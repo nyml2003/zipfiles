@@ -1,9 +1,8 @@
 #include "copyfile.h"
-#include <fstream>
 #include <gtest/gtest.h>
+#include <fstream>
 using namespace zipfiles;
-TEST(CopyFile, copyfile)
-{
+TEST(CopyFile, copyfile) {
     std::string base_dir = "/app/tests/unittest/copyfile/";
     std::string src_filename = base_dir + "example1.txt";
     std::string dst_filename = base_dir + "example1_copy.txt";
@@ -14,8 +13,7 @@ TEST(CopyFile, copyfile)
     std::ifstream dst_file(dst_filename, std::ios::binary);
     char src_buffer, dst_buffer;
 
-    while (true)
-    {
+    while (true) {
         src_file.read(&src_buffer, sizeof(src_buffer));
         dst_file.read(&dst_buffer, sizeof(dst_buffer));
         if (src_file.eof() || dst_file.eof())

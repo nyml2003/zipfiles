@@ -2,10 +2,9 @@
 #include "copyfile.h"
 #include <fstream>
 #include <iostream>
-namespace zipfiles
-{
-void copyfile(const std::string &src_filename, const std::string &dst_filename)
-{
+namespace zipfiles {
+void copyfile(const std::string& src_filename,
+              const std::string& dst_filename) {
     std::ifstream src_file(src_filename);
     if (!src_file)
         return;
@@ -13,8 +12,7 @@ void copyfile(const std::string &src_filename, const std::string &dst_filename)
     if (!dst_file)
         return;
     char buffer;
-    while (true)
-    {
+    while (true) {
         src_file.read(&buffer, sizeof(buffer));
         if (src_file.eof())
             break;
@@ -23,4 +21,4 @@ void copyfile(const std::string &src_filename, const std::string &dst_filename)
     src_file.close();
     dst_file.close();
 }
-} // namespace zipfiles
+}  // namespace zipfiles
