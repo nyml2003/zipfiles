@@ -46,15 +46,20 @@ add_dependencies(ZIPFILES_DEMO CPP_FORMAT)
 target_link_libraries(ZIPFILES_DEMO ZIPFILES_SHARED)
 
 # 单元测试
-add_executable(
-    ZIPFILES_UNIT_TEST
-    ${ZIPFILES_SOURCE_FILES}
-    ${ZIPFILES_UNIT_TEST_FILES}
-)
-target_link_libraries(ZIPFILES_UNIT_TEST GTest::GTest GTest::Main)
 enable_testing()
-add_test(
-    NAME ZIPFILES_UNIT_TEST
-    COMMAND ZIPFILES_UNIT_TEST
-)
 
+foreach(TEST_FILE ${ZIPFILES_UNIT_TEST_FILES})
+    # 获取文件名（不带路径和扩展名）
+    get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
+
+    # 创建测试目标
+    add_executable(${TEST_NAME} ${ZIPFILES_SOURCE_FILES} ${TEST_FILE})
+
+    # 链接 Google Test 库
+    target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main)
+
+    # 添加测试到 CTest
+    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+
+    set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 10)
+endforeach()
