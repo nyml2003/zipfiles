@@ -1,4 +1,7 @@
 cmake-*
 .idea
-build/
-.cache/
+build
+.cache
+tests/demo
+tests/mock
+lib/*.so

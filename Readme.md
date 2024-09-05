@@ -14,6 +14,9 @@
   - `common.h`:通用头文件。
   - `*.h`:核心功能头文件。
   - `utils.h`:工具函数头文件。
+  - `unittest_constant.h`:单元测试常量定义。
+- `lib`:包含编译生成的二进制文件。
+  - `libzipfiles.so`:生成的动态链接库文件。
 - `src`:源代码文件目录。
   - `*.cpp`:源代码文件。
   - `utils.cpp`:工具函数实现。
