@@ -3,3 +3,4 @@ BasedOnStyle: Chromium
 AlignAfterOpenBracket: BlockIndent
 ConstructorInitializerIndentWidth: 2
 ContinuationIndentWidth: 2
+SortIncludes: false

@@ -28,19 +28,17 @@ add_executable(
     ${ZIPFILES_UTIL_CPP}
     ${ZIPFILES_COPYFILES_CPP}
 )
-add_custom_target(
-    clang-format
-    COMMAND clang-format
-    -i
-    ${ZIPFILES_COMMON_H}
-    ${ZIPFILES_UTIL_H}
-    ${ZIPFILES_COPYFILES_H}
-    ${ZIPFILES_ENTRY}
-    ${ZIPFILES_UTIL_CPP}
-    ${ZIPFILES_COPYFILES_CPP}
-    COMMENT "Running clang-format on source files"
+
+# 查找所有的源文件
+file(GLOB_RECURSE ALL_SOURCE_FILES
+    ${CMAKE_SOURCE_DIR}/src/*.cpp
+    ${CMAKE_SOURCE_DIR}/include/*.h
 )
-add_dependencies(clang-format ZIPFILES )
+add_custom_target(clang-format
+    COMMAND clang-format -i -style=file ${ALL_SOURCE_FILES}
+    COMMENT "Formatting source files"
+)
+add_dependencies(ZIPFILES clang-format)
 find_package(GTest REQUIRED)
 add_executable(
     ZIPFILES_UNIT_TEST
