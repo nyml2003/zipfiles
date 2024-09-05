@@ -11,7 +11,8 @@ RUN apt update && apt install -y \
     git \
     gdb \
     vim \
-    libgtest-dev 
+    libgtest-dev \
+    clang-format 
 
 
 RUN  cd /usr/src/gtest \
