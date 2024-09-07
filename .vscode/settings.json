@@ -58,6 +58,13 @@
         "streambuf": "cpp",
         "typeinfo": "cpp",
         "variant": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "list": "cpp",
+        "ratio": "cpp",
+        "netfwd": "cpp",
+        "cfenv": "cpp",
+        "cinttypes": "cpp",
+        "strstream": "cpp",
+        "cstring": "cpp"
     },
 }

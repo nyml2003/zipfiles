@@ -11,39 +11,52 @@ namespace zipfiles::zip {
 
 class LZ77 {
  private:
-  std::string& input_buffer;
-  std::vector<uint16_t>& literal_length_alphabet;
-  std::vector<uint16_t>& distance_alphabet;
-  std::string& output_buffer;
-  std::unordered_map<uint32_t, std::list<uint32_t>> hmap;
+  static constexpr int WSIZE = 1 << 15;
+  static constexpr int MAX_MATCH = 258;
+  static constexpr int MIN_MATCH = 3;
+  static constexpr int MIN_LOOKAHEAD = MAX_MATCH + MIN_MATCH + 1;
+  static constexpr int MAX_DIST = WSIZE - MIN_LOOKAHEAD;
+  static constexpr int WINDOW_SIZE = WSIZE * 2;
+  static constexpr int HTABLE_SIZE = 1 << 15;
+  static constexpr int HSIZE = 1 << 15;
+  static constexpr uint32_t HMASK = HSIZE - 1;
+  static constexpr int HSHIFT = 5;
+  static constexpr int NICE_MATCH = 128;
+  static constexpr int MAX_CHAIN = 128;
 
-  static const int dict_size = 1 << 15;
-  static const int max_match_length = 258;
-  int wr, wl;  // dict_window: [wl, wr)
+  std::vector<uint8_t>& input_buffer;
+  std::vector<uint8_t>& literal_length_alphabet;
+  std::vector<uint16_t>& distance_alphabet;
+  std::vector<uint8_t>& output_buffer;
+  std::vector<uint8_t>::iterator window, input_buffer_end;
+  std::vector<int> head;
+  std::vector<int> prev;
+
+  int strstart, match_start, lookahead, input_size;
+  bool eof;
+  uint32_t now_hash;
 
   // link three sequential byte
-  uint32_t link_three_byte(int pos);
+  uint32_t next_hash(uint8_t byte);
   // shift window 1 byte to the right
-  void shift(int times = 1);
-
-  void append(uint16_t a, uint16_t b);
+  void shift(int& hash_head);
+  int fill_window();
+  void append(uint8_t a, uint16_t b);
   void init();
 
-  int max_match(int pos);
+  int max_match(int hash_head);
 
  public:
   LZ77(
-    std::string& input_buffer,
-    std::vector<uint16_t>& literal_length_alphabet,
+    std::vector<uint8_t>& input_buffer,
+    std::vector<uint8_t>& literal_length_alphabet,
     std::vector<uint16_t>& distance_alphabet,
-    std::string& output_buffer
+    std::vector<uint8_t>& output_buffer
   )
     : input_buffer(input_buffer),
       literal_length_alphabet(literal_length_alphabet),
       distance_alphabet(distance_alphabet),
-      output_buffer(output_buffer),
-      wr(0),
-      wl(0){};
+      output_buffer(output_buffer){};
 
   // Return Code: 2:do nothing
   int encode();

@@ -2,3 +2,5 @@ cmake-*
 .idea
 build/
 .cache/
+lz77/
+lib/

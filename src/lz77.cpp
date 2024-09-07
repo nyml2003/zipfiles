@@ -1,87 +1,143 @@
 #include "lz77.h"
 
+#include <cstring>
+
+#include "utils.h"
+
 namespace zipfiles::zip {
-inline uint32_t LZ77::link_three_byte(int pos) {
-  return ((uint8_t)input_buffer[pos] << 16) |
-         ((uint8_t)input_buffer[pos + 1] << 8) | (uint8_t)input_buffer[pos + 2];
+uint32_t LZ77::next_hash(uint8_t byte) {
+  return now_hash = ((now_hash << HSHIFT) ^ byte) & HMASK;
 }
 
-void LZ77::shift(int times) {
-  uint32_t tail, head;
-  while (times--) {
-    tail = link_three_byte(wr - 2);
-    hmap[tail].push_back(wr - 2);
-    if (hmap[tail].size() > 2) {
-      hmap[tail].pop_front();
+void LZ77::shift(int& hash_head) {
+  next_hash(window[strstart + 2]);
+  prev[strstart] = hash_head = head[now_hash];
+  head[now_hash] = strstart;
+}
+
+int LZ77::fill_window() {
+  int space = WINDOW_SIZE - lookahead - strstart;
+  if (strstart >= WSIZE + MAX_DIST) {
+    // std::copy(window.begin() + WSIZE, window.end(), window.begin());
+    window += WSIZE;
+    match_start -= WSIZE;
+    strstart -= WSIZE;
+
+    for (int i = 0; i < HSIZE; ++i) {
+      head[i] = std::max(head[i] - WSIZE, 0);
     }
-    ++wr;
-    if (wr <= dict_size) {
-      continue;
+    for (int i = 0; i < WSIZE; ++i) {
+      prev[i] = std::max(prev[i] - WSIZE, 0);
     }
-    head = link_three_byte(wl);
-    if (hmap[head].front() == wl) {
-      hmap[head].pop_front();
-    }
-    if (hmap[head].empty()) {
-      hmap.erase(head);
-    }
-    ++wl;
+    space += WSIZE;
   }
+
+  if (eof) {
+    return 0;
+  }
+
+  int len = std::min(
+    static_cast<int>(input_buffer_end - (window + strstart + lookahead)), space
+  );
+  if (!len) {
+    eof = true;
+    // std::fill_n(window + strstart + lookahead, MIN_MATCH - 1, 0);
+  } else {
+    lookahead += len;
+  }
+  return len;
 }
 
-inline void LZ77::append(uint16_t literal_length, uint16_t distance) {
+void LZ77::append(uint8_t literal_length, uint16_t distance) {
   literal_length_alphabet.push_back(literal_length);
   distance_alphabet.push_back(distance);
 }
 
-inline void LZ77::init() {
-  wr = wl = 0;
-  hmap.clear();
-  hmap[link_three_byte(0)].push_back(0);
-  while (wr < 3) {
-    append(input_buffer[wr], 0);
-    ++wr;
+void LZ77::init() {
+  strstart = 0;
+  eof = false;
+
+  head.assign(HTABLE_SIZE, 0);
+  prev.resize(WINDOW_SIZE);
+  input_buffer.resize(input_buffer.size() + MIN_LOOKAHEAD);
+  input_buffer_end = input_buffer.end() - MIN_LOOKAHEAD;
+  std::fill_n(input_buffer_end, MIN_LOOKAHEAD, 0);
+  window = input_buffer.begin();
+  literal_length_alphabet.clear();
+  distance_alphabet.clear();
+
+  lookahead =
+    std::min(static_cast<int>(input_buffer_end - window), WINDOW_SIZE);
+  if (lookahead == 0) {
+    return;
+  }
+  while (lookahead < MIN_LOOKAHEAD && fill_window())
+    ;
+  now_hash = 0;
+  for (int i = 0; i < 2; ++i) {
+    next_hash(window[i]);
   }
 }
 
-int LZ77::max_match(int pos) {
-  int input_buffer_size = input_buffer.length();
-  int length = 3;
-  while (wr + length < input_buffer_size && length < max_match_length &&
-         input_buffer[pos + length] == input_buffer[wr + length]) {
-    ++length;
-  }
-  return length;
+int LZ77::max_match(int cur_match) {
+  int best_len = MIN_MATCH - 1, len = 0, chain_length = MAX_CHAIN;
+  auto scan = window + strstart;
+  auto match = scan;
+  auto strend = scan + MAX_MATCH;
+  int limit = std::max(strstart - MAX_DIST, 0);
+
+  do {
+    match = window + cur_match - 1;
+    scan = strend - MAX_MATCH - 1;
+
+    while (*++scan == *++match && scan < strend)
+      ;
+
+    len = MAX_MATCH - static_cast<int>(strend - scan);
+
+    if (len > best_len) {
+      match_start = cur_match;
+      best_len = len;
+      if (len > NICE_MATCH) {
+        break;
+      }
+    }
+  } while ((cur_match = prev[cur_match]) > limit && --chain_length);
+
+  return best_len;
 }
 
 int LZ77::encode() {
-  int input_buffer_size = input_buffer.length();
-  if (input_buffer_size < 6) {
-    return 2;
-  }
-  literal_length_alphabet.clear();
-  distance_alphabet.clear();
+  int match_length, hash_head;
+
   init();
 
-  uint32_t now_st, max_length, max_match_location, now_max_match;
-  while (wr < input_buffer_size) {
-    if (input_buffer_size - wr < 3 || !hmap.count(now_st = link_three_byte(wr))) {
-      append(input_buffer[wr], 0);
-    } else {
-      max_length = 0;
-      for (int pos : hmap[now_st]) {
-        now_max_match = max_match(pos);
-        if (!max_length || now_max_match >= max_length) {
-          max_match_location = pos;
-          max_length = now_max_match;
-        }
-      }
-      append(max_length, wr - max_match_location);
-      shift(max_length - 1);
+  while (lookahead) {
+    shift(hash_head);
+
+    match_length = 0;
+    if (hash_head && strstart - hash_head <= MAX_DIST && strstart <= WINDOW_SIZE - MIN_LOOKAHEAD) {
+      match_length = std::min(max_match(hash_head), lookahead);
     }
-    shift();
+    if (match_length < MIN_MATCH) {
+      append(window[strstart], 0);
+      strstart++;
+      lookahead--;
+    } else {
+      append(match_length - MIN_MATCH, strstart - match_start);
+      lookahead -= match_length;
+      match_length--;
+      do {
+        strstart++;
+        shift(hash_head);
+      } while (--match_length);
+      strstart++;
+    }
+
+    while (lookahead < MIN_LOOKAHEAD && fill_window())
+      ;
   }
-  return input_buffer_size;
+  return literal_length_alphabet.size();
 }
 
 int LZ77::decode() {
@@ -89,11 +145,11 @@ int LZ77::decode() {
   int length = 0;
   for (int i = 0; i < literal_length_alphabet.size(); ++i) {
     if (distance_alphabet[i]) {
-      for (int j = 0; j < literal_length_alphabet[i]; ++j) {
+      for (int j = 0; j < literal_length_alphabet[i] + MIN_MATCH; ++j) {
         output_buffer.push_back(output_buffer[length + j - distance_alphabet[i]]
         );
       }
-      length += literal_length_alphabet[i];
+      length += literal_length_alphabet[i] + MIN_MATCH;
     } else {
       output_buffer.push_back(literal_length_alphabet[i]);
       ++length;
