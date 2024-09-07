@@ -18,7 +18,6 @@ void LZ77::shift(int& hash_head) {
 int LZ77::fill_window() {
   int space = WINDOW_SIZE - lookahead - strstart;
   if (strstart >= WSIZE + MAX_DIST) {
-    // std::copy(window.begin() + WSIZE, window.end(), window.begin());
     window += WSIZE;
     match_start -= WSIZE;
     strstart -= WSIZE;
@@ -32,19 +31,12 @@ int LZ77::fill_window() {
     space += WSIZE;
   }
 
-  if (eof) {
-    return 0;
-  }
-
   int len = std::min(
     static_cast<int>(input_buffer_end - (window + strstart + lookahead)), space
   );
-  if (!len) {
-    eof = true;
-    // std::fill_n(window + strstart + lookahead, MIN_MATCH - 1, 0);
-  } else {
-    lookahead += len;
-  }
+  eof = !len;
+  lookahead += len;
+
   return len;
 }
 
@@ -71,7 +63,7 @@ void LZ77::init() {
   if (lookahead == 0) {
     return;
   }
-  while (lookahead < MIN_LOOKAHEAD && fill_window())
+  while (lookahead < MIN_LOOKAHEAD && !eof && fill_window())
     ;
   now_hash = 0;
   for (int i = 0; i < 2; ++i) {
@@ -134,7 +126,7 @@ int LZ77::encode() {
       strstart++;
     }
 
-    while (lookahead < MIN_LOOKAHEAD && fill_window())
+    while (lookahead < MIN_LOOKAHEAD && !eof && fill_window())
       ;
   }
   return literal_length_alphabet.size();
