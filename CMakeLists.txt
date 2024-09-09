@@ -76,6 +76,7 @@ add_executable(
     zipfiles_client
     ${ZIPFILES_SOURCE_FILES}
     ${ZIPFILES_CLIENT_SOURCE_FILES}
+    
 )
 target_link_libraries(zipfiles_client ${GTK_LIBRARIES} ${WEBKIT_LIBRARIES} ${JSON_GLIB_LIBRARIES})
 target_compile_options(zipfiles_client PUBLIC ${GTK_CFLAGS_OTHER} ${WEBKIT_CFLAGS_OTHER} ${JSON_GLIB_CFLAGS_OTHER})

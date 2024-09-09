@@ -17,6 +17,8 @@ interface RequestWrapper<Request> {
   params: Request
   timestamp: number
 }
+
+
 let callback = {
   resolve: (data: any) => {},
   reject: (data: any) => {},

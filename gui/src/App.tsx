@@ -18,7 +18,7 @@ const App: React.FC = () => {
   }
 
   const handleCount = () => {
-    console.log('counter:', counter)
+    // console.log('counter:', counter)
 
       api.request<SumRequest,SumResponse>(ApiEnum.Sum, { args: [counter,2] }).then((response: SumResponse) => {
         setResult(response.result)

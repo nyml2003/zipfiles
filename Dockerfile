@@ -21,7 +21,9 @@ RUN apt update && apt install -y \
     libgtk-3-dev \
     libwebkit2gtk-4.1-dev \
     fonts-wqy-microhei \
-    locales
+    locales \
+    valgrind \
+    libjson-glib-dev
 
 
 RUN  cd /usr/src/gtest \

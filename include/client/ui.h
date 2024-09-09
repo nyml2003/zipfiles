@@ -2,55 +2,42 @@
 #define ZIPFILE_CLIENT_UI_H
 #include <webkit2/webkit2.h>
 #include <gtk/gtk.h>
+#include <json-glib/json-glib.h>
+#include <functional>
 
-namespace zipfile::client {
-struct RequestWrapper {
-  JSCValue* timestamp;
-  JSCValue* apiEnum;
-};
+namespace zipfiles::client::ui {
 
-void checkRequestWrapper(
-  WebKitUserContentManager* manager,
-  WebKitJavascriptResult* js_result,
-  gpointer user_data
+bool validate_request_header(JSCValue* value);
+
+void send_response(
+  WebKitWebView* webView,
+  const char* type,
+  const char* message,
+  const char* timestamp_str,
+  const char* apiEnum_str,
+  JsonBuilder* builder
 );
-
+void handle_success(
+  WebKitWebView* webView,
+  JSCValue* value,
+  std::function<void(JsonBuilder*)> build_data
+);
+void handle_error(
+  WebKitWebView* webView,
+  const std::exception& e,
+  JSCValue* value
+);
 void sum(
   WebKitUserContentManager* manager,
   WebKitJavascriptResult* js_result,
   gpointer user_data
 );
-
 void log(
   WebKitUserContentManager* manager,
   WebKitJavascriptResult* js_result,
   gpointer user_data
 );
 
-void buildSuccessJsonBegin(
-  WebKitUserContentManager* manager,
-  WebKitJavascriptResult* js_result,
-  gpointer user_data
-);
-
-void buildSuccessJsonEnd(
-  WebKitUserContentManager* manager,
-  WebKitJavascriptResult* js_result,
-  gpointer user_data
-);
-
-void buildErrorJsonBegin(
-  WebKitUserContentManager* manager,
-  WebKitJavascriptResult* js_result,
-  gpointer user_data
-);
-
-void buildErrorJsonEnd(
-  WebKitUserContentManager* manager,
-  WebKitJavascriptResult* js_result,
-  gpointer user_data
-);
-
-}  // namespace zipfile::client
+}  // namespace zipfile::client::ui
 
 #endif  // !ZIPFILE_CLIENT_UI_H
