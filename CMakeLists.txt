@@ -87,12 +87,12 @@ find_package(GTest REQUIRED)
 # 单元测试
 enable_testing()
 
-foreach(TEST_FILE ${ZIPFILES_UNIT_TEST_FILES})
-    # 获取文件名（不带路径和扩展名）
+foreach(TEST_FILE ${ZIPFILES_SERVER_UNIT_TEST_FILES})
+    # 获取文件名（不带路径和扩展名）+ 服务端单元测试
     get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
 
     # 创建测试目标
-    add_executable(${TEST_NAME} ${ZIPFILES_SOURCE_FILES} ${TEST_FILE})
+    add_executable(${TEST_NAME} ${TEST_FILE} ${ZIPFILES_SOURCE_FILES} ${ZIPFILES_SERVER_SOURCE_FILES})
 
     # 链接 Google Test 库
     target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main)

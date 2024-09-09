@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 #include <filesystem>
 #include <fstream>
-#include "backup.h"
-#include "unittest_constant.h"
+#include "server/backup.h"
+#include "server/unittest_constant.h"
 
 namespace fs = std::filesystem;
-using namespace zipfiles;
+using namespace zipfiles::server;
 
 class BackupRestoreTest : public ::testing::Test {
  protected:
@@ -36,7 +36,7 @@ class BackupRestoreTest : public ::testing::Test {
 
   void TearDown() override {
     // 清理测试目录和文件
-    fs::remove_all(zipfiles::unittest::mockDir);
+    fs::remove_all(unittest::mockDir);
   }
 };
 

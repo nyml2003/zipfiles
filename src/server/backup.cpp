@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include "server/backup.h"
 
-namespace zipfiles {
+namespace zipfiles::server {
 
 // 备份文件
 void backup_file(const fs::path& source, const fs::path& destination) {
