@@ -28,7 +28,7 @@ RUN apt update && apt install -y \
 
 RUN  cd /usr/src/gtest \
     && mkdir build \
-    && cd build \2
+    && cd build \
     && cmake .. \
     && make \
     && cp lib/libgtest*.a /usr/local/lib
