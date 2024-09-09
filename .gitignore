@@ -1,6 +1,6 @@
 cmake-*
 .idea
-build/
+/build
 .cache
 tests/demo
 tests/mock
