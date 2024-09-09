@@ -1,0 +1,52 @@
+<!--
+ * @Author: shawnxiao 597035529@qq.com
+ * @Date: 2022-11-15 22:49:51
+ * @LastEditors: shawnxiao 597035529@qq.com
+ * @LastEditTime: 2022-11-18 00:25:14
+ * @FilePath: \react\webpack5-ts-react18\public\index.html
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- 绝对路径引入图标文件 -->
+  <link data-n-head="ssr" rel="icon" type="image/x-icon" href="./favicon.ico">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= htmlWebpackPlugin.options.title %></title>
+  <!-- import cdn css -->
+  <% if(htmlWebpackPlugin.options.cdn) {%>
+    <% for (var i in htmlWebpackPlugin.options.cdn&&htmlWebpackPlugin.options.cdn.css) { %>
+      <link href="<%= htmlWebpackPlugin.options.cdn.css[i] %>" rel="stylesheet">
+    <% } %>
+  <% } %>
+  <!-- import cdn js -->
+  <% if(htmlWebpackPlugin.options.cdn) {%>
+    <% for (var i in htmlWebpackPlugin.options.cdn&&htmlWebpackPlugin.options.cdn.js) { %>
+      <script src="<%= htmlWebpackPlugin.options.cdn.js[i] %>"></script>
+    <% } %>
+  <% } %>
+</head>
+<body>
+  <!-- 容器节点 -->
+  <div id="root"></div>
+    <!-- built files will be auto injected -->
+    <!-- IE 浏览器跳转提示升级页面 start -->
+    <script>
+      if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode)) {
+          window.open("https://support.dmeng.net/upgrade-your-browser.html?referrer="+encodeURIComponent(window.location.href));
+      };
+    </script>
+    <!-- IE 浏览器跳转提示升级页面 end -->
+    <script>
+      function isIE() {
+          if (!!window.ActiveXObject || "ActiveXObject" in window){
+              return true;
+          }else{
+              return false;
+          }
+      }
+    </script>
+</body>
+</html>

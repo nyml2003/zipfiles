@@ -1,0 +1,10 @@
+/coverage
+/dist
+/examples
+/node_modules
+/package-lock.json
+/dll
+/public/*
+.local
+/src/index/static/json/*
+/build

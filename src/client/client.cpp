@@ -51,19 +51,6 @@ void handle_message(
   }
 }
 
-// C++ add 函数
-static void add_function(
-  WebKitUserContentManager* manager,
-  WebKitJavascriptResult* result,
-  gpointer user_data
-) {
-  handle_message(
-    result, user_data, [](double num1, double num2) { return num1 + num2; },
-    "window.postMessage({type: 'resolve', result: %f}, '*');",
-    "window.postMessage({type: 'reject', error: '%s'}, '*');"
-  );
-}
-
 // 日志处理函数
 static void log_function(
   WebKitUserContentManager* manager,
@@ -80,19 +67,6 @@ static void log_function(
   }
 }
 
-// 辅助函数：注册和连接消息处理程序
-void register_message_handler(
-  WebKitUserContentManager* manager,
-  const char* name,
-  GCallback callback,
-  gpointer user_data
-) {
-  webkit_user_content_manager_register_script_message_handler(manager, name);
-  g_signal_connect(
-    manager, ("script-message-received::" + std::string(name)).c_str(),
-    callback, user_data
-  );
-}
 
 void load_dist_uri(WebKitWebView* web_view) {
   // 获取当前可执行文件的路径

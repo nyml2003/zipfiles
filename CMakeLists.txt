@@ -14,7 +14,7 @@ file(GLOB ZIPFILES_SOURCE_FILES ${ZIPFILES_SOURCE_DIR}/*.cpp)
 set(ZIPFILES_TEST_DIR ${CMAKE_SOURCE_DIR}/tests) # 测试目录
 set(ZIPFILES_UNIT_TEST_DIR ${ZIPFILES_TEST_DIR}/unittest) # 单元测试目录
 set(ZIPFILES_GUI_DIR ${CMAKE_SOURCE_DIR}/gui) # GUI 目录
-set(ZIPFILES_DIST_DIR ${CMAKE_SOURCE_DIR}/dist) # bundle 目录(将HTML、CSS和JavaScript文件打包在一起)
+set(ZIPFILES_DIST_DIR ${CMAKE_SOURCE_DIR}/gui/dist) # bundle 目录(将HTML、CSS和JavaScript文件打包在一起)
 file(GLOB ZIPFILES_DIST_FILES ${ZIPFILES_DIST_DIR}/*)
 
 # 客户端相关
