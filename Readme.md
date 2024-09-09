@@ -150,3 +150,5 @@ BACKEND
 
 打包解包（10 分）：将所有备份文件拼接为一个大文件保存
 
+git config --global --unset http.proxy
+git config --global --unset https.proxy
