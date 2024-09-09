@@ -6,67 +6,82 @@
 #include <unistd.h>
 #include <functional>
 
-// 辅助函数：处理异常和参数校验
-void handle_message(
-  WebKitJavascriptResult* result,
-  gpointer user_data,
-  std::function<double(double, double)> operation,
-  const char* success_callback,
-  const char* error_callback
+static void js_add_function(
+  WebKitUserContentManager* manager,
+  WebKitJavascriptResult* js_result,
+  gpointer user_data
 ) {
+  g_print("js_add_function called\n");
+  JSCValue* value = webkit_javascript_result_get_js_value(js_result);
+  if (!jsc_value_is_object(value)) {
+    g_print("js_add_function: value is not an object\n");
+    return;
+  }
+  JSCValue* timestamp = jsc_value_object_get_property(value, "timestamp");
+  JSCValue* apiEnum = jsc_value_object_get_property(value, "apiEnum");
+  JSCValue* data = jsc_value_object_get_property(value, "data");
+  if (!jsc_value_is_object(data)) {
+    g_print("js_add_function: data is not an object\n");
+    return;
+  }
+  // 输出timestamp和apiEnum
+    g_print("js_add_function: timestamp = %s\n", jsc_value_to_string(timestamp));
+    g_print("js_add_function: apiEnum = %s\n", jsc_value_to_string(apiEnum));
+  JSCValue* args = jsc_value_object_get_property(data, "args");
+  if (!jsc_value_is_array(args)) {
+    g_print("js_add_function: args is not an array\n");
+    return;
+  }
   try {
-    JSCValue* value = webkit_javascript_result_get_js_value(result);
-    if (jsc_value_is_object(value)) {
-      JSCValue* arg1 = jsc_value_object_get_property(value, "arg1");
-      JSCValue* arg2 = jsc_value_object_get_property(value, "arg2");
-
-      if (jsc_value_is_number(arg1) && jsc_value_is_number(arg2)) {
-        double num1 = jsc_value_to_double(arg1);
-        double num2 = jsc_value_to_double(arg2);
-        g_print("num1: %f, num2: %f\n", num1, num2);
-        double result = operation(num1, num2);
-        g_print("result: %f\n", result);
-
-        // 返回结果给 JavaScript
-        WebKitWebView* web_view = WEBKIT_WEB_VIEW(user_data);
-        char* script = g_strdup_printf(success_callback, result);
-        webkit_web_view_evaluate_javascript(
-          web_view, script, -1, NULL, NULL, NULL, NULL, NULL
-        );
-        g_free(script);
+    unsigned length = jsc_value_typed_array_get_length(args);
+    g_print("js_add_function: args length = %u\n", length);
+    double result = 0;
+    for (unsigned i = 0; i < length; i++) {
+      JSCValue* arg = jsc_value_object_get_property_at_index(args, i);
+      if (jsc_value_is_number(arg)) {
+        result += jsc_value_to_double(arg);
       } else {
         throw std::invalid_argument("Arguments must be numbers");
       }
-    } else {
-      throw std::invalid_argument("Invalid arguments");
     }
-  } catch (const std::exception& e) {
-    // 将错误信息传递给 JavaScript
-    WebKitWebView* web_view = WEBKIT_WEB_VIEW(user_data);
-    char* script = g_strdup_printf(error_callback, e.what());
+    g_print("js_add_function: result = %f\n", result);
+    const char* timestamp_str = jsc_value_to_string(timestamp);
+    const char* apiEnum_str = jsc_value_to_string(apiEnum);
+    char* script = g_strdup_printf(
+      "window.postMessage({"
+      "type: 'resolve',"
+      "message: 'Success',"
+      "timestamp: '%s',"
+      "apiEnum: '%s',"
+      "data: { result: %f }"
+      "}, '*');",
+      timestamp_str, apiEnum_str, result
+    );
+    WebKitWebView* webView = WEBKIT_WEB_VIEW(user_data);
     webkit_web_view_evaluate_javascript(
-      web_view, script, -1, NULL, NULL, NULL, NULL, NULL
+      webView, script, -1, NULL, NULL, NULL, NULL, NULL
+    );
+    g_free(script);
+  } catch (const std::exception& e) {
+    const char* timestamp_str = timestamp ? jsc_value_to_string(timestamp) : "";
+    const char* apiEnum_str = apiEnum ? jsc_value_to_string(apiEnum) : "";
+    WebKitWebView* webView = WEBKIT_WEB_VIEW(user_data);
+    char* script = g_strdup_printf(
+      "window.postMessage({"
+      "type: 'reject',"
+      "message: '%s',"
+      "timestamp: '%s',"
+      "apiEnum: '%s',"
+      "data: null"
+      "}, '*');",
+      e.what(), timestamp_str, apiEnum_str
+    );
+    webkit_web_view_evaluate_javascript(
+      webView, script, -1, NULL, NULL, NULL, NULL, NULL
     );
     g_free(script);
   }
 }
-
-// 日志处理函数
-static void log_function(
-  WebKitUserContentManager* manager,
-  WebKitJavascriptResult* result,
-  gpointer user_data
-) {
-  g_print("log_function called\n");
-  JSCValue* value = webkit_javascript_result_get_js_value(result);
-  if (jsc_value_is_string(value)) {
-    const char* message = jsc_value_to_string(value);
-    std::cout << "JavaScript log: " << message << std::endl;
-  } else {
-    g_print("log_function: value is not a string\n");
-  }
-}
-
 
 void load_dist_uri(WebKitWebView* web_view) {
   // 获取当前可执行文件的路径
@@ -88,6 +103,17 @@ void load_dist_uri(WebKitWebView* web_view) {
   webkit_web_view_load_uri(web_view, ("file://" + dist_path).c_str());
 }
 
+static void
+bind_js_functions(WebKitUserContentManager* manager, WebKitWebView* web_view) {
+  webkit_user_content_manager_register_script_message_handler(
+    manager, "js_add_function"
+  );
+  g_signal_connect(
+    manager, "script-message-received::js_add_function",
+    G_CALLBACK(js_add_function), web_view
+  );
+}
+
 int main(int argc, char* argv[]) {
   gtk_init(&argc, &argv);
 
@@ -96,14 +122,9 @@ int main(int argc, char* argv[]) {
   WebKitWebView* web_view =
     WEBKIT_WEB_VIEW(webkit_web_view_new_with_user_content_manager(manager));
 
-  // 使用辅助函数注册和连接消息处理程序
-  register_message_handler(
-    manager, "addFunction", G_CALLBACK(add_function), web_view
-  );
-  register_message_handler(manager, "log", G_CALLBACK(log_function), web_view);
-
+  bind_js_functions(manager, web_view);
   // 加载本地 HTML 文件
-    load_dist_uri(web_view);
+  load_dist_uri(web_view);
 
   // 创建 GTK 窗口
   GtkWidget* window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
