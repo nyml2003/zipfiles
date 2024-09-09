@@ -3,51 +3,51 @@ interface Api {
 }
 
 import { ApiEnum } from '@/apis'
-interface MessageEventData<Response> {
+import { useEffect } from 'react'
+interface ResponseWrapper {
   timestamp: number
   apiEnum: ApiEnum
-  data: Response | null
-    type: 'resolve' | 'reject'
-    message: string
+  data?: any
+  type: 'resolve' | 'reject'
+  message: string
 }
 
-interface MessageEventError {
-    timestamp: number
-    apiEnum: ApiEnum
-    data: any
-    type: 'reject'
-}
-
-interface PostMessage<Request> {
+interface RequestWrapper<Request> {
   apiEnum: ApiEnum
-  request: Request
+  params: Request
   timestamp: number
+}
+let callback = {
+  resolve: (data: any) => {},
+  reject: (data: any) => {},
 }
 
 const useApi = (): Api => {
-  const callbacks: {
-    [key: number]: { resolve: (result: any) => void; reject: (error: any) => void }
-  } = {}
-
-  window.addEventListener('message', function handler(event: MessageEvent) {
-    const { type, timestamp, data, apiEnum } = event.data as MessageEventData<any>
-    if (callbacks[timestamp]) {
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+        const { type, timestamp, data, apiEnum, message } = event.data as ResponseWrapper
       if (type === 'resolve') {
-        callbacks[timestamp].resolve(data)
+        callback.resolve(data)
       } else if (type === 'reject') {
-        callbacks[timestamp].reject(data)
+        callback.reject(message)
       }
-      delete callbacks[timestamp]
     }
-  })
 
-  const api: Api = {
-    request: async <Request, Response>(apiEnum: ApiEnum, request: Request): Promise<Response> => {
-      const timestamp = Date.now()
-      const message: PostMessage<Request> = { apiEnum, request, timestamp }
+    window.addEventListener('message', handler)
+
+    return () => {
+      window.removeEventListener('message', handler)
+    }
+  }, [])
+
+    const api: Api = {
+      request: async <Request, Response>(apiEnum: ApiEnum, request: Request): Promise<Response> => {
+            const timestamp = Date.now()
+      const message: RequestWrapper<Request> = { apiEnum, params: request, timestamp }
       window.webkit.messageHandlers[apiEnum].postMessage(message)
       return new Promise((resolve, reject) => {
-        callbacks[timestamp] = { resolve, reject }
+        callback.resolve = resolve
+        callback.reject = reject
       })
     },
   }

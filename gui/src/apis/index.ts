@@ -1,5 +1,5 @@
 export enum ApiEnum {
-    add = 'add',
-    getVersion = 'getVersion',
-    log = 'log',
+    Sum = 'sum',
+    GetVersion = 'getVersion',
+    Log = 'log',
 }

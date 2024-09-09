@@ -3,7 +3,7 @@ import './app.less'
 import { useEffect, useState } from 'react'
 import { ApiEnum } from './apis'
 import useApi from './hooks/useApi'
-import { AddRequest } from './apis/add'
+import { SumRequest, SumResponse } from './apis/Sum'
 const App: React.FC = () => {
   const api = useApi()
   const [counter, setCounter] = useState(0)
@@ -14,23 +14,17 @@ const App: React.FC = () => {
   }
 
   const handleErrorMessage = () => {
-    console.log('这是一个错误消息2')
+      console.log('这是一个错误消息2')
   }
 
   const handleCount = () => {
     console.log('counter:', counter)
-    const message = {
-      args: [counter, 1],
-    }
 
-    api
-      .request<AddRequest(ApiEnum.add, message)
-      .then(result => {
-        setResult(result)
-        setCounter(counter + 1)
-      })
-      .catch(error => {
-        setResult(error)
+      api.request<SumRequest,SumResponse>(ApiEnum.Sum, { args: [counter,2] }).then((response: SumResponse) => {
+        setResult(response.result)
+        setCounter(response.result)
+      }).catch((error) => {
+        alert('Error: ' + error)
       })
   }
   return (

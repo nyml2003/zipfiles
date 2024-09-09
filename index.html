@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebKit Test</title>
+    <script>
+        function callJsAddFunction() {
+            const message = {
+                timestamp: Date.now(),
+                apiEnum: 'TEST_API',
+                params: {
+                    params: [1,2]
+                }
+            };
+            window.webkit.messageHandlers.js_add_function.postMessage(message);
+        }
+
+        window.addEventListener('message', function (event) {
+            if (event.data.type === 'resolve') {
+                alert('Success: ' + event.data.message + ', Result: ' + JSON.stringify(event.data.data));
+            } else if (event.data.type === 'reject') {
+                alert('Error: ' + event.data.message);
+            }
+        });
+    </script>
+</head>
+
+<body>
+    <h1>WebKit Test Page</h1>
+    <button onclick="callJsAddFunction()">Call js_add_function</button>
+</body>
+
+</html>

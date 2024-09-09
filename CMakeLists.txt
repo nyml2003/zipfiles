@@ -35,8 +35,6 @@ file(GLOB ZIPFILES_SERVER_UNIT_TEST_FILES ${ZIPFILES_SERVER_UNIT_TEST_DIR}/*.cpp
 # 指定头文件搜索路径
 include_directories(
     ${ZIPFILES_HEADER_DIR} 
-    ${ZIPFILES_CLIENT_HEADER_DIR} 
-    ${ZIPFILES_SERVER_HEADER_DIR}
 )
 
 # 源码格式化
@@ -68,17 +66,19 @@ add_executable(
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK REQUIRED gtk+-3.0)
 pkg_check_modules(WEBKIT REQUIRED webkit2gtk-4.1)
+pkg_check_modules(JSON_GLIB REQUIRED json-glib-1.0)
 
 include_directories(${GTK_INCLUDE_DIRS})
 include_directories(${WEBKIT_INCLUDE_DIRS})
+include_directories(${JSON_GLIB_INCLUDE_DIRS})
 
 add_executable(
     zipfiles_client
     ${ZIPFILES_SOURCE_FILES}
     ${ZIPFILES_CLIENT_SOURCE_FILES}
 )
-target_link_libraries(zipfiles_client ${GTK_LIBRARIES} ${WEBKIT_LIBRARIES})
-target_compile_options(zipfiles_client PUBLIC ${GTK_CFLAGS_OTHER} ${WEBKIT_CFLAGS_OTHER})
+target_link_libraries(zipfiles_client ${GTK_LIBRARIES} ${WEBKIT_LIBRARIES} ${JSON_GLIB_LIBRARIES})
+target_compile_options(zipfiles_client PUBLIC ${GTK_CFLAGS_OTHER} ${WEBKIT_CFLAGS_OTHER} ${JSON_GLIB_CFLAGS_OTHER})
 
 install(DIRECTORY ${ZIPFILES_DIST_DIR} DESTINATION ${CMAKE_BINARY_DIR})
 
