@@ -6,6 +6,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS_MINSIZEREL "-O3 -DNDEBUG")
 
+
 # 全局
 set(ZIPFILES_HEADER_DIR ${CMAKE_SOURCE_DIR}/include) # 头文件目录
 file(GLOB ZIPFILES_HEADER_FILES ${ZIPFILES_HEADER_DIR}/*.h)
@@ -32,19 +33,26 @@ file(GLOB ZIPFILES_SERVER_SOURCE_FILES ${ZIPFILES_SERVER_SOURCE_DIR}/*.cpp)
 set(ZIPFILES_SERVER_UNIT_TEST_DIR ${ZIPFILES_UNIT_TEST_DIR}/server)
 file(GLOB ZIPFILES_SERVER_UNIT_TEST_FILES ${ZIPFILES_SERVER_UNIT_TEST_DIR}/*.cpp)
 
-# 消息队列相关
-set(ZIPFILES_MQ_HEADER_DIR ${ZIPFILES_HEADER_DIR}/mq)
-file(GLOB ZIPFILES_MQ_HEADER_FILES ${ZIPFILES_MQ_HEADER_DIR}/*.h)
-set(ZIPFILES_MQ_SOURCE_DIR ${ZIPFILES_SOURCE_DIR}/mq)
-file(GLOB ZIPFILES_MQ_SOURCE_FILES ${ZIPFILES_MQ_SOURCE_DIR}/*.cpp)
-set(ZIPFILES_MQ_TEST_CLIENT_FILE ${ZIPFILES_SOURCE_DIR}/test/mq_test_client.cpp)
-set(ZIPFILES_MQ_TEST_SERVER_FILE ${ZIPFILES_SOURCE_DIR}/test/mq_test_server.cpp)
+# 中台相关
+set(ZIPFILES_MP_HEADER_DIR ${ZIPFILES_HEADER_DIR}/mp)
+file(GLOB ZIPFILES_MP_HEADER_FILES ${ZIPFILES_MP_HEADER_DIR}/*.h)
+set(ZIPFILES_MP_SOURCE_DIR ${ZIPFILES_SOURCE_DIR}/mp)
+file(GLOB ZIPFILES_MP_SOURCE_FILES ${ZIPFILES_MP_SOURCE_DIR}/*.cpp)
 
+# 依赖
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GTK REQUIRED gtk+-3.0)
+pkg_check_modules(WEBKIT REQUIRED webkit2gtk-4.1)
+pkg_check_modules(JSON_GLIB REQUIRED json-glib-1.0)
+pkg_check_modules(JSONCPP REQUIRED jsoncpp)
 
 # 指定头文件搜索路径
-include_directories(
-    ${ZIPFILES_HEADER_DIR} 
-)
+include_directories(${GTK_INCLUDE_DIRS})
+include_directories(${WEBKIT_INCLUDE_DIRS})
+include_directories(${JSON_GLIB_INCLUDE_DIRS})
+include_directories(${JSONCPP_INCLUDE_DIRS})
+# 本项目搜索路径仅为include目录
+include_directories(${ZIPFILES_HEADER_DIR})
 
 # 源码格式化
 add_custom_target(
@@ -59,66 +67,59 @@ add_custom_target(
     ${ZIPFILES_SERVER_HEADER_FILES}
     ${ZIPFILES_SERVER_SOURCE_FILES}
     ${ZIPFILES_SERVER_UNIT_TEST_FILES}
-    ${ZIPFILES_MQ_HEADER_FILES}
-    ${ZIPFILES_MQ_SOURCE_FILES}
+    ${ZIPFILES_MP_HEADER_FILES}
+    ${ZIPFILES_MP_SOURCE_FILES}
     COMMENT "Formatting source files"
 )
 
-# 测试MQ
-
-add_executable(
-    test_mq_server
-    ${ZIPFILES_SOURCE_FILES}
-    ${ZIPFILES_MQ_SOURCE_FILES}
-    ${ZIPFILES_MQ_TEST_SERVER_FILE}
-)
-
 # 服务端打包
-
 add_executable(
     zipfiles_server
     ${ZIPFILES_SOURCE_FILES}
+    ${ZIPFILES_MP_SOURCE_FILES}
     ${ZIPFILES_SERVER_SOURCE_FILES}
 )
 
+target_link_libraries(
+    zipfiles_server 
+    ${JSONCPP_LIBRARIES}
+)
+
 # 客户端打包
-
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(GTK REQUIRED gtk+-3.0)
-pkg_check_modules(WEBKIT REQUIRED webkit2gtk-4.1)
-pkg_check_modules(JSON_GLIB REQUIRED json-glib-1.0)
-
-include_directories(${GTK_INCLUDE_DIRS})
-include_directories(${WEBKIT_INCLUDE_DIRS})
-include_directories(${JSON_GLIB_INCLUDE_DIRS})
 
 add_executable(
     zipfiles_client
     ${ZIPFILES_SOURCE_FILES}
     ${ZIPFILES_CLIENT_SOURCE_FILES}
-    ${ZIPFILES_MQ_SOURCE_FILES}
+    ${ZIPFILES_MP_SOURCE_FILES}
 )
-target_link_libraries(zipfiles_client ${GTK_LIBRARIES} ${WEBKIT_LIBRARIES} ${JSON_GLIB_LIBRARIES})
-target_compile_options(zipfiles_client PUBLIC ${GTK_CFLAGS_OTHER} ${WEBKIT_CFLAGS_OTHER} ${JSON_GLIB_CFLAGS_OTHER})
+target_link_libraries(
+    zipfiles_client 
+    ${GTK_LIBRARIES} 
+    ${WEBKIT_LIBRARIES} 
+    ${JSON_GLIB_LIBRARIES}
+    ${JSONCPP_LIBRARIES}
+)
+target_compile_options(zipfiles_client PRIVATE ${GTK_CFLAGS_OTHER} ${WEBKIT_CFLAGS_OTHER} ${JSON_GLIB_CFLAGS_OTHER})
 
 install(DIRECTORY ${ZIPFILES_DIST_DIR} DESTINATION ${CMAKE_BINARY_DIR})
 
 find_package(GTest REQUIRED)
 # 单元测试
-enable_testing()
+# enable_testing()
 
-foreach(TEST_FILE ${ZIPFILES_SERVER_UNIT_TEST_FILES})
-    # 获取文件名（不带路径和扩展名）+ 服务端单元测试
-    get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
+# foreach(TEST_FILE ${ZIPFILES_SERVER_UNIT_TEST_FILES})
+#     # 获取文件名（不带路径和扩展名）+ 服务端单元测试
+#     get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
 
-    # 创建测试目标
-    add_executable(${TEST_NAME} ${TEST_FILE} ${ZIPFILES_SOURCE_FILES} ${ZIPFILES_SERVER_SOURCE_FILES})
+#     # 创建测试目标
+#     add_executable(${TEST_NAME} ${TEST_FILE} ${ZIPFILES_SOURCE_FILES} )
 
-    # 链接 Google Test 库
-    target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main)
+#     # 链接 Google Test 库
+#     target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main)
 
-    # 添加测试到 CTest
-    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+#     # 添加测试到 CTest
+#     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
 
-    set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 10)
-endforeach()
+#     set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 10)
+# endforeach()

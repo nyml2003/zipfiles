@@ -1,5 +1,5 @@
 #include "client/ui.h"
-#include <stdexcept>
+#include <iostream>
 namespace zipfiles::client::ui {
 bool validate_request_header(JSCValue* value) {
   if (!jsc_value_is_object(value)) {

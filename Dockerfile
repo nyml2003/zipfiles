@@ -23,7 +23,8 @@ RUN apt update && apt install -y \
     fonts-wqy-microhei \
     locales \
     valgrind \
-    libjson-glib-dev
+    libjson-glib-dev \
+    libjsoncpp-dev
 
 
 RUN  cd /usr/src/gtest \
