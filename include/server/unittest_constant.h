@@ -6,5 +6,5 @@ namespace zipfiles::server::unittest {
 const fs::path mockDir = "/app/tests/mock";
 const fs::path backupDir = mockDir / "backup";
 const fs::path userDir = mockDir / "user";
-}  // namespace zipfiles::unittest
+}  // namespace zipfiles::server::unittest
 #endif  // !ZIPFILES_UNITTEST_CONSTANT_H

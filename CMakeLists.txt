@@ -61,8 +61,6 @@ add_custom_target(
     ${ZIPFILES_SERVER_UNIT_TEST_FILES}
     ${ZIPFILES_MQ_HEADER_FILES}
     ${ZIPFILES_MQ_SOURCE_FILES}
-    ${ZIPFILES_MQ_TEST_CLIENT_DIR}
-    ${ZIPFILES_MQ_TEST_SERVER_DIR}
     COMMENT "Formatting source files"
 )
 

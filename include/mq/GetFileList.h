@@ -8,8 +8,8 @@ typedef char filename;
 
 class GetFileList : public IContent, public IToString {
  public:
-    explicit GetFileList(const std::vector<std::string>& filenames);
-    explicit GetFileList() = default;
+  explicit GetFileList(const std::vector<std::string>& filenames);
+  explicit GetFileList() = default;
   void serialize(char* buffer, size_t& buffer_size) override;
   void deserialize(const char* buffer, size_t& offset) override;
   std::string to_string() override;

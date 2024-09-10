@@ -53,7 +53,7 @@ void handle_success(
   WebKitWebView* webView,
   JSCValue* value,
   std::function<void(JsonBuilder*)> build_data
- ){
+) {
   JsonBuilder* builder = json_builder_new();
   json_builder_begin_object(builder);
   json_builder_set_member_name(builder, "type");
@@ -79,8 +79,11 @@ void handle_success(
   );
 }
 
-void
-handle_error(WebKitWebView* webView, const std::exception& e, JSCValue* value) {
+void handle_error(
+  WebKitWebView* webView,
+  const std::exception& e,
+  JSCValue* value
+) {
   JsonBuilder* builder = json_builder_new();
   json_builder_begin_object(builder);
   json_builder_set_member_name(builder, "type");

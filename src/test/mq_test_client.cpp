@@ -21,7 +21,6 @@ int main() {
 
     // 创建请求
     Request req;
-    req.type = MessageType::REQUEST;
     req.api = ApiType::GET_FILE_LIST;
 
     // 发送请求

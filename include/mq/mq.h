@@ -11,11 +11,10 @@ struct Request;
 struct Response;
 const int MAX_MSG_SIZE = (1 << 10);
 const int MAX_RESPONSE_CONTENT_SIZE =
-  MAX_MSG_SIZE - sizeof(MessageType) - sizeof(StatusCode) - sizeof(size_t);
+  MAX_MSG_SIZE - sizeof(StatusCode) - sizeof(size_t);
 }  // namespace zipfiles::mq
 #include <cstddef>
 namespace zipfiles::mq {
-enum class MessageType { REQUEST, RESPONSE };
 
 enum class ApiType { GET_FILE_LIST, GET_FILE };
 
@@ -33,12 +32,10 @@ class IToString {
 };
 
 struct Request {
-  MessageType type;
   ApiType api;
 };
 
 struct Response {
-  MessageType type;
   StatusCode status;
   size_t contentSize;
   char content[MAX_RESPONSE_CONTENT_SIZE];

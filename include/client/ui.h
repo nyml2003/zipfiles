@@ -38,6 +38,6 @@ void log(
   gpointer user_data
 );
 
-}  // namespace zipfile::client::ui
+}  // namespace zipfiles::client::ui
 
 #endif  // !ZIPFILE_CLIENT_UI_H
