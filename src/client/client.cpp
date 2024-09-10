@@ -1,6 +1,9 @@
 #include <webkit2/webkit2.h>
 #include <gtk/gtk.h>
 #include "client/window.h"
+#include "mq/MQWrapper.h"
+#include "client/request.h"
+#include "mq/GetFileList.h"
 
 void init(int argc, char* argv[]) {
   gtk_init(&argc, &argv);
@@ -15,7 +18,24 @@ void init(int argc, char* argv[]) {
 }
 
 int main(int argc, char* argv[]) {
-    init(argc, argv);
+    //init(argc, argv);
+    zipfiles::mq::MQWrapper mqWrapper;
 
+  while (true) {
+    int input;
+    std::cout << "输入1以发送请求，输入其他值以退出: ";
+    std::cin >> input;
+
+    if (input != 1) {
+      break;
+    }
+
+    zipfiles::client::request::Request<zipfiles::mq::GetFileList::GetFileList>
+      request(zipfiles::mq::ApiType::GET_FILE_LIST, mqWrapper);
+
+    zipfiles::mq::GetFileList::GetFileList content = request.handle();
+
+    std::cout << content.to_string() << std::endl;
+  }
   return 0;
 }

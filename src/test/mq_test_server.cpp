@@ -20,7 +20,6 @@ int main() {
 
     // 处理请求并创建响应
     Response res;
-    res.type = MessageType::RESPONSE;
     res.status = StatusCode::OK;
 
     if (req.api == ApiType::GET_FILE_LIST) {
