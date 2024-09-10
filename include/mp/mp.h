@@ -5,7 +5,7 @@
 #include <optional>
 #include <cstddef>
 namespace zipfiles::mp {
-constexpr size_t MAX_MESSAGE_SIZE = 1024;
+constexpr size_t MAX_MESSAGE_SIZE = (1 << 16);
 
 enum class ApiType { GET_FILE_LIST = 0, GET_FILE };
 
@@ -23,6 +23,7 @@ class Request : public Jsonable {
   void fromJson(const Json::Value& json) override;
   bool is(ApiType api);
   void setApi(ApiType api);
+  Json::Value getPayload();
   template <
     typename T,
     typename = std::enable_if_t<std::is_base_of<Jsonable, T>::value>>
@@ -36,6 +37,7 @@ class Request : public Jsonable {
     }
     this->payload = payload.toJson();
   }
+  
 
  private:
   std::optional<ApiType> api;

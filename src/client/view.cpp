@@ -1,6 +1,7 @@
-#include "client/ui.h"
+#include "client/view.h"
+#include "client/api.h"
 #include <iostream>
-namespace zipfiles::client::ui {
+namespace zipfiles::client::view {
 bool validate_request_header(JSCValue* value) {
   if (!jsc_value_is_object(value)) {
     g_print("js_add_function: value is not an object\n");
@@ -36,8 +37,8 @@ void send_response(
   JsonNode* root = json_builder_get_root(builder);
   json_generator_set_root(gen, root);
   gchar* json_str = json_generator_to_data(gen, NULL);
+  g_print("before send response\n: %s\n", json_str);
   char* script = g_strdup_printf("window.postMessage(%s, '*');", json_str);
-
   webkit_web_view_evaluate_javascript(
     webView, script, -1, NULL, NULL, NULL, NULL, NULL
   );
@@ -161,4 +162,46 @@ void log(
     json_builder_add_string_value(builder, message_str);
   });
 }
-}  // namespace zipfiles::client::ui
+
+void getFileList(
+  WebKitUserContentManager* manager,
+  WebKitJavascriptResult* js_result,
+  gpointer user_data
+) {
+  JSCValue* value = webkit_javascript_result_get_js_value(js_result);
+  if (!validate_request_header(value)) {
+    return;
+  }
+  try {
+    JSCValue* params = jsc_value_object_get_property(value, "params");
+    JSCValue* path = jsc_value_object_get_property(params, "path");
+    if (!jsc_value_is_string(path)) {
+      throw std::invalid_argument("Path must be a string");
+    }
+    api::GetFileListRequest request;
+    request.setPath(jsc_value_to_string(path));
+    mp::GetFileListResponse response = api::getFileList(request);
+
+    handle_success(
+      WEBKIT_WEB_VIEW(user_data), value,
+      [&](JsonBuilder* builder) {
+        json_builder_set_member_name(builder, "files");
+        json_builder_begin_array(builder);
+        for (const auto& file : response.getFiles()) {
+          json_builder_begin_object(builder);
+          json_builder_set_member_name(builder, "name");
+          json_builder_add_string_value(builder, file.name.c_str());
+          json_builder_set_member_name(builder, "type");
+          json_builder_add_string_value(
+            builder, file.type == mp::FileType::FILE ? "file" : "directory"
+          );
+          json_builder_end_object(builder);
+        }
+        json_builder_end_array(builder);
+      }
+    );
+  } catch (const std::exception& e) {
+    handle_error(WEBKIT_WEB_VIEW(user_data), e, value);
+  }
+}
+}  // namespace zipfiles::client::view

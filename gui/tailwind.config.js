@@ -1,5 +1,3 @@
-import defaultTheme from 'tailwindcss/defaultTheme'
-
 export default {
   mode: 'jit',
   content: ['./src/**/*.{html,js,jsx,ts,tsx}', './public/index.html'],
@@ -7,7 +5,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter var', ...defaultTheme.fontFamily.sans],
+        chinese: ['Noto Sans SC', 'Noto Serif SC', 'Microsoft YaHei', 'SimHei', 'sans-serif'],
       },
     },
   },

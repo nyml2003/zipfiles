@@ -1,11 +1,11 @@
-#ifndef ZIPFILE_CLIENT_UI_H
-#define ZIPFILE_CLIENT_UI_H
+#ifndef ZIPFILE_CLIENT_VIEW_H
+#define ZIPFILE_CLIENT_VIEW_H
 #include <webkit2/webkit2.h>
 #include <gtk/gtk.h>
 #include <json-glib/json-glib.h>
 #include <functional>
 
-namespace zipfiles::client::ui {
+namespace zipfiles::client::view {
 
 bool validate_request_header(JSCValue* value);
 
@@ -37,7 +37,12 @@ void log(
   WebKitJavascriptResult* js_result,
   gpointer user_data
 );
+void getFileList(
+  WebKitUserContentManager* manager,
+  WebKitJavascriptResult* js_result,
+  gpointer user_data
+);
 
-}  // namespace zipfiles::client::ui
+}  // namespace zipfiles::client::view
 
-#endif  // !ZIPFILE_CLIENT_UI_H
+#endif  // !ZIPFILE_CLIENT_VIEW_H

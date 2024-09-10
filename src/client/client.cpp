@@ -1,81 +1,67 @@
-// #include <webkit2/webkit2.h>
-// #include <gtk/gtk.h>
-// #include "client/window.h"
-// #include "mq/MQWrapper.h"
-// #include "client/request.h"
-// #include "mq/GetFileList.h"
 
-// void init(int argc, char* argv[]) {
-//   gtk_init(&argc, &argv);
-//   WebKitUserContentManager* manager = webkit_user_content_manager_new();
-//   WebKitWebView* web_view =
-//     WEBKIT_WEB_VIEW(webkit_web_view_new_with_user_content_manager(manager));
-//   zipfiles::client::window::load_dist_uri(web_view);
-//   zipfiles::client::window::bind_js_functions(manager, web_view);
-//   GtkWidget* window = zipfiles::client::window::create_window(web_view);
-//   gtk_widget_show_all(window);
-//   gtk_main();
-// }
-
-// int main(int argc, char* argv[]) {
-//   // init(argc, argv);
-//   zipfiles::mq::MQWrapper mqWrapper;
-
-//   while (true) {
-//     int input;
-//     std::cout << "输入1以发送请求，输入其他值以退出: ";
-//     std::cin >> input;
-
-//     if (input != 1) {
-//       break;
-//     }
-
-//     zipfiles::client::request::Request<zipfiles::mq::GetFileList::GetFileList>
-//       request(zipfiles::mq::ApiType::GET_FILE_LIST, mqWrapper);
-
-//     zipfiles::mq::GetFileList::GetFileList content = request.handle();
-
-//     std::cout << content.to_string() << std::endl;
-//   }
-//   return 0;
-// }
-
-#include "mp/mp.h"
-#include "mp/GetFileList.h"
+#include "client/view.h"
+#include "client/client.h"
 #include <iostream>
+#include <string>
+#include <libgen.h>
 
-using namespace zipfiles::mp;
+namespace zipfiles::client::client {
 
-int main() {
-  MessageQueue mq;
-
-  // 创建请求对象
-  Request request;
-  request.setApi(ApiType::GET_FILE_LIST);
-
-  // 发送请求
-  if (mq.sendRequest(request)) {
-    std::cout << "Request sent successfully." << std::endl;
-  } else {
-    std::cerr << "Failed to send request." << std::endl;
+void load_dist_uri(WebKitWebView* web_view) {
+  char exe_path[1024];
+  ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
+  if (len == -1) {
+    std::cerr << "无法获取可执行文件路径" << std::endl;
+    return;
   }
-
-  // 接收响应
-  Response response;
-  if (mq.receiveResponse(response)) {
-    if (response.is(StatusCode::OK)) {
-      GetFileListResponse getFileListResponse;
-      getFileListResponse.fromJson(response.getPayload());
-      std::vector<std::string> filenames = getFileListResponse.getFilenames();
-      for (const auto& filename : filenames) {
-        std::cout << filename << std::endl;
-      }
-    } else {
-      std::cerr << "Error in response." << std::endl;
-    }
-  } else {
-    std::cerr << "Failed to receive response." << std::endl;
-  }
-
-  return 0;
+  exe_path[len] = '\0';
+  char* dir_path = dirname(exe_path);
+  std::string dist_path = std::string(dir_path) + "/dist/index.html";
+  webkit_web_view_load_uri(web_view, ("file://" + dist_path).c_str());
 }
+
+void register_and_connect_handler(
+  WebKitUserContentManager* manager,
+  WebKitWebView* web_view,
+  const char* handler_name,
+  GCallback callback
+) {
+  webkit_user_content_manager_register_script_message_handler(
+    manager, handler_name
+  );
+  g_signal_connect(
+    manager, ("script-message-received::" + std::string(handler_name)).c_str(),
+    callback, web_view
+  );
+}
+
+void bind_js_functions(
+  WebKitUserContentManager* manager,
+  WebKitWebView* web_view
+) {
+  struct Handler {
+    const char* name;
+    GCallback callback;
+  };
+
+  Handler handlers[] = {
+    {"sum", G_CALLBACK(zipfiles::client::view::sum)},
+    {"log", G_CALLBACK(zipfiles::client::view::log)},
+    {"getFileList", G_CALLBACK(zipfiles::client::view::getFileList)}};
+
+  for (const auto& handler : handlers) {
+    register_and_connect_handler(
+      manager, web_view, handler.name, handler.callback
+    );
+  }
+}
+
+GtkWidget* create_window(WebKitWebView* web_view) {
+  GtkWidget* window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_default_size(GTK_WINDOW(window), 800, 600);
+  gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(web_view));
+  g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+  return window;
+}
+
+}  // namespace zipfiles::client::client

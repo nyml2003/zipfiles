@@ -2,7 +2,6 @@ node_nodules
 /dist
 /src/**/*.scss.d.ts
 /src/**/*.less.d.ts
-/build
 
 *.sh
 node_modules

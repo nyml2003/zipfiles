@@ -1,36 +1,39 @@
 #include "mp/mp.h"
 #include "mp/GetFileList.h"
+#include "server/list.h"
 #include <iostream>
 
 using namespace zipfiles::mp;
 
 int main() {
   MessageQueue mq;
+  while (true) {
+    try {
+      Request request;
+      if (!mq.receiveRequest(request)) {
+        throw std::runtime_error("Failed to receive request.");
+        continue;
+      }
+      if (!request.is(ApiType::GET_FILE_LIST)) {
+        throw std::runtime_error("Unknown API type.");
+        continue;
+      }
+      GetFileListRequest getFileListRequest;
+        getFileListRequest.fromJson(request.getPayload());
 
-  // 接收请求
-  Request request;
-  if (mq.receiveRequest(request)) {
-    if (request.is(ApiType::GET_FILE_LIST)) {
-      std::vector<std::string> filenames = {
-        "file1.txt", "file2.txt", "file3.txt"};
-
+      std::vector<File> files = zipfiles::server::list(getFileListRequest.getPath());
       Response response;
       response.setStatus(StatusCode::OK);
       GetFileListResponse getFileListResponse;
-      getFileListResponse.setFilenames(filenames);
+      getFileListResponse.setFiles(files);
       response.setPayload(getFileListResponse);
-
-      // 发送响应
-      if (mq.sendResponse(response)) {
-        std::cout << "Response sent successfully." << std::endl;
-      } else {
-        std::cerr << "Failed to send response." << std::endl;
+      std::cout << "Sending response: " << response.toJson() << std::endl;
+      if (!mq.sendResponse(response)) {
+        throw std::runtime_error("Failed to send response.");
       }
-    } else {
-      std::cerr << "Unknown API type." << std::endl;
+    } catch (const std::exception& e) {
+      std::cerr << e.what() << std::endl;
     }
-  } else {
-    std::cerr << "Failed to receive request." << std::endl;
   }
 
   return 0;

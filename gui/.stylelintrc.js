@@ -1,22 +1,29 @@
 module.exports = {
   root: true,
-  plugins: ['stylelint-order'],
+  plugins: ['stylelint-order', 'stylelint-less'],
   extends: [
     'stylelint-config-standard', // 配置stylelint拓展插件
     'stylelint-config-prettier', // 配置stylelint和prettier兼容
-    'stylelint-config-recess-order' // 配置stylelint css属性书写顺序插件
+    'stylelint-config-recess-order', // 配置stylelint css属性书写顺序插件
+    'stylelint-config-recommended-less', // 配置stylelint less语法插件
+  ],
+  overrides: [
+    {
+      files: ['*.less'],
+      customSyntax: 'postcss-less',
+    },
   ],
   rules: {
     // 'selector-class-pattern': null, // 设置类名选择器不遵循 kebab-case
     'selector-pseudo-class-no-unknown': [
       true,
       {
-        ignorePseudoClasses: ['global']
-      }
+        ignorePseudoClasses: ['global'],
+      },
     ],
     'at-rule-no-unknown': null,
     // "indentation": 4,
-    "no-descending-specificity": null, // 禁止特异性较低的选择器在特异性较高的选择器之后重写
+    'no-descending-specificity': null, // 禁止特异性较低的选择器在特异性较高的选择器之后重写
     'no-empty-source': null,
     'unicode-bom': 'never',
     'no-descending-specificity': null,
@@ -27,8 +34,8 @@ module.exports = {
     'rule-empty-line-before': [
       'always',
       {
-        ignore: ['after-comment', 'first-nested']
-      }
+        ignore: ['after-comment', 'first-nested'],
+      },
     ],
     'unit-no-unknown': [true, { ignoreUnits: ['rpx'] }],
     // Specify the alphabetical order of the attributes in the declaration block
@@ -178,8 +185,8 @@ module.exports = {
       'page',
       'set-link-source',
       'unicode-bidi',
-      'speak'
-    ]
+      'speak',
+    ],
   },
-  ignoreFiles: ['**/*.js', '**/*.jsx', '**/*.tsx', '**/*.ts']
+  ignoreFiles: ['**/*.js', '**/*.jsx', '**/*.tsx', '**/*.ts'],
 }

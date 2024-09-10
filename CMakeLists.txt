@@ -106,20 +106,20 @@ install(DIRECTORY ${ZIPFILES_DIST_DIR} DESTINATION ${CMAKE_BINARY_DIR})
 
 find_package(GTest REQUIRED)
 # 单元测试
-# enable_testing()
+enable_testing()
 
-# foreach(TEST_FILE ${ZIPFILES_SERVER_UNIT_TEST_FILES})
-#     # 获取文件名（不带路径和扩展名）+ 服务端单元测试
-#     get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
+foreach(TEST_FILE ${ZIPFILES_SERVER_UNIT_TEST_FILES})
+    # 获取文件名（不带路径和扩展名）+ 服务端单元测试
+    get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
 
-#     # 创建测试目标
-#     add_executable(${TEST_NAME} ${TEST_FILE} ${ZIPFILES_SOURCE_FILES} )
+    # 创建测试目标
+    add_executable(${TEST_NAME} ${TEST_FILE} ${ZIPFILES_SOURCE_FILES} ${ZIPFILES_SERVER_SOURCE_DIR}/${TEST_NAME}.cpp)
 
-#     # 链接 Google Test 库
-#     target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main)
+    # 链接 Google Test 库
+    target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main)
 
-#     # 添加测试到 CTest
-#     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+    # 添加测试到 CTest
+    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
 
-#     set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 10)
-# endforeach()
+    set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 10)
+endforeach()

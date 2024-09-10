@@ -33,7 +33,12 @@ void Request::setApi(ApiType api) {
   this->api = api;
 }
 
-
+Json::Value Request::getPayload() {
+  if (!payload.has_value()) {
+    throw std::runtime_error("Payload is empty");
+  }
+  return payload.value();
+}
 
 Json::Value Response::toJson() {
   Json::Value json;
@@ -78,12 +83,12 @@ MessageQueue::MessageQueue() {
   attr.mq_curmsgs = 0;
   // 给this->name赋值"/zipfiles"
   this->name = new char[10];
-    strcpy(this->name, "/zipfiles");
+  strcpy(this->name, "/zipfiles");
 
-    mq = mq_open(this->name, O_CREAT | O_RDWR, 0666, &attr);
-    if (mq == (mqd_t)-1) {
-      perror("mq_open");
-      throw std::runtime_error("Failed to create message queue");
+  mq = mq_open(this->name, O_CREAT | O_RDWR, 0666, &attr);
+  if (mq == (mqd_t)-1) {
+    perror("mq_open");
+    throw std::runtime_error("Failed to create message queue");
   }
 }
 
@@ -92,7 +97,7 @@ MessageQueue::~MessageQueue() {
     perror("mq_close");
     std::cerr << "Failed to close message queue" << std::endl;
   }
- 
+  delete[] this->name;
 }
 
 bool MessageQueue::sendRequest(Request& req) {
@@ -125,6 +130,7 @@ bool MessageQueue::sendResponse(Response& res) {
   std::string jsonStr = res.toJson().toStyledString();
   if (mq_send(mq, jsonStr.c_str(), jsonStr.size() + 1, 0) == -1) {
     perror("mq_send");
+    printf("jsonStr: %ldKB\n", jsonStr.size() / 1024);
     return false;
   }
   return true;

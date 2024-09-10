@@ -1,27 +1,55 @@
 #include "mp/GetFileList.h"
 
 namespace zipfiles::mp {
+
+Json::Value GetFileListRequest::toJson() {
+  Json::Value json;
+  json["path"] = path;
+  return json;
+}
+
+void GetFileListRequest::fromJson(const Json::Value& json) {
+  path = json["path"].asString();
+}
+
+void GetFileListRequest::setPath(std::string path) {
+  this->path = path;
+}
+
+std::string GetFileListRequest::getPath() {
+  return path;
+}
+
 Json::Value GetFileListResponse::toJson() {
   Json::Value json;
-  for (const auto& filename : filenames) {
-    json["filenames"].append(filename);
+  json["files"] = Json::Value(Json::arrayValue);
+  for (const auto& file : files) {
+    Json::Value file_json;
+    file_json["name"] = file.name;
+    file_json["type"] = file.type == FileType::FILE ? "file" : "directory";
+    json["files"].append(file_json);
   }
   return json;
 }
 
 void GetFileListResponse::fromJson(const Json::Value& json) {
-  filenames.clear();
-  for (const auto& filename : json["filenames"]) {
-    filenames.push_back(filename.asString());
+    files.clear();
+    for (const auto& file_json : json["files"]) {
+        File file;
+        file.name = file_json["name"].asString();
+        file.type = file_json["type"].asString() == "file" ? FileType::FILE : FileType::DIRECTORY;
+        files.push_back(file);
+    }
+}
+
+void GetFileListResponse::setFiles(std::vector<File> files) {
+  for (const auto& file : files) {
+    this->files.push_back(file);
   }
 }
 
-void GetFileListResponse::setFilenames(std::vector<std::string> filenames) {
-  this->filenames = filenames;
+std::vector<mp::File> GetFileListResponse::getFiles() {
+    return files;
 }
 
-std::vector<std::string> GetFileListResponse::getFilenames() {
-  return filenames;
-}
-
-}  // namespace zipfiles::mq::GetFileList
+}  // namespace zipfiles::mp

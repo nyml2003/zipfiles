@@ -3,16 +3,34 @@
 #include "mp/mp.h"
 namespace zipfiles::mp {
 
+enum class FileType { FILE, DIRECTORY };
+
+struct File {
+  std::string name;
+  FileType type;
+};
+
+class GetFileListRequest : public Jsonable {
+ public:
+  Json::Value toJson() override;
+  void fromJson(const Json::Value& json) override;
+  void setPath(std::string path);
+  std::string getPath();
+
+ private:
+  std::string path;
+};
+
 class GetFileListResponse : public Jsonable {
  public:
   Json::Value toJson() override;
-    void fromJson(const Json::Value& json) override;
-    void setFilenames(std::vector<std::string> filenames);
-    std::vector<std::string> getFilenames();
+  void fromJson(const Json::Value& json) override;
+  void setFiles(std::vector<File> files);
+    std::vector<File> getFiles();
 
  private:
-  std::vector<std::string> filenames;
+    std::vector<File> files;
 };
 
-}  // namespace zipfiles::mq::GetFileList
+}  // namespace zipfiles::mp
 #endif  // !ZIPFILES_MQ_GET_FILE_LIST_H
