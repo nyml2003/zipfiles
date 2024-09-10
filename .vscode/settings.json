@@ -62,6 +62,7 @@
         "codecvt": "cpp",
         "ratio": "cpp",
         "filesystem": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "cstring": "cpp"
     },
 }

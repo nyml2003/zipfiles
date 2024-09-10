@@ -153,3 +153,16 @@ BACKEND
 git config --global --unset http.proxy
 git config --global --unset https.proxy
 libjson-glib-dev
+
+linux mq 用于通信的结构体怎么编写，应该不能用指针吧，服务端的指针指向的位置客户端也无法访问  #define MAX_TEXT 512
+
+struct message {
+    long msg_type;
+    char text[MAX_TEXT];
+}; 是可以的  那
+
+struct message {
+    long msg_type;
+    size_t count;
+    char text[count];
+};
