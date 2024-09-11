@@ -39,7 +39,7 @@ TODO 待完善
 # shell
 mkdir build
 cd build
-cmake ..
+cmake .
 make
 ```
 
@@ -49,16 +49,11 @@ make
   - [ ] 选定备份路径(base)
   - [ ] 选定备份文件/目录(add path)
   - [ ] 合并成commit(transaction)
-  - [ ] 哈希(hash)
   - [ ] 备份文件(backup files)
 - [ ] 数据还原模块(data-recover)
   - [ ] 选定还原路径(target)
   - [ ] 选定要还原的commit
   - [ ] 还原(recover)
-- [ ] 数据信息模块(data-info)
-  - [ ] 文件类型支持(type support)
-  - [ ] 元数据支持(metadata)
-  - [ ] 自定义筛选(custom filter)
 - [ ] 数据处理模块(data-processing)
   - [ ] 数据打包(pack)
   - [ ] 数据解包(unpack)
@@ -68,14 +63,19 @@ make
   - [ ] 数据解密(decrypt)
 - [ ] UI
   - [ ] shell
-  - [ ] webview? support in future
+  - [ ] webkitGTK
 - [ ] 设置模块(configure)
   - [ ] 定时备份(scheduled)
   - [ ] 实时备份(real-time)
   - [ ] 自定义备份(custom backup)
+    - [ ] 自定义配置文件
 - [ ] 工具模块(tools)
   - [ ] Linux API
   - [ ] 读取目录/文件
+    - [ ] 文件类型支持(type support)
+    - [ ] 元数据支持(metadata)
+    - [ ] 自定义筛选(custom filter)
+  - [ ] 哈希(hash)
 
 ### 备份流程
 
@@ -89,15 +89,60 @@ make
 1. 给定commit名和恢复路径，将对应的文件恢复，并重新生成目录结构
 2. 恢复后的目录与给定的目录结构合并，但是文件会被覆盖
 
+### 项目架构
+
+总体的模块划分如下
+```mermaid
+graph LR
+  gui <--> m["middleware (.so)"]
+  shell <--> m
+  m <--> backend
+```
+
+项目的目录结构
+```
+.
+├── build (cmake产物)
+├── demo
+├── include 
+│   ├── common.h
+│   ├── client (客户端)
+│   ├── mp (中间层)
+│   └── server (服务端)
+│       ├── backup (文件备份)
+│       ├── configure (配置)
+│       ├── crypto (加解密)
+│       ├── deflate (压缩解压)
+│       ├── pack (打包拆包)
+│       ├── recover (文件恢复)
+│       └── tools (工具类)
+├── lib
+├── src
+│   ├── client
+│   ├── mp
+│   └── server
+│       ├── backup
+│       ├── configure
+│       ├── crypto
+│       ├── deflate
+│       ├── pack
+│       ├── recover
+│       └── tools
+└── tests (测试用)
+    └── unittest
+```
+
+
 ### 压缩文件结构
 
-| 引导块 | 被压缩的文件1的字节流 | 被压缩的文件2的字节流 | …   | …   |
-| ------ | --------------------- | --------------------- | --- | --- |
+| 引导块 | 被压缩的文件头1 | 被压缩的文件1的字节流 | 被压缩的文件头2 | 被压缩的文件2的字节流   | …   |
+| ------ | --------------------- | --------------------- | --- | --- | --- |
 
-引导块包含了一个数组化的树状结构，对应着被压缩文件的原路径、大小、名称、类型等信息
-递归遍历引导块来恢复文件结构
+文件头包含了文件的元信息，例如大小等
 
-引导块的结点结构如下（暂时）
+同时会生成一个额外的显式记录目录结构的文件，其内容是一个数组化的多叉树
+
+目录块的结点结构如下（暂时）
 ```c
 struct node{
   char type;  // 0--目录 1--文件
