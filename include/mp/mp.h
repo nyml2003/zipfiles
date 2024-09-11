@@ -1,7 +1,9 @@
 #ifndef ZIPFILES_MQ_TYPE_H
 #define ZIPFILES_MQ_TYPE_H
 #include <json/json.h>
-#include <mqueue.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
 #include <optional>
 #include <cstddef>
 namespace zipfiles::mp {
@@ -70,23 +72,30 @@ class Response : public Jsonable {
   std::optional<Json::Value> payload;
 };
 
-class MessageQueue {
+class ServerSocket {
  public:
-  MessageQueue();
-  ~MessageQueue();
-  bool sendRequest(Request& req);
-  bool receiveRequest(Request& req);
-  bool sendResponse(Response& res);
-  bool receiveResponse(Response& res);
+  ServerSocket();
+  ~ServerSocket();
+  bool receive(Request& req);
+  bool send(Response& res);
+  void acceptConnection();
 
  private:
-  mqd_t mq;
-  char* name;
+  int server_fd, client_fd;
+  struct sockaddr_in address;
+  int addrlen;
 };
 
-struct Message {
-  long msgType;
-  char msgText[MAX_MESSAGE_SIZE];
+class ClientSocket {
+ public:
+  ClientSocket();
+  ~ClientSocket();
+  bool send(Request& req);
+  bool receive(Response& res);
+
+ private:
+  int sock;
+  struct sockaddr_in serv_addr;
 };
 
 }  // namespace zipfiles::mp

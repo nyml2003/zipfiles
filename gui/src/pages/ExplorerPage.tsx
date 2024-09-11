@@ -47,7 +47,7 @@ const ExplorerPage: React.FC = () => {
         });
   }
 
-    const handleGetFileList = (path: string = '/app', key: string = 'app') => {
+    const handleGetFileList = (path: string = '/', key: string = 'app') => {
         api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, { path: path }).then((res) => {
             console.log(res)
             setTreeData(res.files.map((item, index) => {

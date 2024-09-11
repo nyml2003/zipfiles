@@ -72,6 +72,23 @@ add_custom_target(
     COMMENT "Formatting source files"
 )
 
+# 计算代码行数
+add_custom_target(
+    LOC
+    COMMAND find 
+    ${ZIPFILES_HEADER_DIR} 
+    ${ZIPFILES_SOURCE_DIR} 
+    ${ZIPFILES_CLIENT_HEADER_DIR} 
+    ${ZIPFILES_CLIENT_SOURCE_DIR} 
+    ${ZIPFILES_SERVER_HEADER_DIR} 
+    ${ZIPFILES_SERVER_SOURCE_DIR} 
+    ${ZIPFILES_SERVER_UNIT_TEST_DIR} 
+    ${ZIPFILES_MP_HEADER_DIR} 
+    ${ZIPFILES_MP_SOURCE_DIR} 
+    -name "*.h" -o -name "*.cpp" | xargs wc -l
+    COMMENT "Counting lines of code"
+)
+
 # 服务端打包
 add_executable(
     zipfiles_server

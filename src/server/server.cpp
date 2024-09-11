@@ -5,35 +5,37 @@
 
 using namespace zipfiles::mp;
 
-int main() {
-  MessageQueue mq;
-  while (true) {
-    try {
-      Request request;
-      if (!mq.receiveRequest(request)) {
-        throw std::runtime_error("Failed to receive request.");
-        continue;
-      }
-      if (!request.is(ApiType::GET_FILE_LIST)) {
-        throw std::runtime_error("Unknown API type.");
-        continue;
-      }
-      GetFileListRequest getFileListRequest;
-        getFileListRequest.fromJson(request.getPayload());
+Response getFileList(Request& request, ServerSocket& socket) {
+  GetFileListRequest getFileListRequest;
+  getFileListRequest.fromJson(request.getPayload());
 
-      std::vector<File> files = zipfiles::server::list(getFileListRequest.getPath());
-      Response response;
-      response.setStatus(StatusCode::OK);
-      GetFileListResponse getFileListResponse;
-      getFileListResponse.setFiles(files);
-      response.setPayload(getFileListResponse);
-      std::cout << "Sending response: " << response.toJson() << std::endl;
-      if (!mq.sendResponse(response)) {
-        throw std::runtime_error("Failed to send response.");
+  std::vector<File> files =
+    zipfiles::server::list(getFileListRequest.getPath());
+  Response response;
+  response.setStatus(StatusCode::OK);
+  GetFileListResponse getFileListResponse;
+  getFileListResponse.setFiles(files);
+  response.setPayload(getFileListResponse);
+  return response;
+}
+
+int main() {
+  ServerSocket server;
+
+  while (true) {
+    server.acceptConnection();
+    Request req;
+    try {
+      while (server.receive(req)) {
+        if (req.is(ApiType::GET_FILE_LIST)) {
+          Response res = getFileList(req, server);
+          server.send(res);
+        }
       }
     } catch (const std::exception& e) {
       std::cerr << e.what() << std::endl;
     }
+    std::cout << "Waiting for new client connection..." << std::endl;
   }
 
   return 0;

@@ -3,17 +3,17 @@
 
 namespace zipfiles::client::api {
 using namespace zipfiles::mp;
-MessageQueue mq;
+ClientSocket clientSocket;
 GetFileListResponse getFileList(GetFileListRequest getFileListRequest) {
   Request request;
   request.setApi(ApiType::GET_FILE_LIST);
 getFileListRequest.setPath(getFileListRequest.getPath());
 request.setPayload(getFileListRequest);
-  if (!mq.sendRequest(request)) {
-    throw std::runtime_error("Failed to send request.");
-  }
+if (!clientSocket.send(request)) {
+  throw std::runtime_error("Failed to send request.");
+}
   Response response;
-  if (!mq.receiveResponse(response)) {
+  if (!clientSocket.receive(response)) {
     throw std::runtime_error("Failed to receive response.");
   }
   if (!response.is(StatusCode::OK)) {

@@ -3,7 +3,7 @@
 #include "mp/GetFileList.h"
 namespace zipfiles::client::api {
 using namespace zipfiles::mp;
-extern MessageQueue mq;
+extern ClientSocket clientSocket;
 GetFileListResponse getFileList(GetFileListRequest getFileListRequest);
 
 }  // namespace zipfiles::client::api
