@@ -41,9 +41,9 @@ const ExplorerPage: React.FC = () => {
                 resolve();
                 return;
             }
-            const path = key.split('-').join('/')
-            console.log(path)
+            const path = key.split('-').slice(1).join('/')
             handleGetFileList(path, key)
+            resolve();
         });
   }
 
