@@ -5,6 +5,8 @@ project(zipfiles)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS_MINSIZEREL "-O3 -DNDEBUG")
+# 设置编译器为clang
+set(CMAKE_CXX_COMPILER "clang++")
 
 
 # 全局

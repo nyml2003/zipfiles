@@ -24,7 +24,8 @@ RUN apt update && apt install -y \
     locales \
     valgrind \
     libjson-glib-dev \
-    libjsoncpp-dev
+    libjsoncpp-dev \
+    clang
 
 
 RUN  cd /usr/src/gtest \
