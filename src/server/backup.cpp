@@ -1,7 +1,7 @@
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>
-#include "server/backup.h"
+#include "server/backup/backup.h"
 
 namespace zipfiles::server {
 
@@ -113,4 +113,4 @@ void restore(const fs::path& source, const fs::path& destination) {
   }
 }
 
-}  // namespace zipfiles::server
+}  // namespace zipfiles::server::backup

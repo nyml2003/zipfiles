@@ -33,13 +33,14 @@ Json::Value GetFileListResponse::toJson() {
 }
 
 void GetFileListResponse::fromJson(const Json::Value& json) {
-    files.clear();
-    for (const auto& file_json : json["files"]) {
-        File file;
-        file.name = file_json["name"].asString();
-        file.type = file_json["type"].asString() == "file" ? FileType::FILE : FileType::DIRECTORY;
-        files.push_back(file);
-    }
+  files.clear();
+  for (const auto& file_json : json["files"]) {
+    File file;
+    file.name = file_json["name"].asString();
+    file.type = file_json["type"].asString() == "file" ? FileType::FILE
+                                                       : FileType::DIRECTORY;
+    files.push_back(file);
+  }
 }
 
 void GetFileListResponse::setFiles(std::vector<File> files) {
@@ -48,8 +49,8 @@ void GetFileListResponse::setFiles(std::vector<File> files) {
   }
 }
 
-std::vector<mp::File> GetFileListResponse::getFiles() {
-    return files;
+std::vector<File> GetFileListResponse::getFiles() {
+  return files;
 }
 
 }  // namespace zipfiles::mp

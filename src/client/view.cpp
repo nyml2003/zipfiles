@@ -193,7 +193,7 @@ void getFileList(
           json_builder_add_string_value(builder, file.name.c_str());
           json_builder_set_member_name(builder, "type");
           json_builder_add_string_value(
-            builder, file.type == mp::FileType::FILE ? "file" : "directory"
+            builder, file.type == FileType::FILE ? "file" : "directory"
           );
           json_builder_end_object(builder);
         }

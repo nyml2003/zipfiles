@@ -39,7 +39,6 @@ class Request : public Jsonable {
     }
     this->payload = payload.toJson();
   }
-  
 
  private:
   std::optional<ApiType> api;

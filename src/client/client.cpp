@@ -45,9 +45,9 @@ void bind_js_functions(
   };
 
   Handler handlers[] = {
-    {"sum", G_CALLBACK(zipfiles::client::view::sum)},
-    {"log", G_CALLBACK(zipfiles::client::view::log)},
-    {"getFileList", G_CALLBACK(zipfiles::client::view::getFileList)}};
+    {"sum", G_CALLBACK(view::sum)},
+    {"log", G_CALLBACK(view::log)},
+    {"getFileList", G_CALLBACK(view::getFileList)}};
 
   for (const auto& handler : handlers) {
     register_and_connect_handler(

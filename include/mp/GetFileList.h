@@ -1,14 +1,8 @@
 #ifndef ZIPFILES_MQ_GET_FILE_LIST_H
 #define ZIPFILES_MQ_GET_FILE_LIST_H
+#include "common.h"
 #include "mp/mp.h"
 namespace zipfiles::mp {
-
-enum class FileType { FILE, DIRECTORY };
-
-struct File {
-  std::string name;
-  FileType type;
-};
 
 class GetFileListRequest : public Jsonable {
  public:
@@ -26,10 +20,10 @@ class GetFileListResponse : public Jsonable {
   Json::Value toJson() override;
   void fromJson(const Json::Value& json) override;
   void setFiles(std::vector<File> files);
-    std::vector<File> getFiles();
+  std::vector<File> getFiles();
 
  private:
-    std::vector<File> files;
+  std::vector<File> files;
 };
 
 }  // namespace zipfiles::mp

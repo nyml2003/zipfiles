@@ -1,6 +1,7 @@
 #include "mp/mp.h"
+#include "common.h"
 #include "mp/GetFileList.h"
-#include "server/list.h"
+#include "server/tools/fsapi.h"
 #include <iostream>
 
 using namespace zipfiles::mp;
@@ -9,7 +10,7 @@ Response getFileList(Request& request, ServerSocket& socket) {
   GetFileListRequest getFileListRequest;
   getFileListRequest.fromJson(request.getPayload());
 
-  std::vector<File> files =
+  std::vector<zipfiles::File> files =
     zipfiles::server::list(getFileListRequest.getPath());
   Response response;
   response.setStatus(StatusCode::OK);

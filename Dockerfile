@@ -5,13 +5,12 @@ RUN mv /etc/apt/sources.list /etc/apt/sources.list.bak
 COPY sources.list /etc/apt/
 
 RUN apt update && apt install -y \
-    gcc \
     cmake \
-    g++ \
     git \
     gdb \
     vim \
     libgtest-dev \
+    clang \
     clang-format \
     tree \
     sudo \
@@ -24,8 +23,8 @@ RUN apt update && apt install -y \
     locales \
     valgrind \
     libjson-glib-dev \
-    libjsoncpp-dev \
-    clang
+    libjsoncpp-dev 
+    
 
 
 RUN  cd /usr/src/gtest \
