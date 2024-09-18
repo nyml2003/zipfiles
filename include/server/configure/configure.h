@@ -2,7 +2,7 @@
 #define ZIPFILES_CONFIGURE_H
 #include <filesystem>
 namespace fs = std::filesystem;
-namespace zipfiles::configure {
+namespace zipfiles::server {
 class ConfigureHandler {
    public:
     static ConfigureHandler& get_instance() {
@@ -24,5 +24,5 @@ class ConfigureHandler {
     ConfigureHandler();
     ~ConfigureHandler();
 };
-}  // namespace zipfiles::configure
+}  // namespace zipfiles::server
 #endif  // !ZIPFILES_CONFIGURE_H

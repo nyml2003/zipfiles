@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+html,
+:host {
+  text-size-adjust: 100% !important; /* For modern browsers */
+  -webkit-text-size-adjust: 100%; /* For older WebKit browsers */
+}
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  @apply bg-gray-100 font-chinese;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('assets/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+
+/* 字体：JetBrains Mono */
+.font-jetbrains-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.separator-container {
+  .separator-item {
+    &:not(:first-child)::before {
+      margin: 0 10px;
+      color: #e5e5e5;
+      content: '|';
+    }
+
+    color: #000;
+  }
+}
+
+.list-circle {
+  list-style-type: circle;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* 隐藏滚动条 */
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* 适用于 IE 和 Edge */
+  scrollbar-width: none;  /* 适用于 Firefox */
+}

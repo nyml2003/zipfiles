@@ -2,7 +2,7 @@
 #define ZIPFILES_PACK_H
 #include <filesystem>
 namespace fs = std::filesystem;
-namespace zipfiles::pack {
+namespace zipfiles::server {
 int pack(char* src);
-}  // namespace zipfiles::pack
+}  // namespace zipfiles::server::pack
 #endif  // !ZIPFILES_PACK_H

@@ -2,7 +2,7 @@
 #define ZIPFILES_UNPACK_H
 #include <filesystem>
 namespace fs = std::filesystem;
-namespace zipfiles::unpack {
+namespace zipfiles::server {
 int unpack(char* src);
-}  // namespace zipfiles::unpack
+}  // namespace zipfiles::server
 #endif  // !ZIPFILES_UNPACK_H

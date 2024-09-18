@@ -4,6 +4,7 @@
     "clang-format.executable": "/usr/bin/clang-format",
     "files.associations": {
         "*.cu": "cpp",
+        "*.css": "css",
         "any": "cpp",
         "array": "cpp",
         "atomic": "cpp",
@@ -60,6 +61,13 @@
         "chrono": "cpp",
         "codecvt": "cpp",
         "ratio": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "cinttypes": "cpp",
+        "cstring": "cpp",
+        "condition_variable": "cpp",
+        "mutex": "cpp",
+        "semaphore": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp"
     },
 }
