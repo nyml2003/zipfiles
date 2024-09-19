@@ -7,60 +7,41 @@
 
 namespace zipfiles::client::client {
 
-void load_dist_uri(WebKitWebView* webView) {
-  std::array<char, 1024> exe_path = {0};
+void loadDistUri(WebKitWebView* webView) {
+  std::array<char, EXE_PATH_SIZE> exe_path = {0};
   ssize_t len =
-    readlink("/proc/self/exe", exe_path.data(), sizeof(exe_path) - 1);
+    readlink("/proc/self/exe", exe_path.data(), exe_path.size() - 1);
   if (len == -1) {
-    std::cerr << "无法获取可执行文件路径" << std::endl;
+    std::cerr << "无法获取可执行文件路径: " << strerror(errno) << std::endl;
     return;
   }
-  exe_path[len] = '\0';
+  exe_path.at(len) = '\0';
   char* dir_path = dirname(exe_path.data());
-  std::string dist_path = std::string(dir_path) + "/dist/index.html";
+  std::string dist_path = std::string(dir_path) + DIST_FILE;
   webkit_web_view_load_uri(webView, ("file://" + dist_path).c_str());
 }
 
-void register_and_connect_handler(
-  WebKitUserContentManager* manager,
-  WebKitWebView* web_view,
-  const char* handler_name,
-  GCallback callback
-) {
-  webkit_user_content_manager_register_script_message_handler(
-    manager, handler_name
-  );
-  g_signal_connect(
-    manager, ("script-message-received::" + std::string(handler_name)).c_str(),
-    callback, web_view
-  );
-}
-
-void bind_js_functions(
-  WebKitUserContentManager* manager,
-  WebKitWebView* web_view
-) {
-  struct Handler {
-    const char* name;
-    GCallback callback;
-  };
-
+void bindJS(WebKitUserContentManager* manager, WebKitWebView* webView) {
   std::array<Handler, 3> handlers = {
     {{"sum", G_CALLBACK(view::sum)},
      {"log", G_CALLBACK(view::log)},
      {"getFileList", G_CALLBACK(view::getFileList)}}};
 
   for (const auto& handler : handlers) {
-    register_and_connect_handler(
-      manager, web_view, handler.name, handler.callback
+    webkit_user_content_manager_register_script_message_handler(
+      manager, handler.name.c_str()
+    );
+    g_signal_connect(
+      manager, ("script-message-received::" + handler.name).c_str(),
+      handler.callback, webView
     );
   }
 }
 
-GtkWidget* create_window(WebKitWebView* web_view) {
+GtkWidget* createWindow(WebKitWebView* webView) {
   GtkWidget* window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_default_size(GTK_WINDOW(window), 800, 600);
-  gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(web_view));
+  gtk_window_set_default_size(GTK_WINDOW(window), WINDOW_WIDTH, WINDOW_HEIGHT);
+  gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(webView));
   g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
   return window;
 }

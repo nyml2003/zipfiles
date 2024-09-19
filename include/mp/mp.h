@@ -8,7 +8,7 @@
 #include <cstddef>
 namespace zipfiles::mp {
 constexpr size_t MAX_MESSAGE_SIZE = (1 << 16);
-
+constexpr size_t PORT = 8080;
 enum class ApiType { GET_FILE_LIST = 0, GET_FILE };
 
 enum class StatusCode { OK = 0, ERROR };
@@ -120,6 +120,7 @@ class ServerSocket {
   ServerSocket& operator=(const ServerSocket& other) = delete;
   ServerSocket(ServerSocket&& other) noexcept = delete;
   ServerSocket& operator=(ServerSocket&& other) noexcept = delete;
+  [[nodiscard]] int getSocketFd() const;
 
  private:
   ServerSocket();

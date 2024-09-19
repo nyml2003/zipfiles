@@ -86,7 +86,7 @@ ServerSocket::ServerSocket()
   std::memset(&address, 0, sizeof(address));
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = INADDR_ANY;
-  address.sin_port = htons(5371);
+  address.sin_port = htons(PORT);
   addrlen = sizeof(address);
 
   if (bind(server_fd, reinterpret_cast<struct sockaddr*>(&address), sizeof(address)) < 0) {
@@ -102,6 +102,10 @@ ServerSocket::ServerSocket()
 
 ServerSocket::~ServerSocket() {
   close(server_fd);
+}
+
+int ServerSocket::getSocketFd() const {
+  return server_fd;
 }
 
 void ServerSocket::acceptConnection() {
@@ -131,8 +135,8 @@ bool ServerSocket::receive(const RequestPtr& req) const {
   Json::CharReaderBuilder reader;
   Json::Value jsonData;
   std::string errs;
-  std::istringstream s(buffer.data());
-  if (Json::parseFromStream(reader, s, &jsonData, &errs)) {
+  std::istringstream stream(buffer.data());
+  if (Json::parseFromStream(reader, stream, &jsonData, &errs)) {
     req->fromJson(jsonData);
     return true;
   }
@@ -155,7 +159,7 @@ ClientSocket::ClientSocket()
   }
 
   serv_addr.sin_family = AF_INET;
-  serv_addr.sin_port = htons(5371);
+  serv_addr.sin_port = htons(PORT);
 
   if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
     perror("Invalid address/ Address not supported");
@@ -188,8 +192,8 @@ bool ClientSocket::receive(const ResponsePtr& res) const {
     Json::CharReaderBuilder reader;
     Json::Value jsonData;
     std::string errs;
-    std::istringstream s(buffer.data());
-    if (Json::parseFromStream(reader, s, &jsonData, &errs)) {
+    std::istringstream stream(buffer.data());
+    if (Json::parseFromStream(reader, stream, &jsonData, &errs)) {
       res->fromJson(jsonData);
       return true;
     }

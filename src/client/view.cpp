@@ -71,7 +71,7 @@ void handle_success(
 
 void handle_error(
   WebKitWebView* webView,
-  const std::exception& e,
+  const std::exception& err,
   JSCValue* value
 ) {
   JsonBuilder* builder = json_builder_new();
@@ -79,7 +79,7 @@ void handle_error(
   json_builder_set_member_name(builder, "type");
   json_builder_add_string_value(builder, "reject");
   json_builder_set_member_name(builder, "message");
-  json_builder_add_string_value(builder, e.what());
+  json_builder_add_string_value(builder, err.what());
   json_builder_set_member_name(builder, "timestamp");
   JSCValue* timestamp = jsc_value_object_get_property(value, "timestamp");
   const char* timestamp_str = jsc_value_to_string(timestamp);

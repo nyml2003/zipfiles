@@ -25,6 +25,11 @@ RUN apt-get update && apt-get install -y \
     libjson-glib-dev \
     libjsoncpp-dev 
 
+RUN apt-get install -y \
+numactl \
+lsof
+
+
     
 COPY tools/perf /usr/bin/perf
 
