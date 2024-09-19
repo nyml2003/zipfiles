@@ -1,11 +1,15 @@
-# 项目名称
+### 项目简介
 
-## 项目简介
+**zipfiles**
 
-## 文件说明
+一款为了毕业而开发的课设软件，主要功能是为用户保管和备份文件。
 
-- `demo`: 使用动态链接库的示例代码。
-  - `demo.cpp`:主函数入口。
+基于C++开发，适用于Linux平台。
+
+### 文件说明
+
+- `bin`:包含编译生成的二进制文件。
+  - `libzipfiles.so`:生成的共享库文件。
 - `include`:头文件目录。
   - `common.h`:通用头文件。
   - `*.h`:核心功能头文件。
@@ -17,162 +21,135 @@
   - `*.cpp`:源代码文件。
   - `utils.cpp`:工具函数实现。
 - `tests`: 测试文件目录
-  - `unittest/`:单元测试的测试代码目录。
-  - `mock/`:单元测试测试时使用的目录。
-  - `demo/`:示例代码运行时建议使用的目录。
+  - `unittest/`:单元测试目录。
+- `demo`: 使用动态链接库的示例代码。
+  - `main.cpp`:主函数入口。
 
-## 命名空间
+### 命名空间
 
 - `zipfiles`:主要命名空间。
 
-## 使用方法
+### 使用方法
 
 TODO 待完善
 
+
 ### 构建项目
 
+
 ```sh
+# shell
 mkdir build
 cd build
-cmake ..
+cmake .
 make
 ```
 
-## 概要设计
+### 项目模块
 
-### 架构
+- [ ] 数据备份模块(data-backup)
+  - [ ] 选定备份路径(base)
+  - [ ] 选定备份文件/目录(add path)
+  - [ ] 合并成commit(transaction)
+  - [ ] 备份文件(backup files)
+- [ ] 数据还原模块(data-recover)
+  - [ ] 选定还原路径(target)
+  - [ ] 选定要还原的commit
+  - [ ] 还原(recover)
+- [ ] 数据处理模块(data-processing)
+  - [ ] 数据打包(pack)
+  - [ ] 数据解包(unpack)
+  - [ ] 数据压缩(compress)
+  - [ ] 数据解压(decompress)
+  - [ ] 数据加密(encrypt)
+  - [ ] 数据解密(decrypt)
+- [ ] UI
+  - [ ] shell
+  - [ ] webkitGTK
+- [ ] 设置模块(configure)
+  - [ ] 定时备份(scheduled)
+  - [ ] 实时备份(real-time)
+  - [ ] 自定义备份(custom backup)
+    - [ ] 自定义配置文件
+- [ ] 工具模块(tools)
+  - [ ] Linux API
+  - [ ] 读取目录/文件
+    - [ ] 文件类型支持(type support)
+    - [ ] 元数据支持(metadata)
+    - [ ] 自定义筛选(custom filter)
+  - [ ] 哈希(hash)
 
+### 备份流程
+
+1. 添加要备份的文件/目录，形成一个commit
+2. 为commit添加author，message，timestamp等信息（message成为commit的索引）
+3. 将所有目标文件压缩，加密，拼接，形成一个文件。同时将这些文件的目录信息，元信息打包成一个结构体，加在文件头
+4. 将commit后形成的文件哈希并存储在一个隐藏文件夹中
+
+### 恢复流程
+
+1. 给定commit名和恢复路径，将对应的文件恢复，并重新生成目录结构
+2. 恢复后的目录与给定的目录结构合并，但是文件会被覆盖
+
+### 项目架构
+
+总体的模块划分如下
 ```mermaid
 graph LR
-subgraph FRONTEND
-    UI[图形界面]
-    Terminal[命令行]
-end
-lib["libzipfiles.so"] --返回结果---> FRONTEND
-FRONTEND --通过ffi调用传递参数---> lib["libzipfiles.so"]
-
-stardardInterfaceStructure["标准接口结构
-    {
-        message: string,
-        code: number(enum),
-        data: any
-    }
-"]
+  gui <--> m["middleware (.so)"]
+  shell <--> m
+  m <--> backend
 ```
 
-> message & code 表示成功或者抛出的异常信息，data 表示返回的数据
-> 用于将可能抛出异常的 cpp 函数封装成一个 C 风格的接口
-> ps: 这是否是将一个 sum type 转换为了一个 product type
-
-```mermaid
-graph
-subgraph BACKEND
-
-end
-
-BACKEND --根据绝对路径查找文件列表，根据条件筛选---> fileSystem
-BACKEND --写入commit文件---> softwareDataPath
-BACKEND --根据commit_id读取指定commit文件---> softwareDataPath
-
-subgraph fileSystem[文件系统]
-
-end
-
-subgraph Software[软件]
-        softwartInstallPath[软件数据路径: ~/.zip]
-        subgraph softwareDataPath[软件备份路径: ~/.zip/backup]
-            commit1["二进制文件 commit 5f..."]
-            commit2["二进制文件 commit 8d..."]
-            commit3["二进制文件 commit ac..."]
-            commit4["二进制文件 commit 9e..."]
-        end
-        softwareLogPath["软件日志(file): ~/.zip/zflog.log"]
-        softwareConfigPath["软件配置(file): ~/.zip/zfconfig.json"]
-    end
-
-FRONTEND --write ---> softwareLogPath
-FRONTEND --write ---> softwareConfigPath
-
-BACKEND --compile---> lib["libzipfiles.so"]
+项目的目录结构
+```
+.
+├── build (cmake产物)
+├── demo
+├── include 
+│   ├── common.h
+│   ├── client (客户端)
+│   ├── mp (中间层)
+│   └── server (服务端)
+│       ├── backup (文件备份)
+│       ├── configure (配置)
+│       ├── crypto (加解密)
+│       ├── deflate (压缩解压)
+│       ├── pack (打包拆包)
+│       ├── recover (文件恢复)
+│       └── tools (工具类)
+├── lib
+├── src
+│   ├── client
+│   ├── mp
+│   └── server
+│       ├── backup
+│       ├── configure
+│       ├── crypto
+│       ├── deflate
+│       ├── pack
+│       ├── recover
+│       └── tools
+└── tests (测试用)
+    └── unittest
 ```
 
-```mermaid
-graph LR
-subgraph BACKEND
-    subgraph algorithm[算法]
-        zip[压缩]
-        unzip[解压]
-        pack[打包]
-        unpack[解包]
-        encrypt[加密]
-        decrypt[解密]
-    end
-    subgraph main[主模块]
-    subgraph interface[接口]
-        list["list({
-            abs_path: fs::path
-            type: number(enum)
-            name: string
-        }) -> vector<fs::path>"]
-        commit["commit({
-            message: string,
-            files: vector< fs::path >
-        }) -> void"]
-        restore["restore({
-            commit_id: number,
-            files: vector< fs::path >
-        }) -> void"]
-    end
-    subgraph interceptorList[拦截器链]
-        zipInterceptor[压缩拦截器]
-        packInterceptor[打包拦截器]
-        encryptInterceptor[加密拦截器]
-    end
-    end
 
-    list --请求文件列表---> fileSystem[文件系统]
-    fileSystem --返回指定绝对路径下的文件并根据条件筛选---> list
-    commit --提交文件信息---> packInterceptor
-    packInterceptor --已打包文件---> zipInterceptor
-    zipInterceptor --已压缩文件---> encryptInterceptor
-    encryptInterceptor --已加密文件，写入指定路径---> fileSystem
-    restore --获取指定commit_id的文件---> fileSystem
-    fileSystem --返回指定commit_id的文件---> encryptInterceptor
-    encryptInterceptor --已解密文件---> zipInterceptor
-    zipInterceptor --已解压文件---> packInterceptor
-    packInterceptor --已解包文件，写入指定路径---> fileSystem
-end
+### 压缩文件结构
 
-BACKEND
-```
+| 引导块 | 被压缩的文件头1 | 被压缩的文件1的字节流 | 被压缩的文件头2 | 被压缩的文件2的字节流   | …   |
+| ------ | --------------------- | --------------------- | --- | --- | --- |
 
-## 打包解包设计
+文件头包含了文件的元信息，例如大小等
 
-打包解包（10 分）：将所有备份文件拼接为一个大文件保存
+同时会生成一个额外的显式记录目录结构的文件，其内容是一个数组化的多叉树
 
-git config --global --unset http.proxy
-git config --global --unset https.proxy
-libjson-glib-dev
-
-linux mq 用于通信的结构体怎么编写，应该不能用指针吧，服务端的指针指向的位置客户端也无法访问  #define MAX_TEXT 512
-
-struct message {
-    long msg_type;
-    char text[MAX_TEXT];
-}; 是可以的  那
-
-struct message {
-    long msg_type;
-    size_t count;
-    char text[count];
+目录块的结点结构如下（暂时）
+```c
+struct node{
+  char type;  // 0--目录 1--文件
+  long long size; // 文件大小
+  int childCount; // 子结点个数，递归遍历用
+  struct meta metaInfo; // 元信息
 };
-
-
-sudo apt-get install lsb-release wget software-properties-common gnupg
-wget https://apt.llvm.org/llvm.sh
-chmod +x llvm.sh
-sudo ./llvm.sh 18
-sudo apt-get update --fix-missing
-sudo apt-get install clang-18
-sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100
-sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 100
+```
