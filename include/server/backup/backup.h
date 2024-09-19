@@ -2,12 +2,16 @@
 #define ZIPFILES_BACKUP_H
 #include <filesystem>
 namespace fs = std::filesystem;
-namespace zipfiles::backup {
-void backup(const fs::path& source, const fs::path& destination);
-void backup_file(const fs::path& source, const fs::path& destination);
-void backup_directory(const fs::path& source, const fs::path& destination);
-void restore(const fs::path& source, const fs::path& destination);
-void restore_file(const fs::path& source, const fs::path& destination);
-void restore_directory(const fs::path& source, const fs::path& destination);
-}  // namespace zipfiles::backup
+namespace zipfiles::server {
+struct BackupParams {
+  fs::path source;
+  fs::path destination;
+};
+void backup(const BackupParams& params);
+void backup_file(const BackupParams& params);
+void backup_directory(const BackupParams& params);
+void restore(const BackupParams& params);
+void restore_file(const BackupParams& params);
+void restore_directory(const BackupParams& params);
+}  // namespace zipfiles::server
 #endif  // !ZIPFILES_BACKUP_H

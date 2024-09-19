@@ -77,19 +77,19 @@ void Response::setStatus(StatusCode status) {
   this->status = status;
 }
 
-ServerSocket::ServerSocket() {
-  server_fd = socket(AF_INET, SOCK_STREAM, 0);
+ServerSocket::ServerSocket()
+  : server_fd(socket(AF_INET, SOCK_STREAM, 0)), client_fd(0), address{} {
   if (server_fd == 0) {
     perror("socket failed");
     exit(EXIT_FAILURE);
   }
-
+  std::memset(&address, 0, sizeof(address));
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = INADDR_ANY;
-  address.sin_port = htons(8080);
+  address.sin_port = htons(PORT);
   addrlen = sizeof(address);
 
-  if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {
+  if (bind(server_fd, reinterpret_cast<struct sockaddr*>(&address), sizeof(address)) < 0) {
     perror("bind failed");
     exit(EXIT_FAILURE);
   }
@@ -104,62 +104,69 @@ ServerSocket::~ServerSocket() {
   close(server_fd);
 }
 
+auto ServerSocket::getSocketFd() const -> int {
+  return server_fd;
+}
+
 void ServerSocket::acceptConnection() {
-  client_fd =
-    accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
+  client_fd = accept(
+    server_fd, reinterpret_cast<struct sockaddr*>(&address),
+    reinterpret_cast<socklen_t*>(&addrlen)
+  );
   if (client_fd < 0) {
     perror("accept");
     exit(EXIT_FAILURE);
   }
 }
 
-bool ServerSocket::receive(Request& req) {
-  char buffer[MAX_MESSAGE_SIZE] = {0};
-  int valread = read(client_fd, buffer, MAX_MESSAGE_SIZE);
+bool ServerSocket::receive(const RequestPtr& req) const {
+  std::array<char, MAX_MESSAGE_SIZE> buffer = {0};
+  ssize_t valread = read(client_fd, buffer.data(), buffer.size());
   if (valread == 0) {
     std::cout << "Client disconnected." << std::endl;
     close(client_fd);
     return false;
-  } else if (valread < 0) {
+  }
+  if (valread < 0) {
     perror("Failed to receive request");
     return false;
   }
-  std::cout << "Received data: " << buffer << std::endl;
+  std::cout << "Received data: " << buffer.data() << std::endl;
   Json::CharReaderBuilder reader;
   Json::Value jsonData;
   std::string errs;
-  std::istringstream s(buffer);
-  if (Json::parseFromStream(reader, s, &jsonData, &errs)) {
-    req.fromJson(jsonData);
+  std::istringstream stream(buffer.data());
+  if (Json::parseFromStream(reader, stream, &jsonData, &errs)) {
+    req->fromJson(jsonData);
     return true;
   }
   return false;
 }
 
-bool ServerSocket::send(Response& res) {
+bool ServerSocket::send(const ResponsePtr& res) const {
   Json::StreamWriterBuilder writer;
-  std::string data = Json::writeString(writer, res.toJson());
+  std::string data = Json::writeString(writer, res->toJson());
   std::cout << "Sending response: " << data << std::endl;
   ::send(client_fd, data.c_str(), data.size(), 0);
   return true;
 }
 
-ClientSocket::ClientSocket() {
-  sock = socket(AF_INET, SOCK_STREAM, 0);
+ClientSocket::ClientSocket()
+  : sock(socket(AF_INET, SOCK_STREAM, 0)), serv_addr{} {
   if (sock < 0) {
     perror("Socket creation error");
     exit(EXIT_FAILURE);
   }
 
   serv_addr.sin_family = AF_INET;
-  serv_addr.sin_port = htons(8080);
+  serv_addr.sin_port = htons(PORT);
 
   if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
     perror("Invalid address/ Address not supported");
     exit(EXIT_FAILURE);
   }
 
-  if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+  if (connect(sock, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
     perror("Connection Failed");
     exit(EXIT_FAILURE);
   }
@@ -169,25 +176,25 @@ ClientSocket::~ClientSocket() {
   close(sock);
 }
 
-bool ClientSocket::send(Request& req) {
+bool ClientSocket::send(const RequestPtr& req) const {
   Json::StreamWriterBuilder writer;
-  std::string data = Json::writeString(writer, req.toJson());
+  std::string data = Json::writeString(writer, req->toJson());
   std::cout << "Sending request: " << data << std::endl;
   ::send(sock, data.c_str(), data.size(), 0);
   return true;
 }
 
-bool ClientSocket::receive(Response& res) {
-  char buffer[MAX_MESSAGE_SIZE] = {0};
-  int valread = read(sock, buffer, MAX_MESSAGE_SIZE);
-  std::cout << "Received data: " << buffer << std::endl;
+bool ClientSocket::receive(const ResponsePtr& res) const {
+  std::array<char, MAX_MESSAGE_SIZE> buffer = {0};
+  ssize_t valread = read(sock, buffer.data(), MAX_MESSAGE_SIZE);
+  std::cout << "Received data: " << buffer.data() << std::endl;
   if (valread > 0) {
     Json::CharReaderBuilder reader;
     Json::Value jsonData;
     std::string errs;
-    std::istringstream s(buffer);
-    if (Json::parseFromStream(reader, s, &jsonData, &errs)) {
-      res.fromJson(jsonData);
+    std::istringstream stream(buffer.data());
+    if (Json::parseFromStream(reader, stream, &jsonData, &errs)) {
+      res->fromJson(jsonData);
       return true;
     }
   }

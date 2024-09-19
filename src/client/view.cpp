@@ -1,120 +1,80 @@
 #include "client/view.h"
 #include "client/api.h"
-#include <iostream>
+
 namespace zipfiles::client::view {
-bool validate_request_header(JSCValue* value) {
-  if (!jsc_value_is_object(value)) {
-    g_print("js_add_function: value is not an object\n");
+bool isRequestHeaderValid(JSCValue* value) {
+  if (jsc_value_is_object(value) == 0) {
+    g_print("js_add_function: value is not an object\n");  // NOLINT
     return false;
   }
   JSCValue* timestamp = jsc_value_object_get_property(value, "timestamp");
-  if (!jsc_value_is_number(timestamp)) {
-    g_print("js_add_function: timestamp is not a number\n");
+  if (jsc_value_is_number(timestamp) == 0) {
+    g_print("js_add_function: timestamp is not a number\n");  // NOLINT
     return false;
   }
   JSCValue* apiEnum = jsc_value_object_get_property(value, "apiEnum");
-  if (!jsc_value_is_string(apiEnum)) {
-    g_print("js_add_function: apiEnum is not a string\n");
+  if (jsc_value_is_string(apiEnum) == 0) {
+    g_print("js_add_function: apiEnum is not a string\n");  // NOLINT
     return false;
   }
   JSCValue* params = jsc_value_object_get_property(value, "params");
-  if (!jsc_value_is_object(params)) {
-    g_print("js_add_function: params is not an object\n");
+  if (jsc_value_is_object(params) == 0) {
+    g_print("js_add_function: params is not an object\n");  // NOLINT
     return false;
   }
   return true;
 }
 
-void send_response(
-  WebKitWebView* webView,
-  const char* type,
-  const char* message,
-  const char* timestamp_str,
-  const char* apiEnum_str,
-  JsonBuilder* builder
-) {
-  JsonGenerator* gen = json_generator_new();
-  JsonNode* root = json_builder_get_root(builder);
-  json_generator_set_root(gen, root);
-  gchar* json_str = json_generator_to_data(gen, NULL);
-  g_print("before send response\n: %s\n", json_str);
-  char* script = g_strdup_printf("window.postMessage(%s, '*');", json_str);
+void sendResponse(WebKitWebView* webView, Json::Value& root) {
+  Json::StreamWriterBuilder writer;
+  std::string json_str = Json::writeString(writer, root);
+  std::string script = "window.postMessage(" + json_str + ", '*');";
   webkit_web_view_evaluate_javascript(
-    webView, script, -1, NULL, NULL, NULL, NULL, NULL
+    webView, script.c_str(), -1, nullptr, nullptr, nullptr, nullptr, nullptr
   );
-
-  g_free(script);
-  g_free(json_str);
-  g_object_unref(gen);
-  json_node_free(root);
-  g_object_unref(builder);
 }
 
-void handle_success(
+void handleSuccess(
   WebKitWebView* webView,
   JSCValue* value,
-  std::function<void(JsonBuilder*)> build_data
+  const std::function<void(Json::Value&)>& build_data
 ) {
-  JsonBuilder* builder = json_builder_new();
-  json_builder_begin_object(builder);
-  json_builder_set_member_name(builder, "type");
-  json_builder_add_string_value(builder, "resolve");
-  json_builder_set_member_name(builder, "message");
-  json_builder_add_string_value(builder, "Success");
-  json_builder_set_member_name(builder, "timestamp");
+  Json::Value root;
+  root["type"] = "resolve";
+  root["message"] = "Success";
   JSCValue* timestamp = jsc_value_object_get_property(value, "timestamp");
-  const char* timestamp_str = jsc_value_to_string(timestamp);
-  json_builder_add_string_value(builder, timestamp_str);
-  json_builder_set_member_name(builder, "apiEnum");
+  root["timestamp"] = jsc_value_to_string(timestamp);
   JSCValue* apiEnum = jsc_value_object_get_property(value, "apiEnum");
-  const char* apiEnum_str = jsc_value_to_string(apiEnum);
-  json_builder_add_string_value(builder, apiEnum_str);
-  json_builder_set_member_name(builder, "data");
-  json_builder_begin_object(builder);
-  build_data(builder);
-  json_builder_end_object(builder);
-  json_builder_end_object(builder);
+  root["apiEnum"] = jsc_value_to_string(apiEnum);
+  build_data(root["data"]);
 
-  send_response(
-    webView, "resolve", "Success", timestamp_str, apiEnum_str, builder
-  );
+  sendResponse(webView, root);
 }
 
-void handle_error(
+void handleError(
   WebKitWebView* webView,
-  const std::exception& e,
-  JSCValue* value
+  JSCValue* value,
+  const std::exception& err
 ) {
-  JsonBuilder* builder = json_builder_new();
-  json_builder_begin_object(builder);
-  json_builder_set_member_name(builder, "type");
-  json_builder_add_string_value(builder, "reject");
-  json_builder_set_member_name(builder, "message");
-  json_builder_add_string_value(builder, e.what());
-  json_builder_set_member_name(builder, "timestamp");
+  Json::Value root;
+  root["type"] = "reject";
+  root["message"] = err.what();
   JSCValue* timestamp = jsc_value_object_get_property(value, "timestamp");
-  const char* timestamp_str = jsc_value_to_string(timestamp);
-  json_builder_add_string_value(builder, timestamp_str);
-  json_builder_set_member_name(builder, "apiEnum");
+  root["timestamp"] = jsc_value_to_string(timestamp);
   JSCValue* apiEnum = jsc_value_object_get_property(value, "apiEnum");
-  const char* apiEnum_str = jsc_value_to_string(apiEnum);
-  json_builder_add_string_value(builder, apiEnum_str);
-  json_builder_set_member_name(builder, "data");
-  json_builder_add_null_value(builder);
-  json_builder_end_object(builder);
+  root["apiEnum"] = jsc_value_to_string(apiEnum);
+  root["data"] = Json::nullValue;
 
-  send_response(
-    webView, "reject", e.what(), timestamp_str, apiEnum_str, builder
-  );
+  sendResponse(webView, root);
 }
 
 void sum(
-  WebKitUserContentManager* manager,
+  [[maybe_unused]] WebKitUserContentManager* manager,
   WebKitJavascriptResult* js_result,
   gpointer user_data
 ) {
   JSCValue* value = webkit_javascript_result_get_js_value(js_result);
-  if (!validate_request_header(value)) {
+  if (!isRequestHeaderValid(value)) {
     return;
   }
   JSCValue* params = jsc_value_object_get_property(value, "params");
@@ -122,9 +82,9 @@ void sum(
   try {
     double result = 0;
     gchar** properties = jsc_value_object_enumerate_properties(args);
-    for (gchar** property = properties; *property; property++) {
+    for (gchar** property = properties; *property != nullptr; property++) {
       JSCValue* arg = jsc_value_object_get_property(args, *property);
-      if (jsc_value_is_number(arg)) {
+      if (jsc_value_is_number(arg) != 0) {
         result += jsc_value_to_double(arg);
       } else {
         g_strfreev(properties);
@@ -132,76 +92,62 @@ void sum(
       }
     }
     g_strfreev(properties);
-    handle_success(
-      WEBKIT_WEB_VIEW(user_data), value,
-      [&](JsonBuilder* builder) {
-        json_builder_set_member_name(builder, "result");
-        json_builder_add_double_value(builder, result);
-      }
-    );
+    handleSuccess(WEBKIT_WEB_VIEW(user_data), value, [&](Json::Value& root) {
+      root["result"] = result;
+    });
   } catch (const std::exception& e) {
-    handle_error(WEBKIT_WEB_VIEW(user_data), e, value);
+    handleError(WEBKIT_WEB_VIEW(user_data), value, e);
   }
 }
 
 void log(
-  WebKitUserContentManager* manager,
+  [[maybe_unused]] WebKitUserContentManager* manager,
   WebKitJavascriptResult* js_result,
   gpointer user_data
 ) {
   JSCValue* value = webkit_javascript_result_get_js_value(js_result);
-  if (!validate_request_header(value)) {
+  if (!isRequestHeaderValid(value)) {
     return;
   }
   JSCValue* params = jsc_value_object_get_property(value, "params");
   JSCValue* message = jsc_value_object_get_property(params, "message");
   const char* message_str = jsc_value_to_string(message);
-  g_print("JS Log: %s\n", message_str);
-  handle_success(WEBKIT_WEB_VIEW(user_data), value, [&](JsonBuilder* builder) {
-    json_builder_set_member_name(builder, "message");
-    json_builder_add_string_value(builder, message_str);
+  g_print("JS Log: %s\n", message_str);  // NOLINT
+  handleSuccess(WEBKIT_WEB_VIEW(user_data), value, [&](Json::Value& root) {
+    root["message"] = message_str;
   });
 }
 
 void getFileList(
-  WebKitUserContentManager* manager,
+  [[maybe_unused]] WebKitUserContentManager* manager,
   WebKitJavascriptResult* js_result,
   gpointer user_data
 ) {
   JSCValue* value = webkit_javascript_result_get_js_value(js_result);
-  if (!validate_request_header(value)) {
+  if (!isRequestHeaderValid(value)) {
     return;
   }
   try {
     JSCValue* params = jsc_value_object_get_property(value, "params");
     JSCValue* path = jsc_value_object_get_property(params, "path");
-    if (!jsc_value_is_string(path)) {
+    if (jsc_value_is_string(path) == 0) {
       throw std::invalid_argument("Path must be a string");
     }
-    api::GetFileListRequest request;
-    request.setPath(jsc_value_to_string(path));
-    mp::GetFileListResponse response = api::getFileList(request);
+    mp::GetFileListRequestPtr request =
+      std::make_shared<mp::GetFileListRequest>();
+    request->setPath(jsc_value_to_string(path));
+    mp::GetFileListResponsePtr response = api::getFileList(request);
 
-    handle_success(
-      WEBKIT_WEB_VIEW(user_data), value,
-      [&](JsonBuilder* builder) {
-        json_builder_set_member_name(builder, "files");
-        json_builder_begin_array(builder);
-        for (const auto& file : response.getFiles()) {
-          json_builder_begin_object(builder);
-          json_builder_set_member_name(builder, "name");
-          json_builder_add_string_value(builder, file.name.c_str());
-          json_builder_set_member_name(builder, "type");
-          json_builder_add_string_value(
-            builder, file.type == FileType::FILE ? "file" : "directory"
-          );
-          json_builder_end_object(builder);
-        }
-        json_builder_end_array(builder);
+    handleSuccess(WEBKIT_WEB_VIEW(user_data), value, [&](Json::Value& root) {
+      for (const auto& file : response->getFiles()) {
+        Json::Value fileJson;
+        fileJson["name"] = file.name;
+        fileJson["type"] = file.type == FileType::FILE ? "file" : "directory";
+        root["files"].append(fileJson);
       }
-    );
+    });
   } catch (const std::exception& e) {
-    handle_error(WEBKIT_WEB_VIEW(user_data), e, value);
+    handleError(WEBKIT_WEB_VIEW(user_data), value, e);
   }
 }
 }  // namespace zipfiles::client::view

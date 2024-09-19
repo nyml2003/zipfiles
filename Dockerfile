@@ -1,10 +1,12 @@
 FROM ubuntu:22.04
 LABEL authors="zipfiles"
 
-RUN mv /etc/apt/sources.list /etc/apt/sources.list.bak
+# 备份并替换 sources.list
+RUN mv /etc/apt/sources.list /etc/apt/sources.list.bak 
 COPY sources.list /etc/apt/
 
-RUN apt update && apt install -y \
+# 更新并安装必要的软件包
+RUN apt-get update && apt-get install -y \
     cmake \
     git \
     gdb \
@@ -22,18 +24,30 @@ RUN apt update && apt install -y \
     fonts-wqy-microhei \
     locales \
     valgrind \
-    libjson-glib-dev \
-    libjsoncpp-dev 
-    
+    libjsoncpp-dev \
+    numactl \
+    lsof \
+    lsb-release \
+    software-properties-common \
+    gnupg && \
+    wget https://apt.llvm.org/llvm.sh && \
+    chmod +x llvm.sh && \
+    ./llvm.sh 18 && \
+    rm llvm.sh && \
+    rm -rf /var/lib/apt/lists/*
 
+# 复制 perf 工具
+COPY tools/perf /usr/bin/perf
 
-RUN  cd /usr/src/gtest \
-    && mkdir build \
-    && cd build \
-    && cmake .. \
-    && make \
-    && cp lib/libgtest*.a /usr/local/lib
+# 编译并安装 Google Test
+RUN cd /usr/src/gtest && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make && \
+    cp lib/libgtest*.a /usr/local/lib
 
-RUN locale-gen en_US.UTF-8
-RUN update-locale LANG=en_US.UTF-8
-RUN echo "LANGUAGE=zh_CN:zh:en_US:en" >> /etc/default/locale
+# 设置本地化
+RUN locale-gen en_US.UTF-8 && \
+    update-locale LANG=en_US.UTF-8 && \
+    echo "LANGUAGE=zh_CN:zh:en_US:en" >> /etc/default/locale

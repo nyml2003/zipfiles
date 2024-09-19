@@ -2,30 +2,21 @@
 #define ZIPFILE_CLIENT_VIEW_H
 #include <webkit2/webkit2.h>
 #include <gtk/gtk.h>
-#include <json-glib/json-glib.h>
 #include <functional>
-
+#include <json/json.h>
 namespace zipfiles::client::view {
 
-bool validate_request_header(JSCValue* value);
-
-void send_response(
-  WebKitWebView* webView,
-  const char* type,
-  const char* message,
-  const char* timestamp_str,
-  const char* apiEnum_str,
-  JsonBuilder* builder
-);
-void handle_success(
+auto isRequestHeaderValid(JSCValue* value) -> bool;
+void sendResponse(WebKitWebView* webView, Json::Value& root);
+void handleSuccess(
   WebKitWebView* webView,
   JSCValue* value,
-  std::function<void(JsonBuilder*)> build_data
+  const std::function<void(Json::Value&)>& build_data
 );
-void handle_error(
+void handleError(
   WebKitWebView* webView,
-  const std::exception& e,
-  JSCValue* value
+  JSCValue* value,
+  const std::exception& err
 );
 void sum(
   WebKitUserContentManager* manager,
