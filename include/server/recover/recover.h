@@ -4,5 +4,5 @@
 namespace fs = std::filesystem;
 namespace zipfiles::server {
 int recover_to(const fs::path& dst);
-}  // namespace zipfiles::server::recover
+}  // namespace zipfiles::server
 #endif  // !ZIPFILES_RECOVER_H

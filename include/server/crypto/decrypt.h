@@ -4,5 +4,5 @@
 namespace fs = std::filesystem;
 namespace zipfiles::server {
 char* decrypt(char* src);
-}  // namespace zipfiles::server::decrypt
+}  // namespace zipfiles::server
 #endif  // !ZIPFILES_DECRYPT_H
