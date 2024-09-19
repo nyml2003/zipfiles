@@ -104,7 +104,7 @@ ServerSocket::~ServerSocket() {
   close(server_fd);
 }
 
-int ServerSocket::getSocketFd() const {
+auto ServerSocket::getSocketFd() const -> int {
   return server_fd;
 }
 

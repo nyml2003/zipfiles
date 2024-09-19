@@ -1,11 +1,11 @@
 
 #include "client/view.h"
-#include "client/client.h"
+#include "client/launcher.h"
 #include <iostream>
 #include <string>
 #include <libgen.h>
 
-namespace zipfiles::client::client {
+namespace zipfiles::client::launcher {
 
 void loadDistUri(WebKitWebView* webView) {
   std::array<char, EXE_PATH_SIZE> exe_path = {0};
@@ -46,4 +46,21 @@ GtkWidget* createWindow(WebKitWebView* webView) {
   return window;
 }
 
-}  // namespace zipfiles::client::client
+void Launcher::run(int argc, char** argv) {
+  gtk_init(&argc, &argv);
+  WebKitUserContentManager* manager = webkit_user_content_manager_new();
+  WebKitWebView* webView =
+    WEBKIT_WEB_VIEW(webkit_web_view_new_with_user_content_manager(manager));
+  loadDistUri(webView);
+  bindJS(manager, webView);
+  GtkWidget* window = createWindow(webView);
+  gtk_widget_show_all(window);
+  gtk_main();
+}
+
+}  // namespace zipfiles::client::launcher
+
+int main(int argc, char* argv[]) {
+  zipfiles::client::launcher::Launcher::run(argc, argv);
+  return 0;
+}
