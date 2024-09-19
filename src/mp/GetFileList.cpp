@@ -13,7 +13,7 @@ void GetFileListRequest::fromJson(const Json::Value& json) {
 }
 
 void GetFileListRequest::setPath(std::string path) {
-  this->path = path;
+  this->path = std::move(path);
 }
 
 std::string GetFileListRequest::getPath() {
@@ -43,7 +43,7 @@ void GetFileListResponse::fromJson(const Json::Value& json) {
   }
 }
 
-void GetFileListResponse::setFiles(std::vector<File> files) {
+void GetFileListResponse::setFiles(const std::vector<File>& files) {
   for (const auto& file : files) {
     this->files.push_back(file);
   }

@@ -4,23 +4,14 @@
 #include <gtk/gtk.h>
 #include <json-glib/json-glib.h>
 #include <functional>
-
 namespace zipfiles::client::view {
 
 bool validate_request_header(JSCValue* value);
-
-void send_response(
-  WebKitWebView* webView,
-  const char* type,
-  const char* message,
-  const char* timestamp_str,
-  const char* apiEnum_str,
-  JsonBuilder* builder
-);
+void send_response(WebKitWebView* webView, JsonBuilder* builder);
 void handle_success(
   WebKitWebView* webView,
   JSCValue* value,
-  std::function<void(JsonBuilder*)> build_data
+  const std::function<void(JsonBuilder*)>& build_data
 );
 void handle_error(
   WebKitWebView* webView,

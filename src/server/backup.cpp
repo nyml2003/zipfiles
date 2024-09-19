@@ -113,4 +113,4 @@ void restore(const fs::path& source, const fs::path& destination) {
   }
 }
 
-}  // namespace zipfiles::server::backup
+}  // namespace zipfiles::server

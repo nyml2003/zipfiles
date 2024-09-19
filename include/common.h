@@ -15,6 +15,7 @@ struct File {
   std::string name;
   FileType type;
 };
+
 }  // namespace zipfiles
 
 #endif  // ! ZIPFILES_COMMON_H

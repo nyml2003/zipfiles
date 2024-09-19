@@ -4,7 +4,7 @@ LABEL authors="zipfiles"
 RUN mv /etc/apt/sources.list /etc/apt/sources.list.bak
 COPY sources.list /etc/apt/
 
-RUN apt update && apt install -y \
+RUN apt-get update && apt-get install -y \
     cmake \
     git \
     gdb \
@@ -24,8 +24,18 @@ RUN apt update && apt install -y \
     valgrind \
     libjson-glib-dev \
     libjsoncpp-dev 
-    
 
+    
+COPY tools/perf /usr/bin/perf
+
+# install clang and all clang tools
+RUN apt-get install -y \
+    lsb-release \
+    software-properties-common \
+    gnupg
+RUN wget https://apt.llvm.org/llvm.sh && \
+    chmod +x llvm.sh && \
+    ./llvm.sh 18
 
 RUN  cd /usr/src/gtest \
     && mkdir build \
