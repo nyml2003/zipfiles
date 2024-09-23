@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useApi } from '../useApi';
+import { useApi } from '@/hooks';
 import { ApiEnum, PagedRequest, PagedResponse } from '@/apis';
 import { IngoreError } from '@/types';
 import { message } from 'antd';

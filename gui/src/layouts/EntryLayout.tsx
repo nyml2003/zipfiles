@@ -16,13 +16,16 @@ const EntryLayout = () => {
           mode='horizontal'
           defaultOpenKeys={['home']}
           className='h-full overflow-x-auto hide-scrollbar'>
-                  <Nav.Header>
+          <Nav.Header>
             <Space>
               <Link relative='path' to='/'>
                 <Nav.Item icon={<IconHome />} text='Home' itemKey={'home'} />
               </Link>
               <Link to='/explorer'>
                 <Nav.Item icon={<IconArticle />} text='Explorer' itemKey={'explorer'} />
+              </Link>
+              <Link to='/test'>
+                <Nav.Item icon={<IconArticle />} text='Test' itemKey={'test'} />
               </Link>
             </Space>
           </Nav.Header>
@@ -67,14 +70,6 @@ const EntryLayout = () => {
       <Content className='mt-16 flex-1 overflow-hidden'>
         <Outlet />
       </Content>
-      <Footer className='h-16 flex flex-none justify-center items-center bg-white'>
-        <div className='text-caption1 text-grey-2'>
-          <span className='mr-2'>© 2023 风唤长河</span>
-          <a href='http://beian.miit.gov.cn' target='_blank'>
-            {'浙ICP备2023031873号 - 1'}
-          </a>
-        </div>
-      </Footer>
     </Layout>
   );
 };

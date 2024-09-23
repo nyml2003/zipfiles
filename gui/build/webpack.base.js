@@ -6,24 +6,24 @@
  * @FilePath: \react\webpack5-ts-react18\build\webpack.base.js
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
-const path = require('path')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const MiniCssExtractPlugin = require('mini-css-extract-plugin')
-const webpack = require('webpack')
-const WebpackBar = require('webpackbar')
-const FriendlyErrorsWebpackPlugin = require('@nuxt/friendly-errors-webpack-plugin')
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const webpack = require('webpack');
+const WebpackBar = require('webpackbar');
+const FriendlyErrorsWebpackPlugin = require('@nuxt/friendly-errors-webpack-plugin');
 
-const env = require('./env.js')
-const isDev = process.env.NODE_ENV === 'development' // // 是否是开发模式
+const env = require('./env.js');
+const isDev = process.env.NODE_ENV === 'development'; // // 是否是开发模式
 
 // 获取自定义变量集
-const oriEnv = env[process.env.BASE_ENV]
+const oriEnv = env[process.env.BASE_ENV];
 Object.assign(oriEnv, {
   BASE_ENV: process.env.BASE_ENV,
-})
-const defineEnv = {}
+});
+const defineEnv = {};
 for (const key in oriEnv) {
-  defineEnv[`process.env.${key}`] = JSON.stringify(oriEnv[key])
+  defineEnv[`process.env.${key}`] = JSON.stringify(oriEnv[key]);
 }
 
 module.exports = {
@@ -144,7 +144,11 @@ module.exports = {
       inject: true, // 自动注入静态资源
       filename: 'index.html',
     }),
-    new webpack.DefinePlugin(defineEnv),
+    new webpack.DefinePlugin({
+        'process.env': JSON.stringify({
+            BASE_ENV: process.env.BASE_ENV,
+      }),
+    }),
     // 进度条
     new WebpackBar({
       name: 'webpack5-ts-react18',
@@ -162,4 +166,4 @@ module.exports = {
     }),
   ],
   stats: 'errors-only',
-}
+};

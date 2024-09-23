@@ -29,8 +29,8 @@ RUN apt-get update && apt-get install -y \
     lsof \
     lsb-release \
     software-properties-common \
-    gnupg && \
-    wget https://apt.llvm.org/llvm.sh && \
+    gnupg 
+RUN wget https://apt.llvm.org/llvm.sh && \
     chmod +x llvm.sh && \
     ./llvm.sh 18 && \
     rm llvm.sh && \
