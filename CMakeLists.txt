@@ -74,34 +74,41 @@ file(GLOB ZIPFILES_MP_SOURCE_FILES ${ZIPFILES_MP_SOURCE_DIR}/*.cpp)
 
 # 服务端打包
 add_executable(
-    zipfiles_server
+    server
     ${ZIPFILES_SOURCE_FILES}
     ${ZIPFILES_MP_SOURCE_FILES}
     ${ZIPFILES_SERVER_SOURCE_FILES}
 )
 
 target_link_libraries(
-    zipfiles_server
+    server
     ${JSONCPP_LIBRARIES}
 )
 
 # 客户端打包
 
 add_executable(
-    zipfiles_client
+    client
     ${ZIPFILES_SOURCE_FILES}
     ${ZIPFILES_CLIENT_SOURCE_FILES}
     ${ZIPFILES_MP_SOURCE_FILES}
 )
 target_link_libraries(
-    zipfiles_client
+    client
     ${GTK_LIBRARIES}
     ${WEBKIT_LIBRARIES}
     ${JSONCPP_LIBRARIES}
 )
-target_compile_options(zipfiles_client PRIVATE ${GTK_CFLAGS_OTHER} ${WEBKIT_CFLAGS_OTHER})
+target_compile_options(client PRIVATE ${GTK_CFLAGS_OTHER} ${WEBKIT_CFLAGS_OTHER})
 
 install(DIRECTORY ${ZIPFILES_DIST_DIR} DESTINATION ${CMAKE_BINARY_DIR})
+
+add_custom_command(
+    TARGET client
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${ZIPFILES_DIST_DIR} ${CMAKE_BINARY_DIR}/dist
+    COMMENT "Running install after building client"
+)
 
 ############################################
 #### 项目测试

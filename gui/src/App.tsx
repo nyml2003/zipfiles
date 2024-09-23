@@ -1,18 +1,17 @@
-import React from 'react'
-import { HashRouter as Router, useRoutes } from 'react-router-dom'
-import routes from './router'
+import React from 'react';
+import { RouterProvider } from 'react-router-dom';
+import router from './router';
+import { ConfigProvider } from 'antd';
+import zhCN from 'antd/locale/zh_CN';
 // 定义路由配置
-const AppRoutes = () => {
-  return useRoutes(routes)
-}
 
 // 主应用组件
 const App = () => {
   return (
-    <Router>
-      <AppRoutes />
-    </Router>
-  )
-}
+    <ConfigProvider locale={zhCN}>
+      <RouterProvider router={router} />
+    </ConfigProvider>
+  );
+};
 
-export default App
+export default App;

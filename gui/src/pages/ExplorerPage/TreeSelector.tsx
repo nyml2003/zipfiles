@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Tree } from 'antd';
+import React, { useState, useEffect, useCallback, Key } from 'react';
+import { Tree, TreeProps } from 'antd';
 import useApi from '@/hooks/useApi';
 import { GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
 import { ApiEnum } from '@/apis';
@@ -13,16 +13,22 @@ interface DataNode {
   children?: DataNode[];
 }
 
-const ExplorerPage: React.FC = () => {
+interface Props {
+  onSelect?: (path: string[]) => void;
+}
+
+const TreeSelector: React.FC<Props> = (props: Props) => {
+  const onSelect = props.onSelect || (() => {});
   const api = useApi();
   const [treeData, setTreeData] = useState<DataNode[]>([
-    { title: '/app', key: '/app', isLeaf: false },
+    { title: 'app', key: '/app', isLeaf: false },
   ]);
-  const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
+  const [checkedKeys, setCheckedKeys] = useState<Key[]>([]);
 
   useEffect(() => {
     handleGetFileList('/app');
   }, []);
+
   const handleGetFileList = async (path: string) => {
     try {
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
@@ -35,7 +41,14 @@ const ExplorerPage: React.FC = () => {
           isLeaf: item.type === 'file',
         };
       });
-      setTreeData(updateTreeData(treeData, path, newTreeData));
+      setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
+      // 如果当前选中的文件夹是checkedKeys中的一部分，就把新的文件夹也加入到checkedKeys中
+      if (checkedKeys.includes(path)) {
+        onSelect([
+          ...checkedKeys.map(key => key.toString()),
+          ...newTreeData.map(item => item.key.toString()),
+        ]);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -63,33 +76,32 @@ const ExplorerPage: React.FC = () => {
     });
   };
 
-  const onLoadData = async ({ key, children }: { key: React.Key; children?: DataNode[] }) => {
+  const onLoadData = async (treeNode: any) => {
+    const { key, children } = treeNode;
     const targetNode = treeData.find(item => item.key === key);
     if (targetNode && targetNode.children) {
       return;
     }
     await handleGetFileList(key as string);
   };
-  const onExpand = (expandedKeys: React.Key[]) => {
-    setExpandedKeys(expandedKeys);
+
+  const handleCheck: TreeProps['onCheck'] = (checkedKeysValue, info) => {
+    setCheckedKeys(checkedKeysValue as Key[]);
+    onSelect(info.checkedNodes.map(node => node.key.toString()));
   };
 
   return (
-    <div className='h-full flex flex-col'>
-      <div className='p-4 border-b border-gray-200'>Explorer</div>
-      <div className='flex-1 overflow-y-auto'>
-        <DirectoryTree
-          showLine
-          multiple
-          switcherIcon={<DownOutlined />}
-          loadData={onLoadData}
-          treeData={treeData}
-          expandedKeys={expandedKeys}
-          onExpand={onExpand}
-        />
-      </div>
-    </div>
+    <DirectoryTree
+      showLine
+      checkable
+      multiple
+      switcherIcon={<DownOutlined />}
+      loadData={onLoadData}
+      treeData={treeData}
+      checkedKeys={checkedKeys}
+      onCheck={handleCheck}
+    />
   );
 };
 
-export default ExplorerPage;
+export default TreeSelector;

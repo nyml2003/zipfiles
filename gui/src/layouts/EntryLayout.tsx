@@ -1,77 +1,69 @@
 import React from 'react';
-import { Button, Layout, Nav, Space, Tooltip } from '@douyinfe/semi-ui';
-import { Link, Outlet } from 'react-router-dom';
-import { IconHome, IconArticle, IconGithubLogo } from '@douyinfe/semi-icons';
-import { useDarkMode } from '@/hooks/useDarkMode';
-function openGithub() {
-  window.open('https://github.com');
-}
-const EntryLayout = () => {
-  const { Header, Footer, Content } = Layout;
-  const { toggleMode, IconDarkMode, mode } = useDarkMode();
+import {
+  BookOutlined,
+  HomeOutlined,
+} from '@ant-design/icons';
+import type { MenuProps } from 'antd';
+import { MenuInfo } from 'rc-menu/lib/interface';
+import { Breadcrumb, Layout, Menu, theme } from 'antd';
+import { Outlet, useNavigate } from 'react-router-dom';
+
+const { Content, Sider } = Layout;
+
+const headerItems: MenuProps['items'] = [
+  {
+    key: 'index',
+    label: '首页',
+    icon: React.createElement(HomeOutlined),
+  },
+  {
+    key: 'explorer',
+    label: '文件列表',
+    icon: React.createElement(BookOutlined),
+  },
+];
+
+const App: React.FC = () => {
+  const navigate = useNavigate();
+  const {
+    token: { colorBgContainer, borderRadiusLG },
+  } = theme.useToken();
+
+  const handleClick = (info: MenuInfo) => {
+    if (info.key === 'github') {
+      navigate('/index');
+      return;
+    }
+    navigate(info.key);
+  };
+
   return (
-    <Layout className='flex flex-col h-screen'>
-      <Header className='bg-white shadow-md fixed h-16 w-full z-10'>
-        <Nav
-          mode='horizontal'
-          defaultOpenKeys={['home']}
-          className='h-full overflow-x-auto hide-scrollbar'>
-          <Nav.Header>
-            <Space>
-              <Link relative='path' to='/'>
-                <Nav.Item icon={<IconHome />} text='Home' itemKey={'home'} />
-              </Link>
-              <Link to='/explorer'>
-                <Nav.Item icon={<IconArticle />} text='Explorer' itemKey={'explorer'} />
-              </Link>
-              <Link to='/test'>
-                <Nav.Item icon={<IconArticle />} text='Test' itemKey={'test'} />
-              </Link>
-            </Space>
-          </Nav.Header>
-          <Nav.Footer>
-            <Space>
-              {/* <Input placeholder="Search" prefix={<IconSearch />} showClear /> */}
-              <Tooltip content={`Swith to ${mode} mode`}>
-                <Button
-                  icon={
-                    <IconDarkMode
-                      style={{
-                        color: 'var(--semi-color-text-2)',
-                      }}
-                      size='large'
-                    />
-                  }
-                  theme='borderless'
-                  onClick={toggleMode}
-                  type='primary'
-                />
-              </Tooltip>
-              <Tooltip content='Github'>
-                <Button
-                  icon={
-                    <IconGithubLogo
-                      style={{
-                        color: 'var(--semi-color-text-2)',
-                      }}
-                      size='large'
-                    />
-                  }
-                  theme='borderless'
-                  onClick={openGithub}
-                  type='primary'
-                  size='large'
-                />
-              </Tooltip>
-            </Space>
-          </Nav.Footer>
-        </Nav>
-      </Header>
-      <Content className='mt-16 flex-1 overflow-hidden'>
-        <Outlet />
-      </Content>
+    <Layout hasSider className='h-screen'>
+      <Sider
+        style={{ background: colorBgContainer }}
+        className='
+          overflow-y-scroll
+          hide-scrollbar
+          '
+        breakpoint='lg'>
+              <Menu mode='inline' defaultSelectedKeys={['1']} defaultOpenKeys={['sub1']} items={headerItems} onClick={handleClick} />
+      </Sider>
+      <Layout className='px-4 pb-4'>
+        <Breadcrumb className='my-4'>
+          <Breadcrumb.Item>Home</Breadcrumb.Item>
+          <Breadcrumb.Item>List</Breadcrumb.Item>
+          <Breadcrumb.Item>App</Breadcrumb.Item>
+        </Breadcrumb>
+        <Content
+          style={{
+            borderRadius: borderRadiusLG,
+          }}
+          className='p-4 overflow-y-scroll hide-scrollbar'>
+          <Outlet />
+        </Content>
+      </Layout>
     </Layout>
   );
 };
 
-export default EntryLayout;
+export default App;

@@ -1,46 +1,41 @@
-import { RouteObject } from 'react-router-dom';
-import React, { lazy, Suspense } from 'react';
-import TestPage from './pages/TestPage';
+import { createHashRouter, Navigate, RouteObject } from 'react-router-dom';
+import EntryLayout from '@/layouts/EntryLayout';
+import NotFound from '@/components/NotFound';
+import Fallback from '@/components/Fallback';
+import { lazy, Suspense } from 'react';
+import React from 'react';
+const ExplorerPage = lazy(() => import('@/pages/ExplorerPage'));
+const IndexPage = lazy(() => import('@/pages/IndexPage'));
 
-const EntryLayout = lazy(() => import('./layouts/EntryLayout'));
-const ExplorerPage = lazy(() => import('./pages/ExplorerPage'));
-const NotFound = lazy(() => import('./components/NotFound'));
+const fallbackWrapper = (component: React.ReactNode) => {
+  return <Suspense fallback={<Fallback />}>{component}</Suspense>;
+};
 
 const routes: RouteObject[] = [
   {
-    path: '/',
-    element: (
-      <Suspense fallback={<div>Loading...</div>}>
-        <EntryLayout />
-      </Suspense>
-    ),
+    path: '/*',
+    element: fallbackWrapper(<EntryLayout />),
     children: [
       {
-        path: 'explorer',
-        element: (
-          <Suspense fallback={<div>Loading...</div>}>
-            <ExplorerPage />
-          </Suspense>
-        ),
+        path: '',
+        element: <Navigate to='/index' />,
       },
       {
-        path: 'test',
-        element: (
-          <Suspense fallback={<div>Loading...</div>}>
-            <TestPage />
-          </Suspense>
-        ),
+        path: 'index',
+        element: fallbackWrapper(<IndexPage />),
+      },
+      {
+        path: 'explorer',
+        element: fallbackWrapper(<ExplorerPage />),
+      },
+      {
+        path: '*',
+        element: <NotFound />,
       },
     ],
   },
-  {
-    path: '*',
-    element: (
-      <Suspense fallback={<div>Loading...</div>}>
-        <NotFound />
-      </Suspense>
-    ),
-  },
 ];
 
-export default routes;
+const router = createHashRouter(routes);
+
+export default router;
