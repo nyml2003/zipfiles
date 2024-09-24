@@ -1,8 +1,7 @@
 import TreeSelector from './TreeSelector';
 import React, { useState } from 'react';
 
-interface Props {
-}
+interface Props {}
 
 const ExplorerPage: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -15,10 +14,14 @@ const ExplorerPage: React.FC = () => {
 
   return (
     <div className='h-full flex'>
-      <div className='w-1/3 border-r border-gray-200 overflow-scroll'>
-        <TreeSelector onSelect={handleSelect} currentPath={currentPath} setCurrentPath={setCurrentPath} />
+      <div className='w-1/3 border-r border-gray-200 '>
+        <TreeSelector
+          onSelect={handleSelect}
+          currentPath={currentPath}
+          setCurrentPath={setCurrentPath}
+        />
       </div>
-      <div className='w-2/3 p-4'>
+      {/* <div className='w-2/3 p-4'>
         {selectedItems.length > 0 ? (
           <div>
             <h3>已选中:</h3>
@@ -31,7 +34,7 @@ const ExplorerPage: React.FC = () => {
         ) : (
           <div>请选择一个项目</div>
         )}
-      </div>
+      </div> */}
     </div>
   );
 };

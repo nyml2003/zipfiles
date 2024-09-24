@@ -22,13 +22,13 @@ interface Props {
 const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath }) => {
   const api = useApi();
   const [treeData, setTreeData] = useState<DataNode[]>([
-    { title: currentPath, key: `/${currentPath}`, isLeaf: false },
+    { title: currentPath, key: currentPath, isLeaf: false },
   ]);
   const [checkedKeys, setCheckedKeys] = useState<Key[]>([]);
 
   useEffect(() => {
-    handleGetFileList(`/${currentPath}`);
-  }, []);
+    setTreeData([{ title: currentPath, key: currentPath, isLeaf: false }]);
+  }, [currentPath]);
 
   const handleGetFileList = async (path: string) => {
     try {
@@ -40,6 +40,13 @@ const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath }
           title: item.name,
           key: `${path}/${item.name}`,
           isLeaf: item.type === 'file',
+          ondblclick: () => {
+            if (item.type === 'file') {
+              onSelect([`${path}/${item.name}`]);
+            } else {
+              setCurrentPath(`${path}/${item.name}`);
+            }
+          },
         };
       });
       setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
@@ -92,7 +99,10 @@ const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath }
   };
 
   const handleSelect: TreeProps['onSelect'] = (selectedKeys, info) => {
-    console.log(selectedKeys, info);
+    // console.log(selectedKeys, info);
+    // if (!info.node.isLeaf) {
+    //   setCurrentPath(selectedKeys[0] as string);
+    // }
   };
 
   return (
@@ -106,6 +116,7 @@ const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath }
       checkedKeys={checkedKeys}
       onCheck={handleCheck}
       onSelect={handleSelect}
+      className='overflow-scroll h-full w-full'
     />
   );
 };
