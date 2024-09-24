@@ -14,19 +14,20 @@ interface DataNode {
 }
 
 interface Props {
-  onSelect?: (path: string[]) => void;
+  onSelect: (path: string[]) => void;
+  currentPath: string;
+  setCurrentPath: (path: string) => void;
 }
 
-const TreeSelector: React.FC<Props> = (props: Props) => {
-  const onSelect = props.onSelect || (() => {});
+const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath }) => {
   const api = useApi();
   const [treeData, setTreeData] = useState<DataNode[]>([
-    { title: 'app', key: '/app', isLeaf: false },
+    { title: currentPath, key: `/${currentPath}`, isLeaf: false },
   ]);
   const [checkedKeys, setCheckedKeys] = useState<Key[]>([]);
 
   useEffect(() => {
-    handleGetFileList('/app');
+    handleGetFileList(`/${currentPath}`);
   }, []);
 
   const handleGetFileList = async (path: string) => {
@@ -90,6 +91,10 @@ const TreeSelector: React.FC<Props> = (props: Props) => {
     onSelect(info.checkedNodes.map(node => node.key.toString()));
   };
 
+  const handleSelect: TreeProps['onSelect'] = (selectedKeys, info) => {
+    console.log(selectedKeys, info);
+  };
+
   return (
     <DirectoryTree
       showLine
@@ -100,6 +105,7 @@ const TreeSelector: React.FC<Props> = (props: Props) => {
       treeData={treeData}
       checkedKeys={checkedKeys}
       onCheck={handleCheck}
+      onSelect={handleSelect}
     />
   );
 };

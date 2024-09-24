@@ -41,6 +41,7 @@ void bindJS(WebKitUserContentManager* manager, WebKitWebView* webView) {
 GtkWidget* createWindow(WebKitWebView* webView) {
   GtkWidget* window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_default_size(GTK_WINDOW(window), WINDOW_WIDTH, WINDOW_HEIGHT);
+  gtk_window_set_resizable(GTK_WINDOW(window), TRUE);
   gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(webView));
   g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
   return window;
