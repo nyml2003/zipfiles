@@ -18,16 +18,21 @@ interface Props {
   currentPath: string;
   setCurrentPath: (path: string) => void;
 }
-
+const api = useApi();
 const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath }) => {
-  const api = useApi();
-  const [treeData, setTreeData] = useState<DataNode[]>([
-    { title: currentPath, key: currentPath, isLeaf: false },
-  ]);
+  const [treeData, setTreeData] = useState<DataNode[]>([]);
   const [checkedKeys, setCheckedKeys] = useState<Key[]>([]);
+  const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
 
   useEffect(() => {
-    setTreeData([{ title: currentPath, key: currentPath, isLeaf: false }]);
+    // 清空已有数据
+    setTreeData([]);
+    // 清空展开的节点
+    setExpandedKeys([]);
+    // 清空选中的节点
+    setCheckedKeys([]);
+    // 加载新的数据
+    handleGetFileList(currentPath);
   }, [currentPath]);
 
   const handleGetFileList = async (path: string) => {
@@ -40,13 +45,6 @@ const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath }
           title: item.name,
           key: `${path}/${item.name}`,
           isLeaf: item.type === 'file',
-          ondblclick: () => {
-            if (item.type === 'file') {
-              onSelect([`${path}/${item.name}`]);
-            } else {
-              setCurrentPath(`${path}/${item.name}`);
-            }
-          },
         };
       });
       setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
@@ -67,6 +65,9 @@ const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath }
     path: string,
     newTreeData: DataNode[],
   ): DataNode[] => {
+    if (treeData.length === 0) {
+      return newTreeData;
+    }
     return treeData.map((item: DataNode) => {
       if (item.key === path) {
         return {
@@ -85,6 +86,7 @@ const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath }
   };
 
   const onLoadData = async (treeNode: any) => {
+    console.log('onLoadData', treeNode);
     const { key, children } = treeNode;
     const targetNode = treeData.find(item => item.key === key);
     if (targetNode && targetNode.children) {
@@ -99,10 +101,9 @@ const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath }
   };
 
   const handleSelect: TreeProps['onSelect'] = (selectedKeys, info) => {
-    // console.log(selectedKeys, info);
-    // if (!info.node.isLeaf) {
-    //   setCurrentPath(selectedKeys[0] as string);
-    // }
+    if (!info.node.isLeaf) {
+      setCurrentPath(selectedKeys[0] as string);
+    }
   };
 
   return (
@@ -116,7 +117,9 @@ const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath }
       checkedKeys={checkedKeys}
       onCheck={handleCheck}
       onSelect={handleSelect}
-      className='overflow-scroll h-full w-full'
+      expandedKeys={expandedKeys}
+      onExpand={setExpandedKeys}
+      className='whitespace-nowrap bg-gray-100 flex-1'
     />
   );
 };

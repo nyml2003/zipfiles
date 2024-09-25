@@ -24,13 +24,29 @@ const useApi: useApiType = () => {
   }, []);
 
   const api: Api = {
-    request: async <Request, Response>(apiEnum: ApiEnum, request: Request): Promise<Response> => {
+    request: async <Request, Response>(
+      apiEnum: ApiEnum,
+      request: Request,
+      timeout: number = 5000, // 默认超时时间为 5000 毫秒
+    ): Promise<Response> => {
       const timestamp = Date.now();
       const message: RequestWrapper<Request> = { apiEnum, params: request, timestamp };
       window.webkit.messageHandlers[apiEnum].postMessage(message);
+
       return new Promise((resolve, reject) => {
-        callback.resolve = resolve;
-        callback.reject = reject;
+        const timer = setTimeout(() => {
+          reject(new Error('请求超时'));
+        }, timeout);
+
+        callback.resolve = (data: any) => {
+          clearTimeout(timer);
+          resolve(data);
+        };
+
+        callback.reject = (message: any) => {
+          clearTimeout(timer);
+          reject(message);
+        };
       });
     },
   };

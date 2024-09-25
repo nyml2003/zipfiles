@@ -2,15 +2,16 @@
 #include <iostream>
 namespace zipfiles::server {
 std::vector<File> list(const fs::path& source) {
-  std::cout << "Listing files in " << source << std::endl;
-  if (!fs::exists(source)) {
+  const fs::path source_path = "/" / source;
+  std::cout << "Listing files in " << source_path << std::endl;
+  if (!fs::exists(source_path)) {
     throw std::runtime_error("Source does not exist.");
   }
-  if (!fs::is_directory(source)) {
+  if (!fs::is_directory(source_path)) {
     throw std::runtime_error("Source is not a directory.");
   }
   std::vector<File> files;
-  for (const auto& entry : fs::directory_iterator(source)) {
+  for (const auto& entry : fs::directory_iterator(source_path)) {
     File file;
     file.name = entry.path().filename().string();
     file.type =
