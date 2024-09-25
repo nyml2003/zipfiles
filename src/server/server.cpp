@@ -65,6 +65,19 @@ void handleClient() {
           std::cerr << "Failed to send response." << std::endl;
         }
       }
+      if (request->is(mp::ApiType::GET_FILE_DETAIL)) {
+        mp::ResponsePtr response = std::make_shared<mp::Response>();
+        mp::GetFileDetailRequestPtr getFileDetailRequest =
+          std::make_shared<mp::GetFileDetailRequest>();
+        getFileDetailRequest->fromJson(request->getPayload());
+        mp::GetFileDetailResponsePtr getFileDetailResponse =
+          api::getFileDetail(getFileDetailRequest);
+        response->setStatus(mp::StatusCode::OK);
+        response->setPayload(getFileDetailResponse);
+        if (!mp::ServerSocket::send(response)) {
+          std::cerr << "Failed to send response." << std::endl;
+        }
+      }
     }
   } catch (const std::exception& e) {
     std::cerr << e.what() << std::endl;

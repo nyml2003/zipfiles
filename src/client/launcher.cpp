@@ -22,10 +22,11 @@ void loadDistUri(WebKitWebView* webView) {
 }
 
 void bindJS(WebKitUserContentManager* manager, WebKitWebView* webView) {
-  std::array<Handler, 3> handlers = {
+  std::array<Handler, 4> handlers = {
     {{"sum", G_CALLBACK(view::sum)},
      {"log", G_CALLBACK(view::log)},
-     {"getFileList", G_CALLBACK(view::getFileList)}}};
+     {"getFileList", G_CALLBACK(view::getFileList)},
+     {"getFileDetail", G_CALLBACK(view::getFileDetail)}}};
 
   for (const auto& handler : handlers) {
     webkit_user_content_manager_register_script_message_handler(

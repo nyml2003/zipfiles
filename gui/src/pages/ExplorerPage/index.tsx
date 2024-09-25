@@ -2,12 +2,14 @@ import { ArrowLeftOutlined, HomeOutlined } from '@ant-design/icons';
 import TreeSelector from './TreeSelector';
 import { Breadcrumb, Button, Input, Splitter } from 'antd'; // Add this import statement
 import React, { useState } from 'react';
+import MetaDataCard from './MetaDataCard';
 
 interface Props {}
 
 const ExplorerPage: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPath, setCurrentPath] = useState<string>('');
+  const [currentFile, setCurrentFile] = useState<string>('');
 
   const handleSelect = (paths: string[]) => {
     //按字典序排序
@@ -49,17 +51,12 @@ const ExplorerPage: React.FC = () => {
             onSelect={handleSelect}
             currentPath={currentPath}
             setCurrentPath={setCurrentPath}
+            setCurrentFile={setCurrentFile}
           />
         </Splitter.Panel>
         <Splitter.Panel>
-          <div>
-            <h2>Selected Items</h2>
-            <ul>
-              {selectedItems.map((item, index) => (
-                <li key={index}>{item}</li>
-              ))}
-            </ul>
-          </div>
+          {/* 文件信息 */}
+          <MetaDataCard currentFile={currentFile} />
         </Splitter.Panel>
       </Splitter>
     </div>

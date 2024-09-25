@@ -151,4 +151,32 @@ void getFileList(
     handleError(WEBKIT_WEB_VIEW(user_data), value, e);
   }
 }
+
+void getFileDetail(
+  [[maybe_unused]] WebKitUserContentManager* manager,
+  WebKitJavascriptResult* js_result,
+  gpointer user_data
+) {
+  JSCValue* value = webkit_javascript_result_get_js_value(js_result);
+  if (!isRequestHeaderValid(value)) {
+    return;
+  }
+  try {
+    JSCValue* params = jsc_value_object_get_property(value, "params");
+    JSCValue* path = jsc_value_object_get_property(params, "path");
+    if (jsc_value_is_string(path) == 0) {
+      throw std::invalid_argument("Path must be a string");
+    }
+    mp::GetFileDetailRequestPtr request =
+      std::make_shared<mp::GetFileDetailRequest>();
+    request->setPath(jsc_value_to_string(path));
+    mp::GetFileDetailResponsePtr response = api::getFileDetail(request);
+
+    handleSuccess(WEBKIT_WEB_VIEW(user_data), value, [&](Json::Value& root) {
+      root = response->toJson();
+    });
+  } catch (const std::exception& e) {
+    handleError(WEBKIT_WEB_VIEW(user_data), value, e);
+  }
+}
 }  // namespace zipfiles::client::view

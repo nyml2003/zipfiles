@@ -18,7 +18,7 @@ constexpr size_t PORT = 8080;
 /**
  * @brief API枚举
  */
-enum class ApiType { GET_FILE_LIST = 0, GET_FILE };
+enum class ApiType { GET_FILE_LIST = 0, GET_FILE_DETAIL };
 
 /**
  * @brief 状态码
