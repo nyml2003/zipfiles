@@ -1,6 +1,11 @@
 #ifndef ZIPFILES_COMMON_H
 #define ZIPFILES_COMMON_H
+#include <ctime>
 #include <string>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <filesystem>
+
 namespace zipfiles {
 template <class... Ts>
 struct overloaded : Ts... {
@@ -8,12 +13,23 @@ struct overloaded : Ts... {
 };
 template <class... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
-
-enum class FileType { FILE, DIRECTORY };
+namespace fs = std::filesystem;
 
 struct File {
   std::string name;
-  FileType type;
+  fs::file_type type;
+};
+
+struct FileDetail {
+  fs::file_type type;
+  std::string createTime;
+  std::string updateTime;
+  uintmax_t size;
+  std::string owner;
+  std::string group;
+  mode_t mode;
+  std::string path;
+  std::string name;
 };
 
 }  // namespace zipfiles

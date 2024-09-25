@@ -1,5 +1,5 @@
-#ifndef ZIPFILES_DECRYPT_H
-#define ZIPFILES_DECRYPT_H
+#ifndef ZIPFILES_SERVER_DECRYPT_H
+#define ZIPFILES_SERVER_DECRYPT_H
 #include <filesystem>
 namespace fs = std::filesystem;
 namespace zipfiles::server {

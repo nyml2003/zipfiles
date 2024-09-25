@@ -24,11 +24,8 @@ mp::GetFileListResponsePtr getFileList(
   mp::GetFileListResponsePtr getFileListResponse =
     std::make_shared<mp::GetFileListResponse>();
   getFileListResponse->fromJson(response->getPayload());
-  for (const auto& file : getFileListResponse->getFiles()) {
-    std::cout << file.name << " "
-              << (file.type == FileType::FILE ? "file" : "directory")
-              << std::endl;
-  }
+  std::cout << "Received response: " << getFileListResponse->toJson()
+            << std::endl;
   return getFileListResponse;
 }
 

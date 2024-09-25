@@ -1,5 +1,5 @@
 #include "mp/GetFileList.h"
-
+#include "utils.h"
 namespace zipfiles::mp {
 
 Json::Value GetFileListRequest::toJson() {
@@ -26,7 +26,7 @@ Json::Value GetFileListResponse::toJson() {
   for (const auto& file : files) {
     Json::Value file_json;
     file_json["name"] = file.name;
-    file_json["type"] = file.type == FileType::FILE ? "file" : "directory";
+    file_json["type"] = zipfiles::toString(file.type);
     json["files"].append(file_json);
   }
   return json;
@@ -37,8 +37,7 @@ void GetFileListResponse::fromJson(const Json::Value& json) {
   for (const auto& file_json : json["files"]) {
     File file;
     file.name = file_json["name"].asString();
-    file.type = file_json["type"].asString() == "file" ? FileType::FILE
-                                                       : FileType::DIRECTORY;
+    file.type = toFileType(file_json["type"].asString());
     files.push_back(file);
   }
 }

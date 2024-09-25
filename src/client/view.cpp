@@ -1,5 +1,6 @@
 #include "client/view.h"
 #include "client/api.h"
+#include "utils.h"
 
 namespace zipfiles::client::view {
 bool isRequestHeaderValid(JSCValue* value) {
@@ -142,7 +143,7 @@ void getFileList(
       for (const auto& file : response->getFiles()) {
         Json::Value fileJson;
         fileJson["name"] = file.name;
-        fileJson["type"] = file.type == FileType::FILE ? "file" : "directory";
+        fileJson["type"] = toString(file.type);
         root["files"].append(fileJson);
       }
     });

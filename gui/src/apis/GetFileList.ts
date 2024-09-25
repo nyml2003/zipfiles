@@ -10,7 +10,7 @@ export interface GetFileListResponse {
 
 export interface File {
   name: string;
-  type: string;
+  type: "none" | "not_found" | "regular" | "directory" | "symlink" | "block" | "character" | "fifo" | "socket" | "unknown";
 }
 
 interface MockFile extends File {
@@ -29,7 +29,7 @@ let cachedFileList: MockFile[] = [
 function generateRandomFiles(): MockFile {
   return Mock.mock({
     name: '@word',
-    type: '@pick(["file", "directory"])',
+    type: '@pick(["directory", "regular", "symlink", "block", "character", "fifo", "socket", "unknown"])',
   });
 }
 

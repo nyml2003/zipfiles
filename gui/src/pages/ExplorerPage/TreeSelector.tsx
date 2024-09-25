@@ -46,7 +46,7 @@ const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath }
         return {
           title: item.name,
           key: `${path}/${item.name}`,
-          isLeaf: item.type === 'file',
+          isLeaf: !(item.type === 'directory'),
         };
       });
       setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));

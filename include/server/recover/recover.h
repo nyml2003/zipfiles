@@ -1,5 +1,5 @@
-#ifndef ZIPFILES_RECOVER_H
-#define ZIPFILES_RECOVER_H
+#ifndef ZIPFILES_SERVER_RECOVER_H
+#define ZIPFILES_SERVER_RECOVER_H
 #include <filesystem>
 namespace fs = std::filesystem;
 namespace zipfiles::server {
