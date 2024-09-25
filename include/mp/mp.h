@@ -7,12 +7,30 @@
 #include <optional>
 #include <cstddef>
 namespace zipfiles::mp {
+/**
+ * @brief 最大消息长度= 2^16B = 64KB
+ */
 constexpr size_t MAX_MESSAGE_SIZE = (1 << 16);
+/**
+ * @brief 服务器端口
+ */
 constexpr size_t PORT = 8080;
+/**
+ * @brief API枚举
+ */
 enum class ApiType { GET_FILE_LIST = 0, GET_FILE };
 
+/**
+ * @brief 状态码
+ */
 enum class StatusCode { OK = 0, ERROR };
 
+/**
+ * @brief Jsonable接口
+ * @details 用于序列化和反序列化
+ * 继承该抽象类的类可以和Json::Value互相转换
+ * 从而可以通过转化为字符串，再转化为二进制流进行传输
+ */
 class Jsonable {
  public:
   Jsonable() = default;
@@ -27,6 +45,11 @@ class Jsonable {
 
 using JsonablePtr = std::shared_ptr<Jsonable>;
 
+/**
+ * @brief 请求DTO
+ * @details
+ * 请求数据传输对象，包含API类型和请求数据
+ */
 class Request : public Jsonable {
  public:
   explicit Request() = default;
@@ -65,6 +88,11 @@ class Request : public Jsonable {
 
 using RequestPtr = std::shared_ptr<Request>;
 
+/**
+ * @brief  响应DTO
+ * @details
+ * 响应数据传输对象，包含状态码和响应数据
+ */
 class Response : public Jsonable {
  public:
   explicit Response() = default;
@@ -103,24 +131,25 @@ class Response : public Jsonable {
 
 using ResponsePtr = std::shared_ptr<Response>;
 
+/**
+ * @brief 服务器套接字
+ * @details 用于接收请求和发送响应
+ */
 class ServerSocket {
  public:
   static ServerSocket& getInstance() {
-    try {
-      static ServerSocket instance;
-      return instance;
-    } catch (const std::exception& e) {
-      throw std::runtime_error(e.what());
-    }
+    static ServerSocket instance;
+    return instance;
   }
-  [[nodiscard]] bool receive(const RequestPtr& req) const;
-  [[nodiscard]] bool send(const ResponsePtr& res) const;
-  void acceptConnection();
+  [[nodiscard]] static bool receive(const RequestPtr& req);
+  [[nodiscard]] static bool send(const ResponsePtr& res);
+
+  static void acceptConnection();
   ServerSocket(const ServerSocket& other) = delete;
   ServerSocket& operator=(const ServerSocket& other) = delete;
   ServerSocket(ServerSocket&& other) noexcept = delete;
   ServerSocket& operator=(ServerSocket&& other) noexcept = delete;
-  [[nodiscard]] int getSocketFd() const;
+  [[nodiscard]] static int getServerFd();
 
  private:
   ServerSocket();
@@ -130,18 +159,18 @@ class ServerSocket {
   int addrlen;
 };
 
+/**
+ * @brief 客户端套接字
+ * @details 用于发送请求和接收响应
+ */
 class ClientSocket {
  public:
   static ClientSocket& getInstance() {
-    try {
-      static ClientSocket instance;
-      return instance;
-    } catch (const std::exception& e) {
-      throw std::runtime_error(e.what());
-    }
+    static ClientSocket instance;
+    return instance;
   }
-  [[nodiscard]] bool receive(const ResponsePtr& res) const;
-  [[nodiscard]] bool send(const RequestPtr& req) const;
+  [[nodiscard]] static bool receive(const ResponsePtr& res);
+  [[nodiscard]] static bool send(const RequestPtr& req);
   ClientSocket(const ClientSocket& other) = delete;
   ClientSocket& operator=(const ClientSocket& other) = delete;
   ClientSocket(ClientSocket&& other) noexcept = delete;

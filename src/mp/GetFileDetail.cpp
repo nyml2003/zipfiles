@@ -38,10 +38,8 @@ Json::Value GetFileDetailResponse::toJson() {
 void GetFileDetailResponse::fromJson(const Json::Value& json) {
   metadata.name = json["metadata"]["name"].asString();
   metadata.type = zipfiles::toFileType(json["metadata"]["type"].asString());
-  metadata.createTime =
-    toIso8601(toTm(json["metadata"]["updateTime"].asUInt64()));
-  metadata.updateTime =
-    toIso8601(toTm(json["metadata"]["updateTime"].asUInt64()));
+  metadata.createTime = toIso8601(json["metadata"]["createTime"].asUInt64());
+  metadata.updateTime = toIso8601(json["metadata"]["updateTime"].asUInt64());
   metadata.size = json["metadata"]["size"].asUInt64();
   metadata.owner = json["metadata"]["owner"].asString();
   metadata.group = json["metadata"]["group"].asString();

@@ -1,7 +1,5 @@
 #ifndef ZIPFILES_SERVER_DECRYPT_H
 #define ZIPFILES_SERVER_DECRYPT_H
-#include <filesystem>
-namespace fs = std::filesystem;
 namespace zipfiles::server {
 char* decrypt(char* src);
 }  // namespace zipfiles::server

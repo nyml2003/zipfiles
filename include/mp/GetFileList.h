@@ -3,7 +3,10 @@
 #include "common.h"
 #include "mp/mp.h"
 namespace zipfiles::mp {
-
+/**
+ * @brief 获取文件列表 请求DTO
+ *
+ */
 class GetFileListRequest : public Jsonable {
  public:
   explicit GetFileListRequest() = default;
@@ -18,6 +21,9 @@ class GetFileListRequest : public Jsonable {
 
 using GetFileListRequestPtr = std::shared_ptr<GetFileListRequest>;
 
+/**
+ * @brief 获取文件列表 响应DTO
+ */
 class GetFileListResponse : public Jsonable {
  public:
   explicit GetFileListResponse() = default;

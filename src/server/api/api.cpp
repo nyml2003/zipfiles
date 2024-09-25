@@ -3,7 +3,6 @@
 #include <vector>
 
 namespace zipfiles::server::api {
-mp::ServerSocket& serverSocket = mp::ServerSocket::getInstance();
 mp::GetFileListResponsePtr getFileList(
   const mp::GetFileListRequestPtr& getFileListRequest
 ) {
