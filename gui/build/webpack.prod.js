@@ -75,7 +75,7 @@ module.exports = merge(baseConfig, {
         `${path.join(__dirname, '../public')}/index.html`,
       ]),
       safelist: {
-        standard: [/^ant-/], // 过滤以ant-开头的类名，哪怕没用到也不删除
+          standard: [/^ant-/, /^hover:/, /^focus:/, /^active:/, /^disabled:/]
       },
     }),
     new CompressionPlugin({

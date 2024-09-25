@@ -1,4 +1,4 @@
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, HomeOutlined } from '@ant-design/icons';
 import TreeSelector from './TreeSelector';
 import { Breadcrumb, Button, Input, Splitter } from 'antd'; // Add this import statement
 import React, { useState } from 'react';
@@ -7,7 +7,7 @@ interface Props {}
 
 const ExplorerPage: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [currentPath, setCurrentPath] = useState<string>('app');
+  const [currentPath, setCurrentPath] = useState<string>('');
 
   const handleSelect = (paths: string[]) => {
     //按字典序排序
@@ -29,9 +29,9 @@ const ExplorerPage: React.FC = () => {
           }></Button>
         <Breadcrumb
           items={currentPath.split('/').reduce((acc, item, index, arr) => {
-            const path = arr.slice(0, index + 1).join('/');
+              const path = arr.slice(0, index + 1).join('/');
             acc.push({
-              title: item,
+              title: item === '' ? <HomeOutlined /> : item,
               onClick: () => setCurrentPath(path),
               className: 'cursor-pointer px-2 py-1 rounded hover:bg-gray-200',
             });

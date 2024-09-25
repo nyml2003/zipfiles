@@ -4,6 +4,7 @@ import useApi from '@/hooks/useApi';
 import { GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
 import { ApiEnum } from '@/apis';
 import { DownOutlined } from '@ant-design/icons';
+import LoadingSpinner from '@/components/LoadingSpinner';
 const { DirectoryTree } = Tree;
 
 interface DataNode {
@@ -18,8 +19,9 @@ interface Props {
   currentPath: string;
   setCurrentPath: (path: string) => void;
 }
-const api = useApi();
+
 const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath }) => {
+  const api = useApi();
   const [treeData, setTreeData] = useState<DataNode[]>([]);
   const [checkedKeys, setCheckedKeys] = useState<Key[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
@@ -106,7 +108,9 @@ const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath }
     }
   };
 
-  return (
+  return treeData.length === 0 ? (
+    <LoadingSpinner />
+  ) : (
     <DirectoryTree
       showLine
       checkable

@@ -20,27 +20,9 @@ interface MockFile extends File {
 // 全局变量来缓存嵌套的目录结构
 let cachedFileList: MockFile[] = [
   {
-    name: 'app',
+    name: '/',
     type: 'directory',
-    children: [
-      {
-        name: 'src',
-        type: 'directory',
-        children: [
-          {
-            name: 'apis',
-            type: 'directory',
-            children: [
-              {
-                name: 'GetFileList.ts',
-                type: 'file',
-                children: null,
-              },
-            ],
-          },
-        ],
-      },
-    ],
+    children: Array.from({ length: 15 }, () => generateRandomFiles()),
   },
 ];
 
@@ -48,26 +30,26 @@ function generateRandomFiles(): MockFile {
   return Mock.mock({
     name: '@word',
     type: '@pick(["file", "directory"])',
-    children() {
-      if (this.type === 'directory') {
-        return generateRandomFiles();
-      }
-      return null;
-    },
   });
 }
 
 // 递归查找函数
-function findFilesByPath(files: MockFile[], path: string[]): MockFile[] | null {
-  console.log(files, path);
+function findFilesByPath(
+  files: MockFile[],
+  targetPath: string,
+  currentPath: string,
+): MockFile[] | null {
+  //console.log('findFilesByPath', files, targetPath, currentPath);
   for (const file of files) {
-    const [currentPath, ...restPath] = path;
-    if (file.name === currentPath) {
+    const newPath = currentPath ? `${currentPath}/${file.name}` : file.name;
+    if (newPath === targetPath) {
+      if (!file.children) {
+        file.children = Array.from({ length: 15 }, () => generateRandomFiles());
+      }
       return file.children;
     }
-      if (file.children) {
-        console.log(file.children, restPath);
-      const result = findFilesByPath(file.children, restPath);
+    if (file.type === 'directory') {
+      const result = findFilesByPath(file.children || [], targetPath, newPath);
       if (result) {
         return result;
       }
@@ -78,6 +60,9 @@ function findFilesByPath(files: MockFile[], path: string[]): MockFile[] | null {
 
 export function mock(request: GetFileListRequest): GetFileListResponse {
   const { path } = request;
-  const files = findFilesByPath(cachedFileList, path.split('/'));
-  return { files: files || [] };
+  const files = findFilesByPath(cachedFileList, `/${path}`, '');
+  if (!files) {
+    return { files: [] };
+  }
+  return { files: files.map(file => ({ name: file.name, type: file.type })) };
 }

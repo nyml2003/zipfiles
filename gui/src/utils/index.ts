@@ -1,6 +1,7 @@
 export function selectEnvironment<T>(production: T, development: T) {
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.BASE_ENV === 'prod') {
     return production;
+  } else {
+    return development;
   }
-  return development;
 }

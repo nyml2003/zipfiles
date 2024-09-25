@@ -132,7 +132,7 @@ bool ServerSocket::receive(const RequestPtr& req) const {
     return false;
   }
   std::cout << "Received data: " << buffer.data() << std::endl;
-  Json::CharReaderBuilder reader;
+  static Json::CharReaderBuilder reader;
   Json::Value jsonData;
   std::string errs;
   std::istringstream stream(buffer.data());
@@ -144,7 +144,7 @@ bool ServerSocket::receive(const RequestPtr& req) const {
 }
 
 bool ServerSocket::send(const ResponsePtr& res) const {
-  Json::StreamWriterBuilder writer;
+  static Json::StreamWriterBuilder writer;
   std::string data = Json::writeString(writer, res->toJson());
   std::cout << "Sending response: " << data << std::endl;
   ::send(client_fd, data.c_str(), data.size(), 0);
@@ -177,7 +177,7 @@ ClientSocket::~ClientSocket() {
 }
 
 bool ClientSocket::send(const RequestPtr& req) const {
-  Json::StreamWriterBuilder writer;
+  static Json::StreamWriterBuilder writer;
   std::string data = Json::writeString(writer, req->toJson());
   std::cout << "Sending request: " << data << std::endl;
   ::send(sock, data.c_str(), data.size(), 0);
@@ -189,7 +189,7 @@ bool ClientSocket::receive(const ResponsePtr& res) const {
   ssize_t valread = read(sock, buffer.data(), MAX_MESSAGE_SIZE);
   std::cout << "Received data: " << buffer.data() << std::endl;
   if (valread > 0) {
-    Json::CharReaderBuilder reader;
+    static Json::CharReaderBuilder reader;
     Json::Value jsonData;
     std::string errs;
     std::istringstream stream(buffer.data());
