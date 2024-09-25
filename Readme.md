@@ -83,7 +83,7 @@ make
 
 1. 添加要备份的文件/目录，形成一个commit
 2. 为commit添加author，message，timestamp等信息（message成为commit的索引）
-3. 将所有目标文件压缩，加密，拼接，形成一个文件。同时将这些文件的目录信息，元信息打包成一个结构体，加在文件头
+3. 将所有目标文件打包，压缩，加密，形成一个文件，同时为了可以读取备份后的commit信息，所以额外生成一个目录文件来展示结构
 4. 将commit后形成的文件哈希并存储在一个隐藏文件夹中
 
 ### 恢复流程
@@ -104,25 +104,13 @@ graph LR
 项目的目录结构
 ```
 .
-├── build (cmake产物)
-├── demo
-├── include 
-│   ├── common.h
-│   ├── client (客户端)
-│   ├── mp (中间层)
-│   └── server (服务端)
-│       ├── backup (文件备份)
-│       ├── configure (配置)
-│       ├── crypto (加解密)
-│       ├── deflate (压缩解压)
-│       ├── pack (打包拆包)
-│       ├── recover (文件恢复)
-│       └── tools (工具类)
-├── lib
-├── src
+├── build
+├── gui
+├── include
 │   ├── client
 │   ├── mp
 │   └── server
+│       ├── api
 │       ├── backup
 │       ├── configure
 │       ├── crypto
@@ -130,14 +118,33 @@ graph LR
 │       ├── pack
 │       ├── recover
 │       └── tools
-└── tests (测试用)
-    └── unittest
+├── script
+├── src
+│   ├── client
+│   ├── mp
+│   └── server
+│       ├── api
+│       ├── backup
+│       ├── configure
+│       ├── crypto
+│       ├── deflate
+│       ├── pack
+│       ├── recover
+│       └── tools
+├── tests
+│   └── unittest
+│       └── server
+└── tools
 ```
 
+### 前后端的函数调用
+
+需要在前后端同时定义调用函数并实现（在api文件夹下）
+在中台定义DTO和序列化/反序列化器（为每一个函数）
 
 ### 压缩文件结构
 
-| 引导块 | 被压缩的文件头1 | 被压缩的文件1的字节流 | 被压缩的文件头2 | 被压缩的文件2的字节流   | …   |
+| 被压缩的文件头1 | 被压缩的文件1的字节流 | 被压缩的文件头2 | 被压缩的文件2的字节流   | …   |
 | ------ | --------------------- | --------------------- | --- | --- | --- |
 
 文件头包含了文件的元信息，例如大小等
