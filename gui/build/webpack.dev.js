@@ -14,10 +14,6 @@ const baseConfig = require('./webpack.base.js')
 // 在不需要刷新浏览器的前提下模块热更新,并且能够保留react组件的状态。
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin')
 
-const isMock = true // 是否mock数据
-// 引入mock.js
-const mock = require('../mock/index.js')
-
 // 合并公共配置,并添加开发环境配置
 module.exports = merge(baseConfig, {
   mode: 'development', // 开发模式,打包更加快速,省了代码优化步骤

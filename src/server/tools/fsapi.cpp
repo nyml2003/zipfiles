@@ -46,7 +46,7 @@ FileDetail getFileDetail(const fs::path& file) {
     .type = fs::status(file_path).type(),
     .createTime = toIso8601(file_stat.st_ctime),
     .updateTime = toIso8601(file_stat.st_mtime),
-    .size = fs::file_size(file_path),
+    .size = file_stat.st_size,
     .owner = pwd->pw_name,
     .group = grp->gr_name,
     .mode = file_stat.st_mode,

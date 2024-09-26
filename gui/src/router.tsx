@@ -1,9 +1,10 @@
 import { createHashRouter, Navigate, RouteObject } from 'react-router-dom';
-import EntryLayout from '@/layouts/EntryLayout';
-import NotFound from '@/components/NotFound';
-import Fallback from '@/components/Fallback';
 import { lazy, Suspense } from 'react';
 import React from 'react';
+const Fallback = lazy(() => import('@/components/Fallback'));
+
+const EntryLayout = lazy(() => import('@/layouts/EntryLayout'));
+const NotFound = lazy(() => import('@/components/NotFound'));
 const ExplorerPage = lazy(() => import('@/pages/ExplorerPage'));
 const IndexPage = lazy(() => import('@/pages/IndexPage'));
 
@@ -30,7 +31,7 @@ const routes: RouteObject[] = [
       },
       {
         path: '*',
-        element: <NotFound />,
+        element: fallbackWrapper(<NotFound />),
       },
     ],
   },

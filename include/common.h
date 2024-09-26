@@ -24,7 +24,7 @@ struct FileDetail {
   fs::file_type type;
   std::string createTime;
   std::string updateTime;
-  uintmax_t size;
+  __off_t size;
   std::string owner;
   std::string group;
   mode_t mode;
