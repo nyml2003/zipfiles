@@ -2,6 +2,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <iostream>
+
 namespace zipfiles::mp {
 
 Json::Value Request::toJson() {
@@ -79,7 +80,7 @@ void Response::setStatus(StatusCode status) {
 
 ServerSocket::ServerSocket()
   : server_fd(socket(AF_INET, SOCK_STREAM, 0)), client_fd(0), address{} {
-  if (server_fd == 0) {
+  if (server_fd == -1) {
     perror("socket failed");
     exit(EXIT_FAILURE);
   }
@@ -91,11 +92,13 @@ ServerSocket::ServerSocket()
 
   if (bind(server_fd, reinterpret_cast<struct sockaddr*>(&address), sizeof(address)) < 0) {
     perror("bind failed");
+    close(server_fd);
     exit(EXIT_FAILURE);
   }
 
   if (listen(server_fd, 3) < 0) {
     perror("listen");
+    close(server_fd);
     exit(EXIT_FAILURE);
   }
 }
@@ -104,27 +107,29 @@ ServerSocket::~ServerSocket() {
   close(server_fd);
 }
 
-auto ServerSocket::getSocketFd() const -> int {
-  return server_fd;
+int ServerSocket::getServerFd() {
+  return getInstance().server_fd;
 }
 
 void ServerSocket::acceptConnection() {
-  client_fd = accept(
-    server_fd, reinterpret_cast<struct sockaddr*>(&address),
-    reinterpret_cast<socklen_t*>(&addrlen)
+  getInstance().client_fd = accept(
+    getInstance().server_fd,
+    reinterpret_cast<struct sockaddr*>(&getInstance().address),
+    reinterpret_cast<socklen_t*>(&getInstance().addrlen)
   );
-  if (client_fd < 0) {
+  if (getInstance().client_fd < 0) {
     perror("accept");
     exit(EXIT_FAILURE);
   }
 }
 
-bool ServerSocket::receive(const RequestPtr& req) const {
+bool ServerSocket::receive(const RequestPtr& req) {
   std::array<char, MAX_MESSAGE_SIZE> buffer = {0};
-  ssize_t valread = read(client_fd, buffer.data(), buffer.size());
+  ssize_t valread =
+    read(getInstance().client_fd, buffer.data(), MAX_MESSAGE_SIZE);
   if (valread == 0) {
     std::cout << "Client disconnected." << std::endl;
-    close(client_fd);
+    close(getInstance().client_fd);
     return false;
   }
   if (valread < 0) {
@@ -143,11 +148,11 @@ bool ServerSocket::receive(const RequestPtr& req) const {
   return false;
 }
 
-bool ServerSocket::send(const ResponsePtr& res) const {
+bool ServerSocket::send(const ResponsePtr& res) {
   static Json::StreamWriterBuilder writer;
   std::string data = Json::writeString(writer, res->toJson());
   std::cout << "Sending response: " << data << std::endl;
-  ::send(client_fd, data.c_str(), data.size(), 0);
+  ::send(getInstance().client_fd, data.c_str(), data.size(), 0);
   return true;
 }
 
@@ -163,11 +168,13 @@ ClientSocket::ClientSocket()
 
   if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
     perror("Invalid address/ Address not supported");
+    close(sock);
     exit(EXIT_FAILURE);
   }
 
   if (connect(sock, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
     perror("Connection Failed");
+    close(sock);
     exit(EXIT_FAILURE);
   }
 }
@@ -176,17 +183,17 @@ ClientSocket::~ClientSocket() {
   close(sock);
 }
 
-bool ClientSocket::send(const RequestPtr& req) const {
+bool ClientSocket::send(const RequestPtr& req) {
   static Json::StreamWriterBuilder writer;
   std::string data = Json::writeString(writer, req->toJson());
   std::cout << "Sending request: " << data << std::endl;
-  ::send(sock, data.c_str(), data.size(), 0);
+  ::send(getInstance().sock, data.c_str(), data.size(), 0);
   return true;
 }
 
-bool ClientSocket::receive(const ResponsePtr& res) const {
+bool ClientSocket::receive(const ResponsePtr& res) {
   std::array<char, MAX_MESSAGE_SIZE> buffer = {0};
-  ssize_t valread = read(sock, buffer.data(), MAX_MESSAGE_SIZE);
+  ssize_t valread = read(getInstance().sock, buffer.data(), MAX_MESSAGE_SIZE);
   std::cout << "Received data: " << buffer.data() << std::endl;
   if (valread > 0) {
     static Json::CharReaderBuilder reader;

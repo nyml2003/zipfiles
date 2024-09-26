@@ -18,9 +18,10 @@ interface Props {
   onSelect: (path: string[]) => void;
   currentPath: string;
   setCurrentPath: (path: string) => void;
+  setCurrentFile: (file: string) => void;
 }
 
-const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath }) => {
+const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath, setCurrentFile }) => {
   const api = useApi();
   const [treeData, setTreeData] = useState<DataNode[]>([]);
   const [checkedKeys, setCheckedKeys] = useState<Key[]>([]);
@@ -106,6 +107,7 @@ const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath }
     if (!info.node.isLeaf) {
       setCurrentPath(selectedKeys[0] as string);
     }
+    setCurrentFile(selectedKeys[0] as string);
   };
 
   return treeData.length === 0 ? (
