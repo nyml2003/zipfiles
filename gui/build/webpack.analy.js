@@ -1,11 +1,3 @@
-/*
- * @Author: shawnxiao 597035529@qq.com
- * @Date: 2022-11-16 23:58:13
- * @LastEditors: shawnxiao 597035529@qq.com
- * @LastEditTime: 2022-11-17 00:32:52
- * @FilePath: \react\webpack5-ts-react18\build\webpack.analy.js
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
 const prodConfig = require('./webpack.prod.js'); // 引入打包配置
 const SpeedMeasurePlugin = require('speed-measure-webpack-plugin'); // 引入webpack打包速度分析插件
 const smp = new SpeedMeasurePlugin(); // 实例化分析插件

@@ -39,7 +39,7 @@ struct FileDetail {
   // 修改时间
   std::string updateTime;
   // 大小
-  uintmax_t size;
+  __off_t size;
   // 创建用户
   std::string owner;
   // 用户属于的用户组

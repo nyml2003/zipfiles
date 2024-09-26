@@ -1,31 +1,10 @@
-/*
- * @Author: shawnxiao 597035529@qq.com
- * @Date: 2022-11-15 23:05:22
- * @LastEditors: shawnxiao 597035529@qq.com
- * @LastEditTime: 2022-11-18 01:36:54
- * @FilePath: \react\webpack5-ts-react18\build\webpack.base.js
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const webpack = require('webpack');
 const WebpackBar = require('webpackbar');
 const FriendlyErrorsWebpackPlugin = require('@nuxt/friendly-errors-webpack-plugin');
-
-const env = require('./env.js');
-const isDev = process.env.NODE_ENV === 'development'; // // 是否是开发模式
-
-// 获取自定义变量集
-const oriEnv = env[process.env.BASE_ENV];
-Object.assign(oriEnv, {
-  BASE_ENV: process.env.BASE_ENV,
-});
-const defineEnv = {};
-for (const key in oriEnv) {
-  defineEnv[`process.env.${key}`] = JSON.stringify(oriEnv[key]);
-}
-
+const selectEnv = require('./utils');
 module.exports = {
   entry: {
     index: path.join(__dirname, '../src/index.tsx'),
@@ -37,7 +16,7 @@ module.exports = {
     filename: 'static/js/[name].[contenthash].js', // 每个输出js的名称
     path: path.join(__dirname, '../dist'), // 打包结果输出路径
     clean: true, // webpack4需要配置clean-webpack-plugin来删除dist文件,webpack5内置了
-    publicPath: isDev ? '/' : './', // 打包后文件的公共前缀路径
+    publicPath: selectEnv('/', './'), // 根据环境选择路径
   },
   // 开启webpack持久化存储缓存
   cache: {
@@ -49,7 +28,7 @@ module.exports = {
         test: /\.css$/, //匹配所有的 css 文件
         enforce: 'pre',
         use: [
-          isDev ? 'style-loader' : MiniCssExtractPlugin.loader, // // 开发环境使用style-looader,打包模式抽离css
+          selectEnv('style-loader', MiniCssExtractPlugin.loader),
           'css-loader',
           'postcss-loader',
         ],
@@ -59,16 +38,17 @@ module.exports = {
         enforce: 'pre',
         include: [path.resolve(__dirname, '../src')],
         use: [
-          isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
+          selectEnv('style-loader', MiniCssExtractPlugin.loader),
           'css-loader',
           'postcss-loader',
-          // 'less-loader'
-          // 如果使用antd，引入less@import '~antd/dist/antd.less'; 修改less-loader
           {
             loader: 'less-loader',
             options: {
               lessOptions: {
                 javascriptEnabled: true,
+                // modifyVars: {
+                //   hack: `true; @import "${path.resolve(__dirname, '../src/styles/antd.less')}";`,
+                // },
               },
             },
           },
@@ -82,7 +62,7 @@ module.exports = {
           {
             loader: 'thread-loader',
             options: {
-              workers: 3, // 开启几个 worker 进程来处理打包，默认是 os.cpus().length - 1
+              workers: 7, // 开启几个 worker 进程来处理打包，默认是 os.cpus().length - 1
             },
           },
           'babel-loader',
@@ -131,6 +111,11 @@ module.exports = {
       },
     ],
   },
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+    },
+  },
   resolve: {
     alias: {
       '@': path.join(__dirname, '../src'),
@@ -139,19 +124,19 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title: 'webpack5-ts-react18',
+      title: 'zipfiles',
       template: path.resolve(__dirname, '../public/index.html'), // 模板取定义root节点的模板
       inject: true, // 自动注入静态资源
       filename: 'index.html',
     }),
     new webpack.DefinePlugin({
-        'process.env': JSON.stringify({
-            BASE_ENV: process.env.BASE_ENV,
+      'process.env': JSON.stringify({
+        BASE_ENV: process.env.BASE_ENV,
       }),
     }),
     // 进度条
     new WebpackBar({
-      name: 'webpack5-ts-react18',
+      name: 'zipfiles',
       // react 蓝
       color: '#61dafb',
       basic: false, // 默认true，启用一个简单的日志报告器

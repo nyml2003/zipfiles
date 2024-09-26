@@ -89,7 +89,7 @@ const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath, 
   };
 
   const onLoadData = async (treeNode: any) => {
-    console.log('onLoadData', treeNode);
+    
     const { key, children } = treeNode;
     const targetNode = treeData.find(item => item.key === key);
     if (targetNode && targetNode.children) {

@@ -39,7 +39,6 @@ function findFilesByPath(
   targetPath: string,
   currentPath: string,
 ): MockFile[] | null {
-  //console.log('findFilesByPath', files, targetPath, currentPath);
   for (const file of files) {
     const newPath = currentPath ? `${currentPath}/${file.name}` : file.name;
     if (newPath === targetPath) {

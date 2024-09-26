@@ -16,10 +16,12 @@ const TerserPlugin = require('terser-webpack-plugin'); //压缩js
 const globAll = require('glob-all');
 const { PurgeCSSPlugin } = require('purgecss-webpack-plugin'); // // 清理无用css
 const CompressionPlugin = require('compression-webpack-plugin');
+const WebpackCdnPlugin = require('webpack-cdn-plugin');
 
 module.exports = merge(baseConfig, {
   mode: 'production', // 生产模式,会开启tree-shaking和压缩代码,以及其他优化
   optimization: {
+    usedExports: true, // tree-shaking
     minimizer: [
       new CssMinimizerPlugin(), // 压缩css
       new TerserPlugin({
@@ -84,6 +86,13 @@ module.exports = merge(baseConfig, {
       algorithm: 'gzip', // 压缩格式,默认是gzip
       threshold: 10240, // 只有大小大于该值的资源会被处理。默认值是 10k
       minRatio: 0.8, // 压缩率,默认值是 0.8
+    }),
+    new WebpackCdnPlugin({
+      modules: [
+        { name: 'react', var: 'React', path: 'umd/react.production.min.js' },
+        { name: 'react-dom', var: 'ReactDOM', path: 'umd/react-dom.production.min.js' },
+      ],
+      publicPath: '/node_modules'
     }),
   ],
 });
