@@ -6,6 +6,7 @@
 #include <csignal>
 #include "server/api/api.h"
 #include "mp/mp.h"
+#include "server/socket/socket.h"
 
 namespace zipfiles::server {
 
@@ -51,7 +52,7 @@ void daemonize() {
 void handleClient() {
   mp::RequestPtr request = std::make_shared<mp::Request>();
   try {
-    while (mp::ServerSocket::receive(request)) {
+    while (ServerSocket::receive(request)) {
       if (request->is(mp::ApiType::GET_FILE_LIST)) {
         mp::ResponsePtr response = std::make_shared<mp::Response>();
         mp::GetFileListRequestPtr getFileListRequest =
@@ -61,7 +62,7 @@ void handleClient() {
           api::getFileList(getFileListRequest);
         response->setStatus(mp::StatusCode::OK);
         response->setPayload(getFileListResponse);
-        if (!mp::ServerSocket::send(response)) {
+        if (!ServerSocket::send(response)) {
           std::cerr << "Failed to send response." << std::endl;
         }
       }
@@ -74,7 +75,7 @@ void handleClient() {
           api::getFileDetail(getFileDetailRequest);
         response->setStatus(mp::StatusCode::OK);
         response->setPayload(getFileDetailResponse);
-        if (!mp::ServerSocket::send(response)) {
+        if (!ServerSocket::send(response)) {
           std::cerr << "Failed to send response." << std::endl;
         }
       }
@@ -85,7 +86,7 @@ void handleClient() {
 }
 
 void run() {
-  int serverFd = mp::ServerSocket::getServerFd();
+  int serverFd = ServerSocket::getServerFd();
 
   fd_set readfds;
   std::vector<std::future<void>> futures;  // 用于存储 future 对象
@@ -101,7 +102,7 @@ void run() {
     }
 
     if (FD_ISSET(serverFd, &readfds)) {
-      mp::ServerSocket::acceptConnection();
+      ServerSocket::acceptConnection();
       futures.emplace_back(std::async(std::launch::async, handleClient));
       std::cout << "Waiting for new client connection..." << std::endl;
     }

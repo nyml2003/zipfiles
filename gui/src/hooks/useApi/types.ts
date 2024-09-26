@@ -7,7 +7,10 @@ export interface ResponseWrapper {
   timestamp: number;
   apiEnum: ApiEnum;
   data?: any;
-  type: 'resolve' | 'reject';
+  // resolve: 返回数据
+  // reject: 返回错误信息
+  // fatal: 严重错误
+  type: 'resolve' | 'reject' | 'fatal';
   message: string;
 }
 

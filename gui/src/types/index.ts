@@ -13,5 +13,7 @@ export class IngoreError extends Error {
     super('IngoreError');
   }
 }
-
-
+export enum LoadingState {
+  Loading,
+  Done,
+}

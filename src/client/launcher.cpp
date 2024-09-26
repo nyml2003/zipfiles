@@ -6,8 +6,8 @@
 #include <libgen.h>
 
 namespace zipfiles::client::launcher {
-
-void loadDistUri(WebKitWebView* webView) {
+WebKitWebView* webView = nullptr;
+void loadDistUri() {
   std::array<char, EXE_PATH_SIZE> exe_path = {0};
   ssize_t len =
     readlink("/proc/self/exe", exe_path.data(), exe_path.size() - 1);
@@ -21,12 +21,14 @@ void loadDistUri(WebKitWebView* webView) {
   webkit_web_view_load_uri(webView, ("file://" + dist_path).c_str());
 }
 
-void bindJS(WebKitUserContentManager* manager, WebKitWebView* webView) {
-  std::array<Handler, 4> handlers = {
-    {{"sum", G_CALLBACK(view::sum)},
-     {"log", G_CALLBACK(view::log)},
-     {"getFileList", G_CALLBACK(view::getFileList)},
-     {"getFileDetail", G_CALLBACK(view::getFileDetail)}}};
+void bindJS(WebKitUserContentManager* manager) {
+  // std::array<Handler, 4> handlers = {
+  //   {{"sum", G_CALLBACK(view::sum)},
+  //    {"log", G_CALLBACK(view::log)},
+  //    {"getFileList", G_CALLBACK(view::getFileList)},
+  //    {"getFileDetail", G_CALLBACK(view::getFileDetail)}}};
+  std::array<Handler, 1> handlers = {
+    {{"getFileList", G_CALLBACK(view::getFileList)}}};
 
   for (const auto& handler : handlers) {
     webkit_user_content_manager_register_script_message_handler(
@@ -39,7 +41,7 @@ void bindJS(WebKitUserContentManager* manager, WebKitWebView* webView) {
   }
 }
 
-GtkWidget* createWindow(WebKitWebView* webView) {
+GtkWidget* createWindow() {
   GtkWidget* window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_default_size(GTK_WINDOW(window), WINDOW_WIDTH, WINDOW_HEIGHT);
   gtk_window_set_resizable(GTK_WINDOW(window), TRUE);
@@ -51,11 +53,11 @@ GtkWidget* createWindow(WebKitWebView* webView) {
 void Launcher::run(int argc, char** argv) {
   gtk_init(&argc, &argv);
   WebKitUserContentManager* manager = webkit_user_content_manager_new();
-  WebKitWebView* webView =
+  webView =
     WEBKIT_WEB_VIEW(webkit_web_view_new_with_user_content_manager(manager));
-  loadDistUri(webView);
-  bindJS(manager, webView);
-  GtkWidget* window = createWindow(webView);
+  loadDistUri();
+  bindJS(manager);
+  GtkWidget* window = createWindow();
   gtk_widget_show_all(window);
   gtk_main();
 }

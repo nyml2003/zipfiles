@@ -5,6 +5,8 @@ import { GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
 import { ApiEnum } from '@/apis';
 import { DownOutlined } from '@ant-design/icons';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { LoadingState } from '@/types';
+import NoMoreData from '@/components/NoMoreData';
 const { DirectoryTree } = Tree;
 
 interface DataNode {
@@ -21,11 +23,17 @@ interface Props {
   setCurrentFile: (file: string) => void;
 }
 
-const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath, setCurrentFile }) => {
+const TreeSelector: React.FC<Props> = ({
+  onSelect,
+  currentPath,
+  setCurrentPath,
+  setCurrentFile,
+}) => {
   const api = useApi();
   const [treeData, setTreeData] = useState<DataNode[]>([]);
   const [checkedKeys, setCheckedKeys] = useState<Key[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
+  const [loading, setLoading] = useState<LoadingState>(LoadingState.Done);
 
   useEffect(() => {
     // 清空已有数据
@@ -39,6 +47,7 @@ const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath, 
   }, [currentPath]);
 
   const handleGetFileList = async (path: string) => {
+    setLoading(LoadingState.Loading);
     try {
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
         path,
@@ -61,6 +70,7 @@ const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath, 
     } catch (err) {
       console.error(err);
     }
+    setLoading(LoadingState.Done);
   };
 
   const updateTreeData = (
@@ -89,7 +99,6 @@ const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath, 
   };
 
   const onLoadData = async (treeNode: any) => {
-    
     const { key, children } = treeNode;
     const targetNode = treeData.find(item => item.key === key);
     if (targetNode && targetNode.children) {
@@ -110,24 +119,31 @@ const TreeSelector: React.FC<Props> = ({ onSelect, currentPath, setCurrentPath, 
     setCurrentFile(selectedKeys[0] as string);
   };
 
-  return treeData.length === 0 ? (
-    <LoadingSpinner />
-  ) : (
-    <DirectoryTree
-      showLine
-      checkable
-      multiple
-      switcherIcon={<DownOutlined />}
-      loadData={onLoadData}
-      treeData={treeData}
-      checkedKeys={checkedKeys}
-      onCheck={handleCheck}
-      onSelect={handleSelect}
-      expandedKeys={expandedKeys}
-      onExpand={setExpandedKeys}
-      className='whitespace-nowrap bg-gray-100 flex-1'
-    />
-  );
+  const render = () => {
+    if (loading === LoadingState.Loading) {
+      return <LoadingSpinner />;
+    } else if (loading === LoadingState.Done && treeData.length === 0) {
+      return <NoMoreData />;
+    }
+    return (
+      <DirectoryTree
+        showLine
+        checkable
+        multiple
+        switcherIcon={<DownOutlined />}
+        loadData={onLoadData}
+        treeData={treeData}
+        checkedKeys={checkedKeys}
+        onCheck={handleCheck}
+        onSelect={handleSelect}
+        expandedKeys={expandedKeys}
+        onExpand={setExpandedKeys}
+        className='whitespace-nowrap bg-gray-100 flex-1'
+      />
+    );
+  };
+
+  return render();
 };
 
 export default TreeSelector;
