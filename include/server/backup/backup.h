@@ -28,20 +28,5 @@ void backup_file(const BackupParams& params);
  * @param params 备份参数
  */
 void backup_directory(const BackupParams& params);
-/**
- * @brief 恢复
- * @param params 备份参数
- */
-void restore(const BackupParams& params);
-/**
- * @brief 恢复文件
- * @param params 备份参数
- */
-void restore_file(const BackupParams& params);
-/**
- * @brief 恢复目录
- * @param params 备份参数
- */
-void restore_directory(const BackupParams& params);
 }  // namespace zipfiles::server
 #endif  // !ZIPFILES_BACKUP_H

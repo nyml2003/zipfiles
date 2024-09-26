@@ -52,10 +52,10 @@ make
   - [ ] 选定备份文件/目录(add path)
   - [ ] 合并成commit(transaction)
   - [ ] 备份文件(backup files)
-- [ ] 数据还原模块(data-recover)
+- [ ] 数据还原模块(data-restore)
   - [ ] 选定还原路径(target)
   - [ ] 选定要还原的commit
-  - [ ] 还原(recover)
+  - [ ] 还原(restore)
 - [ ] 数据处理模块(data-processing)
   - [ ] 数据打包(pack)
   - [ ] 数据解包(unpack)
@@ -116,7 +116,7 @@ graph LR
 │       ├── crypto
 │       ├── deflate
 │       ├── pack
-│       ├── recover
+│       ├── restore
 │       └── tools
 ├── script
 ├── src
@@ -129,7 +129,7 @@ graph LR
 │       ├── crypto
 │       ├── deflate
 │       ├── pack
-│       ├── recover
+│       ├── restore
 │       └── tools
 ├── tests
 │   └── unittest
