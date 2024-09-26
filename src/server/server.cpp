@@ -1,15 +1,16 @@
 #include <iostream>
-#include <vector>
-#include <future>
-#include <sys/select.h>
 #include <unistd.h>
 #include <csignal>
-#include "server/api/api.h"
-#include "mp/mp.h"
+
+#include "server/acceptor.h"
+#include "server/handler.h"
 
 namespace zipfiles::server {
 
-// 守护进程初始化
+/**
+ * @brief 守护进程初始化函数
+ * ? 待使用
+ */
 void daemonize() {
   pid_t pid = fork();
   if (pid < 0) {
@@ -48,92 +49,11 @@ void daemonize() {
   close(STDERR_FILENO);
 }
 
-void handleClient() {
-  mp::RequestPtr request = std::make_shared<mp::Request>();
-
-  try {
-    while (mp::ServerSocket::receive(request)) {
-
-      if (request->is(mp::ApiType::GET_FILE_LIST)) {
-        mp::ResponsePtr response = std::make_shared<mp::Response>();
-
-        mp::GetFileListRequestPtr getFileListRequest =
-          std::make_shared<mp::GetFileListRequest>();
-
-        getFileListRequest->fromJson(request->getPayload());
-
-        mp::GetFileListResponsePtr getFileListResponse =
-          api::getFileList(getFileListRequest);
-
-        response->setStatus(mp::StatusCode::OK);
-
-        response->setPayload(getFileListResponse);
-
-        if (!mp::ServerSocket::send(response)) {
-          std::cerr << "Failed to send response." << std::endl;
-        }
-      }
-
-      if (request->is(mp::ApiType::GET_FILE_DETAIL)) {
-
-        mp::ResponsePtr response = std::make_shared<mp::Response>();
-
-        mp::GetFileDetailRequestPtr getFileDetailRequest =
-          std::make_shared<mp::GetFileDetailRequest>();
-
-        getFileDetailRequest->fromJson(request->getPayload());
-
-        mp::GetFileDetailResponsePtr getFileDetailResponse =
-          api::getFileDetail(getFileDetailRequest);
-        
-        response->setStatus(mp::StatusCode::OK);
-
-        response->setPayload(getFileDetailResponse);
-
-        if (!mp::ServerSocket::send(response)) {
-          std::cerr << "Failed to send response." << std::endl;
-        }
-      }
-      
-    }
-  } catch (const std::exception& e) {
-
-    std::cerr << e.what() << std::endl;
-
-  }
-}
-
-void run() {
-  int serverFd = mp::ServerSocket::getServerFd();
-
-  fd_set readfds;
-  std::vector<std::future<void>> futures;  // 用于存储 future 对象
-
-  while (true) {
-    FD_ZERO(&readfds);
-    FD_SET(serverFd, &readfds);
-
-    int activity = select(serverFd + 1, &readfds, nullptr, nullptr, nullptr);
-    if (activity < 0) {
-      std::cerr << "Select error" << std::endl;
-      break;
-    }
-
-    if (FD_ISSET(serverFd, &readfds)) {
-      mp::ServerSocket::acceptConnection();
-
-      futures.emplace_back(std::async(std::launch::async, handleClient));
-
-      std::cout << "Waiting for new client connection..." << std::endl;
-      
-    }
-  }
-}
-
 }  // namespace zipfiles::server
 
 int main() {
   // zipfiles::server::daemonize();  // 初始化守护进程
-  zipfiles::server::run();
+  zipfiles::server::doAccept();
+  
   return 0;
 }

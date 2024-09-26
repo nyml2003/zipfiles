@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <filesystem>
 #include <vector>
+#include <sys/select.h>
 
 namespace zipfiles {
 template <class... Ts>
