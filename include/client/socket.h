@@ -14,6 +14,7 @@ class ClientSocket {
   }
   [[nodiscard]] static bool receive(const mp::ResponsePtr& res);
   [[nodiscard]] static bool send(const mp::RequestPtr& req);
+  static void reconnect();
   ClientSocket(const ClientSocket& other) = delete;
   ClientSocket& operator=(const ClientSocket& other) = delete;
   ClientSocket(ClientSocket&& other) noexcept = delete;

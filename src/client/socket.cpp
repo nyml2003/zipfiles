@@ -59,20 +59,62 @@ ClientSocket::~ClientSocket() {
   close(sock);
 }
 
+void ClientSocket::reconnect() {
+  // 关闭旧的 socket
+  close(getInstance().sock);
+
+  // 创建新的 socket 并重新连接
+  getInstance().sock = ::socket(AF_INET, SOCK_STREAM, 0);
+  if (getInstance().sock < 0) {
+    throw std::runtime_error("Failed to create socket");
+  }
+
+  int retries = 0;
+  const int max_retries = 5;
+  while (retries < max_retries) {
+    if (connect(getInstance().sock, reinterpret_cast<struct sockaddr*>(&(getInstance().serv_addr)), sizeof(getInstance().serv_addr)) == 0) {
+      std::cout << "Reconnected to the server." << std::endl;
+      return;
+    }
+    retries++;
+    std::this_thread::sleep_for(std::chrono::seconds(1));  // 等待一段时间后重试
+  }
+
+  throw std::runtime_error("Failed to reconnect to the server");
+}
+
 bool ClientSocket::send(const mp::RequestPtr& req) {
   static Json::StreamWriterBuilder writer;
   std::string data = Json::writeString(writer, req->toJson());
   std::cout << "Sending request: " << data << std::endl;
   ssize_t bytesSent = ::send(getInstance().sock, data.c_str(), data.size(), 0);
+
   if (bytesSent == -1) {
-    std::cerr << "Failed to send request: " << strerror(errno) << std::endl;
-    if (errno == ECONNREFUSED) {
-      std::cerr << "Connection refused. Please check if the server is running "
-                   "and reachable."
-                << std::endl;
+    if (errno == EPIPE) {  // 检测到 "Broken pipe" 错误
+      std::cerr
+        << "Failed to send request: Broken pipe. Attempting to reconnect..."
+        << std::endl;
+      close(getInstance().sock);
+      try {
+        reconnect();  // 尝试重新连接
+        bytesSent = ::send(
+          getInstance().sock, data.c_str(), data.size(), 0
+        );  // 重新发送请求
+        if (bytesSent == -1) {
+          std::cerr << "Failed to send request after reconnecting."
+                    << std::endl;
+          return false;
+        }
+      } catch (const std::exception& e) {
+        std::cerr << "Reconnection failed: " << e.what() << std::endl;
+        return false;
+      }
+    } else {
+      std::cerr << "Failed to send request: " << strerror(errno) << std::endl;
+      return false;
     }
-    return false;
   }
+
   return true;
 }
 
