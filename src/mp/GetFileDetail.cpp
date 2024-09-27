@@ -1,4 +1,5 @@
 #include "mp/GetFileDetail.h"
+#include <iostream>
 #include "utils.h"
 
 namespace zipfiles::mp {
@@ -25,7 +26,7 @@ Json::Value GetFileDetailResponse::toJson() {
   Json::Value json;
   json["metadata"] = Json::Value(Json::objectValue);
   json["metadata"]["name"] = metadata.name;
-  json["metadata"]["type"] = zipfiles::toString(metadata.type);
+  json["metadata"]["type"] = toDouble(metadata.type);
   json["metadata"]["createTime"] = metadata.createTime;
   json["metadata"]["updateTime"] = metadata.updateTime;
   json["metadata"]["owner"] = metadata.owner;
@@ -36,11 +37,12 @@ Json::Value GetFileDetailResponse::toJson() {
 }
 
 void GetFileDetailResponse::fromJson(const Json::Value& json) {
+  std::cout << json << std::endl;
   metadata.name = json["metadata"]["name"].asString();
-  metadata.type = zipfiles::toFileType(json["metadata"]["type"].asString());
-  metadata.createTime = toIso8601(json["metadata"]["createTime"].asUInt64());
-  metadata.updateTime = toIso8601(json["metadata"]["updateTime"].asUInt64());
-  metadata.size = json["metadata"]["size"].asUInt64();
+  metadata.type = toFileType(json["metadata"]["type"].asDouble());
+  metadata.createTime = json["metadata"]["createTime"].asString();
+  metadata.updateTime = json["metadata"]["updateTime"].asString();
+  metadata.size = static_cast<__off_t>(json["metadata"]["size"].asUInt64());
   metadata.owner = json["metadata"]["owner"].asString();
   metadata.group = json["metadata"]["group"].asString();
   metadata.mode = json["metadata"]["mode"].asUInt();

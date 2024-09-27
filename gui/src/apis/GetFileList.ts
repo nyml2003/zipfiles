@@ -29,7 +29,7 @@ let cachedFileList: MockFile[] = [
 function generateRandomFiles(): MockFile {
   return Mock.mock({
     name: '@word',
-    type: '@pick(["directory", "regular", "symlink", "block", "character", "fifo", "socket", "unknown"])',
+    type: '@pick(["directory", "regular"])',
   });
 }
 
@@ -43,7 +43,7 @@ function findFilesByPath(
     const newPath = currentPath ? `${currentPath}/${file.name}` : file.name;
     if (newPath === targetPath) {
       if (!file.children) {
-        file.children = Array.from({ length: 15 }, () => generateRandomFiles());
+        file.children = Array.from({ length: 0 }, () => generateRandomFiles());
       }
       return file.children;
     }

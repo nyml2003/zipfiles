@@ -131,57 +131,5 @@ class Response : public Jsonable {
 
 using ResponsePtr = std::shared_ptr<Response>;
 
-/**
- * @brief 服务器套接字
- * @details 用于接收请求和发送响应
- */
-class ServerSocket {
- public:
-  static ServerSocket& getInstance() {
-    static ServerSocket instance;
-    return instance;
-  }
-  [[nodiscard]] static bool receive(const RequestPtr& req);
-  [[nodiscard]] static bool send(const ResponsePtr& res);
-
-  static void acceptConnection();
-  ServerSocket(const ServerSocket& other) = delete;
-  ServerSocket& operator=(const ServerSocket& other) = delete;
-  ServerSocket(ServerSocket&& other) noexcept = delete;
-  ServerSocket& operator=(ServerSocket&& other) noexcept = delete;
-  [[nodiscard]] static int getServerFd();
-
- private:
-  ServerSocket();
-  ~ServerSocket();
-  int server_fd, client_fd;
-  struct sockaddr_in address;
-  int addrlen;
-};
-
-/**
- * @brief 客户端套接字
- * @details 用于发送请求和接收响应
- */
-class ClientSocket {
- public:
-  static ClientSocket& getInstance() {
-    static ClientSocket instance;
-    return instance;
-  }
-  [[nodiscard]] static bool receive(const ResponsePtr& res);
-  [[nodiscard]] static bool send(const RequestPtr& req);
-  ClientSocket(const ClientSocket& other) = delete;
-  ClientSocket& operator=(const ClientSocket& other) = delete;
-  ClientSocket(ClientSocket&& other) noexcept = delete;
-  ClientSocket& operator=(ClientSocket&& other) noexcept = delete;
-
- private:
-  ClientSocket();
-  ~ClientSocket();
-  int sock;
-  struct sockaddr_in serv_addr;
-};
-
 }  // namespace zipfiles::mp
 #endif  // ! ZIPFILES_MQ_TYPE_H

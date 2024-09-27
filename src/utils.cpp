@@ -1,7 +1,6 @@
 #include "utils.h"
 #include <string>
 #include <unordered_map>
-
 namespace zipfiles {
 std::string toString(const fs::file_type& type) {
   static const std::unordered_map<fs::file_type, std::string> fileTypeMap = {
@@ -40,11 +39,17 @@ fs::file_type toFileType(const std::string& type) {
   if (it != fileTypeMap.end()) {
     return it->second;
   }
-  throw std::invalid_argument("Unknown file type");
+  throw std::invalid_argument("Unknown file type: " + type);
 }
 
 fs::file_type toFileType(const fs::directory_entry& entry) {
   return entry.symlink_status().type();
+}
+double toDouble(const fs::file_type& type) {
+  return static_cast<double>(static_cast<signed char>(type));
+}
+fs::file_type toFileType(const double& type) {
+  return static_cast<fs::file_type>(static_cast<signed char>(type));
 }
 
 std::string toIso8601(time_t timestamp) {

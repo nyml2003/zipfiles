@@ -26,6 +26,8 @@ constexpr int WINDOW_HEIGHT = 600;
  */
 constexpr const char* DIST_FILE = "/dist/index.html";
 
+extern WebKitWebView* webView;
+
 /**
  * @brief 消息处理器
  * @details 消息名称和回调函数
@@ -38,17 +40,20 @@ struct Handler {
 /**
  * @brief 加载前端页面
  * @details 从可执行文件路径中获取前端打包文件路径并加载
- * @param webView
  */
-void loadDistUri(WebKitWebView* webView);
+void loadDistUri();
 /**
  * @brief 绑定JS消息处理器
  * @details 绑定JS消息处理器到WebView
  * @param manager
- * @param webView
  */
-void bindJS(WebKitUserContentManager* manager, WebKitWebView* webView);
-GtkWidget* createWindow(WebKitWebView* webView);
+void bindJS(WebKitUserContentManager* manager);
+/**
+ * @brief 创建窗体
+ * @details 创建一个窗体并添加WebView
+ * @return GtkWidget* 窗体指针
+ */
+GtkWidget* createWindow();
 /**
  * @brief 启动器
  * @details 启动前端页面

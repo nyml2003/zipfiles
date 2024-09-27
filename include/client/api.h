@@ -1,5 +1,6 @@
 #ifndef ZIPFILE_CLIENT_API_H
 #define ZIPFILE_CLIENT_API_H
+#include <future>
 #include "mp/GetFileList.h"
 #include "mp/GetFileDetail.h"
 namespace zipfiles::client::api {
@@ -9,7 +10,8 @@ namespace zipfiles::client::api {
  * @param request
  * @return mp::GetFileListResponsePtr
  */
-mp::GetFileListResponsePtr getFileList(const mp::GetFileListRequestPtr& request
+std::future<mp::GetFileDetailResponsePtr> getFileDetailAsync(
+  const mp::GetFileDetailRequestPtr& getFileDetailRequest
 );
 /**
  * @brief 获取文件详情
@@ -17,8 +19,8 @@ mp::GetFileListResponsePtr getFileList(const mp::GetFileListRequestPtr& request
  * @param request
  * @return mp::GetFileDetailResponsePtr
  */
-mp::GetFileDetailResponsePtr getFileDetail(
-  const mp::GetFileDetailRequestPtr& request
+std::future<mp::GetFileListResponsePtr> getFileListAsync(
+  const mp::GetFileListRequestPtr& getFileListRequest
 );
 }  // namespace zipfiles::client::api
 
