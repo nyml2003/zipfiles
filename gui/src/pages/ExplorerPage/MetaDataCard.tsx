@@ -1,5 +1,5 @@
 import { ApiEnum } from '@/apis';
-import { GetFileDetailRequest, GetFileDetailResponse } from '@/apis/GetFileDetail';
+import { FileTypeToString, GetFileDetailRequest, GetFileDetailResponse } from '@/apis/GetFileDetail';
 import useApi from '@/hooks/useApi';
 import React from 'react';
 import { useEffect, useState } from 'react';
@@ -31,7 +31,7 @@ const MetaDataCard: React.FC<Props> = ({ currentFile }) => {
         <div>
           <p> 路径: {metadata.path}</p>
           <p>文件名: {metadata.name}</p>
-          <p>文件类型: {metadata.type}</p>
+          <p>文件类型: {FileTypeToString(metadata.type)}</p>
           <p>创建时间: {metadata.createTime.toString()}</p>
           <p>更新时间: {metadata.updateTime.toString()}</p>
           <p>大小: {metadata.size}</p>

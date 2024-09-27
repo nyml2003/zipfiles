@@ -6,6 +6,8 @@ namespace fs = std::filesystem;
 namespace zipfiles {
 std::string toString(const fs::file_type& type);
 fs::file_type toFileType(const std::string& type);
+double toDouble(const fs::file_type& type);
+fs::file_type toFileType(const double& type);
 std::string toIso8601(time_t timestamp);
 time_t toTimestamp(const std::string& iso8601);
 std::string toIso8601(uint64_t timestamp);

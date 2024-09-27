@@ -26,7 +26,7 @@ Json::Value GetFileListResponse::toJson() {
   for (const auto& file : files) {
     Json::Value file_json;
     file_json["name"] = file.name;
-    file_json["type"] = zipfiles::toString(file.type);
+    file_json["type"] = toDouble(file.type);
     json["files"].append(file_json);
   }
   return json;
@@ -37,7 +37,7 @@ void GetFileListResponse::fromJson(const Json::Value& json) {
   for (const auto& file_json : json["files"]) {
     File file;
     file.name = file_json["name"].asString();
-    file.type = toFileType(file_json["type"].asString());
+    file.type = toFileType(file_json["type"].asDouble());
     files.push_back(file);
   }
 }

@@ -4,6 +4,7 @@
 #include <thread>
 #include "client/api.h"
 #include "client/launcher.h"
+#include "jsc/jsc.h"
 #include "json/value.h"
 #include "utils.h"
 #include <future>
@@ -71,7 +72,7 @@ void handleFatal(const std ::exception& err) {
   Json::Value root;
   root["type"] = "fatal";
   root["message"] = err.what();
-  root["timestamp"] = std::to_string(time(nullptr));
+  root["timestamp"] = 0;
   root["apiEnum"] = "Fatal";
   root["data"] = Json::nullValue;
 
@@ -109,23 +110,28 @@ void handleFatal(const std ::exception& err) {
 //   }
 // }
 
-// void log(
-//   [[maybe_unused]] WebKitUserContentManager* manager,
-//   WebKitJavascriptResult* js_result,
-//   [[maybe_unused]] gpointer user_data
-// ) {
-//   JSCValue* value = webkit_javascript_result_get_js_value(js_result);
-//   if (!isRequestHeaderValid(value)) {
-//     return;
-//   }
-//   JSCValue* params = jsc_value_object_get_property(value, "params");
-//   JSCValue* message = jsc_value_object_get_property(params, "message");
-//   const char* message_str = jsc_value_to_string(message);
-//   g_print("JS Log: %s\n", message_str);  // NOLINT
-//   handleSuccess(value, [&](Json::Value& root) {
-//     root["message"] = message_str;
-//   });
-// }
+void log(
+  [[maybe_unused]] WebKitUserContentManager* manager,
+  WebKitJavascriptResult* js_result,
+  [[maybe_unused]] gpointer user_data
+) {
+  JSCValue* value = webkit_javascript_result_get_js_value(js_result);
+  if (!isRequestHeaderValid(value)) {
+    return;
+  }
+  JSCValue* params = jsc_value_object_get_property(value, "params");
+  JSCValue* message = jsc_value_object_get_property(params, "message");
+  Json::Value root;
+  root["timestamp"] =
+    jsc_value_to_double(jsc_value_object_get_property(value, "timestamp"));
+  root["apiEnum"] =
+    jsc_value_to_string(jsc_value_object_get_property(value, "apiEnum"));
+  const char* message_str = jsc_value_to_string(message);
+  g_print("JS Log: %s\n", message_str);  // NOLINT
+  handleSuccess(root, [&](Json::Value& root) {
+    root["message"] = message_str;
+  });
+}
 
 void getFileList(
   [[maybe_unused]] WebKitUserContentManager* manager,
@@ -148,7 +154,7 @@ void getFileList(
 
     Json::Value root;
     root["timestamp"] =
-      jsc_value_to_string(jsc_value_object_get_property(value, "timestamp"));
+      jsc_value_to_double(jsc_value_object_get_property(value, "timestamp"));
     root["apiEnum"] =
       jsc_value_to_string(jsc_value_object_get_property(value, "apiEnum"));
     // 异步调用 api::getFileList
@@ -176,42 +182,47 @@ void getFileList(
   }
 }
 
-// void getFileDetail(
-//   [[maybe_unused]] WebKitUserContentManager* manager,
-//   WebKitJavascriptResult* js_result,
-//   [[maybe_unused]] gpointer user_data
-// ) {
-//   JSCValue* value = webkit_javascript_result_get_js_value(js_result);
-//   if (!isRequestHeaderValid(value)) {
-//     return;
-//   }
-//   try {
-//     JSCValue* params = jsc_value_object_get_property(value, "params");
-//     JSCValue* path = jsc_value_object_get_property(params, "path");
-//     if (jsc_value_is_string(path) == 0) {
-//       throw std::invalid_argument("Path must be a string");
-//     }
-//     mp::GetFileDetailRequestPtr request =
-//       std::make_shared<mp::GetFileDetailRequest>();
-//     request->setPath(jsc_value_to_string(path));
+void getFileDetail(
+  [[maybe_unused]] WebKitUserContentManager* manager,
+  WebKitJavascriptResult* js_result,
+  [[maybe_unused]] gpointer user_data
+) {
+  JSCValue* value = webkit_javascript_result_get_js_value(js_result);
+  if (!isRequestHeaderValid(value)) {
+    return;
+  }
+  try {
+    JSCValue* params = jsc_value_object_get_property(value, "params");
+    JSCValue* path = jsc_value_object_get_property(params, "path");
+    if (jsc_value_is_string(path) == 0) {
+      throw std::invalid_argument("Path must be a string");
+    }
+    mp::GetFileDetailRequestPtr request =
+      std::make_shared<mp::GetFileDetailRequest>();
+    request->setPath(jsc_value_to_string(path));
 
-//     // 异步调用 api::getFileDetail
-//     auto future =
-//       std::async(std::launch::async, api::getFileDetailAsync, request);
+    Json::Value root;
+    root["timestamp"] =
+      jsc_value_to_double(jsc_value_object_get_property(value, "timestamp"));
+    root["apiEnum"] =
+      jsc_value_to_string(jsc_value_object_get_property(value, "apiEnum"));
+    // 异步调用 api::getFileDetail
+    auto future =
+      std::async(std::launch::async, api::getFileDetailAsync, request);
 
-//     // 在后台线程中处理结果
-//     std::thread([value, future = std::move(future)]() mutable {
-//       try {
-//         auto response = future.get();
-//         handleSuccess(value, [&](Json::Value& root) {
-//           root = response.get()->toJson();
-//         });
-//       } catch (const std::exception& e) {
-//         handleError(value, e);
-//       }
-//     }).detach();
-//   } catch (const std::exception& e) {
-//     handleError(value, e);
-//   }
-// }
+    // 在后台线程中处理结果
+    std::thread([root, future = std::move(future)]() mutable {
+      try {
+        auto response = future.get();
+        handleSuccess(root, [&](Json::Value& root) {
+          root = response.get()->toJson();
+        });
+      } catch (const std::exception& e) {
+        handleFatal(e);
+      }
+    }).detach();
+  } catch (const std::exception& e) {
+    handleFatal(e);
+  }
+}
 }  // namespace zipfiles::client::view

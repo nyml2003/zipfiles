@@ -22,13 +22,9 @@ void loadDistUri() {
 }
 
 void bindJS(WebKitUserContentManager* manager) {
-  // std::array<Handler, 4> handlers = {
-  //   {{"sum", G_CALLBACK(view::sum)},
-  //    {"log", G_CALLBACK(view::log)},
-  //    {"getFileList", G_CALLBACK(view::getFileList)},
-  //    {"getFileDetail", G_CALLBACK(view::getFileDetail)}}};
-  std::array<Handler, 1> handlers = {
-    {{"getFileList", G_CALLBACK(view::getFileList)}}};
+  std::array<Handler, 2> handlers = {
+    {{"getFileList", G_CALLBACK(view::getFileList)},
+     {"getFileDetail", G_CALLBACK(view::getFileDetail)}}};
 
   for (const auto& handler : handlers) {
     webkit_user_content_manager_register_script_message_handler(
