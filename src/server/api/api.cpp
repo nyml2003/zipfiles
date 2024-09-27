@@ -1,6 +1,7 @@
 #include "server/api/api.h"
 #include "common.h"
 #include "server/tools/fsapi.h"
+#include <filesystem>
 #include <vector>
 
 namespace zipfiles::server::api {

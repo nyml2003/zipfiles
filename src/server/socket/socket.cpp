@@ -8,6 +8,12 @@ ServerSocket::ServerSocket()
     perror("socket failed");
     exit(EXIT_FAILURE);
   }
+
+  // 若程序退出则立刻释放socket
+  int opt = 1;
+  setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+  // 初始化实例
   std::memset(&address, 0, sizeof(address));
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = INADDR_ANY;
