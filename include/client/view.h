@@ -79,24 +79,24 @@ void log(
  * @param js_result JS请求对象
  * @param user_data 用户数据
  */
-void getFileList(
+void handleMessage(
   WebKitUserContentManager* manager,
   WebKitJavascriptResult* js_result,
   gpointer user_data
 );
-/**
- * @brief 获取文件内容
- * @details
- * 获取文件内容并发送到前端
- * @param manager 用户内容管理器
- * @param js_result JS请求对象
- * @param user_data 用户数据
- */
-void getFileDetail(
-  WebKitUserContentManager* manager,
-  WebKitJavascriptResult* js_result,
-  gpointer user_data
-);
+// /**
+//  * @brief 获取文件内容
+//  * @details
+//  * 获取文件内容并发送到前端
+//  * @param manager 用户内容管理器
+//  * @param js_result JS请求对象
+//  * @param user_data 用户数据
+//  */
+// void getFileDetail(
+//   WebKitUserContentManager* manager,
+//   WebKitJavascriptResult* js_result,
+//   gpointer user_data
+// );
 
 }  // namespace zipfiles::client::view
 

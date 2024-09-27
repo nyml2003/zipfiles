@@ -1,12 +1,11 @@
 #include "client/view.h"
-#include <iostream>
-#include <memory>
 #include <thread>
 #include "client/api.h"
 #include "client/launcher.h"
 #include "jsc/jsc.h"
 #include "json/value.h"
-#include "utils.h"
+#include "mp/Request.h"
+#include "mp/Response.h"
 #include <future>
 namespace zipfiles::client::view {
 bool isRequestHeaderValid(JSCValue* value) {
@@ -43,7 +42,6 @@ void sendResponse(Json::Value& root) {
   Json::StreamWriterBuilder writer;
   std::string json_str = Json::writeString(writer, root);
   std::string script = "window.postMessage(" + json_str + ", '*');";
-  std::cout << "evaluating script: " << script << std::endl;
   webkit_web_view_evaluate_javascript(
     launcher::webView, script.c_str(), -1, nullptr, nullptr, nullptr, nullptr,
     nullptr
@@ -133,7 +131,7 @@ void log(
   });
 }
 
-void getFileList(
+void handleMessage(
   [[maybe_unused]] WebKitUserContentManager* manager,
   WebKitJavascriptResult* js_result,
   [[maybe_unused]] gpointer user_data
@@ -148,30 +146,21 @@ void getFileList(
     if (jsc_value_is_string(path) == 0) {
       throw std::invalid_argument("Path must be a string");
     }
-    mp::GetFileListRequestPtr request =
-      std::make_shared<mp::GetFileListRequest>();
-    request->setPath(jsc_value_to_string(path));
-
+    ReqPtr request = makeReqGetFileList(jsc_value_to_string(path));
     Json::Value root;
     root["timestamp"] =
       jsc_value_to_double(jsc_value_object_get_property(value, "timestamp"));
     root["apiEnum"] =
       jsc_value_to_string(jsc_value_object_get_property(value, "apiEnum"));
     // 异步调用 api::getFileList
-    auto future =
-      std::async(std::launch::async, api::getFileListAsync, request);
+    auto future = std::async(std::launch::async, doHandle, request);
 
     // 在后台线程中处理结果
     std::thread([root, future = std::move(future)]() mutable {
       try {
-        auto response = future.get();
+        ResPtr response = future.get();
         handleSuccess(root, [&](Json::Value& root) {
-          for (const auto& file : response.get()->getFiles()) {
-            Json::Value fileJson;
-            fileJson["name"] = file.name;
-            fileJson["type"] = toDouble(file.type);
-            root["files"].append(fileJson);
-          }
+          root["data"] = response->toJson();
         });
       } catch (const std::exception& e) {
         handleFatal(e);
@@ -182,47 +171,45 @@ void getFileList(
   }
 }
 
-void getFileDetail(
-  [[maybe_unused]] WebKitUserContentManager* manager,
-  WebKitJavascriptResult* js_result,
-  [[maybe_unused]] gpointer user_data
-) {
-  JSCValue* value = webkit_javascript_result_get_js_value(js_result);
-  if (!isRequestHeaderValid(value)) {
-    return;
-  }
-  try {
-    JSCValue* params = jsc_value_object_get_property(value, "params");
-    JSCValue* path = jsc_value_object_get_property(params, "path");
-    if (jsc_value_is_string(path) == 0) {
-      throw std::invalid_argument("Path must be a string");
-    }
-    mp::GetFileDetailRequestPtr request =
-      std::make_shared<mp::GetFileDetailRequest>();
-    request->setPath(jsc_value_to_string(path));
+// void getFileDetail(
+//   [[maybe_unused]] WebKitUserContentManager* manager,
+//   WebKitJavascriptResult* js_result,
+//   [[maybe_unused]] gpointer user_data
+// ) {
+//   JSCValue* value = webkit_javascript_result_get_js_value(js_result);
+//   if (!isRequestHeaderValid(value)) {
+//     return;
+//   }
+//   try {
+//     JSCValue* params = jsc_value_object_get_property(value, "params");
+//     JSCValue* path = jsc_value_object_get_property(params, "path");
+//     if (jsc_value_is_string(path) == 0) {
+//       throw std::invalid_argument("Path must be a string");
+//     }
+//     ReqPtr request = makeReqGetFileDetail(jsc_value_to_string(path));
 
-    Json::Value root;
-    root["timestamp"] =
-      jsc_value_to_double(jsc_value_object_get_property(value, "timestamp"));
-    root["apiEnum"] =
-      jsc_value_to_string(jsc_value_object_get_property(value, "apiEnum"));
-    // 异步调用 api::getFileDetail
-    auto future =
-      std::async(std::launch::async, api::getFileDetailAsync, request);
+//     Json::Value root;
+//     root["timestamp"] =
+//       jsc_value_to_double(jsc_value_object_get_property(value, "timestamp"));
+//     root["apiEnum"] =
+//       jsc_value_to_string(jsc_value_object_get_property(value, "apiEnum"));
+//     // 异步调用 api::getFileDetail
+//     auto future =
+//       std::async(std::launch::async, doHandle, std::move(request));
 
-    // 在后台线程中处理结果
-    std::thread([root, future = std::move(future)]() mutable {
-      try {
-        auto response = future.get();
-        handleSuccess(root, [&](Json::Value& root) {
-          root = response.get()->toJson();
-        });
-      } catch (const std::exception& e) {
-        handleFatal(e);
-      }
-    }).detach();
-  } catch (const std::exception& e) {
-    handleFatal(e);
-  }
-}
+//     // 在后台线程中处理结果
+//     std::thread([root, future = std::move(future)]() mutable {
+//       try {
+//         auto response = future.get();
+//         handleSuccess(root, [&](Json::Value& root) {
+//           root = response.get()->toJson();
+//         });
+//       } catch (const std::exception& e) {
+//         handleFatal(e);
+//       }
+//     }).detach();
+//   } catch (const std::exception& e) {
+//     handleFatal(e);
+//   }
+// }
 }  // namespace zipfiles::client::view

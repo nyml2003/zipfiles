@@ -12,7 +12,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_FLAGS_MINSIZEREL "-O3 -DNDEBUG")
 # 设置编译器为clang
-set(CMAKE_CXX_COMPILER "clang++")
+set(CMAKE_C_COMPILER clang)
+set(CMAKE_CXX_COMPILER clang++)
 # 集成clang-tidy
 find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
 if(CLANG_TIDY_EXE)
@@ -25,11 +26,13 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK REQUIRED gtk+-3.0)
 pkg_check_modules(WEBKIT REQUIRED webkit2gtk-4.1)
 pkg_check_modules(JSONCPP REQUIRED jsoncpp)
+pkg_check_modules(LOG4CPP REQUIRED log4cpp)
 
 # 指定头文件搜索路径
 include_directories(${GTK_INCLUDE_DIRS})
 include_directories(${WEBKIT_INCLUDE_DIRS})
 include_directories(${JSONCPP_INCLUDE_DIRS})
+include_directories(${LOG4CPP_INCLUDE_DIRS})
 # 本项目搜索路径仅为include目录
 include_directories(${ZIPFILES_HEADER_DIR})
 
@@ -79,11 +82,13 @@ add_executable(
     ${ZIPFILES_SOURCE_FILES}
     ${ZIPFILES_MP_SOURCE_FILES}
     ${ZIPFILES_SERVER_SOURCE_FILES}
+
 )
 
 target_link_libraries(
     server
     ${JSONCPP_LIBRARIES}
+    ${LOG4CPP_LIBRARIES}
 )
 
 # 客户端打包
@@ -93,17 +98,15 @@ add_executable(
     ${ZIPFILES_SOURCE_FILES}
     ${ZIPFILES_MP_SOURCE_FILES}
     ${ZIPFILES_CLIENT_SOURCE_FILES}
-
 )
 target_link_libraries(
     client
     ${GTK_LIBRARIES}
     ${WEBKIT_LIBRARIES}
     ${JSONCPP_LIBRARIES}
+    ${LOG4CPP_LIBRARIES}
 )
 target_compile_options(client PRIVATE ${GTK_CFLAGS_OTHER} ${WEBKIT_CFLAGS_OTHER})
-
-install(DIRECTORY ${ZIPFILES_DIST_DIR} DESTINATION ${CMAKE_BINARY_DIR})
 
 add_custom_command(
     TARGET client

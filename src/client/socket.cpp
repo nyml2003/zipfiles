@@ -4,10 +4,11 @@
 #include <thread>
 #include "mp/mp.h"
 #include "client/view.h"
+#include "mp/Response.h"
+#include "mp/Request.h"
 
 namespace zipfiles::client::socket {
-ClientSocket::ClientSocket()
-  : sock(::socket(AF_INET, SOCK_STREAM, 0)), serv_addr{} {
+Socket::Socket() : sock(::socket(AF_INET, SOCK_STREAM, 0)), serv_addr{} {
   if (sock < 0) {
     perror("Socket creation error");
     throw std::runtime_error("Socket creation error");
@@ -55,11 +56,11 @@ ClientSocket::ClientSocket()
   }
 }
 
-ClientSocket::~ClientSocket() {
+Socket::~Socket() {
   close(sock);
 }
 
-void ClientSocket::reconnect() {
+void Socket::reconnect() {
   // 关闭旧的 socket
   close(getInstance().sock);
 
@@ -73,7 +74,6 @@ void ClientSocket::reconnect() {
   const int max_retries = 5;
   while (retries < max_retries) {
     if (connect(getInstance().sock, reinterpret_cast<struct sockaddr*>(&(getInstance().serv_addr)), sizeof(getInstance().serv_addr)) == 0) {
-      std::cout << "Reconnected to the server." << std::endl;
       return;
     }
     retries++;
@@ -83,10 +83,9 @@ void ClientSocket::reconnect() {
   throw std::runtime_error("Failed to reconnect to the server");
 }
 
-bool ClientSocket::send(const mp::RequestPtr& req) {
+void Socket::send(const ReqPtr& req) {
   static Json::StreamWriterBuilder writer;
   std::string data = Json::writeString(writer, req->toJson());
-  std::cout << "Sending request: " << data << std::endl;
   ssize_t bytesSent = ::send(getInstance().sock, data.c_str(), data.size(), 0);
 
   if (bytesSent == -1) {
@@ -103,37 +102,33 @@ bool ClientSocket::send(const mp::RequestPtr& req) {
         if (bytesSent == -1) {
           std::cerr << "Failed to send request after reconnecting."
                     << std::endl;
-          return false;
+          throw std::runtime_error("Failed to send request after reconnecting");
         }
       } catch (const std::exception& e) {
         std::cerr << "Reconnection failed: " << e.what() << std::endl;
-        return false;
+        throw std::runtime_error("Reconnection failed");
       }
     } else {
       std::cerr << "Failed to send request: " << strerror(errno) << std::endl;
-      return false;
+      throw std::runtime_error("Failed to send request");
     }
   }
-
-  return true;
 }
 
-bool ClientSocket::receive(const mp::ResponsePtr& res) {
+ResPtr Socket::receive() {
   std::array<char, mp::MAX_MESSAGE_SIZE> buffer = {0};
   ssize_t valread =
     read(getInstance().sock, buffer.data(), mp::MAX_MESSAGE_SIZE);
 
-  std::cout << "Received data: " << buffer.data() << std::endl;
   if (valread > 0) {
     static Json::CharReaderBuilder reader;
     Json::Value jsonData;
     std::string errs;
     std::istringstream stream(buffer.data());
     if (Json::parseFromStream(reader, stream, &jsonData, &errs)) {
-      res->fromJson(jsonData);
-      return true;
+      return Res::fromJson(jsonData);
     }
   }
-  return false;
+  throw std::runtime_error("Failed to receive response");
 }
 }  // namespace zipfiles::client::socket

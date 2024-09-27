@@ -1,37 +1,23 @@
 #include "server/api/api.h"
+#include "mp/Request.h"
+#include "mp/Response.h"
+#include "common.h"
 #include "server/tools/fsapi.h"
-#include <vector>
-
 namespace zipfiles::server::api {
-
-mp::GetFileListResponsePtr getFileList(
-  const mp::GetFileListRequestPtr& getFileListRequest
-) {
-
-  std::vector<zipfiles::File> files =
-    server::getFilesList(getFileListRequest->getPath());
-
-  mp::GetFileListResponsePtr getFileListResponse =
-    std::make_shared<mp::GetFileListResponse>();
-
-  getFileListResponse->setFiles(files);
-
-  return getFileListResponse;
-  
+ResPtr handleRequest(const ReqPtr& req) {
+  return std::visit(
+    overload{
+      [](const request::GetFileDetail& req) {
+        return makeResGetFileDetail(getFileDetail(req.path));
+      },
+      [](const request::GetFileList& req) {
+        return makeResGetFileList(getFileList(req.path));
+      },
+      [](auto&&) {
+        throw std::runtime_error("Unknown request type");
+        return nullptr;
+      }},
+    req->kind
+  );
 }
-
-mp::GetFileDetailResponsePtr getFileDetail(
-  const mp::GetFileDetailRequestPtr& getFileDetailRequest
-) {
-
-  FileDetail metadata = server::getFileDetail(getFileDetailRequest->getPath());
-
-  mp::GetFileDetailResponsePtr getFileDetailResponse =
-    std::make_shared<mp::GetFileDetailResponse>();
-
-  getFileDetailResponse->setMetadata(metadata);
-
-  return getFileDetailResponse;
-}
-
 }  // namespace zipfiles::server::api

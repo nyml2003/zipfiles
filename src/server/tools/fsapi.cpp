@@ -2,9 +2,10 @@
 #include "common.h"
 #include <pwd.h>
 #include <grp.h>
-#include "utils.h"
-#include <iostream>
 #include <vector>
+#include "mp/dto.h"
+#include "utils.h"
+#include <sys/stat.h>
 namespace zipfiles::server {
 /**
  * @brief 获取给定目录下的所有文件和目录(No follow，只返回一层的结果)
@@ -14,9 +15,8 @@ namespace zipfiles::server {
  * @return 返回一个File类型的数组
  *
  */
-std::vector<File> getFilesList(const fs::path& directory) {
+std::vector<File> getFileList(const fs::path& directory) {
   const fs::path directory_path = "/" / directory;
-  std::cout << "Listing files in " << directory_path << std::endl;
   if (!fs::exists(directory_path)) {
     throw std::runtime_error("Directory does not exist.");
   }
@@ -28,9 +28,7 @@ std::vector<File> getFilesList(const fs::path& directory) {
     File file;
     file.name = entry.path().filename().string();
     file.type = entry.symlink_status().type();
-    std::cout << "Found " << file.name << std::endl;
-    std::cout << "Type: " << zipfiles::toString(entry.symlink_status().type())
-              << std::endl;
+
     files.push_back(file);
   }
   return files;
@@ -45,7 +43,6 @@ std::vector<File> getFilesList(const fs::path& directory) {
  */
 FileDetail getFileDetail(const fs::path& file) {
   const fs::path file_path = "/" / file;
-  std::cout << "Getting file details for " << file_path << std::endl;
   if (!fs::exists(file_path)) {
     throw std::runtime_error("File does not exist.");
   }

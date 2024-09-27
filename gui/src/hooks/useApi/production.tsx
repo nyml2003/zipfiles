@@ -7,7 +7,7 @@ const useApi: useApiType = () => {
     request: async <Request, Response>(apiEnum: ApiEnum, request: Request): Promise<Response> => {
       const timestamp = Date.now();
       const message: RequestWrapper<Request> = { apiEnum, params: request, timestamp };
-      window.webkit.messageHandlers[apiEnum].postMessage(message);
+      window.webkit.messageHandlers.handleMessage.postMessage(message);
 
       return new Promise((resolve, reject) => {
         setGlobalCallback({

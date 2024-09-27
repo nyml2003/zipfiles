@@ -1,5 +1,6 @@
 
 #include "client/view.h"
+#include "glib-object.h"
 #include "client/launcher.h"
 #include <iostream>
 #include <string>
@@ -23,8 +24,8 @@ void loadDistUri() {
 
 void bindJS(WebKitUserContentManager* manager) {
   std::array<Handler, 2> handlers = {
-    {{"getFileList", G_CALLBACK(view::getFileList)},
-     {"getFileDetail", G_CALLBACK(view::getFileDetail)}}};
+    {{"handleMessage", reinterpret_cast<GCallback>(view::handleMessage)},
+     {"log", reinterpret_cast<GCallback>(view::log)}}};
 
   for (const auto& handler : handlers) {
     webkit_user_content_manager_register_script_message_handler(

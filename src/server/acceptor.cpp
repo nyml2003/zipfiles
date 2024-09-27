@@ -1,7 +1,9 @@
 #include "server/acceptor.h"
 #include <future>
 #include <iostream>
+#include <vector>
 #include <sys/epoll.h>
+#include <unistd.h>
 #include "server/handler.h"
 #include "server/socket/socket.h"
 
@@ -15,7 +17,7 @@ namespace zipfiles::server {
 int threadCount = 0;
 
 void doAccept() {
-  int serverFd = ServerSocket::getServerFd();
+  int serverFd = Socket::getServerFd();
 
   fd_set readfds;
   std::vector<std::future<void>> futures;  // 用于存储 future 对象
@@ -56,15 +58,13 @@ void doAccept() {
 
     for (int i = 0; i < numEvents; ++i) {
       if (events[i].data.fd == serverFd && threadCount < MAX_THREADS) {
-        ServerSocket::acceptConnection();
+        Socket::acceptConnection();
 
         futures.emplace_back(std::async(std::launch::async, doHandle));
 
         threadCount++;
       }
     }
-
-    
   }
 }
 
