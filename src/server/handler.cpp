@@ -2,6 +2,7 @@
 #include <iostream>
 #include "server/api/api.h"
 #include "mp/mp.h"
+#include "server/socket/socket.h"
 
 namespace zipfiles::server {
 
@@ -10,7 +11,7 @@ void doHandle() {
 
   try {
     // 主eventloop
-    while (mp::ServerSocket::receive(request)) {
+    while (ServerSocket::receive(request)) {
       if (request->is(mp::ApiType::GET_FILE_LIST)) {
         mp::ResponsePtr response = std::make_shared<mp::Response>();
 
@@ -26,7 +27,7 @@ void doHandle() {
 
         response->setPayload(getFileListResponse);
 
-        if (!mp::ServerSocket::send(response)) {
+        if (!ServerSocket::send(response)) {
           std::cerr << "Failed to send response." << std::endl;
         }
       }
@@ -46,7 +47,7 @@ void doHandle() {
 
         response->setPayload(getFileDetailResponse);
 
-        if (!mp::ServerSocket::send(response)) {
+        if (!ServerSocket::send(response)) {
           std::cerr << "Failed to send response." << std::endl;
         }
       }
