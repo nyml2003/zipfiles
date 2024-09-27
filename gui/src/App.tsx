@@ -11,18 +11,21 @@ import { ApiEnum } from './apis';
 
 // 主应用组件
 const App = () => {
-  const api = useApi();
-  useGlobalMessageHandler();
   if (process.env.BASE_ENV === 'prod') {
-    console.log = new Proxy(console.log, {
-      apply: (target, thisArg, argArray) => {
-        api.request<LogRequest, LogResponse>(ApiEnum.Log, {
-          message: argArray.join(' '),
-        });
-        target(...argArray);
-      },
-    });
+    const api = useApi();
+    useGlobalMessageHandler();
+    if (process.env.BASE_ENV === 'prod') {
+      console.log = new Proxy(console.log, {
+        apply: (target, thisArg, argArray) => {
+          api.request<LogRequest, LogResponse>(ApiEnum.Log, {
+            message: argArray.join(' '),
+          });
+          target(...argArray);
+        },
+      });
+    }
   }
+
   return (
     <ConfigProvider locale={zhCN}>
       <RouterProvider router={router} />

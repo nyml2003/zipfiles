@@ -40,8 +40,8 @@ void doAccept() {
   }
 
   while (true) {
-    struct epoll_event events[8];
-    int numEvents = epoll_wait(epollFd, events, 8, -1);
+    std::array<struct epoll_event, 8> events{};
+    int numEvents = epoll_wait(epollFd, events.data(), events.size(), -1);
     if (numEvents == -1) {
       std::cerr << "epoll_wait error" << std::endl;
       break;

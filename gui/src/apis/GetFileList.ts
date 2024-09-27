@@ -1,3 +1,5 @@
+import { FileType } from '@/types';
+import { pickFileType, pickIndex } from '@/utils';
 import Mock from 'mockjs';
 
 export interface GetFileListRequest {
@@ -10,7 +12,7 @@ export interface GetFileListResponse {
 
 export interface File {
   name: string;
-  type: "none" | "not_found" | "regular" | "directory" | "symlink" | "block" | "character" | "fifo" | "socket" | "unknown";
+  type: FileType;
 }
 
 interface MockFile extends File {
@@ -21,16 +23,18 @@ interface MockFile extends File {
 let cachedFileList: MockFile[] = [
   {
     name: '/',
-    type: 'directory',
+    type: FileType.Directory,
     children: Array.from({ length: 15 }, () => generateRandomFiles()),
   },
 ];
 
 function generateRandomFiles(): MockFile {
-  return Mock.mock({
-    name: '@word',
-    type: '@pick(["directory", "regular"])',
-  });
+  const type = pickFileType(); // 随机选择文件类型
+  return {
+    name: Mock.mock('@word(3, 10)'),
+    type,
+    children: null,
+  };
 }
 
 // 递归查找函数
@@ -43,11 +47,11 @@ function findFilesByPath(
     const newPath = currentPath ? `${currentPath}/${file.name}` : file.name;
     if (newPath === targetPath) {
       if (!file.children) {
-        file.children = Array.from({ length: 0 }, () => generateRandomFiles());
+        file.children = Array.from({ length: 15 }, () => generateRandomFiles());
       }
       return file.children;
     }
-    if (file.type === 'directory') {
+    if (file.type === FileType.Directory) {
       const result = findFilesByPath(file.children || [], targetPath, newPath);
       if (result) {
         return result;

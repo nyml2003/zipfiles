@@ -33,6 +33,7 @@ Json::Value GetFileDetailResponse::toJson() {
   json["metadata"]["group"] = metadata.group;
   json["metadata"]["mode"] = metadata.mode;
   json["metadata"]["path"] = metadata.path;
+  json["metadata"]["size"] = static_cast<Json::UInt64>(metadata.size);
   return json;
 }
 
