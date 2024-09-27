@@ -1,4 +1,4 @@
-import { ArrowLeftOutlined, HomeOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, HomeOutlined, Loading3QuartersOutlined } from '@ant-design/icons';
 import TreeSelector from './TreeSelector';
 import { Breadcrumb, Button, Input, Splitter } from 'antd'; // Add this import statement
 import React, { useState } from 'react';
@@ -10,6 +10,7 @@ const ExplorerPage: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPath, setCurrentPath] = useState<string>('');
   const [currentFile, setCurrentFile] = useState<string>('');
+  const [refresh, setRefresh] = useState<boolean>(false);
 
   const handleSelect = (paths: string[]) => {
     //按字典序排序
@@ -29,9 +30,11 @@ const ExplorerPage: React.FC = () => {
               return pathArr.join('/');
             })
           }></Button>
+        <Button type='text' onClick={() => setRefresh(true)} icon={<Loading3QuartersOutlined />} />
+
         <Breadcrumb
           items={currentPath.split('/').reduce((acc, item, index, arr) => {
-              const path = arr.slice(0, index + 1).join('/');
+            const path = arr.slice(0, index + 1).join('/');
             acc.push({
               title: item === '' ? <HomeOutlined /> : item,
               onClick: () => setCurrentPath(path),
@@ -52,6 +55,8 @@ const ExplorerPage: React.FC = () => {
             currentPath={currentPath}
             setCurrentPath={setCurrentPath}
             setCurrentFile={setCurrentFile}
+            refresh={refresh}
+            setRefresh={setRefresh}
           />
         </Splitter.Panel>
         <Splitter.Panel>

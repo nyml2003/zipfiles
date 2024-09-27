@@ -169,7 +169,7 @@ void getFileList(
           for (const auto& file : response.get()->getFiles()) {
             Json::Value fileJson;
             fileJson["name"] = file.name;
-            fileJson["type"] = toString(file.type);
+            fileJson["type"] = toDouble(file.type);
             root["files"].append(fileJson);
           }
         });

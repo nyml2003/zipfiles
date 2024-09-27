@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useCallback, Key } from 'react';
-import { Tree, TreeProps } from 'antd';
+import { Button, Tree, TreeProps } from 'antd';
 import useApi from '@/hooks/useApi';
 import { GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
 import { ApiEnum } from '@/apis';
-import { DownOutlined } from '@ant-design/icons';
+import { ArrowsAltOutlined, DownOutlined } from '@ant-design/icons';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { LoadingState } from '@/types';
+import { FileType, FileTypeToString, LoadingState } from '@/types';
 import NoMoreData from '@/components/NoMoreData';
+import LoadingWrapper from '@/components/LoadingWrapper';
 const { DirectoryTree } = Tree;
 
 interface DataNode {
-  title: string;
+  title: React.ReactNode;
   key: string;
   isLeaf?: boolean;
   children?: DataNode[];
@@ -21,12 +22,16 @@ interface Props {
   currentPath: string;
   setCurrentPath: (path: string) => void;
   setCurrentFile: (file: string) => void;
+  refresh: boolean;
+  setRefresh: (refresh: boolean) => void;
 }
 
 const TreeSelector: React.FC<Props> = ({
   onSelect,
   currentPath,
   setCurrentPath,
+  refresh,
+  setRefresh,
   setCurrentFile,
 }) => {
   const api = useApi();
@@ -34,7 +39,7 @@ const TreeSelector: React.FC<Props> = ({
   const [checkedKeys, setCheckedKeys] = useState<Key[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Done);
-
+  const [lastClickTime, setLastClickTime] = useState<number>(0);
   useEffect(() => {
     // 清空已有数据
     setTreeData([]);
@@ -46,17 +51,25 @@ const TreeSelector: React.FC<Props> = ({
     handleGetFileList(currentPath);
   }, [currentPath]);
 
-  const handleGetFileList = async (path: string) => {
-    setLoading(LoadingState.Loading);
+  useEffect(() => {
+    if (refresh) {
+      setRefresh(false);
+      handleGetFileList(currentPath);
+    }
+  }, [refresh]);
+
+  const handleGetFileList = async (path: string, needLoading: boolean = true) => {
+    if (needLoading) setLoading(LoadingState.Loading);
     try {
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
         path,
       });
       const newTreeData = res.files.map(item => {
+        const isDirectory = item.type === FileType.Directory;
         return {
           title: item.name,
           key: `${path}/${item.name}`,
-          isLeaf: !(item.type === 'directory'),
+          isLeaf: !isDirectory,
         };
       });
       setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
@@ -104,7 +117,7 @@ const TreeSelector: React.FC<Props> = ({
     if (targetNode && targetNode.children) {
       return;
     }
-    await handleGetFileList(key as string);
+    await handleGetFileList(key as string, false);
   };
 
   const handleCheck: TreeProps['onCheck'] = (checkedKeysValue, info) => {
@@ -113,37 +126,40 @@ const TreeSelector: React.FC<Props> = ({
   };
 
   const handleSelect: TreeProps['onSelect'] = (selectedKeys, info) => {
-    if (!info.node.isLeaf) {
-      setCurrentPath(selectedKeys[0] as string);
+    const currentTime = new Date().getTime();
+    if (currentTime - lastClickTime < 300) {
+      console.log(currentTime, lastClickTime);
+      if (!info.node.isLeaf) {
+        setCurrentPath(selectedKeys[0].toString());
+      }
+    } else {
+      setCurrentFile(selectedKeys[0].toString());
     }
-    setCurrentFile(selectedKeys[0] as string);
+    setLastClickTime(currentTime);
   };
 
-  const render = () => {
-    if (loading === LoadingState.Loading) {
-      return <LoadingSpinner />;
-    } else if (loading === LoadingState.Done && treeData.length === 0) {
-      return <NoMoreData />;
-    }
-    return (
-      <DirectoryTree
-        showLine
-        checkable
-        multiple
-        switcherIcon={<DownOutlined />}
-        loadData={onLoadData}
-        treeData={treeData}
-        checkedKeys={checkedKeys}
-        onCheck={handleCheck}
-        onSelect={handleSelect}
-        expandedKeys={expandedKeys}
-        onExpand={setExpandedKeys}
-        className='whitespace-nowrap bg-gray-100 flex-1'
-      />
-    );
-  };
-
-  return render();
+  return (
+    <LoadingWrapper
+      loading={loading}
+      hasData={() => treeData.length > 0}
+      children={
+        <DirectoryTree
+          showLine
+          checkable
+          multiple
+          switcherIcon={<DownOutlined />}
+          loadData={onLoadData}
+          treeData={treeData}
+          checkedKeys={checkedKeys}
+          onCheck={handleCheck}
+          onSelect={handleSelect}
+          expandedKeys={expandedKeys}
+          onExpand={setExpandedKeys}
+          className='whitespace-nowrap bg-gray-100 flex-1 select-none'
+        />
+      }
+    />
+  );
 };
 
 export default TreeSelector;
