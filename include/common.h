@@ -1,6 +1,7 @@
 #ifndef ZIPFILES_COMMON_H
 #define ZIPFILES_COMMON_H
 #include <ctime>
+#include <functional>
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -9,13 +10,21 @@
 #include <sys/select.h>
 
 namespace zipfiles {
+
 template <class... Ts>
 struct overloaded : Ts... {
   using Ts::operator()...;
 };
 template <class... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
+
 namespace fs = std::filesystem;
+
+/**********************************
+
+结构体
+
+***********************************/
 
 /**
  * @brief 用于展示的文件结构体
@@ -79,6 +88,54 @@ struct CommitLog {
   std::string defaultPath;
   // 作者
   std::string author;
+};
+
+/**********************************
+
+类
+
+***********************************/
+
+class MetaDataFilter {
+ public:
+  using FilterFunc = std::function<bool(const FileDetail&)>;
+
+  MetaDataFilter& filterByType(fs::file_type type) {
+    filters.emplace_back([&type](FileDetail& fd) { return fd.type == type; });
+    return *this;
+  }
+
+  MetaDataFilter& filterBySize(__off_t minSize, __off_t maxSize) {
+    filters.emplace_back([&minSize, &maxSize](FileDetail& fd) {
+      return fd.size >= minSize && fd.size <= maxSize;
+    });
+    return *this;
+  }
+
+  MetaDataFilter& filterByOwner(const std::string& owner) {
+    filters.emplace_back([&owner](FileDetail& fd) { return fd.owner == owner; }
+    );
+    return *this;
+  }
+
+  MetaDataFilter& filterByGroup(const std::string& group) {
+    filters.emplace_back([&group](FileDetail& fd) { return fd.group == group; }
+    );
+    return *this;
+  }
+
+  [[nodiscard]] bool doFilter(const FileDetail& fd) const {
+    for (const auto& filter : filters) {
+      if (filter(fd)) {
+        continue;
+      }
+      return false;
+    }
+    return true;
+  }
+
+ private:
+  std::vector<FilterFunc> filters;
 };
 
 }  // namespace zipfiles
