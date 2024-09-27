@@ -6,6 +6,14 @@
 #include <iostream>
 #include <vector>
 namespace zipfiles::server {
+/**
+ * @brief 获取给定目录下的所有文件和目录(No follow，只返回一层的结果)
+ *
+ * @param directory 指定的目录路径
+ *
+ * @return 返回一个File类型的数组
+ *
+ */
 std::vector<File> getFilesList(const fs::path& directory) {
   const fs::path directory_path = "/" / directory;
   std::cout << "Listing files in " << directory_path << std::endl;
@@ -27,7 +35,14 @@ std::vector<File> getFilesList(const fs::path& directory) {
   }
   return files;
 }
-
+/**
+ * @brief 获取选定文件的元信息
+ *
+ * @param file 指定的文件路径
+ *
+ * @return 返回一个FileDetail类型
+ *
+ */
 FileDetail getFileDetail(const fs::path& file) {
   const fs::path file_path = "/" / file;
   std::cout << "Getting file details for " << file_path << std::endl;
