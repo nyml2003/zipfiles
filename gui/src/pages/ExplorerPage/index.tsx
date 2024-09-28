@@ -34,7 +34,7 @@ const ExplorerPage: React.FC = () => {
       return <FilterForm />;
     }
     if (view === 'table') {
-      return <TableView />;
+      return <TableView currentPath={currentPath} />;
     }
     if (view === 'tree') {
       return (
