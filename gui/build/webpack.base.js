@@ -5,6 +5,7 @@ const webpack = require('webpack');
 const WebpackBar = require('webpackbar');
 const FriendlyErrorsWebpackPlugin = require('@nuxt/friendly-errors-webpack-plugin');
 const selectEnv = require('./utils');
+
 module.exports = {
   entry: {
     index: path.join(__dirname, '../src/index.tsx'),
@@ -25,7 +26,25 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.module\.css$/,
+        enforce: 'pre',
+        include: [path.resolve(__dirname, '../src')],
+        use: [
+          selectEnv('style-loader', MiniCssExtractPlugin.loader),
+          {
+            loader: 'css-loader',
+            options: {
+              modules: {
+                localIdentName: '[local]_[hash:base64:6]',
+              },
+            },
+          },
+          'postcss-loader',
+        ],
+      },
+      {
         test: /\.css$/, //匹配所有的 css 文件
+        exclude: /\.module\.css$/,
         enforce: 'pre',
         use: [
           selectEnv('style-loader', MiniCssExtractPlugin.loader),
@@ -34,7 +53,33 @@ module.exports = {
         ],
       },
       {
+        test: /\.module\.less$/,
+        enforce: 'pre',
+        include: [path.resolve(__dirname, '../src')],
+        use: [
+          selectEnv('style-loader', MiniCssExtractPlugin.loader),
+          {
+            loader: 'css-loader',
+            options: {
+              modules: {
+                localIdentName: '[local]_[hash:base64:6]',
+              },
+            },
+          },
+          'postcss-loader',
+          {
+            loader: 'less-loader',
+            options: {
+              lessOptions: {
+                javascriptEnabled: true,
+              },
+            },
+          },
+        ],
+      },
+      {
         test: /\.less$/, //匹配所有的 less 文件
+        exclude: /\.module\.less$/,
         enforce: 'pre',
         include: [path.resolve(__dirname, '../src')],
         use: [
@@ -46,9 +91,6 @@ module.exports = {
             options: {
               lessOptions: {
                 javascriptEnabled: true,
-                // modifyVars: {
-                //   hack: `true; @import "${path.resolve(__dirname, '../src/styles/antd.less')}";`,
-                // },
               },
             },
           },

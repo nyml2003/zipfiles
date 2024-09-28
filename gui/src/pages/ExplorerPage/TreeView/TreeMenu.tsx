@@ -26,7 +26,7 @@ interface Props {
   setRefresh: (refresh: boolean) => void;
 }
 
-const TreeSelector: React.FC<Props> = ({
+const TreeMenu: React.FC<Props> = ({
   onSelect,
   currentPath,
   setCurrentPath,
@@ -49,6 +49,7 @@ const TreeSelector: React.FC<Props> = ({
     setCheckedKeys([]);
     // 加载新的数据
     handleGetFileList(currentPath);
+    setCurrentFile(currentPath);
   }, [currentPath]);
 
   useEffect(() => {
@@ -163,4 +164,4 @@ const TreeSelector: React.FC<Props> = ({
   );
 };
 
-export default TreeSelector;
+export default TreeMenu;

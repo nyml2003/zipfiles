@@ -8,7 +8,7 @@ const useApi: useApiType = () => {
       return new Promise((resolve, reject) => {
         setTimeout(() => {
           resolve(mockApi[apiEnum](request));
-        }, 1000);
+        }, 10);
       });
     },
   };
