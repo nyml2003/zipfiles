@@ -4,8 +4,8 @@
 #include <vector>
 #include "mp/dto.h"
 namespace zipfiles::server {
-namespace fs = std::filesystem;
-std::vector<File> getFileList(const fs::path& directory);
+std::vector<File>
+getFilesList(const fs::path& directory, bool doFilter, MetaDataFilter& filter);
 FileDetail getFileDetail(const fs::path& file);
 }  // namespace zipfiles::server
 #endif  // !ZIPFILES_FSAPI_H

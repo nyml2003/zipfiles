@@ -3,8 +3,10 @@
 #include "mp/Request.h"
 #include "mp/Response.h"
 #include "server/handler.h"
+#include <iostream>
+#include "server/api/api.h"
+#include "mp/mp.h"
 #include "server/socket/socket.h"
-#include "server/tools/fsapi.h"
 
 namespace zipfiles::server {
 
