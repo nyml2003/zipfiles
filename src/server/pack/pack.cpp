@@ -1,9 +1,8 @@
-#include "server/pack/pack.h"
-
 #include <array>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include "server/pack/pack.h"
 
 namespace zipfiles::server {
 /**
@@ -40,7 +39,7 @@ void packFileToArchive(std::ofstream& archive, const fs::path& filePath) {
  *
  */
 std::ofstream createArchive(const std::string& archiveName) {
-  std::ofstream archive(archiveName, std::ios::binary);
+  std::ofstream archive(archiveName, std::ios::binary | std::ios::app);
   if (!archive) {
     throw std::runtime_error("Failed to create archive: " + archiveName);
   }
