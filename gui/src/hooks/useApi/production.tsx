@@ -7,8 +7,16 @@ const useApi: useApiType = () => {
     request: async <Request, Response>(apiEnum: ApiEnum, request: Request): Promise<Response> => {
       const timestamp = Date.now();
       const message: RequestWrapper<Request> = { apiEnum, params: request, timestamp };
-      window.webkit.messageHandlers[apiEnum].postMessage(message);
-
+      if (typeof apiEnum === 'number') {
+        window.webkit.messageHandlers.handleMessage.postMessage(message);
+      } else {
+        window.webkit.messageHandlers[apiEnum].postMessage(message);
+      }
+      if (apiEnum === ApiEnum.Log) {
+        return new Promise((resolve, reject) => {
+          resolve({} as Response);
+        });
+      }
       return new Promise((resolve, reject) => {
         setGlobalCallback({
           request: message,

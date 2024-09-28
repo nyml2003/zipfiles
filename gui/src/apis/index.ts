@@ -2,9 +2,9 @@ export enum ApiEnum {
   Sum = 'sum',
   GetVersion = 'getVersion',
   Log = 'log',
-  GetFileList = 'getFileList',
+  GetFileList = 1,
   PostBackup = 'postBackup',
-  GetFileDetail = 'getFileDetail',
+  GetFileDetail = 0,
 }
 import { mock as GetFileList } from '@/apis/GetFileList';
 import { mock as GetFileDetail } from '@/apis/GetFileDetail';

@@ -1,9 +1,9 @@
 #ifndef ZIPFILE_CLIENT_VIEW_H
 #define ZIPFILE_CLIENT_VIEW_H
-#include <webkit2/webkit2.h>
 #include <gtk/gtk.h>
-#include <functional>
 #include <json/json.h>
+#include <webkit2/webkit2.h>
+#include <functional>
 namespace zipfiles::client::view {
 /**
  * @brief 检查请求头是否合法
@@ -45,23 +45,10 @@ void handleError(Json::Value& root, const std::exception& err);
  * @param err
  */
 void handleFatal(const std::exception& err);
-// /**
-//  * @brief 求和
-//  * @details
-//  * 从JS请求对象中获取参数，求和并发送到前端
-//  * @param manager 用户内容管理器
-//  * @param js_result JS请求对象
-//  * @param user_data 用户数据
-//  */
-// void sum(
-//   WebKitUserContentManager* manager,
-//   WebKitJavascriptResult* js_result,
-//   gpointer user_data
-// );
 /**
- * @brief 记录
+ * @brief 处理日志
  * @details
- * 记录JS请求对象中的参数并发送到前端
+ * 将JS请求对象中的数据打印到控制台
  * @param manager 用户内容管理器
  * @param js_result JS请求对象
  * @param user_data 用户数据
@@ -72,32 +59,18 @@ void log(
   gpointer user_data
 );
 /**
- * @brief 获取文件列表
+ * @brief 处理消息
  * @details
- * 获取文件列表并发送到前端
+ * 处理JS请求对象并发送到前端
  * @param manager 用户内容管理器
  * @param js_result JS请求对象
  * @param user_data 用户数据
  */
-void getFileList(
+void handleMessage(
   WebKitUserContentManager* manager,
   WebKitJavascriptResult* js_result,
   gpointer user_data
 );
-/**
- * @brief 获取文件内容
- * @details
- * 获取文件内容并发送到前端
- * @param manager 用户内容管理器
- * @param js_result JS请求对象
- * @param user_data 用户数据
- */
-void getFileDetail(
-  WebKitUserContentManager* manager,
-  WebKitJavascriptResult* js_result,
-  gpointer user_data
-);
-
 }  // namespace zipfiles::client::view
 
 #endif  // !ZIPFILE_CLIENT_VIEW_H

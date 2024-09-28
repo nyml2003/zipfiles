@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import router from './router';
 import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
-import useGlobalMessageHandler from './hooks/useGlobalMessageHandler';
+import { useGlobalMessageHandler } from './hooks/useGlobalMessageHandler';
 import useApi from './hooks/useApi';
 import { LogRequest, LogResponse } from './apis/log';
 import { ApiEnum } from './apis';
@@ -11,20 +11,24 @@ import { ApiEnum } from './apis';
 
 // 主应用组件
 const App = () => {
-  if (process.env.BASE_ENV === 'prod') {
-    const api = useApi();
-    useGlobalMessageHandler();
+  useGlobalMessageHandler();
+
+  useEffect(() => {
     if (process.env.BASE_ENV === 'prod') {
-      console.log = new Proxy(console.log, {
-        apply: (target, thisArg, argArray) => {
-          api.request<LogRequest, LogResponse>(ApiEnum.Log, {
-            message: argArray.join(' '),
-          });
-          target(...argArray);
-        },
-      });
+      const api = useApi();
+
+      if (process.env.BASE_ENV === 'prod') {
+        console.log = new Proxy(console.log, {
+          apply: (target, thisArg, argArray) => {
+            api.request<LogRequest, LogResponse>(ApiEnum.Log, {
+              message: argArray.join(' '),
+            });
+            target(...argArray);
+          },
+        });
+      }
     }
-  }
+  }, []);
 
   return (
     <ConfigProvider locale={zhCN}>

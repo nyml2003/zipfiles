@@ -1,10 +1,10 @@
-#include "server/tools/fsapi.h"
-#include "common.h"
-#include <pwd.h>
 #include <grp.h>
-#include "utils.h"
-#include <iostream>
+#include <pwd.h>
+#include <sys/stat.h>
+#include <log4cpp/Category.hh>
 #include <vector>
+#include "server/tools/fsapi.h"
+
 namespace zipfiles::server {
 /**
  * @brief 获取给定目录下的所有文件和目录(No follow，只返回一层的结果)
@@ -15,10 +15,11 @@ namespace zipfiles::server {
  *
  */
 std::vector<File>
-getFilesList(const fs::path& directory, bool doFilter, MetaDataFilter& filter) {
+getFileList(const fs::path& directory, bool doFilter, MetaDataFilter& filter) {
   const fs::path directory_path = "/" / directory;
 
-  std::cout << "Listing files in " << directory_path << std::endl;
+  log4cpp::Category::getRoot().infoStream()
+    << "Getting files list for " << directory_path;
 
   if (!fs::exists(directory_path)) {
     throw std::runtime_error("Directory does not exist.");
@@ -34,16 +35,6 @@ getFilesList(const fs::path& directory, bool doFilter, MetaDataFilter& filter) {
     File file;
     file.name = entry.path().filename().string();
     file.type = entry.symlink_status().type();
-
-    // ! deprecated
-    // File file;
-    // file.name = entry.path().filename().string();
-    // file.type = entry.symlink_status().type();
-    // std::cout << "Found " << file.name << std::endl;
-    // std::cout << "Type: " <<
-    // zipfiles::toString(entry.symlink_status().type())
-    //           << std::endl;
-    // files.push_back(file);
 
     if (doFilter) {
       FileDetail fd = getFileDetail(entry.path());
@@ -68,7 +59,8 @@ getFilesList(const fs::path& directory, bool doFilter, MetaDataFilter& filter) {
 FileDetail getFileDetail(const fs::path& file) {
   const fs::path file_path = "/" / file;
 
-  std::cout << "Getting file details for " << file_path << std::endl;
+  log4cpp::Category::getRoot().infoStream()
+    << "Getting file detail for " << file_path;
 
   if (!fs::exists(file_path)) {
     throw std::runtime_error("File does not exist.");
@@ -85,8 +77,8 @@ FileDetail getFileDetail(const fs::path& file) {
 
   FileDetail file_detail = {
     .type = fs::status(file_path).type(),
-    .createTime = toIso8601(file_stat.st_ctime),
-    .updateTime = toIso8601(file_stat.st_mtime),
+    .createTime = static_cast<double>(file_stat.st_ctime),
+    .updateTime = static_cast<double>(file_stat.st_mtime),
     .size = file_stat.st_size,
     .owner = pwd->pw_name,
     .group = grp->gr_name,

@@ -1,36 +1,41 @@
-#include "client/view.h"
-#include <iostream>
-#include <memory>
+#include <future>
+#include <log4cpp/Category.hh>
 #include <thread>
-#include "client/api.h"
 #include "client/launcher.h"
+#include "client/socket.h"
+#include "client/view.h"
 #include "jsc/jsc.h"
 #include "json/value.h"
-#include "utils.h"
-#include <future>
+#include "mp/Request.h"
+#include "mp/Response.h"
 namespace zipfiles::client::view {
 bool isRequestHeaderValid(JSCValue* value) {
   if (value == nullptr) {
-    g_print("js_add_function: value is null\n");  // NOLINT
+    log4cpp::Category::getRoot().errorStream() << __func__ << ": value is null";
     return false;
   }
   if (jsc_value_is_object(value) == 0) {
-    g_print("js_add_function: value is not an object\n");  // NOLINT
+    log4cpp::Category::getRoot().errorStream()
+      << __func__ << ": value is not an object";
     return false;
   }
   JSCValue* timestamp = jsc_value_object_get_property(value, "timestamp");
   if (jsc_value_is_number(timestamp) == 0) {
-    g_print("js_add_function: timestamp is not a number\n");  // NOLINT
+    log4cpp::Category::getRoot().errorStream()
+      << __func__ << ": timestamp is not a number";
     return false;
   }
   JSCValue* apiEnum = jsc_value_object_get_property(value, "apiEnum");
-  if (jsc_value_is_string(apiEnum) == 0) {
-    g_print("js_add_function: apiEnum is not a string\n");  // NOLINT
+  // 如果是number，说明是向后端请求，如果是string，说明是native调用
+  if (jsc_value_is_number(apiEnum) == 0 && jsc_value_is_string(apiEnum) == 0) {
+    log4cpp::Category::getRoot().errorStream()
+      << __func__ << ": apiEnum is not a number or string";
     return false;
   }
   JSCValue* params = jsc_value_object_get_property(value, "params");
   if (jsc_value_is_object(params) == 0) {
-    g_print("js_add_function: params is not an object\n");  // NOLINT
+    log4cpp::Category::getRoot().errorStream()
+      << __func__ << ": params is not an object";
     return false;
   }
   return true;
@@ -43,7 +48,7 @@ void sendResponse(Json::Value& root) {
   Json::StreamWriterBuilder writer;
   std::string json_str = Json::writeString(writer, root);
   std::string script = "window.postMessage(" + json_str + ", '*');";
-  std::cout << "evaluating script: " << script << std::endl;
+  log4cpp::Category::getRoot().infoStream() << "evaluating script: " << script;
   webkit_web_view_evaluate_javascript(
     launcher::webView, script.c_str(), -1, nullptr, nullptr, nullptr, nullptr,
     nullptr
@@ -52,12 +57,15 @@ void sendResponse(Json::Value& root) {
 
 void handleSuccess(
   Json::Value& root,
-  const std::function<void(Json::Value&)>& build_data
+  Json::Value& data,
+  double timestamp,
+  int apiEnum
 ) {
   root["type"] = "resolve";
   root["message"] = "Success";
-  build_data(root["data"]);
-
+  root["timestamp"] = timestamp;
+  root["apiEnum"] = apiEnum;
+  root["data"] = data["payload"];
   sendResponse(root);
 }
 
@@ -75,40 +83,9 @@ void handleFatal(const std ::exception& err) {
   root["timestamp"] = 0;
   root["apiEnum"] = "Fatal";
   root["data"] = Json::nullValue;
-
+  log4cpp::Category::getRoot().errorStream() << "Fatal error: " << err.what();
   sendResponse(root);
 }
-
-// void sum(
-//   [[maybe_unused]] WebKitUserContentManager* manager,
-//   WebKitJavascriptResult* js_result,
-//   [[maybe_unused]] gpointer user_data
-// ) {
-//   JSCValue* value = webkit_javascript_result_get_js_value(js_result);
-//   if (!isRequestHeaderValid(value)) {
-//     return;
-//   }
-//   JSCValue* params = jsc_value_object_get_property(value, "params");
-//   JSCValue* args = jsc_value_object_get_property(params, "args");
-//   try {
-//     double result = 0;
-//     gchar** properties = jsc_value_object_enumerate_properties(args);
-//     for (gchar** property = properties; *property != nullptr; property++) {
-//       JSCValue* arg = jsc_value_object_get_property(args, *property);
-//       if (jsc_value_is_number(arg) != 0) {
-//         result += jsc_value_to_double(arg);
-//       } else {
-//         g_strfreev(properties);
-//         throw std::invalid_argument("Arguments must be numbers");
-//       }
-//     }
-//     g_strfreev(properties);
-//     handleSuccess(value, [&](Json::Value& root) { root["result"] = result;
-//     });
-//   } catch (const std::exception& e) {
-//     handleFatal(e);
-//   }
-// }
 
 void log(
   [[maybe_unused]] WebKitUserContentManager* manager,
@@ -127,52 +104,82 @@ void log(
   root["apiEnum"] =
     jsc_value_to_string(jsc_value_object_get_property(value, "apiEnum"));
   const char* message_str = jsc_value_to_string(message);
-  g_print("JS Log: %s\n", message_str);  // NOLINT
-  handleSuccess(root, [&](Json::Value& root) {
-    root["message"] = message_str;
-  });
+  log4cpp::Category::getRoot().infoStream() << "JS Log: " << message_str;
 }
 
-void getFileList(
+void handleMessage(
   [[maybe_unused]] WebKitUserContentManager* manager,
   WebKitJavascriptResult* js_result,
   [[maybe_unused]] gpointer user_data
 ) {
   JSCValue* value = webkit_javascript_result_get_js_value(js_result);
+  // 如果请求头不合法，直接返回
   if (!isRequestHeaderValid(value)) {
+    handleFatal(std::invalid_argument("Invalid request header"));
     return;
   }
   try {
     JSCValue* params = jsc_value_object_get_property(value, "params");
-    JSCValue* path = jsc_value_object_get_property(params, "path");
-    if (jsc_value_is_string(path) == 0) {
-      throw std::invalid_argument("Path must be a string");
-    }
-    mp::GetFileListRequestPtr request =
-      std::make_shared<mp::GetFileListRequest>();
-    request->setPath(jsc_value_to_string(path));
-
-    Json::Value root;
-    root["timestamp"] =
+    gdouble timestamp =
       jsc_value_to_double(jsc_value_object_get_property(value, "timestamp"));
-    root["apiEnum"] =
-      jsc_value_to_string(jsc_value_object_get_property(value, "apiEnum"));
+    JSCValue* apiEnum = jsc_value_object_get_property(value, "apiEnum");
+    gint32 apiEnumInt = jsc_value_to_int32(apiEnum);
+    auto api = static_cast<ApiEnum>(apiEnumInt);
+    // todo 根据apiEnum调用不同的函数
+    ReqPtr request = nullptr;
+    switch (api) {
+      case ApiEnum::GET_FILE_LIST: {
+        // getFileList
+        request = makeReqGetFileList(
+          jsc_value_to_string(jsc_value_object_get_property(params, "path"))
+        );
+        break;
+      }
+      case ApiEnum::GET_FILE_DETAIL: {
+        // getFileDetail
+        request = makeReqGetFileDetail(
+          jsc_value_to_string(jsc_value_object_get_property(params, "path"))
+        );
+        break;
+      }
+      default:
+        throw std::invalid_argument("Invalid apiEnum");
+        return;
+    }
+    if (request == nullptr) {
+      throw std::runtime_error("Failed to create request");
+    }
+    request->timestamp = timestamp;  // 设置时间戳
     // 异步调用 api::getFileList
-    auto future =
-      std::async(std::launch::async, api::getFileListAsync, request);
-
+    auto future = std::async(
+      std::launch::async,
+      [](const ReqPtr& request) {
+        log4cpp::Category::getRoot().infoStream()
+          << "Sending request to server: "
+          << request->toJson().toStyledString();
+        // 发送请求
+        socket::Socket::getInstance().send(request);
+        // 接收请求
+        ResPtr response = socket::Socket::getInstance().receive();
+        // 处理异常状态
+        if (response->status != StatusCode::OK) {
+          log4cpp::Category::getRoot().errorStream()
+            << "Failed to handle request: " << response->status;
+          throw std::runtime_error("Failed to handle request");
+        }
+        return response;
+      },
+      request
+    );
     // 在后台线程中处理结果
-    std::thread([root, future = std::move(future)]() mutable {
+    std::thread([future = std::move(future)]() mutable {
       try {
-        auto response = future.get();
-        handleSuccess(root, [&](Json::Value& root) {
-          for (const auto& file : response.get()->getFiles()) {
-            Json::Value fileJson;
-            fileJson["name"] = file.name;
-            fileJson["type"] = toDouble(file.type);
-            root["files"].append(fileJson);
-          }
-        });
+        ResPtr response = future.get();
+        Json::Value res = response->toJson();
+        Json::Value root;
+        handleSuccess(
+          root, res, res["timestamp"].asDouble(), res["apiEnum"].asInt()
+        );
       } catch (const std::exception& e) {
         handleFatal(e);
       }
@@ -182,47 +189,4 @@ void getFileList(
   }
 }
 
-void getFileDetail(
-  [[maybe_unused]] WebKitUserContentManager* manager,
-  WebKitJavascriptResult* js_result,
-  [[maybe_unused]] gpointer user_data
-) {
-  JSCValue* value = webkit_javascript_result_get_js_value(js_result);
-  if (!isRequestHeaderValid(value)) {
-    return;
-  }
-  try {
-    JSCValue* params = jsc_value_object_get_property(value, "params");
-    JSCValue* path = jsc_value_object_get_property(params, "path");
-    if (jsc_value_is_string(path) == 0) {
-      throw std::invalid_argument("Path must be a string");
-    }
-    mp::GetFileDetailRequestPtr request =
-      std::make_shared<mp::GetFileDetailRequest>();
-    request->setPath(jsc_value_to_string(path));
-
-    Json::Value root;
-    root["timestamp"] =
-      jsc_value_to_double(jsc_value_object_get_property(value, "timestamp"));
-    root["apiEnum"] =
-      jsc_value_to_string(jsc_value_object_get_property(value, "apiEnum"));
-    // 异步调用 api::getFileDetail
-    auto future =
-      std::async(std::launch::async, api::getFileDetailAsync, request);
-
-    // 在后台线程中处理结果
-    std::thread([root, future = std::move(future)]() mutable {
-      try {
-        auto response = future.get();
-        handleSuccess(root, [&](Json::Value& root) {
-          root = response.get()->toJson();
-        });
-      } catch (const std::exception& e) {
-        handleFatal(e);
-      }
-    }).detach();
-  } catch (const std::exception& e) {
-    handleFatal(e);
-  }
-}
 }  // namespace zipfiles::client::view

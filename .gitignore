@@ -6,3 +6,4 @@ tests/demo
 tests/mock
 lib/*.so
 .pnpm-store
+/bin

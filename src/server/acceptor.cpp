@@ -1,7 +1,9 @@
-#include "server/acceptor.h"
-#include <future>
-#include <iostream>
 #include <sys/epoll.h>
+#include <unistd.h>
+#include <future>
+#include <vector>
+#include "log4cpp/Category.hh"
+#include "server/acceptor.h"
 #include "server/handler.h"
 #include "server/socket/socket.h"
 
@@ -15,7 +17,7 @@ namespace zipfiles::server {
 int threadCount = 0;
 
 void doAccept() {
-  int serverFd = ServerSocket::getServerFd();
+  int serverFd = Socket::getServerFd();
 
   fd_set readfds;
   std::vector<std::future<void>> futures;  // 用于存储 future 对象
@@ -27,7 +29,9 @@ void doAccept() {
   // 初始化epoll实例
   int epollFd = epoll_create1(0);
   if (epollFd == -1) {
-    std::cerr << "Failed to create epoll file descriptor" << std::endl;
+    log4cpp::Category::getRoot().errorStream()
+      << "Failed to create epoll file descriptor";
+    return;
   }
 
   // 初始化epoll事件
@@ -35,7 +39,8 @@ void doAccept() {
   event.events = EPOLLIN;  // 监听可读事件
   event.data.fd = serverFd;
   if (epoll_ctl(epollFd, EPOLL_CTL_ADD, serverFd, &event) == -1) {
-    std::cerr << "Failed to add file descriptor to epoll" << std::endl;
+    log4cpp::Category::getRoot().errorStream()
+      << "Failed to add file descriptor to epoll";
     close(epollFd);
   }
 
@@ -43,20 +48,13 @@ void doAccept() {
     std::array<struct epoll_event, 8> events{};
     int numEvents = epoll_wait(epollFd, events.data(), events.size(), -1);
     if (numEvents == -1) {
-      std::cerr << "epoll_wait error" << std::endl;
+      log4cpp::Category::getRoot().errorStream() << "Failed to wait for events";
       break;
     }
 
-    // ! deprecated
-    // int activity = select(serverFd + 1, &readfds, nullptr, nullptr, nullptr);
-    // if (activity < 0) {
-    //   std::cerr << "Select error" << std::endl;
-    //   break;
-    // }
-
     for (int i = 0; i < numEvents; ++i) {
       if (events[i].data.fd == serverFd && threadCount < MAX_THREADS) {
-        ServerSocket::acceptConnection();
+        Socket::acceptConnection();
 
         futures.emplace_back(std::async(std::launch::async, doHandle));
 

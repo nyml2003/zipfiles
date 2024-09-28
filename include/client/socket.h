@@ -1,28 +1,33 @@
 #ifndef ZIPFILE_CLIENT_SOCKET_H
 #define ZIPFILE_CLIENT_SOCKET_H
-#include "mp/mp.h"
+#include <netinet/in.h>
+#include "mp/Request.h"
+#include "mp/Response.h"
+
 namespace zipfiles::client::socket {
 /**
  * @brief 客户端套接字
  * @details 用于发送请求和接收响应
  */
-class ClientSocket {
+class Socket {
  public:
-  static ClientSocket& getInstance() {
-    static ClientSocket instance;
+  static Socket& getInstance() {
+    static Socket instance;
     return instance;
   }
-  [[nodiscard]] static bool receive(const mp::ResponsePtr& res);
-  [[nodiscard]] static bool send(const mp::RequestPtr& req);
-  static void reconnect();
-  ClientSocket(const ClientSocket& other) = delete;
-  ClientSocket& operator=(const ClientSocket& other) = delete;
-  ClientSocket(ClientSocket&& other) noexcept = delete;
-  ClientSocket& operator=(ClientSocket&& other) noexcept = delete;
+  [[nodiscard]] ResPtr receive() const;
+  void send(const ReqPtr& req);
+  void reconnect();
+  void connectWithRetries();
+  void initializeSocket();
+  Socket(const Socket& other) = delete;
+  Socket& operator=(const Socket& other) = delete;
+  Socket(Socket&& other) noexcept = delete;
+  Socket& operator=(Socket&& other) noexcept = delete;
 
  private:
-  ClientSocket();
-  ~ClientSocket();
+  Socket();
+  ~Socket();
   int sock;
   struct sockaddr_in serv_addr;
 };

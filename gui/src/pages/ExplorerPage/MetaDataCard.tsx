@@ -11,7 +11,7 @@ interface Props {
 }
 
 const MetaDataCard: React.FC<Props> = ({ currentFile }) => {
-  const [metadata, setMetadata] = useState<GetFileDetailResponse['metadata'] | null>(null);
+  const [metadata, setMetadata] = useState<GetFileDetailResponse | null>(null);
   const api = useApi();
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Done);
 
@@ -23,8 +23,12 @@ const MetaDataCard: React.FC<Props> = ({ currentFile }) => {
           path: currentFile,
         })
         .then((res: GetFileDetailResponse) => {
-          setMetadata(res.metadata);
+          console.log('GetFileListResponse: ', JSON.stringify(res));
+          setMetadata(res);
           setLoading(LoadingState.Done);
+        })
+        .catch(e => {
+          console.log('获取文件详情失败: ', e);
         });
     }
   }, [currentFile]);
@@ -40,8 +44,8 @@ const MetaDataCard: React.FC<Props> = ({ currentFile }) => {
             <p> 路径: {metadata.path}</p>
             <p>文件名: {metadata.name}</p>
             <p>文件类型: {FileTypeToString(metadata.type)}</p>
-            <p>创建时间: {metadata.createTime.toString()}</p>
-            <p>更新时间: {metadata.updateTime.toString()}</p>
+            <p>创建时间: {metadata.createTime}</p>
+            <p>更新时间: {metadata.updateTime}</p>
             <p>大小: {metadata.size}</p>
             <p>所有者: {metadata.owner}</p>
             <p>组: {metadata.group}</p>

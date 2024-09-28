@@ -1,8 +1,9 @@
 #include "server/socket/socket.h"
-#include <iostream>
+#include "mp/Request.h"
+#include "mp/Response.h"
 #include "mp/mp.h"
 namespace zipfiles::server {
-ServerSocket::ServerSocket()
+Socket::Socket()
   : server_fd(socket(AF_INET, SOCK_STREAM, 0)), client_fd(0), address{} {
   if (server_fd == -1) {
     perror("socket failed");
@@ -33,15 +34,15 @@ ServerSocket::ServerSocket()
   }
 }
 
-ServerSocket::~ServerSocket() {
+Socket::~Socket() {
   close(server_fd);
 }
 
-int ServerSocket::getServerFd() {
+int Socket::getServerFd() {
   return getInstance().server_fd;
 }
 
-void ServerSocket::acceptConnection() {
+void Socket::acceptConnection() {
   getInstance().client_fd = accept(
     getInstance().server_fd,
     reinterpret_cast<struct sockaddr*>(&getInstance().address),
@@ -53,36 +54,31 @@ void ServerSocket::acceptConnection() {
   }
 }
 
-bool ServerSocket::receive(const mp::RequestPtr& req) {
+ReqPtr Socket::receive() {
   std::array<char, mp::MAX_MESSAGE_SIZE> buffer = {0};
   ssize_t valread =
     read(getInstance().client_fd, buffer.data(), mp::MAX_MESSAGE_SIZE);
   if (valread == 0) {
-    std::cout << "Client disconnected." << std::endl;
     close(getInstance().client_fd);
-    return false;
+    throw std::runtime_error("Client disconnected");
   }
   if (valread < 0) {
     perror("Failed to receive request");
-    return false;
+    close(getInstance().client_fd);
   }
-  std::cout << "Received data: " << buffer.data() << std::endl;
   static Json::CharReaderBuilder reader;
   Json::Value jsonData;
   std::string errs;
   std::istringstream stream(buffer.data());
   if (Json::parseFromStream(reader, stream, &jsonData, &errs)) {
-    req->fromJson(jsonData);
-    return true;
+    return Req::fromJson(jsonData);
   }
-  return false;
+  throw std::runtime_error("Failed to parse request");
 }
 
-bool ServerSocket::send(const mp::ResponsePtr& res) {
+void Socket::send(const ResPtr& res) {
   static Json::StreamWriterBuilder writer;
   std::string data = Json::writeString(writer, res->toJson());
-  std::cout << "Sending response: " << data << std::endl;
   ::send(getInstance().client_fd, data.c_str(), data.size(), 0);
-  return true;
 }
 }  // namespace zipfiles::server

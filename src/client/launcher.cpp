@@ -1,9 +1,12 @@
 
-#include "client/view.h"
-#include "client/launcher.h"
-#include <iostream>
-#include <string>
 #include <libgen.h>
+#include <iostream>
+#include <log4cpp/Category.hh>
+#include <log4cpp/PropertyConfigurator.hh>
+#include <string>
+#include "client/launcher.h"
+#include "client/view.h"
+#include "glib-object.h"
 
 namespace zipfiles::client::launcher {
 WebKitWebView* webView = nullptr;
@@ -12,7 +15,7 @@ void loadDistUri() {
   ssize_t len =
     readlink("/proc/self/exe", exe_path.data(), exe_path.size() - 1);
   if (len == -1) {
-    std::cerr << "无法获取可执行文件路径: " << strerror(errno) << std::endl;
+    log4cpp::Category::getRoot().errorStream() << "Failed to readlink";
     return;
   }
   exe_path.at(len) = '\0';
@@ -23,8 +26,8 @@ void loadDistUri() {
 
 void bindJS(WebKitUserContentManager* manager) {
   std::array<Handler, 2> handlers = {
-    {{"getFileList", G_CALLBACK(view::getFileList)},
-     {"getFileDetail", G_CALLBACK(view::getFileDetail)}}};
+    {{"handleMessage", reinterpret_cast<GCallback>(view::handleMessage)},
+     {"log", reinterpret_cast<GCallback>(view::log)}}};
 
   for (const auto& handler : handlers) {
     webkit_user_content_manager_register_script_message_handler(
@@ -58,9 +61,19 @@ void Launcher::run(int argc, char** argv) {
   gtk_main();
 }
 
+void Launcher::startLogger() {
+  try {
+    // 假设配置文件名为 "log4cpp.properties"
+    std::string configFilePath = "/app/bin/client/client.log.properties";
+    log4cpp::PropertyConfigurator::configure(configFilePath);
+  } catch (log4cpp::ConfigureFailure& f) {
+    std::cerr << "Configure Problem: " << f.what() << std::endl;
+  }
+}
 }  // namespace zipfiles::client::launcher
 
 int main(int argc, char* argv[]) {
+  zipfiles::client::launcher::Launcher::startLogger();
   zipfiles::client::launcher::Launcher::run(argc, argv);
   return 0;
 }

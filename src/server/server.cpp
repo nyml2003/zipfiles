@@ -1,9 +1,8 @@
-#include <iostream>
 #include <unistd.h>
 #include <csignal>
-
+#include <log4cpp/Category.hh>
+#include <log4cpp/PropertyConfigurator.hh>
 #include "server/acceptor.h"
-#include "server/handler.h"
 
 namespace zipfiles::server {
 
@@ -14,7 +13,7 @@ namespace zipfiles::server {
 void daemonize() {
   pid_t pid = fork();
   if (pid < 0) {
-    std::cerr << "Fork failed" << std::endl;
+    log4cpp::Category::getRoot().errorStream() << "Failed to fork process";
     exit(EXIT_FAILURE);
   }
   if (pid > 0) {
@@ -23,23 +22,27 @@ void daemonize() {
 
   // 创建新的会话
   if (setsid() < 0) {
-    std::cerr << "Setsid failed" << std::endl;
+    log4cpp::Category::getRoot().errorStream()
+      << "Failed to create new session";
     exit(EXIT_FAILURE);
   }
 
   // 捕捉和处理信号
   if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
-    std::cerr << "Failed to set signal handler for SIGCHLD" << std::endl;
+    log4cpp::Category::getRoot().errorStream()
+      << "Failed to set signal handler for SIGCHLD";
     exit(EXIT_FAILURE);
   }
   if (signal(SIGTSTP, SIG_IGN) == SIG_ERR) {
-    std::cerr << "Failed to set signal handler for SIGTSTP" << std::endl;
+    log4cpp::Category::getRoot().errorStream()
+      << "Failed to set signal handler for SIGTSTP";
     exit(EXIT_FAILURE);
   }
 
   // 更改工作目录
   if (chdir("/") < 0) {
-    std::cerr << "Chdir failed" << std::endl;
+    log4cpp::Category::getRoot().errorStream()
+      << "Failed to change working directory";
     exit(EXIT_FAILURE);
   }
 
@@ -53,7 +56,15 @@ void daemonize() {
 
 int main() {
   // zipfiles::server::daemonize();  // 初始化守护进程
+  try {
+    // 假设配置文件名为 "log4cpp.properties"
+    std::string configFilePath = "/app/bin/server/server.log.properties";
+    log4cpp::PropertyConfigurator::configure(configFilePath);
+    log4cpp::Category::getRoot().infoStream() << "Server started";
+  } catch (log4cpp::ConfigureFailure& f) {
+    std::cerr << "Configure Problem: " << f.what() << std::endl;
+  }
   zipfiles::server::doAccept();
-  
+
   return 0;
 }
