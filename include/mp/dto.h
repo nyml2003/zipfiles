@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 namespace zipfiles {
-
+namespace fs = std::filesystem;
 /**
  * @brief 用以展示目录结构的结构体
  *
@@ -13,7 +13,7 @@ struct DirectoryTreeNode {
   // 文件名
   std::string name;
   // 文件类型，定义见filesystem
-  std::filesystem::file_type type;
+  fs::file_type type;
   // 子节点
   std::vector<DirectoryTreeNode> children;
 };
@@ -38,7 +38,7 @@ struct CommitLog {
  */
 struct FileDetail {
   // 文件类型，定义见filesystem
-  std::filesystem::file_type type{};
+  fs::file_type type{};
   // 创建时间
   double createTime;
   // 修改时间
@@ -60,7 +60,7 @@ struct File {
   // 文件名
   std::string name;
   // 文件类型，定义见filesystem
-  std::filesystem::file_type type;
+  fs::file_type type;
 };
 }  // namespace zipfiles
 #endif  // !ZIPFILES_MP_COMMIT_Hs

@@ -12,17 +12,16 @@ namespace zipfiles::server {
  * @return 返回一个File类型的数组
  *
  */
-std::vector<File> getFileList(const std::filesystem::path& directory) {
-  const std::filesystem::path directory_path = "/" / directory;
-  if (!std::filesystem::exists(directory_path)) {
+std::vector<File> getFileList(const fs::path& directory) {
+  const fs::path directory_path = "/" / directory;
+  if (!fs::exists(directory_path)) {
     throw std::runtime_error("Directory does not exist.");
   }
-  if (!std::filesystem::is_directory(directory_path)) {
+  if (!fs::is_directory(directory_path)) {
     throw std::runtime_error(directory_path.string() + " is not a directory.");
   }
   std::vector<File> files;
-  for (const auto& entry :
-       std::filesystem::directory_iterator(directory_path)) {
+  for (const auto& entry : fs::directory_iterator(directory_path)) {
     File file;
     file.name = entry.path().filename().string();
     file.type = entry.symlink_status().type();
@@ -39,9 +38,9 @@ std::vector<File> getFileList(const std::filesystem::path& directory) {
  * @return 返回一个FileDetail类型
  *
  */
-FileDetail getFileDetail(const std::filesystem::path& file) {
-  const std::filesystem::path file_path = "/" / file;
-  if (!std::filesystem::exists(file_path)) {
+FileDetail getFileDetail(const fs::path& file) {
+  const fs::path file_path = "/" / file;
+  if (!fs::exists(file_path)) {
     throw std::runtime_error("File does not exist.");
   }
 
@@ -53,7 +52,7 @@ FileDetail getFileDetail(const std::filesystem::path& file) {
   struct group* grp = getgrgid(file_stat.st_gid);
 
   FileDetail file_detail = {
-    .type = std::filesystem::status(file_path).type(),
+    .type = fs::status(file_path).type(),
     .createTime = static_cast<double>(file_stat.st_ctime),
     .updateTime = static_cast<double>(file_stat.st_mtime),
     .size = file_stat.st_size,

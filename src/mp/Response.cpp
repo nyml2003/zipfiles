@@ -5,7 +5,7 @@
 #include "json/value.h"
 #include "mp/Response.h"
 namespace zipfiles {
-
+namespace fs = std::filesystem;
 Res::Res(ResKind kind) : kind(std::move(kind)), timestamp(0) {}
 
 std::ostream& operator<<(std::ostream& os, const StatusCode& status) {
@@ -75,8 +75,7 @@ ResPtr Res::fromJson(const Json::Value& json) {
   switch (api) {
     case ApiEnum::GET_FILE_DETAIL: {
       FileDetail metadata = {
-        static_cast<std::filesystem::file_type>(json["payload"]["type"].asInt()
-        ),
+        static_cast<fs::file_type>(json["payload"]["type"].asInt()),
         json["payload"]["createTime"].asDouble(),
         json["payload"]["updateTime"].asDouble(),
         static_cast<__off_t>(json["payload"]["size"].asUInt64()),
@@ -94,7 +93,7 @@ ResPtr Res::fromJson(const Json::Value& json) {
       for (const auto& file : json["payload"]["files"]) {
         files.push_back(
           {file["name"].asString(),
-           static_cast<std::filesystem::file_type>(file["type"].asInt())}
+           static_cast<fs::file_type>(file["type"].asInt())}
         );
       }
       res = makeResGetFileList(files);
