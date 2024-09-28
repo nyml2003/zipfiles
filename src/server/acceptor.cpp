@@ -45,6 +45,7 @@ void doAccept() {
   }
 
   while (true) {
+    // 设置epoll_wait
     std::array<struct epoll_event, 8> events{};
     int numEvents = epoll_wait(epollFd, events.data(), events.size(), -1);
     if (numEvents == -1) {
@@ -52,13 +53,18 @@ void doAccept() {
       break;
     }
 
+    // 检查是否是server Fd
     for (int i = 0; i < numEvents; ++i) {
       if (events[i].data.fd == serverFd && threadCount < MAX_THREADS) {
         Socket::acceptConnection();
 
         futures.emplace_back(std::async(std::launch::async, doHandle));
 
+        // 增加当前正在运行的线程数
         threadCount++;
+
+      } else {
+        // todo: thread数量过多的处理
       }
     }
 

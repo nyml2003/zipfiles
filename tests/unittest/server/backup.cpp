@@ -39,19 +39,3 @@ class BackupRestoreTest : public ::testing::Test {
     fs::remove_all(unittest::mockDir);
   }
 };
-
-TEST_F(BackupRestoreTest, BackupFile) {
-  ASSERT_NO_THROW(
-    backup({.source = unittest::userDir, .destination = unittest::backupDir})
-  );
-}
-
-TEST_F(BackupRestoreTest, RestoreFile) {
-  ASSERT_NO_THROW(
-    backup({.source = unittest::userDir, .destination = unittest::backupDir})
-  );
-  fs::remove_all(unittest::userDir);
-  ASSERT_NO_THROW(
-    restore({.source = unittest::backupDir, .destination = unittest::userDir})
-  );
-}

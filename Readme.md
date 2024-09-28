@@ -95,10 +95,12 @@ make
 
 总体的模块划分如下
 ```mermaid
-graph LR
-  gui <--> m["middleware (.so)"]
-  shell <--> m
-  m <--> backend
+graph TB
+  client --request--> server
+  server --response--> client
+  mp <--注册服务--> client
+  mp <--注册服务--> server
+  
 ```
 
 项目的目录结构

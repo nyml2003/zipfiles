@@ -8,7 +8,9 @@
 #define MAX_THREADS 8
 
 namespace zipfiles::server {
+
 void doAccept();
+
 }
 
 #endif

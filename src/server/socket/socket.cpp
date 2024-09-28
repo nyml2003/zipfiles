@@ -48,37 +48,50 @@ void Socket::acceptConnection() {
     reinterpret_cast<struct sockaddr*>(&getInstance().address),
     reinterpret_cast<socklen_t*>(&getInstance().addrlen)
   );
+
   if (getInstance().client_fd < 0) {
     perror("accept");
     exit(EXIT_FAILURE);
   }
+
 }
 
 ReqPtr Socket::receive() {
+
   std::array<char, mp::MAX_MESSAGE_SIZE> buffer = {0};
+
   ssize_t valread =
     read(getInstance().client_fd, buffer.data(), mp::MAX_MESSAGE_SIZE);
+  
   if (valread == 0) {
     close(getInstance().client_fd);
     throw std::runtime_error("Client disconnected");
   }
+
   if (valread < 0) {
     perror("Failed to receive request");
     close(getInstance().client_fd);
   }
+
   static Json::CharReaderBuilder reader;
   Json::Value jsonData;
   std::string errs;
   std::istringstream stream(buffer.data());
+
   if (Json::parseFromStream(reader, stream, &jsonData, &errs)) {
     return Req::fromJson(jsonData);
   }
+
   throw std::runtime_error("Failed to parse request");
+
 }
 
 void Socket::send(const ResPtr& res) {
+
   static Json::StreamWriterBuilder writer;
+
   std::string data = Json::writeString(writer, res->toJson());
   ::send(getInstance().client_fd, data.c_str(), data.size(), 0);
+  
 }
 }  // namespace zipfiles::server

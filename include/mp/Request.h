@@ -5,16 +5,22 @@
 #include <variant>
 namespace zipfiles {
 namespace request {
+
 struct GetFileDetail {
   std::string path;
 };
+
 struct GetFileList {
   std::string path;
 };
+
 };  // namespace request
+
 struct Req;
+
 using ReqKind = std::variant<request::GetFileDetail, request::GetFileList>;
 using ReqPtr = std::shared_ptr<Req>;
+
 struct Req {
   explicit Req(ReqKind kind);
   ReqKind kind;

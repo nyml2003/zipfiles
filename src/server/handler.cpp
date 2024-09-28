@@ -15,8 +15,10 @@ void doHandle() {
     while (true) {
       log4cpp::Category::getRoot().infoStream() << "Waiting for request";
       ReqPtr request = Socket::receive();
+
       log4cpp::Category::getRoot().infoStream()
         << "Request received: " << request->toJson().toStyledString();
+
       ResPtr response = std::visit(
         overload{
           [](request::GetFileDetail& req) {
@@ -33,9 +35,13 @@ void doHandle() {
         },
         request->kind
       );
+
+      // 设置response
       response->status = StatusCode::OK;
       response->timestamp = request->timestamp;
+
       Socket::send(response);
+
       log4cpp::Category::getRoot().infoStream()
         << "Response sent: " << response->toJson().toStyledString();
     }

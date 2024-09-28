@@ -3,7 +3,9 @@
 #include <json/json.h>
 #include <variant>
 #include "mp/dto.h"
+
 namespace zipfiles {
+
 enum class StatusCode {
   UNKNOWN = 0,
   OK = 1,
@@ -20,6 +22,7 @@ size_t toSizeT(ApiEnum apiEnum);
 std::ostream& operator<<(std::ostream& os, const StatusCode& status);
 
 namespace response {
+
 struct GetFileDetail {
   FileDetail metadata;
 };
@@ -27,10 +30,14 @@ struct GetFileDetail {
 struct GetFileList {
   std::vector<File> files;
 };
+
 }  // namespace response
+
 struct Res;
+
 using ResKind = std::variant<response::GetFileDetail, response::GetFileList>;
 using ResPtr = std::shared_ptr<Res>;
+
 struct Res {
   explicit Res(ResKind kind);
   ResKind kind;

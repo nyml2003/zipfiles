@@ -58,7 +58,7 @@ int main() {
   // zipfiles::server::daemonize();  // 初始化守护进程
   try {
     // 假设配置文件名为 "log4cpp.properties"
-    std::string configFilePath = "/app/bin/server/server.log.properties";
+    std::string configFilePath = "/app/config/server.log.properties";
     log4cpp::PropertyConfigurator::configure(configFilePath);
     log4cpp::Category::getRoot().infoStream() << "Server started";
   } catch (log4cpp::ConfigureFailure& f) {

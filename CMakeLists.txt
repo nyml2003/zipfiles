@@ -119,7 +119,6 @@ target_compile_options(client PRIVATE ${GTK_CFLAGS_OTHER} ${WEBKIT_CFLAGS_OTHER}
 install(DIRECTORY ${ZIPFILES_DIST_DIR} DESTINATION ${ZIPFILES_OUTPUT_DIR}/client)
 install(FILES ${ZIPFILES_CLIENT_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR}/client)
 
-
 ############################################
 #### 项目测试
 ############################################
