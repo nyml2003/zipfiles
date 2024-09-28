@@ -1,5 +1,5 @@
-#ifndef ZIPFILES_MQ_TYPE_H
-#define ZIPFILES_MQ_TYPE_H
+#ifndef ZIPFILES_MP_H
+#define ZIPFILES_MP_H
 #include <json/json.h>
 #include <netinet/in.h>
 #include <sys/socket.h>

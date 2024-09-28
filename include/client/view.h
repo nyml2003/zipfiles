@@ -45,19 +45,6 @@ void handleError(Json::Value& root, const std::exception& err);
  * @param err
  */
 void handleFatal(const std::exception& err);
-// /**
-//  * @brief 求和
-//  * @details
-//  * 从JS请求对象中获取参数，求和并发送到前端
-//  * @param manager 用户内容管理器
-//  * @param js_result JS请求对象
-//  * @param user_data 用户数据
-//  */
-// void sum(
-//   WebKitUserContentManager* manager,
-//   WebKitJavascriptResult* js_result,
-//   gpointer user_data
-// );
 /**
  * @brief 记录
  * @details

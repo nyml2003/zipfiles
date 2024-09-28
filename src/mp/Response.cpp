@@ -1,10 +1,9 @@
+#include <filesystem>
 #include <log4cpp/Category.hh>
 #include <utility>
 #include "common.h"
 #include "json/value.h"
 #include "mp/Response.h"
-#include "utils.h"
-
 namespace zipfiles {
 
 Res::Res(ResKind kind) : kind(std::move(kind)), timestamp(0) {}
@@ -45,7 +44,7 @@ Json::Value Res::toJson() {
         json["apiEnum"] = Json::Value(toSizeT(ApiEnum::GET_FILE_DETAIL));
         const auto& metadata = res.metadata;
         json["payload"]["name"] = metadata.name;
-        json["payload"]["type"] = toDouble(metadata.type);
+        json["payload"]["type"] = static_cast<int>(metadata.type);
         json["payload"]["createTime"] = metadata.createTime;
         json["payload"]["updateTime"] = metadata.updateTime;
         json["payload"]["owner"] = metadata.owner;
@@ -60,7 +59,7 @@ Json::Value Res::toJson() {
         for (const auto& file : res.files) {
           Json::Value fileJson;
           fileJson["name"] = file.name;
-          fileJson["type"] = toDouble(file.type);
+          fileJson["type"] = static_cast<int>(file.type);
           json["payload"]["files"].append(fileJson);
         }
       },
@@ -76,7 +75,8 @@ ResPtr Res::fromJson(const Json::Value& json) {
   switch (api) {
     case ApiEnum::GET_FILE_DETAIL: {
       FileDetail metadata = {
-        toFileType(json["payload"]["type"].asDouble()),
+        static_cast<std::filesystem::file_type>(json["payload"]["type"].asInt()
+        ),
         json["payload"]["createTime"].asDouble(),
         json["payload"]["updateTime"].asDouble(),
         static_cast<__off_t>(json["payload"]["size"].asUInt64()),
@@ -93,7 +93,8 @@ ResPtr Res::fromJson(const Json::Value& json) {
       std::vector<File> files;
       for (const auto& file : json["payload"]["files"]) {
         files.push_back(
-          {file["name"].asString(), toFileType(file["type"].asDouble())}
+          {file["name"].asString(),
+           static_cast<std::filesystem::file_type>(file["type"].asInt())}
         );
       }
       res = makeResGetFileList(files);
