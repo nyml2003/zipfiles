@@ -3,9 +3,10 @@
 #include <filesystem>
 #include <vector>
 #include "mp/dto.h"
+#include "mp/filter.h"
 namespace zipfiles::server {
 std::vector<File>
-getFilesList(const fs::path& directory, bool doFilter, MetaDataFilter& filter);
+getFileList(const fs::path& directory, bool doFilter, MetaDataFilter& filter);
 FileDetail getFileDetail(const fs::path& file);
 }  // namespace zipfiles::server
 #endif  // !ZIPFILES_FSAPI_H

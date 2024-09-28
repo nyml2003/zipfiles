@@ -2,11 +2,10 @@
 #include "common.h"
 #include "mp/Request.h"
 #include "mp/Response.h"
+#include "mp/filter.h"
 #include "server/handler.h"
-#include <iostream>
-#include "server/api/api.h"
-#include "mp/mp.h"
 #include "server/socket/socket.h"
+#include "server/tools/fsapi.h"
 
 namespace zipfiles::server {
 
@@ -24,7 +23,8 @@ void doHandle() {
             return makeResGetFileDetail(getFileDetail(req.path));
           },
           [](request::GetFileList& req) {
-            return makeResGetFileList(getFileList(req.path));
+            MetaDataFilter filter;
+            return makeResGetFileList(getFileList(req.path, false, filter));
           },
           [](auto&&) {
             throw std::runtime_error("Unknown request type");
