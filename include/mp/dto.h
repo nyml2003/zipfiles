@@ -1,9 +1,10 @@
 #ifndef ZIPFILES_MP_DATA_TRANSFER_OBJECT_H
 #define ZIPFILES_MP_DATA_TRANSFER_OBJECT_H
+
 #include <filesystem>
 #include <map>
 #include <string>
-#include <vector>
+
 namespace zipfiles {
 namespace fs = std::filesystem;
 
