@@ -4,7 +4,7 @@
 namespace zipfiles::server {
 
 void doHandle();
-
+void daemonize();
 }  // namespace zipfiles::server
 
 #endif

@@ -1,4 +1,0 @@
-#ifndef ZIPFILES_UTILS_H
-#define ZIPFILES_UTILS_H
-
-#endif  // !ZIPFILES_UTILS_H

@@ -20,6 +20,11 @@ void unpackArchive(
     throw std::runtime_error("Failed to open archive: " + archivePath);
   }
 
+  // 创建输出目录
+  if (!fs::exists(outputDir)) {
+    fs::create_directories(outputDir);
+  }
+
   while (archive) {
     size_t pathLength;
     archive.read(reinterpret_cast<char*>(&pathLength), sizeof(pathLength));

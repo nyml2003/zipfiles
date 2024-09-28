@@ -63,8 +63,11 @@ file(GLOB_RECURSE ZIPFILES_SERVER_HEADER_FILES ${ZIPFILES_SERVER_HEADER_DIR}/*.h
 set(ZIPFILES_SERVER_SOURCE_DIR ${ZIPFILES_SOURCE_DIR}/server)
 # 递归地去查找所有的.cpp文件
 file(GLOB_RECURSE ZIPFILES_SERVER_SOURCE_FILES ${ZIPFILES_SERVER_SOURCE_DIR}/*.cpp)
+list(REMOVE_ITEM ZIPFILES_SERVER_SOURCE_FILES ${EXCLUDE_FILE})
+# 服务端测试目录
 set(ZIPFILES_SERVER_UNIT_TEST_DIR ${ZIPFILES_UNIT_TEST_DIR}/server)
 file(GLOB_RECURSE ZIPFILES_SERVER_UNIT_TEST_FILES ${ZIPFILES_SERVER_UNIT_TEST_DIR}/*.cpp)
+# 服务端配置目录
 set(ZIPFILES_SERVER_LOG_CONFIG ${ZIPFILES_CONFIG_DIR}/server.log.properties)
 
 # 中台相关
@@ -72,6 +75,11 @@ set(ZIPFILES_MP_HEADER_DIR ${ZIPFILES_HEADER_DIR}/mp)
 file(GLOB_RECURSE ZIPFILES_MP_HEADER_FILES ${ZIPFILES_MP_HEADER_DIR}/*.h)
 set(ZIPFILES_MP_SOURCE_DIR ${ZIPFILES_SOURCE_DIR}/mp)
 file(GLOB_RECURSE ZIPFILES_MP_SOURCE_FILES ${ZIPFILES_MP_SOURCE_DIR}/*.cpp)
+
+# 可执行文件入口
+set(ZIPFILES_ENTRY_DIR ${ZIPFILES_SOURCE_DIR}/entry)
+set(ZIPFILES_CLINET_ENTRY ${ZIPFILES_ENTRY_DIR}/client.cpp)
+set(ZIPFILES_SERVER_ENTRY ${ZIPFILES_ENTRY_DIR}/server.cpp)
 
 
 ############################################
@@ -84,6 +92,7 @@ add_executable(
     ${ZIPFILES_SOURCE_FILES}
     ${ZIPFILES_MP_SOURCE_FILES}
     ${ZIPFILES_SERVER_SOURCE_FILES}
+    ${ZIPFILES_SERVER_ENTRY}
 )
 
 set_target_properties(server PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZIPFILES_OUTPUT_DIR}/server)
@@ -103,6 +112,7 @@ add_executable(
     ${ZIPFILES_SOURCE_FILES}
     ${ZIPFILES_MP_SOURCE_FILES}
     ${ZIPFILES_CLIENT_SOURCE_FILES}
+    ${ZIPFILES_CLINET_ENTRY}
 )
 
 set_target_properties(client PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZIPFILES_OUTPUT_DIR}/client)
@@ -124,23 +134,24 @@ install(FILES ${ZIPFILES_CLIENT_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR}/c
 ############################################
 
 find_package(GTest REQUIRED)
-# # 单元测试
-# enable_testing()
+# 单元测试
+enable_testing()
 
-# foreach(TEST_FILE ${ZIPFILES_SERVER_UNIT_TEST_FILES})
-#     # 获取文件名（不带路径和扩展名）+ 服务端单元测试
-#     get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
+foreach(TEST_FILE ${ZIPFILES_SERVER_UNIT_TEST_FILES})
+    # 获取文件名（不带路径和扩展名）+ 服务端单元测试
+    get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
 
-#     # 创建测试目标
-#     add_executable(${TEST_NAME} ${TEST_FILE} ${ZIPFILES_SOURCE_FILES})
-#     # 链接 Google Test 库
-#     target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main)
+    # 创建测试目标
+    add_executable(${TEST_NAME} ${TEST_FILE} ${ZIPFILES_SERVER_SOURCE_FILES} ${ZIPFILES_MP_SOURCE_FILES})
 
-#     # 添加测试到 CTest
-#     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+    # 链接 Google Test 库
+    target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main ${LOG4CPP_LIBRARIES} ${JSONCPP_LIBRARIES})
 
-#     set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 10)
-# endforeach()
+    # 添加测试到 CTest
+    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+
+    set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 10)
+endforeach()
 
 
 
