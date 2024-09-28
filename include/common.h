@@ -96,16 +96,26 @@ struct CommitLog {
 
 ***********************************/
 
+/**
+ * @brief 元数据过滤器类
+ *
+ * @details
+ * 使用成员函数往vector数组中添加过滤器，之后调用doFilter来按顺序执行所有过滤器
+ *
+ * todo: 直接返回一个FileDatail数组
+ */
 class MetaDataFilter {
  public:
   using FilterFunc = std::function<bool(const FileDetail&)>;
 
-  MetaDataFilter& filterByType(const fs::file_type &type) {
-    filters.emplace_back([&type](const FileDetail& fd) { return fd.type == type; });
+  MetaDataFilter& filterByType(const fs::file_type& type) {
+    filters.emplace_back([&type](const FileDetail& fd) {
+      return fd.type == type;
+    });
     return *this;
   }
 
-  MetaDataFilter& filterBySize(const __off_t &minSize, const __off_t &maxSize) {
+  MetaDataFilter& filterBySize(const __off_t& minSize, const __off_t& maxSize) {
     filters.emplace_back([&minSize, &maxSize](const FileDetail& fd) {
       return fd.size >= minSize && fd.size <= maxSize;
     });
@@ -113,14 +123,16 @@ class MetaDataFilter {
   }
 
   MetaDataFilter& filterByOwner(const std::string& owner) {
-    filters.emplace_back([&owner](const FileDetail& fd) { return fd.owner == owner; }
-    );
+    filters.emplace_back([&owner](const FileDetail& fd) {
+      return fd.owner == owner;
+    });
     return *this;
   }
 
   MetaDataFilter& filterByGroup(const std::string& group) {
-    filters.emplace_back([&group](const FileDetail& fd) { return fd.group == group; }
-    );
+    filters.emplace_back([&group](const FileDetail& fd) {
+      return fd.group == group;
+    });
     return *this;
   }
 
@@ -133,6 +145,8 @@ class MetaDataFilter {
     }
     return true;
   }
+
+  ~MetaDataFilter() { filters.clear(); }
 
  private:
   std::vector<FilterFunc> filters;
