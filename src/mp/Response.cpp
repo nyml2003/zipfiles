@@ -37,47 +37,42 @@ size_t toSizeT(ApiEnum apiEnum) {
 }
 Json::Value Res::toJson() {
   Json::Value json;
-  Json::Value payload;
-  Json::Value kindValue;
-  payload = Json::objectValue;
+  json["status"] = static_cast<int>(status);
+  json["timestamp"] = timestamp;
   std::visit(
     overload{
-      [&payload, &kindValue](response::GetFileDetail& res) {
-        kindValue = Json::Value(toSizeT(ApiEnum::GET_FILE_DETAIL));
+      [&json](response::GetFileDetail& res) {
+        json["apiEnum"] = Json::Value(toSizeT(ApiEnum::GET_FILE_DETAIL));
         const auto& metadata = res.metadata;
-        payload["name"] = metadata.name;
-        payload["type"] = toDouble(metadata.type);
-        payload["createTime"] = metadata.createTime;
-        payload["updateTime"] = metadata.updateTime;
-        payload["owner"] = metadata.owner;
-        payload["group"] = metadata.group;
-        payload["mode"] = metadata.mode;
-        payload["path"] = metadata.path;
-        payload["size"] = static_cast<Json::UInt64>(metadata.size);
+        json["payload"]["name"] = metadata.name;
+        json["payload"]["type"] = toDouble(metadata.type);
+        json["payload"]["createTime"] = metadata.createTime;
+        json["payload"]["updateTime"] = metadata.updateTime;
+        json["payload"]["owner"] = metadata.owner;
+        json["payload"]["group"] = metadata.group;
+        json["payload"]["mode"] = metadata.mode;
+        json["payload"]["path"] = metadata.path;
+        json["payload"]["size"] = static_cast<Json::UInt64>(metadata.size);
       },
-      [&payload, &kindValue](response::GetFileList& res) {
-        kindValue = Json::Value(toSizeT(ApiEnum::GET_FILE_LIST));
-        payload["files"] = Json::arrayValue;
+      [&json](response::GetFileList& res) {
+        json["apiEnum"] = Json::Value(toSizeT(ApiEnum::GET_FILE_LIST));
+        json["payload"]["files"] = Json::arrayValue;
         for (const auto& file : res.files) {
           Json::Value fileJson;
           fileJson["name"] = file.name;
           fileJson["type"] = toDouble(file.type);
-          payload["files"].append(fileJson);
+          json["payload"]["files"].append(fileJson);
         }
       },
       [](auto&&) { throw std::runtime_error("Unknown response type"); }},
     kind
   );
-  json["kind"] = kindValue;
-  json["payload"] = payload;
-  json["status"] = static_cast<int>(status);
-  json["timestamp"] = timestamp;
   return json;
 }
 
 ResPtr Res::fromJson(const Json::Value& json) {
   ResPtr res;
-  auto api = static_cast<ApiEnum>(json["kind"].asInt());
+  auto api = static_cast<ApiEnum>(json["apiEnum"].asInt());
   switch (api) {
     case ApiEnum::GET_FILE_DETAIL: {
       FileDetail metadata = {
@@ -92,7 +87,6 @@ ResPtr Res::fromJson(const Json::Value& json) {
         json["payload"]["name"].asString(),
       };
       res = makeResGetFileDetail(metadata);
-
       break;
     }
     case ApiEnum::GET_FILE_LIST: {

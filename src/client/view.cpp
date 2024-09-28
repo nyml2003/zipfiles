@@ -1,8 +1,8 @@
 #include <future>
 #include <log4cpp/Category.hh>
 #include <thread>
-#include "client/api.h"
 #include "client/launcher.h"
+#include "client/socket.h"
 #include "client/view.h"
 #include "jsc/jsc.h"
 #include "json/value.h"
@@ -26,6 +26,7 @@ bool isRequestHeaderValid(JSCValue* value) {
     return false;
   }
   JSCValue* apiEnum = jsc_value_object_get_property(value, "apiEnum");
+  // 如果是number，说明是向后端请求，如果是string，说明是native调用
   if (jsc_value_is_number(apiEnum) == 0 && jsc_value_is_string(apiEnum) == 0) {
     log4cpp::Category::getRoot().errorStream()
       << __func__ << ": apiEnum is not a number or string";
@@ -56,11 +57,15 @@ void sendResponse(Json::Value& root) {
 
 void handleSuccess(
   Json::Value& root,
-  const std::function<void(Json::Value&)>& build_data
+  Json::Value& data,
+  double timestamp,
+  int apiEnum
 ) {
   root["type"] = "resolve";
   root["message"] = "Success";
-  build_data(root);
+  root["timestamp"] = timestamp;
+  root["apiEnum"] = apiEnum;
+  root["data"] = data["payload"];
   sendResponse(root);
 }
 
@@ -108,7 +113,9 @@ void handleMessage(
   [[maybe_unused]] gpointer user_data
 ) {
   JSCValue* value = webkit_javascript_result_get_js_value(js_result);
+  // 如果请求头不合法，直接返回
   if (!isRequestHeaderValid(value)) {
+    handleFatal(std::invalid_argument("Invalid request header"));
     return;
   }
   try {
@@ -123,16 +130,16 @@ void handleMessage(
     switch (api) {
       case ApiEnum::GET_FILE_LIST: {
         // getFileList
-        auto* path =
-          jsc_value_to_string(jsc_value_object_get_property(params, "path"));
-        request = makeReqGetFileList(path);
+        request = makeReqGetFileList(
+          jsc_value_to_string(jsc_value_object_get_property(params, "path"))
+        );
         break;
       }
       case ApiEnum::GET_FILE_DETAIL: {
         // getFileDetail
-        auto* path =
-          jsc_value_to_string(jsc_value_object_get_property(params, "path"));
-        request = makeReqGetFileDetail(path);
+        request = makeReqGetFileDetail(
+          jsc_value_to_string(jsc_value_object_get_property(params, "path"))
+        );
         break;
       }
       default:
@@ -142,25 +149,37 @@ void handleMessage(
     if (request == nullptr) {
       throw std::runtime_error("Failed to create request");
     }
-    request->timestamp = timestamp;
-    log4cpp::Category::getRoot().infoStream()
-      << "Sending request to server: " << request->toJson().toStyledString();
+    request->timestamp = timestamp;  // 设置时间戳
     // 异步调用 api::getFileList
-    auto future = std::async(std::launch::async, doHandle, request);
-
+    auto future = std::async(
+      std::launch::async,
+      [](const ReqPtr& request) {
+        log4cpp::Category::getRoot().infoStream()
+          << "Sending request to server: "
+          << request->toJson().toStyledString();
+        // 发送请求
+        socket::Socket::getInstance().send(request);
+        // 接收请求
+        ResPtr response = socket::Socket::getInstance().receive();
+        // 处理异常状态
+        if (response->status != StatusCode::OK) {
+          log4cpp::Category::getRoot().errorStream()
+            << "Failed to handle request: " << response->status;
+          throw std::runtime_error("Failed to handle request");
+        }
+        return response;
+      },
+      request
+    );
     // 在后台线程中处理结果
     std::thread([future = std::move(future)]() mutable {
       try {
         ResPtr response = future.get();
         Json::Value res = response->toJson();
-        int apiEnum = res["kind"].asInt();
-        double timestamp = res["timestamp"].asDouble();
         Json::Value root;
-        handleSuccess(root, [&](Json::Value& root) {
-          root["data"] = response->toJson()["payload"];
-          root["timestamp"] = timestamp;
-          root["apiEnum"] = apiEnum;
-        });
+        handleSuccess(
+          root, res, res["timestamp"].asDouble(), res["apiEnum"].asInt()
+        );
       } catch (const std::exception& e) {
         handleFatal(e);
       }

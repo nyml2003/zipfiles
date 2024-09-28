@@ -25,11 +25,11 @@ Json::Value Req::toJson() {
       [&json](request::GetFileDetail& req) {
         // 获取variant index
         json["payload"]["path"] = req.path;
-        json["kind"] = toSizeT(ApiEnum::GET_FILE_DETAIL);
+        json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_DETAIL);
       },
       [&json](request::GetFileList& req) {
         json["payload"]["path"] = req.path;
-        json["kind"] = toSizeT(ApiEnum::GET_FILE_LIST);
+        json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_LIST);
       },
       [](auto&&) { throw std::runtime_error("Unknown request type"); },
     },
@@ -40,7 +40,7 @@ Json::Value Req::toJson() {
 
 ReqPtr Req::fromJson(const Json::Value& json) {
   ReqPtr req;
-  auto api = static_cast<ApiEnum>(json["kind"].asInt());
+  auto api = static_cast<ApiEnum>(json["apiEnum"].asInt());
   switch (api) {
     case ApiEnum::GET_FILE_DETAIL:
       req = makeReqGetFileDetail(json["payload"]["path"].asString());
