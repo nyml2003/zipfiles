@@ -9,10 +9,7 @@ namespace zipfiles::server {
 
 namespace fs = std::filesystem;
 
-void backupFiles(
-  const std::vector<const fs::path&>& files,
-  const CommitLog& cl
-);
+void backupFiles(const std::vector<fs::path>& files, const CommitLog& cl);
 
 DirectoryTreeNode generateDirectoryTree(
   const std::vector<const fs::path&>& files

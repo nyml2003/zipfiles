@@ -36,8 +36,7 @@ struct FileDetail {
  * @brief 用以展示目录结构的结构体
  *
  */
-struct DirectoryTreeNode
- : public FileDetail {
+struct DirectoryTreeNode : public FileDetail {
   std::map<std::string, DirectoryTreeNode> children;
 };
 
@@ -52,11 +51,11 @@ struct CommitLog {
   std::string createTime;
   // 恢复的默认路径
   std::string defaultPath;
+  // 文件的存储路径
+  std::string storagePath;
   // 作者
   std::string author;
 };
-
-
 
 struct File {
   // 文件名

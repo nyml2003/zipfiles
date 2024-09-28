@@ -1,8 +1,11 @@
 #include <filesystem>
+#include <fstream>
+#include <log4cpp/Category.hh>
 #include <stdexcept>
 #include <vector>
 #include "mp/dto.h"
 #include "server/backup/backup.h"
+#include "server/pack/pack.h"
 
 namespace zipfiles::server {
 /**
@@ -10,13 +13,27 @@ namespace zipfiles::server {
  *
  * @param files 一个文件路径数组
  */
-void backupFiles(
-  const std::vector<const fs::path&>& /*files*/,
-  const CommitLog& cl
-) {
+void backupFiles(const std::vector<fs::path>& files, const CommitLog& cl) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Backup started, log messeag is \"" << cl.message << "\" at "
+    << cl.createTime;
+
   if (isCommitted(cl)) {
     throw std::runtime_error("Commit log is already committed.");
   }
+
+  // 打包
+  try {
+    std::ofstream archive = createArchive(cl.storagePath);
+    for (const auto& file : files) {
+      packFileToArchive(archive, file);
+    }
+  } catch (const std::exception& e) {
+    throw std::runtime_error("Error occurred when trying to pack.");
+  }
+
+  // todo: 压缩
+  // todo: 加密
 }
 
 /**
