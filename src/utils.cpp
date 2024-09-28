@@ -1,6 +1,6 @@
-#include "utils.h"
 #include <string>
 #include <unordered_map>
+#include "utils.h"
 namespace zipfiles {
 std::string toString(const fs::file_type& type) {
   static const std::unordered_map<fs::file_type, std::string> fileTypeMap = {
@@ -52,22 +52,4 @@ fs::file_type toFileType(const double& type) {
   return static_cast<fs::file_type>(static_cast<signed char>(type));
 }
 
-std::string toIso8601(time_t timestamp) {
-  std::tm tm = *std::localtime(&timestamp);
-  std::string iso8601(20, '\0');
-  if (std::strftime(iso8601.data(), iso8601.size(), "%Y-%m-%dT%H:%M:%S", &tm) == 0) {
-    throw std::runtime_error("Failed to format timestamp to ISO 8601");
-  }
-  return iso8601;
-}
-
-std::string toIso8601(uint64_t timestamp) {
-  return toIso8601(static_cast<time_t>(timestamp));
-}
-time_t toTimestamp(const std::string& iso8601) {
-  std::tm tm = {};
-  std::istringstream ss(iso8601);
-  ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%S");
-  return std::mktime(&tm);
-}
 }  // namespace zipfiles

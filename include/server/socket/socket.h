@@ -1,8 +1,8 @@
 #ifndef ZIPFILE_SERVER_SOCKET_H
 #define ZIPFILE_SERVER_SOCKET_H
+#include <netinet/in.h>
 #include "mp/Request.h"
 #include "mp/Response.h"
-#include <netinet/in.h>
 namespace zipfiles::server {
 /**
  * @brief 服务器套接字

@@ -1,7 +1,8 @@
 #ifndef ZIPFILE_CLIENT_LAUNCHER_H
 #define ZIPFILE_CLIENT_LAUNCHER_H
-#include <webkit2/webkit2.h>
 #include <gtk/gtk.h>
+#include <webkit2/webkit2.h>
+#include <log4cpp/Category.hh>
 #include <string>
 
 namespace zipfiles::client::launcher {
@@ -27,7 +28,6 @@ constexpr int WINDOW_HEIGHT = 600;
 constexpr const char* DIST_FILE = "/dist/index.html";
 
 extern WebKitWebView* webView;
-
 /**
  * @brief 消息处理器
  * @details 消息名称和回调函数
@@ -73,6 +73,7 @@ class Launcher {
    * @param argv
    */
   static void run(int argc, char** argv);
+  static void startLogger();
 };
 }  // namespace zipfiles::client::launcher
 

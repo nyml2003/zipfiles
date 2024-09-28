@@ -64,6 +64,7 @@ const TreeSelector: React.FC<Props> = ({
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
         path,
       });
+      console.log('GetFileListResponse: ', JSON.stringify(res));
       const newTreeData = res.files.map(item => {
         const isDirectory = item.type === FileType.Directory;
         return {
@@ -81,7 +82,7 @@ const TreeSelector: React.FC<Props> = ({
         ]);
       }
     } catch (err) {
-      console.error(err);
+      console.log('获取文件列表失败: ', err);
     }
     setLoading(LoadingState.Done);
   };

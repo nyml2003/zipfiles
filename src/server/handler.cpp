@@ -1,8 +1,8 @@
-#include "server/handler.h"
-#include <iostream>
+#include <log4cpp/Category.hh>
 #include "common.h"
 #include "mp/Request.h"
 #include "mp/Response.h"
+#include "server/handler.h"
 #include "server/socket/socket.h"
 #include "server/tools/fsapi.h"
 
@@ -12,13 +12,16 @@ void doHandle() {
   try {
     // 主eventloop
     while (true) {
+      log4cpp::Category::getRoot().infoStream() << "Waiting for request";
       ReqPtr request = Socket::receive();
+      log4cpp::Category::getRoot().infoStream()
+        << "Request received: " << request->toJson().toStyledString();
       ResPtr response = std::visit(
         overload{
-          [](const request::GetFileDetail& req) {
+          [](request::GetFileDetail& req) {
             return makeResGetFileDetail(getFileDetail(req.path));
           },
-          [](const request::GetFileList& req) {
+          [](request::GetFileList& req) {
             return makeResGetFileList(getFileList(req.path));
           },
           [](auto&&) {
@@ -28,12 +31,15 @@ void doHandle() {
         },
         request->kind
       );
-
       response->status = StatusCode::OK;
+      response->timestamp = request->timestamp;
       Socket::send(response);
+      log4cpp::Category::getRoot().infoStream()
+        << "Response sent: " << response->toJson().toStyledString();
     }
   } catch (const std::exception& e) {
-    std::cerr << e.what() << std::endl;
+    log4cpp::Category::getRoot().errorStream()
+      << "Failed to handle request: " << e.what();
   }
 }  // namespace zipfiles::server
 }  // namespace zipfiles::server

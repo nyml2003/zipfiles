@@ -1,9 +1,9 @@
 #ifndef ZIPFILE_CLIENT_VIEW_H
 #define ZIPFILE_CLIENT_VIEW_H
-#include <webkit2/webkit2.h>
 #include <gtk/gtk.h>
-#include <functional>
 #include <json/json.h>
+#include <webkit2/webkit2.h>
+#include <functional>
 namespace zipfiles::client::view {
 /**
  * @brief 检查请求头是否合法
@@ -84,20 +84,6 @@ void handleMessage(
   WebKitJavascriptResult* js_result,
   gpointer user_data
 );
-// /**
-//  * @brief 获取文件内容
-//  * @details
-//  * 获取文件内容并发送到前端
-//  * @param manager 用户内容管理器
-//  * @param js_result JS请求对象
-//  * @param user_data 用户数据
-//  */
-// void getFileDetail(
-//   WebKitUserContentManager* manager,
-//   WebKitJavascriptResult* js_result,
-//   gpointer user_data
-// );
-
 }  // namespace zipfiles::client::view
 
 #endif  // !ZIPFILE_CLIENT_VIEW_H

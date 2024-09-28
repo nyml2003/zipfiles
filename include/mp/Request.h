@@ -1,8 +1,8 @@
 #ifndef ZIPFILES_MP_REQUEST_H
 #define ZIPFILES_MP_REQUEST_H
+#include <json/json.h>
 #include <string>
 #include <variant>
-#include <json/json.h>
 namespace zipfiles {
 namespace request {
 struct GetFileDetail {
@@ -17,8 +17,8 @@ using ReqKind = std::variant<request::GetFileDetail, request::GetFileList>;
 using ReqPtr = std::shared_ptr<Req>;
 struct Req {
   explicit Req(ReqKind kind);
-
   ReqKind kind;
+  double timestamp;
   Json::Value toJson();
   static ReqPtr fromJson(const Json::Value& json);
 };

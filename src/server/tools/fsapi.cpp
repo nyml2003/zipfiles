@@ -1,11 +1,8 @@
-#include "server/tools/fsapi.h"
-#include "common.h"
-#include <pwd.h>
 #include <grp.h>
+#include <pwd.h>
+#include <sys/stat.h>
 #include <vector>
 #include "mp/dto.h"
-#include "utils.h"
-#include <sys/stat.h>
 namespace zipfiles::server {
 /**
  * @brief 获取给定目录下的所有文件和目录(No follow，只返回一层的结果)
@@ -15,16 +12,17 @@ namespace zipfiles::server {
  * @return 返回一个File类型的数组
  *
  */
-std::vector<File> getFileList(const fs::path& directory) {
-  const fs::path directory_path = "/" / directory;
-  if (!fs::exists(directory_path)) {
+std::vector<File> getFileList(const std::filesystem::path& directory) {
+  const std::filesystem::path directory_path = "/" / directory;
+  if (!std::filesystem::exists(directory_path)) {
     throw std::runtime_error("Directory does not exist.");
   }
-  if (!fs::is_directory(directory_path)) {
+  if (!std::filesystem::is_directory(directory_path)) {
     throw std::runtime_error(directory_path.string() + " is not a directory.");
   }
   std::vector<File> files;
-  for (const auto& entry : fs::directory_iterator(directory_path)) {
+  for (const auto& entry :
+       std::filesystem::directory_iterator(directory_path)) {
     File file;
     file.name = entry.path().filename().string();
     file.type = entry.symlink_status().type();
@@ -41,9 +39,9 @@ std::vector<File> getFileList(const fs::path& directory) {
  * @return 返回一个FileDetail类型
  *
  */
-FileDetail getFileDetail(const fs::path& file) {
-  const fs::path file_path = "/" / file;
-  if (!fs::exists(file_path)) {
+FileDetail getFileDetail(const std::filesystem::path& file) {
+  const std::filesystem::path file_path = "/" / file;
+  if (!std::filesystem::exists(file_path)) {
     throw std::runtime_error("File does not exist.");
   }
 
@@ -55,9 +53,9 @@ FileDetail getFileDetail(const fs::path& file) {
   struct group* grp = getgrgid(file_stat.st_gid);
 
   FileDetail file_detail = {
-    .type = fs::status(file_path).type(),
-    .createTime = toIso8601(file_stat.st_ctime),
-    .updateTime = toIso8601(file_stat.st_mtime),
+    .type = std::filesystem::status(file_path).type(),
+    .createTime = static_cast<double>(file_stat.st_ctime),
+    .updateTime = static_cast<double>(file_stat.st_mtime),
     .size = file_stat.st_size,
     .owner = pwd->pw_name,
     .group = grp->gr_name,

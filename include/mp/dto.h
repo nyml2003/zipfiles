@@ -40,9 +40,9 @@ struct FileDetail {
   // 文件类型，定义见filesystem
   std::filesystem::file_type type{};
   // 创建时间
-  std::string createTime;
+  double createTime;
   // 修改时间
-  std::string updateTime;
+  double updateTime;
   // 大小
   __off_t size{};
   // 创建用户

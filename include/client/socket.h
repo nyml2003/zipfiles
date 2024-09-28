@@ -15,9 +15,11 @@ class Socket {
     static Socket instance;
     return instance;
   }
-  [[nodiscard]] static ResPtr receive();
-  static void send(const ReqPtr& req);
-  static void reconnect();
+  [[nodiscard]] ResPtr receive() const;
+  void send(const ReqPtr& req);
+  void reconnect();
+  void connectWithRetries();
+  void initializeSocket();
   Socket(const Socket& other) = delete;
   Socket& operator=(const Socket& other) = delete;
   Socket(Socket&& other) noexcept = delete;
