@@ -46,9 +46,9 @@ void handleError(Json::Value& root, const std::exception& err);
  */
 void handleFatal(const std::exception& err);
 /**
- * @brief 记录
+ * @brief 处理日志
  * @details
- * 记录JS请求对象中的参数并发送到前端
+ * 将JS请求对象中的数据打印到控制台
  * @param manager 用户内容管理器
  * @param js_result JS请求对象
  * @param user_data 用户数据
@@ -59,9 +59,9 @@ void log(
   gpointer user_data
 );
 /**
- * @brief 获取文件列表
+ * @brief 处理消息
  * @details
- * 获取文件列表并发送到前端
+ * 处理JS请求对象并发送到前端
  * @param manager 用户内容管理器
  * @param js_result JS请求对象
  * @param user_data 用户数据
