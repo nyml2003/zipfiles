@@ -53,6 +53,9 @@ void doAccept() {
       break;
     }
 
+    log4cpp::Category::getRoot().infoStream()
+      << "Number of events: " << numEvents;  // 增加：输出事件数量
+
     // 检查是否是server Fd
     for (int i = 0; i < numEvents; ++i) {
       if (events[i].data.fd == serverFd && threadCount < MAX_THREADS) {
@@ -62,9 +65,12 @@ void doAccept() {
 
         // 增加当前正在运行的线程数
         threadCount++;
-
+        log4cpp::Category::getRoot().infoStream()
+          << "Thread count: " << threadCount;
       } else {
         // todo: thread数量过多的处理
+        log4cpp::Category::getRoot().warnStream()
+          << "Max threads reached, cannot accept new connection";  // 增加：输出线程数达到上限的警告
       }
     }
 

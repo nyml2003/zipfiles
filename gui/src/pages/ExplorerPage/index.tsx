@@ -9,8 +9,6 @@ import {
   Loading3QuartersOutlined,
 } from '@ant-design/icons';
 import { Breadcrumb, Button, Input, Splitter } from 'antd';
-import TreeSelector from './TreeView/TreeMenu';
-import MetaDataCard from './TreeView/MetaDataCard';
 import styles from './index.module.less';
 import FilterForm from './FilterForm';
 import TreeView from './TreeView';
@@ -34,7 +32,7 @@ const ExplorerPage: React.FC = () => {
       return <FilterForm />;
     }
     if (view === 'table') {
-      return <TableView currentPath={currentPath} />;
+      return <TableView currentPath={currentPath} refresh={refresh} setRefresh={setRefresh} />;
     }
     if (view === 'tree') {
       return (

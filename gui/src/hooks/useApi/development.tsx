@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Api, RequestWrapper, ResponseWrapper, useApiType } from './types';
-import { ApiEnum, mockApi } from '@/apis';
+import { ApiEnum } from '@/apis';
+import { mockApi } from '@/apis/mock';
 //mock
 const useApi: useApiType = () => {
   const api: Api = {
@@ -13,12 +14,12 @@ const useApi: useApiType = () => {
           //   return;
           // }
           //时不时慢
-          if (Math.random() > 0.5) {
-            setTimeout(() => {
-              resolve(mockApi[apiEnum](request));
-            }, 2000);
-            return;
-          }
+          // if (Math.random() > 0.5) {
+          //   setTimeout(() => {
+          //     resolve(mockApi[apiEnum](request));
+          //   }, 2000);
+          //   return;
+          // }
           resolve(mockApi[apiEnum](request));
         }, 10);
       });

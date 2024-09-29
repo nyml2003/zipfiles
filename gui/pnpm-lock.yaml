@@ -23,9 +23,6 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
-      mockjs:
-        specifier: ^1.1.0
-        version: 1.1.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -171,6 +168,9 @@ importers:
       mini-css-extract-plugin:
         specifier: ^2.9.1
         version: 2.9.1(webpack@5.95.0(webpack-cli@5.1.4))
+      mockjs:
+        specifier: ^1.1.0
+        version: 1.1.0
       postcss-loader:
         specifier: ^7.3.4
         version: 7.3.4(postcss@8.4.47)(typescript@5.6.2)(webpack@5.95.0(webpack-cli@5.1.4))
@@ -1995,10 +1995,6 @@ packages:
   commander@11.0.0:
     resolution: {integrity: sha512-9HMlXtt/BNoYr8ooyjjNRdIilOTkVJXB+GhxMTtOKwk0R4j4lS4NpjuqmRxroBfnfTSHQIHQB7wryHhXarNjmQ==}
     engines: {node: '>=16'}
-
-  commander@12.1.0:
-    resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
-    engines: {node: '>=18'}
 
   commander@2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
@@ -7795,8 +7791,6 @@ snapshots:
 
   commander@11.0.0: {}
 
-  commander@12.1.0: {}
-
   commander@2.20.3: {}
 
   commander@4.1.1: {}
@@ -9535,7 +9529,7 @@ snapshots:
 
   mockjs@1.1.0:
     dependencies:
-      commander: 12.1.0
+      commander: 11.0.0
 
   mrmime@2.0.0: {}
 

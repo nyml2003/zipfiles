@@ -77,7 +77,7 @@ module.exports = merge(baseConfig, {
         `${path.join(__dirname, '../public')}/index.html`,
       ]),
       safelist: {
-          standard: [/^ant-/, /^hover:/, /^focus:/, /^active:/, /^disabled:/]
+          standard: [/^ant-/, /^hover:/, /^focus:/, /^active:/, /^disabled:/,/^module_/],
       },
     }),
     new CompressionPlugin({

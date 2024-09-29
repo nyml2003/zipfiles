@@ -10,7 +10,6 @@ import { FileFilled, FolderFilled } from '@ant-design/icons';
 
 interface DataType extends Partial<FileDetail> {
   hasDetail: boolean;
-  key: string;
 }
 
 const columns: TableColumnsType<DataType> = [
@@ -88,16 +87,19 @@ const columns: TableColumnsType<DataType> = [
 
 interface TableViewProps {
   currentPath: string;
+  refresh: boolean;
+  setRefresh: (refresh: boolean) => void;
 }
 
-const TableView: React.FC<TableViewProps> = ({ currentPath }) => {
+const TableView: React.FC<TableViewProps> = ({ currentPath, refresh, setRefresh: setRrefresh }) => {
   const api = useApi();
   const [files, setFiles] = useState<File[]>([]);
   const [data, setData] = useState<DataType[]>([]);
-  useEffect(() => {
+
+  const fetchFileList = (path: string): Promise<File[]> =>
     api
       .request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
-        path: currentPath,
+        path,
       })
       .then((res: GetFileListResponse) => {
         setFiles(res.files);
@@ -106,46 +108,53 @@ const TableView: React.FC<TableViewProps> = ({ currentPath }) => {
             return {
               name: file.name,
               type: file.type,
-              key: file.name,
               hasDetail: false,
             };
           }),
         );
+        return res.files;
+      });
 
-        const fetchDetail = (file: File): Promise<FileDetail> =>
-          api
-            .request<GetFileDetailRequest, FileDetail>(ApiEnum.GetFileDetail, {
-              path: `${currentPath}/${file.name}`,
-            })
-            .then(res => {
-              return res;
-            })
-            .catch(e => {
-              // 重新请求
-              return fetchDetail(file);
-            });
+  const fetchDetail = (path: string, file: File): Promise<FileDetail> =>
+    api
+      .request<GetFileDetailRequest, FileDetail>(ApiEnum.GetFileDetail, {
+        path: `${path}/${file.name}`,
+      })
+      .then(res => {
+        return res;
+      });
 
-        res.files.forEach(file => {
-          fetchDetail(file).then(res => {
-            setData((prevData: DataType[]) => {
-              // 如果hasDetail为true，说明已经请求过了，不需要再次请求
-              const index = prevData.findIndex(item => item.name === file.name);
-              if (index !== -1) {
-                if (prevData[index].hasDetail) return prevData;
-                const newData = [...prevData];
-                newData[index] = { ...newData[index], ...res, hasDetail: true };
-                return newData;
-              } else {
-                throw new Error('未找到对应文件');
-              }
-            });
+  const fetchData = (path: string) => {
+    fetchFileList(path).then((files: File[]) => {
+      files.forEach(file => {
+        fetchDetail(path, file).then(res => {
+          setData((prevData: DataType[]) => {
+            const index = prevData.findIndex(item => item.name === file.name);
+            if (index !== -1) {
+              if (prevData[index].hasDetail) return prevData;
+              const newData = [...prevData];
+              newData[index] = { ...newData[index], ...res, hasDetail: true };
+              return newData;
+            } else {
+              throw new Error('未找到对应文件');
+            }
           });
         });
-      })
-      .catch(e => {
-        console.log('获取文件列表失败: ', e);
       });
+    });
+  };
+
+  useEffect(() => {
+    fetchData(currentPath);
   }, [currentPath]);
+
+  useEffect(() => {
+    if (refresh) {
+      setRrefresh(false);
+      fetchData(currentPath);
+    }
+  }, [refresh]);
+
   return (
     <Table<DataType>
       columns={columns}
@@ -153,6 +162,7 @@ const TableView: React.FC<TableViewProps> = ({ currentPath }) => {
       pagination={false}
       className='overflow-auto'
       size='small'
+      rowKey={"name"}
     />
   );
 };

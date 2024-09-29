@@ -1,4 +1,4 @@
-import Mock from 'mockjs';
+
 export interface BackUpFile {
   name: string;
   type: string;

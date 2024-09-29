@@ -1,7 +1,9 @@
-#include "server/socket/socket.h"
+#include <arpa/inet.h>
+#include "log4cpp/Category.hh"
 #include "mp/Request.h"
 #include "mp/Response.h"
 #include "mp/mp.h"
+#include "server/socket/socket.h"
 namespace zipfiles::server {
 Socket::Socket()
   : server_fd(socket(AF_INET, SOCK_STREAM, 0)), client_fd(0), address{} {
@@ -50,19 +52,26 @@ void Socket::acceptConnection() {
   );
 
   if (getInstance().client_fd < 0) {
+    log4cpp::Category::getRoot().errorStream()
+      << "Failed to accept connection.";
     perror("accept");
     exit(EXIT_FAILURE);
-  }
+  } else {
+    std::string ip(inet_ntoa(getInstance().address.sin_addr));
+    std::string port(std::to_string(ntohs(getInstance().address.sin_port)));
 
+    log4cpp::Category::getRoot().infoStream()
+      << "Accept connection with ip: " << ip << " port: " << port
+      << " fd: " << getInstance().client_fd;
+  }
 }
 
 ReqPtr Socket::receive() {
-
   std::array<char, mp::MAX_MESSAGE_SIZE> buffer = {0};
 
   ssize_t valread =
     read(getInstance().client_fd, buffer.data(), mp::MAX_MESSAGE_SIZE);
-  
+
   if (valread == 0) {
     close(getInstance().client_fd);
     throw std::runtime_error("Client disconnected");
@@ -83,15 +92,12 @@ ReqPtr Socket::receive() {
   }
 
   throw std::runtime_error("Failed to parse request");
-
 }
 
 void Socket::send(const ResPtr& res) {
-
   static Json::StreamWriterBuilder writer;
 
   std::string data = Json::writeString(writer, res->toJson());
   ::send(getInstance().client_fd, data.c_str(), data.size(), 0);
-  
 }
 }  // namespace zipfiles::server

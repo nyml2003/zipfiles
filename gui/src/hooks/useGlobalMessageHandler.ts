@@ -69,33 +69,33 @@ const MAX_REQUEST_RETRY = 3;
 export const useGlobalMessageHandler = () => {
   useEffect(() => {
     window.addEventListener('message', handler);
-    const intervalId = setInterval(() => {
-      const now = Date.now();
-      callbacks = callbacks.filter(callback => {
-        if (callback.request.timestamp + MAX_REQUEST_TIMEOUT < now) {
-          const { request } = callback;
-          callback.request.timestamp = now;
-          if (
-            window.webkit &&
-            window.webkit.messageHandlers &&
-            window.webkit.messageHandlers.handleMessage
-          ) {
-            window.webkit.messageHandlers.handleMessage.postMessage(request);
-          }
-          callback.retries += 1;
-          if (callback.retries > MAX_REQUEST_RETRY) {
-            notification.error({
-              message: '请求超时',
-            });
-            return false; // 移除超时的回调
-          }
-        }
-        return true; // 保留未超时的回调
-      });
-    }, MAX_REQUEST_TIMEOUT);
+    // const intervalId = setInterval(() => {
+    //   const now = Date.now();
+    //   callbacks = callbacks.filter(callback => {
+    //     if (callback.request.timestamp + MAX_REQUEST_TIMEOUT < now) {
+    //       const { request } = callback;
+    //       callback.request.timestamp = now;
+    //       if (
+    //         window.webkit &&
+    //         window.webkit.messageHandlers &&
+    //         window.webkit.messageHandlers.handleMessage
+    //       ) {
+    //         window.webkit.messageHandlers.handleMessage.postMessage(request);
+    //       }
+    //       callback.retries += 1;
+    //       if (callback.retries > MAX_REQUEST_RETRY) {
+    //         notification.error({
+    //           message: '请求超时',
+    //         });
+    //         return false; // 移除超时的回调
+    //       }
+    //     }
+    //     return true; // 保留未超时的回调
+    //   });
+    // }, MAX_REQUEST_TIMEOUT);
     return () => {
       window.removeEventListener('message', handler);
-      clearInterval(intervalId);
+      //clearInterval(intervalId);
     };
   }, []);
 };

@@ -35,7 +35,7 @@ module.exports = {
             loader: 'css-loader',
             options: {
               modules: {
-                localIdentName: '[local]_[hash:base64:6]',
+                localIdentName: 'module_[local]_[hash:base64:6]',
               },
             },
           },
@@ -62,7 +62,7 @@ module.exports = {
             loader: 'css-loader',
             options: {
               modules: {
-                localIdentName: '[local]_[hash:base64:6]',
+                localIdentName: 'module_[local]_[hash:base64:6]',
               },
             },
           },
