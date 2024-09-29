@@ -25,6 +25,10 @@ Socket::Socket()
   int opt = 1;
   setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
+  // 非阻塞
+  int flags = fcntl(server_fd, F_GETFL, 0);
+  fcntl(server_fd, F_SETFL, flags | O_NONBLOCK);
+
   // 初始化实例
   std::memset(&address, 0, sizeof(address));
   address.sin_family = AF_INET;
@@ -79,7 +83,7 @@ void Socket::acceptConnection(int epoll_fd) {
 
   // 将client_fd加入epoll
   struct epoll_event event {};
-  event.events = EPOLLIN | EPOLLET;
+  event.events = EPOLLIN;
   event.data.fd = client_fd;
   if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) == -1) {
     log4cpp::Category::getRoot().errorStream()

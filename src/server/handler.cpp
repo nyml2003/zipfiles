@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <csignal>
 #include <log4cpp/Category.hh>
+#include <thread>
 #include "mp/Request.h"
 #include "mp/Response.h"
 #include "mp/common.h"
@@ -14,40 +15,41 @@ namespace zipfiles::server {
 void doHandle(int client_fd) {
   try {
     // 主eventloop
-    while (true) {
-      log4cpp::Category::getRoot().infoStream() << "Waiting for request...";
-      ReqPtr request = Socket::receive(client_fd);
+    log4cpp::Category::getRoot().infoStream()
+      << "Thread " << std::this_thread::get_id()
+      << " is waiting for request from " << client_fd << "...";
 
-      log4cpp::Category::getRoot().infoStream()
-        << "Request received: " << request->toJson().toStyledString();
+    ReqPtr request = Socket::receive(client_fd);
 
-      ResPtr response = std::visit(
-        overload{
-          [](request::GetFileDetail& req) {
-            return makeResGetFileDetail(getFileDetail(req.path));
-          },
-          [](request::GetFileList& req) {
-            MetaDataFilter filter;
-            return makeResGetFileList(getFileList(req.path, false, filter));
-          },
-          [](auto&&) {
-            throw std::runtime_error("Unknown request type");
-            return nullptr;
-          },
+    log4cpp::Category::getRoot().infoStream()
+      << "Request received: " << request->toJson().toStyledString();
+
+    ResPtr response = std::visit(
+      overload{
+        [](request::GetFileDetail& req) {
+          return makeResGetFileDetail(getFileDetail(req.path));
         },
-        request->kind
-      );
+        [](request::GetFileList& req) {
+          MetaDataFilter filter;
+          return makeResGetFileList(getFileList(req.path, false, filter));
+        },
+        [](auto&&) {
+          throw std::runtime_error("Unknown request type");
+          return nullptr;
+        },
+      },
+      request->kind
+    );
 
-      // 设置response
-      response->status = StatusCode::OK;
-      response->timestamp = request->timestamp;
-      response->uuid = request->uuid;
+    // 设置response
+    response->status = StatusCode::OK;
+    response->timestamp = request->timestamp;
+    response->uuid = request->uuid;
 
-      Socket::send(client_fd, response);
+    Socket::send(client_fd, response);
 
-      log4cpp::Category::getRoot().infoStream()
-        << "Response sent: " << response->toJson().toStyledString();
-    }
+    log4cpp::Category::getRoot().infoStream()
+      << "Response sent: " << response->toJson().toStyledString();
   } catch (const std::exception& e) {
     log4cpp::Category::getRoot().errorStream()
       << "Failed to handle request: " << e.what();
