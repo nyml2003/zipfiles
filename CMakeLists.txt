@@ -48,6 +48,7 @@ set(ZIPFILES_UNIT_TEST_DIR ${ZIPFILES_TEST_DIR}/unittest) # 单元测试目录
 set(ZIPFILES_DIST_DIR ${CMAKE_SOURCE_DIR}/gui/dist)
 set(ZIPFILES_CONFIG_DIR ${CMAKE_SOURCE_DIR}/config)
 set(ZIPFILES_OUTPUT_DIR ${CMAKE_SOURCE_DIR}/bin)
+set(ZIPFILES_FRONTEND_DIR ${CMAKE_SOURCE_DIR}/gui/src)
 
 # 客户端相关
 set(ZIPFILES_CLIENT_HEADER_DIR ${ZIPFILES_HEADER_DIR}/client)
@@ -176,13 +177,7 @@ add_custom_target(
     COMMAND find
     ${ZIPFILES_HEADER_DIR}
     ${ZIPFILES_SOURCE_DIR}
-    ${ZIPFILES_CLIENT_HEADER_DIR}
-    ${ZIPFILES_CLIENT_SOURCE_DIR}
-    ${ZIPFILES_SERVER_HEADER_DIR}
-    ${ZIPFILES_SERVER_SOURCE_DIR}
-    ${ZIPFILES_SERVER_UNIT_TEST_DIR}
-    ${ZIPFILES_MP_HEADER_DIR}
-    ${ZIPFILES_MP_SOURCE_DIR}
-    -name "*.h" -o -name "*.cpp" | xargs wc -l
+    ${ZIPFILES_FRONTEND_DIR}
+    -type f -name "*.h" -o -name "*.cpp" -o -name "*.ts" -o -name "*.tsx" | xargs wc -l
     COMMENT "Counting lines of code"
 )

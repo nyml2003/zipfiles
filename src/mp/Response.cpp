@@ -6,7 +6,7 @@
 #include "mp/common.h"
 namespace zipfiles {
 namespace fs = std::filesystem;
-Res::Res(ResKind kind) : kind(std::move(kind)), timestamp(0) {}
+Res::Res(ResKind kind) : kind(std::move(kind)) {}
 
 std::ostream& operator<<(std::ostream& os, const StatusCode& status) {
   switch (status) {
@@ -38,6 +38,7 @@ Json::Value Res::toJson() {
   Json::Value json;
   json["status"] = static_cast<int>(status);
   json["timestamp"] = timestamp;
+  json["uuid"] = uuid;
   std::visit(
     overload{
       [&json](response::GetFileDetail& res) {
@@ -105,6 +106,7 @@ ResPtr Res::fromJson(const Json::Value& json) {
   }
   res->status = static_cast<StatusCode>(json["status"].asInt());
   res->timestamp = json["timestamp"].asDouble();
+  res->uuid = json["uuid"].asString();
   return res;
 }
 

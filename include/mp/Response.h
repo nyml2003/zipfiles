@@ -41,7 +41,8 @@ using ResPtr = std::shared_ptr<Res>;
 struct Res {
   explicit Res(ResKind kind);
   ResKind kind;
-  double timestamp;
+  double timestamp{};
+  std::string uuid;
   StatusCode status{};
   Json::Value toJson();
   static ResPtr fromJson(const Json::Value& json);

@@ -24,7 +24,7 @@ let cachedFileList: MockFile[] = [
   {
     name: '/',
     type: FileType.Directory,
-    children: Array.from({ length: 15 }, () => generateRandomFiles()),
+    children: Array.from({ length: 5 }, () => generateRandomFiles()),
   },
 ];
 
@@ -47,7 +47,7 @@ function findFilesByPath(
     const newPath = currentPath ? `${currentPath}/${file.name}` : file.name;
     if (newPath === targetPath) {
       if (!file.children) {
-        file.children = Array.from({ length: 15 }, () => generateRandomFiles());
+        file.children = Array.from({ length: 5 }, () => generateRandomFiles());
       }
       return file.children;
     }

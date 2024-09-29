@@ -18,6 +18,7 @@ export interface RequestWrapper<Request> {
   apiEnum: ApiEnum;
   params: Request;
   timestamp: number;
+  uuid: string;
 }
 
 export type useApiType = () => Api;

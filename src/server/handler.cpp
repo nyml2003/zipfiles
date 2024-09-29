@@ -41,6 +41,7 @@ void doHandle() {
       // 设置response
       response->status = StatusCode::OK;
       response->timestamp = request->timestamp;
+      response->uuid = request->uuid;
 
       Socket::send(response);
 

@@ -32,6 +32,12 @@ bool isRequestHeaderValid(JSCValue* value) {
       << __func__ << ": apiEnum is not a number or string";
     return false;
   }
+  JSCValue* uuid = jsc_value_object_get_property(value, "uuid");
+  if (jsc_value_is_string(uuid) == 0) {
+    log4cpp::Category::getRoot().errorStream()
+      << __func__ << ": uuid is not a string";
+    return false;
+  }
   JSCValue* params = jsc_value_object_get_property(value, "params");
   if (jsc_value_is_object(params) == 0) {
     log4cpp::Category::getRoot().errorStream()
@@ -59,13 +65,15 @@ void handleSuccess(
   Json::Value& root,
   Json::Value& data,
   double timestamp,
-  int apiEnum
+  int apiEnum,
+  const std::string& uuid
 ) {
   root["type"] = "resolve";
   root["message"] = "Success";
   root["timestamp"] = timestamp;
   root["apiEnum"] = apiEnum;
   root["data"] = data["payload"];
+  root["uuid"] = uuid;
   sendResponse(root);
 }
 
@@ -82,6 +90,7 @@ void handleFatal(const std ::exception& err) {
   root["message"] = err.what();
   root["timestamp"] = 0;
   root["apiEnum"] = "Fatal";
+  root["uuid"] = "";
   root["data"] = Json::nullValue;
   log4cpp::Category::getRoot().errorStream() << "Fatal error: " << err.what();
   sendResponse(root);
@@ -103,6 +112,8 @@ void log(
     jsc_value_to_double(jsc_value_object_get_property(value, "timestamp"));
   root["apiEnum"] =
     jsc_value_to_string(jsc_value_object_get_property(value, "apiEnum"));
+  root["uuid"] =
+    jsc_value_to_string(jsc_value_object_get_property(value, "uuid"));
   const char* message_str = jsc_value_to_string(message);
   log4cpp::Category::getRoot().infoStream() << "JS Log: " << message_str;
 }
@@ -122,6 +133,8 @@ void handleMessage(
     JSCValue* params = jsc_value_object_get_property(value, "params");
     gdouble timestamp =
       jsc_value_to_double(jsc_value_object_get_property(value, "timestamp"));
+    std::string uuid =
+      jsc_value_to_string(jsc_value_object_get_property(value, "uuid"));
     JSCValue* apiEnum = jsc_value_object_get_property(value, "apiEnum");
     gint32 apiEnumInt = jsc_value_to_int32(apiEnum);
     auto api = static_cast<ApiEnum>(apiEnumInt);
@@ -149,7 +162,8 @@ void handleMessage(
     if (request == nullptr) {
       throw std::runtime_error("Failed to create request");
     }
-    request->timestamp = timestamp;  // 设置时间戳
+    request->timestamp = timestamp;
+    request->uuid = uuid;
     // 异步调用 api::getFileList
     auto future = std::async(
       std::launch::async,
@@ -178,7 +192,8 @@ void handleMessage(
         Json::Value res = response->toJson();
         Json::Value root;
         handleSuccess(
-          root, res, res["timestamp"].asDouble(), res["apiEnum"].asInt()
+          root, res, res["timestamp"].asDouble(), res["apiEnum"].asInt(),
+          res["uuid"].asString()
         );
       } catch (const std::exception& e) {
         handleFatal(e);

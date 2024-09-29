@@ -36,7 +36,10 @@ const App: React.FC = () => {
 
   return (
     <Layout hasSider className='h-screen'>
-      <Sider style={{ background: colorBgContainer }} breakpoint='lg'>
+      <Sider
+        style={{ background: colorBgContainer }}
+        breakpoint='lg'
+        className='overflow-hidden lg:rounded-r-2xl rounded-r-xl'>
         <Menu
           mode='inline'
           defaultSelectedKeys={['1']}

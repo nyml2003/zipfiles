@@ -9,6 +9,7 @@ import { FileType, FileTypeToString } from '@/types';
 import { FileFilled, FolderFilled } from '@ant-design/icons';
 
 interface DataType extends Partial<FileDetail> {
+  hasDetail: boolean;
   key: string;
 }
 
@@ -106,6 +107,7 @@ const TableView: React.FC<TableViewProps> = ({ currentPath }) => {
               name: file.name,
               type: file.type,
               key: file.name,
+              hasDetail: false,
             };
           }),
         );
@@ -126,12 +128,16 @@ const TableView: React.FC<TableViewProps> = ({ currentPath }) => {
         res.files.forEach(file => {
           fetchDetail(file).then(res => {
             setData((prevData: DataType[]) => {
-              return prevData.map(data => {
-                if (data.name === file.name) {
-                  return {...res, key: file.name};
-                }
-                return data;
-              });
+              // 如果hasDetail为true，说明已经请求过了，不需要再次请求
+              const index = prevData.findIndex(item => item.name === file.name);
+              if (index !== -1) {
+                if (prevData[index].hasDetail) return prevData;
+                const newData = [...prevData];
+                newData[index] = { ...newData[index], ...res, hasDetail: true };
+                return newData;
+              } else {
+                throw new Error('未找到对应文件');
+              }
             });
           });
         });
@@ -141,9 +147,13 @@ const TableView: React.FC<TableViewProps> = ({ currentPath }) => {
       });
   }, [currentPath]);
   return (
-    <div>
-      <Table<DataType> columns={columns} dataSource={data} pagination={false} />
-    </div>
+    <Table<DataType>
+      columns={columns}
+      dataSource={data}
+      pagination={false}
+      className='overflow-auto'
+      size='small'
+    />
   );
 };
 

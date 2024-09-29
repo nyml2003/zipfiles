@@ -24,7 +24,8 @@ using ReqPtr = std::shared_ptr<Req>;
 struct Req {
   explicit Req(ReqKind kind);
   ReqKind kind;
-  double timestamp;
+  double timestamp{};
+  std::string uuid;
   Json::Value toJson();
   static ReqPtr fromJson(const Json::Value& json);
 };

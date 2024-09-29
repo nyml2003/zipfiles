@@ -5,7 +5,7 @@
 #include "mp/common.h"
 
 namespace zipfiles {
-Req::Req(ReqKind kind) : kind(std::move(kind)), timestamp(0) {}
+Req::Req(ReqKind kind) : kind(std::move(kind)) {}
 
 ReqPtr makeReqGetFileDetail(std::string path) {
   log4cpp::Category::getRoot().infoStream()
@@ -20,6 +20,7 @@ ReqPtr makeReqGetFileList(std::string path) {
 Json::Value Req::toJson() {
   Json::Value json;
   json["timestamp"] = timestamp;
+  json["uuid"] = uuid;
   std::visit(
     overload{
       [&json](request::GetFileDetail& req) {
@@ -52,6 +53,7 @@ ReqPtr Req::fromJson(const Json::Value& json) {
       break;
   }
   req->timestamp = json["timestamp"].asDouble();
+  req->uuid = json["uuid"].asString();
   return req;
 }
 }  // namespace zipfiles

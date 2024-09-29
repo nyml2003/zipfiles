@@ -87,8 +87,7 @@ const ExplorerPage: React.FC = () => {
             type='text'
             icon={view === 'table' ? <ArrowsAltOutlined /> : <DownOutlined />}
             onClick={() => setView(view === 'table' ? 'tree' : 'table')}
-            disabled={filter}
-          >
+            disabled={filter}>
             视图
           </Button>
           <Button
@@ -99,7 +98,7 @@ const ExplorerPage: React.FC = () => {
           </Button>
         </div>
       </div>
-      <div className={`bg-white rounded-xl m-2 p-2 ${styles['fade-in-down']} h-full`}>
+      <div className={`bg-white rounded-xl m-2 p-2 ${styles['fade-in-down']} overflow-auto flex-1`}>
         {renderContent()}
       </div>
     </div>
