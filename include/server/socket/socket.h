@@ -3,6 +3,13 @@
 #include <netinet/in.h>
 #include "mp/Request.h"
 #include "mp/Response.h"
+
+/**
+ * @brief 建立的最大连接数量(最大client数量)
+ *
+ */
+#define MAX_CONNECTIONS 3
+
 namespace zipfiles::server {
 /**
  * @brief 服务器套接字
@@ -14,22 +21,24 @@ class Socket {
     static Socket instance;
     return instance;
   }
-  [[nodiscard]] static ReqPtr receive();
-  static void send(const ResPtr& res);
+  [[nodiscard]] static ReqPtr receive(int client_fd);
+  static void send(int client_fd, const ResPtr& res);
 
-  static void acceptConnection();
+  static void acceptConnection(int epoll_fd);
   Socket(const Socket& other) = delete;
   Socket& operator=(const Socket& other) = delete;
   Socket(Socket&& other) noexcept = delete;
   Socket& operator=(Socket&& other) noexcept = delete;
   [[nodiscard]] static int getServerFd();
+  [[nodiscard]] static int getConnectionCount();
 
  private:
   Socket();
   ~Socket();
-  int server_fd, client_fd;
+  int server_fd;
   struct sockaddr_in address;
   int addrlen;
+  int connectionCount;
 };
 }  // namespace zipfiles::server
 #endif  // !ZIPFILE_SERVER_SOCKET_SOCKET_H

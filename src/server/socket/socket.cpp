@@ -1,12 +1,21 @@
 #include <arpa/inet.h>
+#include <sys/epoll.h>
 #include "log4cpp/Category.hh"
 #include "mp/Request.h"
 #include "mp/Response.h"
 #include "mp/mp.h"
 #include "server/socket/socket.h"
+
+/**
+ * @brief 当前正在运行的连接数
+ * @details 因为只有一个acceptor，所以不需要做并发处理
+ *
+ */
+int connectionCount = 0;
+
 namespace zipfiles::server {
 Socket::Socket()
-  : server_fd(socket(AF_INET, SOCK_STREAM, 0)), client_fd(0), address{} {
+  : server_fd(socket(AF_INET, SOCK_STREAM, 0)), address{}, connectionCount(0) {
   if (server_fd == -1) {
     perror("socket failed");
     exit(EXIT_FAILURE);
@@ -29,7 +38,8 @@ Socket::Socket()
     exit(EXIT_FAILURE);
   }
 
-  if (listen(server_fd, 3) < 0) {
+  // 限制最大监听数量
+  if (listen(server_fd, MAX_CONNECTIONS) < 0) {
     perror("listen");
     close(server_fd);
     exit(EXIT_FAILURE);
@@ -44,42 +54,65 @@ int Socket::getServerFd() {
   return getInstance().server_fd;
 }
 
-void Socket::acceptConnection() {
-  getInstance().client_fd = accept(
-    getInstance().server_fd,
-    reinterpret_cast<struct sockaddr*>(&getInstance().address),
-    reinterpret_cast<socklen_t*>(&getInstance().addrlen)
+void Socket::acceptConnection(int epoll_fd) {
+  sockaddr_in client_addr{};
+  socklen_t client_len = sizeof(client_addr);
+  int client_fd = accept(
+    getInstance().server_fd, reinterpret_cast<struct sockaddr*>(&client_addr),
+    &client_len
   );
 
-  if (getInstance().client_fd < 0) {
+  // 创建client_fd失败
+  if (client_fd < 0) {
     log4cpp::Category::getRoot().errorStream()
       << "Failed to accept connection.";
     perror("accept");
     exit(EXIT_FAILURE);
   } else {
-    std::string ip(inet_ntoa(getInstance().address.sin_addr));
-    std::string port(std::to_string(ntohs(getInstance().address.sin_port)));
+    std::string ip(inet_ntoa(client_addr.sin_addr));
+    std::string port(std::to_string(ntohs(client_addr.sin_port)));
 
     log4cpp::Category::getRoot().infoStream()
       << "Accept connection with ip: " << ip << " port: " << port
-      << " fd: " << getInstance().client_fd;
+      << " client_fd: " << client_fd;
+  }
+
+  // 将client_fd加入epoll
+  struct epoll_event event {};
+  event.events = EPOLLIN | EPOLLET;
+  event.data.fd = client_fd;
+  if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) == -1) {
+    log4cpp::Category::getRoot().errorStream()
+      << "Failed to add client_fd " << client_fd << " into epoll, which fd is "
+      << epoll_fd;
+    perror("epoll_ctl: client_fd");
+    close(client_fd);
+  } else {
+    log4cpp::Category::getRoot().infoStream()
+      << "Add client_fd " << client_fd << " to epoll_fd " << epoll_fd;
+
+    getInstance().connectionCount++;
   }
 }
 
-ReqPtr Socket::receive() {
+ReqPtr Socket::receive(int client_fd) {
   std::array<char, mp::MAX_MESSAGE_SIZE> buffer = {0};
 
-  ssize_t valread =
-    read(getInstance().client_fd, buffer.data(), mp::MAX_MESSAGE_SIZE);
+  ssize_t valread = read(client_fd, buffer.data(), mp::MAX_MESSAGE_SIZE);
 
   if (valread == 0) {
-    close(getInstance().client_fd);
+    close(client_fd);
+    getInstance().connectionCount--;
+    log4cpp::Category::getRoot().infoStream()
+      << "Client disconnect, which has client_fd " << client_fd;
+    log4cpp::Category::getRoot().infoStream()
+      << "Connection count: " << Socket::getConnectionCount();
     throw std::runtime_error("Client disconnected");
   }
 
   if (valread < 0) {
     perror("Failed to receive request");
-    close(getInstance().client_fd);
+    close(client_fd);
   }
 
   static Json::CharReaderBuilder reader;
@@ -94,10 +127,14 @@ ReqPtr Socket::receive() {
   throw std::runtime_error("Failed to parse request");
 }
 
-void Socket::send(const ResPtr& res) {
+void Socket::send(int client_fd, const ResPtr& res) {
   static Json::StreamWriterBuilder writer;
 
   std::string data = Json::writeString(writer, res->toJson());
-  ::send(getInstance().client_fd, data.c_str(), data.size(), 0);
+  ::send(client_fd, data.c_str(), data.size(), 0);
+}
+
+int Socket::getConnectionCount() {
+  return getInstance().connectionCount;
 }
 }  // namespace zipfiles::server

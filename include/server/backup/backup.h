@@ -21,5 +21,9 @@ void writeCommitLog(const fs::path& dst, const CommitLog& cl);
 
 void writeDirectoryFile(const fs::path& dst, const DirectoryTreeNode& root);
 
+void deleteCommit();
+
+void deleteCommitLog();
+
 }  // namespace zipfiles::server
 #endif  // !ZIPFILES_BACKUP_H

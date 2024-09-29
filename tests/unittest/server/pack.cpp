@@ -41,7 +41,7 @@ TEST(ArchiveTest, PackFileToArchive) {
   std::ifstream archiveIn(archiveName, std::ios::binary);
   ASSERT_TRUE(archiveIn.is_open());
 
-  size_t pathLength;
+  size_t pathLength = 0;
   archiveIn.read(reinterpret_cast<char*>(&pathLength), sizeof(pathLength));
   ASSERT_EQ(pathLength, testFileName.size());
 
@@ -49,7 +49,7 @@ TEST(ArchiveTest, PackFileToArchive) {
   archiveIn.read(pathStr.data(), pathLength);
   ASSERT_EQ(pathStr, testFileName);
 
-  size_t fileSize;
+  size_t fileSize = 0;
   archiveIn.read(reinterpret_cast<char*>(&fileSize), sizeof(fileSize));
   ASSERT_EQ(fileSize, fileContent.size());
 

@@ -3,7 +3,7 @@
 
 namespace zipfiles::server {
 
-void doHandle();
+void doHandle(int client_fd);
 void daemonize();
 }  // namespace zipfiles::server
 

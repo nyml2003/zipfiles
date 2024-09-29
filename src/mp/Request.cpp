@@ -9,12 +9,12 @@ Req::Req(ReqKind kind) : kind(std::move(kind)) {}
 
 ReqPtr makeReqGetFileDetail(std::string path) {
   log4cpp::Category::getRoot().infoStream()
-    << "make a request to get file detail";
+    << "Making a request to get file detail";
   return std::make_shared<Req>(request::GetFileDetail{std::move(path)});
 }
 ReqPtr makeReqGetFileList(std::string path) {
   log4cpp::Category::getRoot().infoStream()
-    << "make a request to get file list";
+    << "Making a request to get file list";
   return std::make_shared<Req>(request::GetFileList{std::move(path)});
 }
 Json::Value Req::toJson() {

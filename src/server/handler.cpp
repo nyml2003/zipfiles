@@ -11,12 +11,12 @@
 
 namespace zipfiles::server {
 
-void doHandle() {
+void doHandle(int client_fd) {
   try {
     // 主eventloop
     while (true) {
-      log4cpp::Category::getRoot().infoStream() << "Waiting for request";
-      ReqPtr request = Socket::receive();
+      log4cpp::Category::getRoot().infoStream() << "Waiting for request...";
+      ReqPtr request = Socket::receive(client_fd);
 
       log4cpp::Category::getRoot().infoStream()
         << "Request received: " << request->toJson().toStyledString();
@@ -43,7 +43,7 @@ void doHandle() {
       response->timestamp = request->timestamp;
       response->uuid = request->uuid;
 
-      Socket::send(response);
+      Socket::send(client_fd, response);
 
       log4cpp::Category::getRoot().infoStream()
         << "Response sent: " << response->toJson().toStyledString();

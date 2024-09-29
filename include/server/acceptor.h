@@ -7,6 +7,12 @@
  */
 #define MAX_THREADS 8
 
+/**
+ * @brief 最大支持的epoll_event数
+ *
+ */
+#define MAX_EPOLL_EVENTS 8
+
 namespace zipfiles::server {
 
 void doAccept();

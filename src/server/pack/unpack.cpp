@@ -26,7 +26,7 @@ void unpackArchive(
   }
 
   while (archive) {
-    size_t pathLength;
+    size_t pathLength = 0;
     archive.read(reinterpret_cast<char*>(&pathLength), sizeof(pathLength));
     if (archive.eof()) {
       break;

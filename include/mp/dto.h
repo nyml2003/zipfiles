@@ -56,6 +56,10 @@ struct CommitLog {
   std::string storagePath;
   // 作者
   std::string author;
+  // 是否被加密
+  bool isEncrypt;
+  // 是否被删除
+  bool isDelete;
 };
 
 struct File {
