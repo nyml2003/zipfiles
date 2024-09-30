@@ -28,7 +28,7 @@ void doAccept() {
 
   // 初始化epoll事件
   struct epoll_event event {};
-  event.events = EPOLLIN | EPOLLET;  // 监听可读事件
+  event.events = EPOLLIN;  // 监听可读事件
   event.data.fd = server_fd;
   if (epoll_ctl(epollFd, EPOLL_CTL_ADD, server_fd, &event) == -1) {
     log4cpp::Category::getRoot().errorStream()

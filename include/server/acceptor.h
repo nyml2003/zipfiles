@@ -11,7 +11,7 @@
  * @brief 最大支持的epoll_event数
  *
  */
-#define MAX_EPOLL_EVENTS 8
+#define MAX_EPOLL_EVENTS 16
 
 namespace zipfiles::server {
 
