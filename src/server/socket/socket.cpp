@@ -120,7 +120,7 @@ ReqPtr Socket::receive(int client_fd) {
   if (valread < 0) {
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
       // 没有更多数据可读
-      throw std::runtime_error("No more data")
+      throw std::runtime_error("No more data");
     }
     perror("Failed to receive request");
     close(client_fd);
