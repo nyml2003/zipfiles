@@ -16,7 +16,6 @@
 
 std::mutex mtx;
 std::atomic<int> counter(0);
-std::unordered_set<int> usedCounters;
 
 void sendRequest(int sock) {
   int currentCounter = counter.fetch_add(1);
@@ -53,14 +52,6 @@ void sendRequest(int sock) {
               << std::endl;
 
     // Check if the counter has been used before
-    if (usedCounters.find(currentCounter) != usedCounters.end()) {
-      std::cout << "Counter " << currentCounter << " has been used before."
-                << std::endl;
-    } else {
-      usedCounters.insert(currentCounter);
-      std::cout << "Counter " << currentCounter
-                << " is used for the first time." << std::endl;
-    }
   }
 }
 
