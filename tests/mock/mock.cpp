@@ -1,25 +1,27 @@
 #include <arpa/inet.h>
 #include <json/json.h>
 #include <unistd.h>
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <iostream>
 #include <mutex>
+#include <set>
 #include <string>
 #include <thread>
-#include <unordered_set>
 #include <vector>
 
 #define SERVER_PORT 8080
 #define SERVER_IP "127.0.0.1"
-#define REQUESTS_PER_SECOND 10
 
 std::mutex mtx;
 std::atomic<int> counter(0);
+std::set<int> usedCounters;
 
 void sendRequest(int sock) {
   int currentCounter = counter.fetch_add(1);
-
+  // std::cout << "Sending request with counter: " << currentCounter <<
+  // std::endl;
   Json::Value request;
   request["apiEnum"] = 0;
   request["payload"]["path"] = "/app/gui/src";
@@ -35,23 +37,27 @@ void sendRequest(int sock) {
   }
 
   std::array<char, 1024> buffer = {0};
-  std::cout << "Request sent: " << currentCounter << std::endl;
+  usedCounters.insert(currentCounter);
   ssize_t valread = read(sock, buffer.data(), 1024);
   if (valread < 0) {
     std::cerr << "Read failed" << std::endl;
   } else {
     std::lock_guard<std::mutex> lock(mtx);
-    // 用json解析一下
     Json::CharReaderBuilder reader;
     Json::Value response;
     std::string errors;
     std::istringstream is(std::string(buffer.data(), valread));
     Json::parseFromStream(reader, is, &response, &errors);
 
-    std::cout << "Response received: " << response["timestamp"].asInt()
-              << std::endl;
-
-    // Check if the counter has been used before
+    int receivedCounter = response["timestamp"].asInt();
+    // std::cout << "Received response with counter: " << receivedCounter
+    //           << std::endl;
+    auto it = usedCounters.find(receivedCounter);
+    if (it != usedCounters.end()) {
+      usedCounters.erase(it);
+    } else {
+      throw std::runtime_error("Counter not found");
+    }
   }
 }
 
@@ -80,20 +86,17 @@ int main() {
     return -1;
   }
 
-  for (int i = 0; i < 5; ++i) {
-    std::vector<std::thread> threads(REQUESTS_PER_SECOND);
-
-    for (int j = 0; j < REQUESTS_PER_SECOND; ++j) {
-      threads[j] = std::thread(sendRequest, sock);
-    }
-
-    for (auto& th : threads) {
-      th.join();
-    }
-
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+  for (int i = 0; i < 1000; i++) {
+    std::thread([sock]() { sendRequest(sock); }).detach();
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
   }
 
   close(sock);
+  // 打印usedCounters
+  std::cout << "Used counters: ";
+  for (auto& counter : usedCounters) {
+    std::cout << counter << " ";
+  }
+  std::cout << std::endl;
   return 0;
 }
