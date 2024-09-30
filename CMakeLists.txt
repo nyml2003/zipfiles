@@ -141,7 +141,9 @@ install(FILES ${ZIPFILES_CLIENT_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR})
 add_executable(
     mock
     ${ZIPFILES_MOCK_SERVER_ENTRY}
-
+    ${ZIPFILES_SOURCE_FILES}
+    ${ZIPFILES_MP_SOURCE_FILES}
+    
 )
 
 target_link_libraries(
@@ -149,6 +151,7 @@ target_link_libraries(
     ${JSONCPP_LIBRARIES}
     ${LOG4CPP_LIBRARIES}
 )
+
 
 
 

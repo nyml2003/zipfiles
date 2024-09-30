@@ -2,6 +2,7 @@
 #define ZIPFILES_MP_RESPONSE_H
 #include <json/json.h>
 #include <variant>
+#include "mp/Request.h"
 #include "mp/dto.h"
 
 namespace zipfiles {
@@ -13,8 +14,10 @@ enum class StatusCode {
 };
 
 enum class ApiEnum {
-  GET_FILE_DETAIL = 0,
-  GET_FILE_LIST = 1,
+  IGNORE = 1,
+  ERROR = 0,
+  GET_FILE_DETAIL = 100,
+  GET_FILE_LIST = 101,
 };
 
 size_t toSizeT(ApiEnum apiEnum);
@@ -31,11 +34,18 @@ struct GetFileList {
   std::vector<File> files;
 };
 
+struct MockNeedTime {
+  int id;
+};
+
 }  // namespace response
 
 struct Res;
 
-using ResKind = std::variant<response::GetFileDetail, response::GetFileList>;
+using ResKind = std::variant<
+  response::GetFileDetail,
+  response::GetFileList,
+  response::MockNeedTime>;
 using ResPtr = std::shared_ptr<Res>;
 
 struct Res {
@@ -51,6 +61,8 @@ struct Res {
 ResPtr makeResGetFileDetail(FileDetail metadata);
 
 ResPtr makeResGetFileList(std::vector<File> files);
+
+ResPtr makeResMockNeedTime(int id);
 
 }  // namespace zipfiles
 

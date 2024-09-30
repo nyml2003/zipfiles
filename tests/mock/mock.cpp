@@ -1,7 +1,6 @@
 #include <arpa/inet.h>
 #include <json/json.h>
 #include <unistd.h>
-#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <iostream>
@@ -9,10 +8,10 @@
 #include <set>
 #include <string>
 #include <thread>
-#include <vector>
+#include "mp/Request.h"
 
-#define SERVER_PORT 8080
-#define SERVER_IP "127.0.0.1"
+const int SERVER_PORT = 8080;
+std::string SERVER_IP = "127.0.0.1";
 
 std::mutex mtx;
 std::atomic<int> counter(0);
@@ -20,13 +19,11 @@ std::set<int> usedCounters;
 
 void sendRequest(int sock) {
   int currentCounter = counter.fetch_add(1);
-  // std::cout << "Sending request with counter: " << currentCounter <<
-  // std::endl;
-  Json::Value request;
-  request["apiEnum"] = 0;
-  request["payload"]["path"] = "/app/gui/src";
-  request["timestamp"] = currentCounter;
-  request["uuid"] = "4293c2c8-89de-4f5e-bd5e-98cf3b1f5533";
+  std::cout << "Sending request with counter: " << currentCounter << std::endl;
+  Json::Value request = zipfiles::makeReqMockNeedTime(currentCounter)->toJson();
+  request["timestamp"] = 0;
+  request["uuid"] = "1234567890";
+  std::cout << "Request: " << request << std::endl;
 
   Json::StreamWriterBuilder writer;
   std::string requestData = Json::writeString(writer, request);
@@ -49,9 +46,8 @@ void sendRequest(int sock) {
     std::istringstream is(std::string(buffer.data(), valread));
     Json::parseFromStream(reader, is, &response, &errors);
 
-    int receivedCounter = response["timestamp"].asInt();
-    // std::cout << "Received response with counter: " << receivedCounter
-    //           << std::endl;
+    int receivedCounter = response["payload"]["id"].asInt();
+    std::cout << "Received response with counter: " << response << std::endl;
     auto it = usedCounters.find(receivedCounter);
     if (it != usedCounters.end()) {
       usedCounters.erase(it);
@@ -74,7 +70,7 @@ int main() {
   serv_addr.sin_family = AF_INET;
   serv_addr.sin_port = htons(SERVER_PORT);
 
-  if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
+  if (inet_pton(AF_INET, SERVER_IP.c_str(), &serv_addr.sin_addr) <= 0) {
     std::cerr << "Invalid address/ Address not supported" << std::endl;
     close(sock);
     return -1;
@@ -85,18 +81,22 @@ int main() {
     close(sock);
     return -1;
   }
+  try {
+    for (int i = 0; i < 100000; i++) {
+      std::thread([sock]() { sendRequest(sock); }).detach();
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
 
-  for (int i = 0; i < 1000; i++) {
-    std::thread([sock]() { sendRequest(sock); }).detach();
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    close(sock);
+  } catch (const std::exception& e) {
+    std::cerr << "Exception: " << e.what() << std::endl;
+    std::cout << "Used counters: ";
+    for (auto& counter : usedCounters) {
+      std::cout << counter << " ";
+    }
+    std::cout << std::endl;
   }
-
-  close(sock);
   // 打印usedCounters
-  std::cout << "Used counters: ";
-  for (auto& counter : usedCounters) {
-    std::cout << counter << " ";
-  }
-  std::cout << std::endl;
+
   return 0;
 }
