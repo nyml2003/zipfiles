@@ -6,13 +6,6 @@
 #include "mp/mp.h"
 #include "server/socket/socket.h"
 
-/**
- * @brief 当前正在运行的连接数
- * @details 因为只有一个acceptor，所以不需要做并发处理
- *
- */
-int connectionCount = 0;
-
 namespace zipfiles::server {
 Socket::Socket()
   : server_fd(socket(AF_INET, SOCK_STREAM, 0)), address{}, connectionCount(0) {
@@ -95,7 +88,7 @@ void Socket::acceptConnection(int epoll_fd) {
     log4cpp::Category::getRoot().infoStream()
       << "Add client_fd " << client_fd << " to epoll_fd " << epoll_fd;
 
-    getInstance().connectionCount++;
+    getInstance().connectionCount.fetch_add(1);
   }
 }
 
@@ -105,8 +98,9 @@ ReqPtr Socket::receive(int client_fd) {
   ssize_t valread = read(client_fd, buffer.data(), mp::MAX_MESSAGE_SIZE);
 
   if (valread == 0) {
+    // 断开连接
     close(client_fd);
-    getInstance().connectionCount--;
+    getInstance().connectionCount.fetch_sub(1);
     log4cpp::Category::getRoot().infoStream()
       << "Client disconnect, which has client_fd " << client_fd;
     log4cpp::Category::getRoot().infoStream()
@@ -139,6 +133,6 @@ void Socket::send(int client_fd, const ResPtr& res) {
 }
 
 int Socket::getConnectionCount() {
-  return getInstance().connectionCount;
+  return getInstance().connectionCount.load();
 }
 }  // namespace zipfiles::server

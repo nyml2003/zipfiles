@@ -22,7 +22,7 @@ void doHandle(int client_fd) {
     ReqPtr request = Socket::receive(client_fd);
 
     log4cpp::Category::getRoot().infoStream()
-      << "Request received: " << request->toJson().toStyledString();
+      << "Request received: " << request->timestamp;
 
     ResPtr response = std::visit(
       overload{
@@ -49,7 +49,7 @@ void doHandle(int client_fd) {
     Socket::send(client_fd, response);
 
     log4cpp::Category::getRoot().infoStream()
-      << "Response sent: " << response->toJson().toStyledString();
+      << "Response sent: " << response->timestamp;
   } catch (const std::exception& e) {
     log4cpp::Category::getRoot().errorStream()
       << "Failed to handle request: " << e.what();

@@ -32,6 +32,7 @@ class ThreadPool {
 template <class F, class... Args>
 auto ThreadPool::enqueue(F&& f, Args&&... args)
   -> std::future<typename std::result_of<F(Args...)>::type> {
+  
   using returnType = typename std::result_of<F(Args...)>::type;
 
   auto task = std::make_shared<std::packaged_task<returnType()>>(
@@ -46,6 +47,7 @@ auto ThreadPool::enqueue(F&& f, Args&&... args)
     }
     tasks.emplace([task] { (*task)(); });
   }
+  
   condition.notify_one();
   return res;
 }

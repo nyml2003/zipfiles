@@ -27,8 +27,11 @@ ThreadPool::ThreadPool(size_t numThreads) : stop(false) {
 }
 
 ThreadPool::~ThreadPool() {
+
   stop = true;
+
   condition.notify_all();
+  
   for (std::thread& worker : workers) {
     worker.join();
   }
