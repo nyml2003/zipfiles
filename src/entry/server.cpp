@@ -9,7 +9,7 @@ int main() {
     // 因为会导致Debug冲突，因此暂时先手动处理
     std::ofstream ofs;
     ofs.open(
-      "/app/bin/server/server.log", std::ofstream::out | std::ofstream::trunc
+      "/app/bin/server.log", std::ofstream::out | std::ofstream::trunc
     );
     ofs.close();
 

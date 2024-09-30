@@ -81,6 +81,7 @@ file(GLOB_RECURSE ZIPFILES_MP_SOURCE_FILES ${ZIPFILES_MP_SOURCE_DIR}/*.cpp)
 set(ZIPFILES_ENTRY_DIR ${ZIPFILES_SOURCE_DIR}/entry)
 set(ZIPFILES_CLINET_ENTRY ${ZIPFILES_ENTRY_DIR}/client.cpp)
 set(ZIPFILES_SERVER_ENTRY ${ZIPFILES_ENTRY_DIR}/server.cpp)
+set(ZIPFILES_MOCK_SERVER_ENTRY ${ZIPFILES_TEST_DIR}/mock/mock.cpp)
 
 
 ############################################
@@ -96,9 +97,9 @@ add_executable(
     ${ZIPFILES_SERVER_ENTRY}
 )
 
-set_target_properties(server PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZIPFILES_OUTPUT_DIR}/server)
+set_target_properties(server PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZIPFILES_OUTPUT_DIR})
 
-install(FILES ${ZIPFILES_SERVER_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR}/server)
+install(FILES ${ZIPFILES_SERVER_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR})
 
 target_link_libraries(
     server
@@ -116,7 +117,7 @@ add_executable(
     ${ZIPFILES_CLINET_ENTRY}
 )
 
-set_target_properties(client PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZIPFILES_OUTPUT_DIR}/client)
+set_target_properties(client PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZIPFILES_OUTPUT_DIR})
 
 target_link_libraries(
     client
@@ -127,12 +128,32 @@ target_link_libraries(
 )
 target_compile_options(client PRIVATE ${GTK_CFLAGS_OTHER} ${WEBKIT_CFLAGS_OTHER})
 
-install(DIRECTORY ${ZIPFILES_DIST_DIR} DESTINATION ${ZIPFILES_OUTPUT_DIR}/client)
-install(FILES ${ZIPFILES_CLIENT_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR}/client)
+install(DIRECTORY ${ZIPFILES_DIST_DIR} DESTINATION ${ZIPFILES_OUTPUT_DIR})
+install(FILES ${ZIPFILES_CLIENT_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR})
 
 ############################################
 #### 项目测试
 ############################################
+
+
+# 模拟给后端发请求，算集成测试（？）
+
+add_executable(
+    mock
+    ${ZIPFILES_MOCK_SERVER_ENTRY}
+    ${ZIPFILES_SOURCE_FILES}
+    ${ZIPFILES_MP_SOURCE_FILES}
+    
+)
+
+target_link_libraries(
+    mock
+    ${JSONCPP_LIBRARIES}
+    ${LOG4CPP_LIBRARIES}
+)
+
+
+
 
 find_package(GTest REQUIRED)
 # 单元测试

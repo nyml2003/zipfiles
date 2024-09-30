@@ -31,6 +31,10 @@ ResPtr makeResGetFileDetail(FileDetail metadata) {
 ResPtr makeResGetFileList(std::vector<File> files) {
   return std::make_shared<Res>(response::GetFileList{std::move(files)});
 }
+
+ResPtr makeResMockNeedTime(int id) {
+  return std::make_shared<Res>(response::MockNeedTime{id});
+}
 size_t toSizeT(ApiEnum apiEnum) {
   return static_cast<size_t>(apiEnum);
 }
@@ -63,6 +67,10 @@ Json::Value Res::toJson() {
           fileJson["type"] = static_cast<int>(file.type);
           json["payload"]["files"].append(fileJson);
         }
+      },
+      [&json](response::MockNeedTime& res) {
+        json["apiEnum"] = Json::Value(toSizeT(ApiEnum::IGNORE));
+        json["payload"]["id"] = res.id;
       },
       [](auto&&) { throw std::runtime_error("Unknown response type"); }},
     kind
@@ -100,6 +108,9 @@ ResPtr Res::fromJson(const Json::Value& json) {
       res = makeResGetFileList(files);
       break;
     }
+    case ApiEnum::IGNORE:
+      res = makeResMockNeedTime(json["payload"]["id"].asInt());
+      break;
     default:
       throw std::runtime_error("Invalid response kind");
       break;
