@@ -97,9 +97,9 @@ add_executable(
     ${ZIPFILES_SERVER_ENTRY}
 )
 
-set_target_properties(server PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZIPFILES_OUTPUT_DIR}/server)
+set_target_properties(server PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZIPFILES_OUTPUT_DIR})
 
-install(FILES ${ZIPFILES_SERVER_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR}/server)
+install(FILES ${ZIPFILES_SERVER_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR})
 
 target_link_libraries(
     server
@@ -117,7 +117,7 @@ add_executable(
     ${ZIPFILES_CLINET_ENTRY}
 )
 
-set_target_properties(client PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZIPFILES_OUTPUT_DIR}/client)
+set_target_properties(client PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZIPFILES_OUTPUT_DIR})
 
 target_link_libraries(
     client
@@ -128,8 +128,8 @@ target_link_libraries(
 )
 target_compile_options(client PRIVATE ${GTK_CFLAGS_OTHER} ${WEBKIT_CFLAGS_OTHER})
 
-install(DIRECTORY ${ZIPFILES_DIST_DIR} DESTINATION ${ZIPFILES_OUTPUT_DIR}/client)
-install(FILES ${ZIPFILES_CLIENT_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR}/client)
+install(DIRECTORY ${ZIPFILES_DIST_DIR} DESTINATION ${ZIPFILES_OUTPUT_DIR})
+install(FILES ${ZIPFILES_CLIENT_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR})
 
 ############################################
 #### 项目测试

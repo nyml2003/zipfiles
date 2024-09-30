@@ -35,13 +35,21 @@ void sendRequest(int sock) {
     return;
   }
 
-  char buffer[1024] = {0};
-  int valread = read(sock, buffer, 1024);
+  std::array<char, 1024> buffer = {0};
+  std::cout << "Request sent: " << currentCounter << std::endl;
+  ssize_t valread = read(sock, buffer.data(), 1024);
   if (valread < 0) {
     std::cerr << "Read failed" << std::endl;
   } else {
     std::lock_guard<std::mutex> lock(mtx);
-    std::cout << "Response received: " << std::string(buffer, valread)
+    // 用json解析一下
+    Json::CharReaderBuilder reader;
+    Json::Value response;
+    std::string errors;
+    std::istringstream is(std::string(buffer.data(), valread));
+    Json::parseFromStream(reader, is, &response, &errors);
+
+    std::cout << "Response received: " << response["timestamp"].asInt()
               << std::endl;
 
     // Check if the counter has been used before
@@ -58,9 +66,10 @@ void sendRequest(int sock) {
 
 int main() {
   int sock = 0;
-  struct sockaddr_in serv_addr;
+  struct sockaddr_in serv_addr {};
 
-  if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+  sock = socket(AF_INET, SOCK_STREAM, 0);
+  if (sock < 0) {
     std::cerr << "Socket creation error" << std::endl;
     return -1;
   }
@@ -74,7 +83,7 @@ int main() {
     return -1;
   }
 
-  if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+  if (connect(sock, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
     std::cerr << "Connection Failed" << std::endl;
     close(sock);
     return -1;
@@ -84,7 +93,7 @@ int main() {
     std::vector<std::thread> threads(REQUESTS_PER_SECOND);
 
     for (int j = 0; j < REQUESTS_PER_SECOND; ++j) {
-      threads.emplace_back(sendRequest, sock);
+      threads[j] = std::thread(sendRequest, sock);
     }
 
     for (auto& th : threads) {
