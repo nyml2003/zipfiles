@@ -46,10 +46,13 @@ struct DirectoryTreeNode : public FileDetail {
  *
  */
 struct CommitLog {
-  // Commit消息，默认为Commit的唯一标识
+  // id为Commit的唯一标识
+  std::string uuid;
+  // Commit消息
   std::string message;
   // 创建时间
-  std::string createTime;
+  // 以秒为单位，有效位数是53位
+  double createTime;
   // 恢复的默认路径
   std::string defaultPath;
   // 文件的存储路径

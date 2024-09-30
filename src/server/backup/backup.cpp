@@ -3,15 +3,19 @@
 #include <log4cpp/Category.hh>
 #include <stdexcept>
 #include <vector>
+#include "json/writer.h"
 #include "mp/dto.h"
 #include "server/backup/backup.h"
 #include "server/pack/pack.h"
 
 namespace zipfiles::server {
+
 /**
  * @brief 前端的直接调用接口，处理整个commit流程
  *
  * @param files 一个文件路径数组
+ *
+ * todo: 将CommitLog替换为Json value形式
  */
 void backupFiles(const std::vector<fs::path>& files, const CommitLog& cl) {
   log4cpp::Category::getRoot().infoStream()
@@ -19,7 +23,7 @@ void backupFiles(const std::vector<fs::path>& files, const CommitLog& cl) {
     << cl.createTime;
 
   if (isCommitted(cl)) {
-    throw std::runtime_error("Commit log is already committed.");
+    throw std::runtime_error("Commit log is already committed");
   }
 
   // 打包
@@ -29,7 +33,7 @@ void backupFiles(const std::vector<fs::path>& files, const CommitLog& cl) {
       packFileToArchive(archive, file);
     }
   } catch (const std::exception& e) {
-    throw std::runtime_error("Error occurred when trying to pack.");
+    throw std::runtime_error("Error occurred when trying to pack");
   }
 
   // todo: 压缩
@@ -75,8 +79,21 @@ DirectoryTreeNode generateDirectoryTree(const std::vector<fs::path>& files) {
  * @param dst 指定的log文件路径
  *
  * @param cl 指定的CommitLog对象
+ *
+ * todo: 将CommitLog替换为Json value形式，直接写入json文件
  */
-void writeCommitLog(const fs::path& /*dst*/, const CommitLog& /*cl*/) {}
+void writeCommitLog(const fs::path& dst, const CommitLog& /*cl*/) {
+  std::ofstream logFile(dst, std::ios::app);
+  if (!logFile.is_open()) {
+    throw std::runtime_error("Unable to open log file");
+  }
+
+  // Json::StreamWriterBuilder writer;
+  // std::string jsonString = Json::writeString(writer, cl.toJson());
+  // logFile << jsonString << std::endl;
+
+  logFile.close();
+}
 
 /**
  * @brief 给定一个路径，生成一个描述Commit内容的目录树文件
@@ -96,6 +113,8 @@ void writeDirectoryFile(
  * @param src 指定的log文件路径
  *
  * @param cl 指定的CommitLog对象
+ *
+ * todo: 将CommitLog替换为Json value形式
  */
 bool isCommitted(const CommitLog& /*cl*/) {
   return false;
