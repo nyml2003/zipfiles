@@ -28,7 +28,7 @@ void doAccept() {
 
   // 初始化epoll事件
   struct epoll_event event {};
-  event.events = EPOLLIN;  // 监听可读事件
+  event.events = EPOLLIN | EPOLLET;  // 监听可读事件
   event.data.fd = server_fd;
   if (epoll_ctl(epollFd, EPOLL_CTL_ADD, server_fd, &event) == -1) {
     log4cpp::Category::getRoot().errorStream()
@@ -63,7 +63,7 @@ void doAccept() {
           // todo: connection数量过多的处理
           // ? 不处理，前端直接不展示数据了
           log4cpp::Category::getRoot().warnStream()
-            << "Max threads reached, cannot accept new connection";  // 增加：输出连接数达到上限的警告
+            << "Max connections reached, cannot accept new connection";  // 增加：输出连接数达到上限的警告
 
           continue;
         }

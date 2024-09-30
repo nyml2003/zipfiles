@@ -80,6 +80,7 @@ void Socket::acceptConnection(int epoll_fd) {
       << " client_fd: " << client_fd;
   }
 
+  // 设置非阻塞
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
 
@@ -145,12 +146,13 @@ ReqPtr Socket::receive(int client_fd) {
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
       std::stringstream ss;
       ss << client_fd;
-      ss << " has no more data";
+      ss << " has no more data, now disconnect and connection count is ";
+      ss << Socket::getConnectionCount();
       // 没有更多数据可读
       throw std::runtime_error(ss.str());
     }
-    perror("Failed to receive request");
-    throw std::runtime_error("Failed to receive request");
+
+    throw std::runtime_error("Failed to receive request, now disconnect");
   }
 
   static Json::CharReaderBuilder reader;

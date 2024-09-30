@@ -20,8 +20,6 @@ std::set<int> usedCounters;
 
 void sendRequest(int sock) {
   int currentCounter = counter.fetch_add(1);
-  // std::cout << "Sending request with counter: " << currentCounter <<
-  // std::endl;
   Json::Value request;
   request["apiEnum"] = 0;
   request["payload"]["path"] = "/app/gui/src";
@@ -37,7 +35,10 @@ void sendRequest(int sock) {
   }
 
   std::array<char, 1024> buffer = {0};
-  usedCounters.insert(currentCounter);
+  {
+    std::lock_guard<std::mutex> lock(mtx);
+    usedCounters.insert(currentCounter);
+  }
   ssize_t valread = read(sock, buffer.data(), 1024);
   if (valread < 0) {
     std::cerr << "Read failed" << std::endl;
@@ -50,8 +51,6 @@ void sendRequest(int sock) {
     Json::parseFromStream(reader, is, &response, &errors);
 
     int receivedCounter = response["timestamp"].asInt();
-    // std::cout << "Received response with counter: " << receivedCounter
-    //           << std::endl;
     auto it = usedCounters.find(receivedCounter);
     if (it != usedCounters.end()) {
       usedCounters.erase(it);
@@ -61,14 +60,14 @@ void sendRequest(int sock) {
   }
 }
 
-int main() {
+void createConnection() {
   int sock = 0;
   struct sockaddr_in serv_addr {};
 
   sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock < 0) {
     std::cerr << "Socket creation error" << std::endl;
-    return -1;
+    return;
   }
 
   serv_addr.sin_family = AF_INET;
@@ -77,26 +76,41 @@ int main() {
   if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
     std::cerr << "Invalid address/ Address not supported" << std::endl;
     close(sock);
-    return -1;
+    return;
   }
 
   if (connect(sock, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
     std::cerr << "Connection Failed" << std::endl;
     close(sock);
-    return -1;
+    return;
   }
 
-  for (int i = 0; i < 1000; i++) {
-    std::thread([sock]() { sendRequest(sock); }).detach();
+  for (int i = 0; i < 10; i++) {
+    std::thread([&sock] { sendRequest(sock); }).detach();
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
   }
 
   close(sock);
-  // 打印usedCounters
+}
+
+int main() {
+  std::vector<std::thread> connections;
+  for (int i = 0; i < 3; i++) {
+    connections.emplace_back(createConnection);
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  }
+
+  for (auto& conn : connections) {
+    if (conn.joinable()) {
+      conn.join();
+    }
+  }
+
   std::cout << "Used counters: ";
-  for (auto& counter : usedCounters) {
+  for (const auto& counter : usedCounters) {
     std::cout << counter << " ";
   }
   std::cout << std::endl;
+
   return 0;
 }
