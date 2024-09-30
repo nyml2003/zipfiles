@@ -1,5 +1,7 @@
 #include <arpa/inet.h>
 #include <sys/epoll.h>
+#include <stdexcept>
+#include "json/value.h"
 #include "log4cpp/Category.hh"
 #include "mp/Request.h"
 #include "mp/Response.h"
@@ -74,6 +76,9 @@ void Socket::acceptConnection(int epoll_fd) {
       << " client_fd: " << client_fd;
   }
 
+  int flags = fcntl(client_fd, F_GETFL, 0);
+  fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
+
   // 将client_fd加入epoll
   struct epoll_event event {};
   event.events = EPOLLIN;
@@ -100,17 +105,26 @@ ReqPtr Socket::receive(int client_fd) {
   if (valread == 0) {
     // 断开连接
     close(client_fd);
+
     getInstance().connectionCount.fetch_sub(1);
+
     log4cpp::Category::getRoot().infoStream()
       << "Client disconnect, which has client_fd " << client_fd;
+
     log4cpp::Category::getRoot().infoStream()
       << "Connection count: " << Socket::getConnectionCount();
+
     throw std::runtime_error("Client disconnected");
   }
 
   if (valread < 0) {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      // 没有更多数据可读
+      throw std::runtime_error("No more data")
+    }
     perror("Failed to receive request");
     close(client_fd);
+    throw std::runtime_error("Failed to receive request");
   }
 
   static Json::CharReaderBuilder reader;
@@ -121,7 +135,6 @@ ReqPtr Socket::receive(int client_fd) {
   if (Json::parseFromStream(reader, stream, &jsonData, &errs)) {
     return Req::fromJson(jsonData);
   }
-
   throw std::runtime_error("Failed to parse request");
 }
 
@@ -135,4 +148,5 @@ void Socket::send(int client_fd, const ResPtr& res) {
 int Socket::getConnectionCount() {
   return getInstance().connectionCount.load();
 }
+
 }  // namespace zipfiles::server
