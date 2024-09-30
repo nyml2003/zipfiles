@@ -32,6 +32,19 @@ ResPtr makeResGetFileList(std::vector<File> files) {
   return std::make_shared<Res>(response::GetFileList{std::move(files)});
 }
 
+// Json::Value json;
+
+// Json::Value newJson;
+// newJson["payload"] = json;
+// newJson["apiEnum"] = 1;
+// fromJson(newJson);
+
+// ResPtr makeResPostCommit(Json::Value json) {
+//   json::Value newJson;
+//   newJson["payload"] = json;
+//   newJson["apiEnum"] = 1;
+//   return Res::fromJson(newJson);
+// }
 ResPtr makeResMockNeedTime(int id) {
   return std::make_shared<Res>(response::MockNeedTime{id});
 }

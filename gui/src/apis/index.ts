@@ -2,7 +2,7 @@ export enum ApiEnum {
   Sum = 'sum',
   GetVersion = 'getVersion',
   Log = 'log',
-  GetFileList = 1,
+  GetFileList = 101,
   PostBackup = 'postBackup',
-  GetFileDetail = 0,
+  GetFileDetail = 100,
 }

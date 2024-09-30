@@ -3,6 +3,7 @@
 #include <json/json.h>
 #include <string>
 #include <variant>
+#include "mp/dto.h"
 namespace zipfiles {
 namespace request {
 
@@ -19,12 +20,19 @@ struct MockNeedTime {
   int id;
 };
 
+struct PostCommit {
+  CommitLog commitLog;
+};
+
 };  // namespace request
 
 struct Req;
 
-using ReqKind = std::
-  variant<request::GetFileDetail, request::GetFileList, request::MockNeedTime>;
+using ReqKind = std::variant<
+  request::GetFileDetail,
+  request::GetFileList,
+  request::MockNeedTime,
+  request::PostCommit>;
 using ReqPtr = std::shared_ptr<Req>;
 
 struct Req {
@@ -39,6 +47,7 @@ struct Req {
 ReqPtr makeReqGetFileDetail(std::string path);
 ReqPtr makeReqGetFileList(std::string path);
 ReqPtr makeReqMockNeedTime(int id);
+ReqPtr makeReqPostCommit(CommitLog commitLog);
 
 }  // namespace zipfiles
 

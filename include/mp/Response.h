@@ -18,6 +18,7 @@ enum class ApiEnum {
   ERROR = 0,
   GET_FILE_DETAIL = 100,
   GET_FILE_LIST = 101,
+  POST_COMMIT = 102,
 };
 
 size_t toSizeT(ApiEnum apiEnum);
@@ -33,7 +34,7 @@ struct GetFileDetail {
 struct GetFileList {
   std::vector<File> files;
 };
-
+// TODO 测试耗时请求
 struct MockNeedTime {
   int id;
 };
