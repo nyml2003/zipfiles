@@ -18,6 +18,12 @@ ReqPtr makeReqGetFileList(std::string path) {
   return std::make_shared<Req>(request::GetFileList{std::move(path)});
 }
 
+ReqPtr makeReqPostCommit(CommitLog commitLog) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a request to post commit";
+  return std::make_shared<Req>(request::PostCommit{std::move(commitLog)});
+}
+
 ReqPtr makeReqMockNeedTime(int id) {
   log4cpp::Category::getRoot().infoStream()
     << "Making a request to mock need time";
@@ -42,6 +48,16 @@ Json::Value Req::toJson() {
       [&json](request::MockNeedTime& req) {
         json["payload"]["id"] = req.id;
         json["apiEnum"] = toSizeT(ApiEnum::IGNORE);
+      },
+      [&json](request::PostCommit& req) {
+        json["apiEnum"] = toSizeT(ApiEnum::POST_COMMIT);
+        json["payload"]["message"] = req.commitLog.message;
+        json["payload"]["createTime"] = req.commitLog.createTime;
+        json["payload"]["defaultPath"] = req.commitLog.defaultPath;
+        json["payload"]["storagePath"] = req.commitLog.storagePath;
+        json["payload"]["author"] = req.commitLog.author;
+        json["payload"]["isEncrypt"] = req.commitLog.isEncrypt;
+        json["payload"]["isDelete"] = req.commitLog.isDelete;
       },
       [](auto&&) { throw std::runtime_error("Unknown request type"); },
     },

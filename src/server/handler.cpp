@@ -34,6 +34,7 @@ void doHandle(int client_fd) {
           MetaDataFilter filter;
           return makeResGetFileList(getFileList(req.path, false, filter));
         },
+        [](request::PostCommit& req) {},
         [](request::MockNeedTime& req) { return makeResMockNeedTime(req.id); },
         [](auto&&) {
           throw std::runtime_error("Unknown request type");
