@@ -9,8 +9,10 @@
 #include "log4cpp/Category.hh"
 #include "mp/Request.h"
 #include "mp/Response.h"
+#include "mp/error.h"
 #include "mp/mp.h"
 #include "server/socket/socket.h"
+
 
 namespace zipfiles::server {
 Socket::Socket()
@@ -136,7 +138,7 @@ ReqPtr Socket::receive(int client_fd) {
       ss << " has no more data, now disconnect and connection count is ";
       ss << Socket::getConnectionCount();
       // 没有更多数据可读
-      throw std::runtime_error(ss.str());
+      throw SocketTemporarilyUnavailable(ss.str());
     }
 
     close(client_fd);

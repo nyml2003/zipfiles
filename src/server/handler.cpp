@@ -5,6 +5,7 @@
 #include "mp/Request.h"
 #include "mp/Response.h"
 #include "mp/common.h"
+#include "mp/error.h"
 #include "mp/filter.h"
 #include "server/handler.h"
 #include "server/socket/socket.h"
@@ -52,6 +53,11 @@ void doHandle(int client_fd) {
     log4cpp::Category::getRoot().infoStream()
       << "Response sent: " << response->timestamp;
   } catch (const std::exception& e) {
+    // 如果是SocketTemporarilyUnavailable
+    if (const auto* e_ptr = dynamic_cast<const SocketTemporarilyUnavailable*>(&e)) {
+      log4cpp::Category::getRoot().infoStream() << e_ptr->what();
+      return;
+    }
     log4cpp::Category::getRoot().errorStream()
       << "Failed to handle request: " << e.what();
   }
