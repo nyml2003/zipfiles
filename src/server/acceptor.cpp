@@ -37,7 +37,7 @@ void doAccept() {
   }
 
   std::array<struct epoll_event, MAX_EPOLL_EVENTS> events{};
-  ThreadPool tp(8);
+  ThreadPool tp(MAX_THREADS);
 
   while (true) {
     // 调用epoll_wait

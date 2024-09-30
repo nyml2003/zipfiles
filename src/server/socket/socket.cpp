@@ -1,6 +1,10 @@
 #include <arpa/inet.h>
 #include <sys/epoll.h>
+#include <mutex>
+#include <sstream>
 #include <stdexcept>
+#include <string>
+#include <unordered_set>
 #include "json/value.h"
 #include "log4cpp/Category.hh"
 #include "mp/Request.h"
@@ -106,24 +110,46 @@ ReqPtr Socket::receive(int client_fd) {
     // 断开连接
     close(client_fd);
 
-    getInstance().connectionCount.fetch_sub(1);
+    // 减少connectionCount
+    static std::mutex mtx;
+    static std::unordered_set<int> closedConnections;
+    {
+      std::lock_guard<std::mutex> lock(mtx);
+      if (closedConnections.find(client_fd) == closedConnections.end()) {
+        closedConnections.insert(client_fd);
+        getInstance().connectionCount.fetch_sub(1);
+      }
+    }
 
     log4cpp::Category::getRoot().infoStream()
-      << "Client disconnect, which has client_fd " << client_fd;
-
-    log4cpp::Category::getRoot().infoStream()
-      << "Connection count: " << Socket::getConnectionCount();
+      << "Client disconnect, which has client_fd " << client_fd
+      << ", and now connection count is " << Socket::getConnectionCount();
 
     throw std::runtime_error("Client disconnected");
   }
 
   if (valread < 0) {
+    close(client_fd);
+
+    // 减少connectionCount
+    static std::mutex mtx;
+    static std::unordered_set<int> closedConnections;
+    {
+      std::lock_guard<std::mutex> lock(mtx);
+      if (closedConnections.find(client_fd) == closedConnections.end()) {
+        closedConnections.insert(client_fd);
+        getInstance().connectionCount.fetch_sub(1);
+      }
+    }
+
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      std::stringstream ss;
+      ss << client_fd;
+      ss << " has no more data";
       // 没有更多数据可读
-      throw std::runtime_error("No more data");
+      throw std::runtime_error(ss.str());
     }
     perror("Failed to receive request");
-    close(client_fd);
     throw std::runtime_error("Failed to receive request");
   }
 
