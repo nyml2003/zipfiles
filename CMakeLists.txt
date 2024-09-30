@@ -81,6 +81,7 @@ file(GLOB_RECURSE ZIPFILES_MP_SOURCE_FILES ${ZIPFILES_MP_SOURCE_DIR}/*.cpp)
 set(ZIPFILES_ENTRY_DIR ${ZIPFILES_SOURCE_DIR}/entry)
 set(ZIPFILES_CLINET_ENTRY ${ZIPFILES_ENTRY_DIR}/client.cpp)
 set(ZIPFILES_SERVER_ENTRY ${ZIPFILES_ENTRY_DIR}/server.cpp)
+set(ZIPFILES_MOCK_SERVER_ENTRY ${ZIPFILES_TEST_DIR}/mock/mock.cpp)
 
 
 ############################################
@@ -133,6 +134,23 @@ install(FILES ${ZIPFILES_CLIENT_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR}/c
 ############################################
 #### 项目测试
 ############################################
+
+
+# 模拟给后端发请求，算集成测试（？）
+
+add_executable(
+    mock
+    ${ZIPFILES_MOCK_SERVER_ENTRY}
+
+)
+
+target_link_libraries(
+    mock
+    ${JSONCPP_LIBRARIES}
+    ${LOG4CPP_LIBRARIES}
+)
+
+
 
 find_package(GTest REQUIRED)
 # 单元测试
