@@ -130,8 +130,16 @@ ReqPtr Socket::receive(int client_fd) {
   }
 
   if (valread < 0) {
-    close(client_fd);
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      std::stringstream ss;
+      ss << client_fd;
+      ss << " has no more data, now disconnect and connection count is ";
+      ss << Socket::getConnectionCount();
+      // 没有更多数据可读
+      throw std::runtime_error(ss.str());
+    }
 
+    close(client_fd);
     // 减少connectionCount
     static std::mutex mtx;
     static std::unordered_set<int> closedConnections;
@@ -142,16 +150,6 @@ ReqPtr Socket::receive(int client_fd) {
         getInstance().connectionCount.fetch_sub(1);
       }
     }
-
-    if (errno == EAGAIN || errno == EWOULDBLOCK) {
-      std::stringstream ss;
-      ss << client_fd;
-      ss << " has no more data, now disconnect and connection count is ";
-      ss << Socket::getConnectionCount();
-      // 没有更多数据可读
-      throw std::runtime_error(ss.str());
-    }
-
     throw std::runtime_error("Failed to receive request, now disconnect");
   }
 

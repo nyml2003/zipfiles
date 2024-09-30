@@ -34,10 +34,7 @@ void sendRequest(int sock) {
   }
 
   std::array<char, 1024> buffer = {0};
-  {
-    std::lock_guard<std::mutex> lock(mtx);
-    usedCounters.insert(currentCounter);
-  }
+  usedCounters.insert(currentCounter);
   ssize_t valread = read(sock, buffer.data(), 1024);
   if (valread < 0) {
     std::cerr << "Read failed" << std::endl;
@@ -60,14 +57,14 @@ void sendRequest(int sock) {
   }
 }
 
-void createConnection() {
+int main() {
   int sock = 0;
   struct sockaddr_in serv_addr {};
 
   sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock < 0) {
     std::cerr << "Socket creation error" << std::endl;
-    return;
+    return -1;
   }
 
   serv_addr.sin_family = AF_INET;
@@ -76,25 +73,25 @@ void createConnection() {
   if (inet_pton(AF_INET, SERVER_IP.c_str(), &serv_addr.sin_addr) <= 0) {
     std::cerr << "Invalid address/ Address not supported" << std::endl;
     close(sock);
-    return;
+    return -1;
   }
 
   if (connect(sock, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
     std::cerr << "Connection Failed" << std::endl;
     close(sock);
-    return;
+    return -1;
   }
   try {
-    for (int i = 0; i < 100000; i++) {
+    for (int i = 0; i < 1000; i++) {
       std::thread([sock]() { sendRequest(sock); }).detach();
-      std::this_thread::sleep_for(std::chrono::milliseconds(20));
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
     close(sock);
   } catch (const std::exception& e) {
     std::cerr << "Exception: " << e.what() << std::endl;
     std::cout << "Used counters: ";
-    for (auto& counter : usedCounters) {
+    for (const auto& counter : usedCounters) {
       std::cout << counter << " ";
     }
     std::cout << std::endl;
