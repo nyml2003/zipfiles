@@ -1,5 +1,6 @@
 
 #include <fstream>
+#include "json/reader.h"
 #include "json/value.h"
 #include "server/restore/restore.h"
 
@@ -14,65 +15,60 @@ DirectoryTreeNode readDirectoryFile(const fs::path& /*src*/) {
   return root;
 }
 
-CommitLog parseCommitLog(const std::string& logEntry) {
-  std::istringstream stream(logEntry);
-  CommitLog cl;
-  std::string line;
-
-  Json::Value json;
-
-  while (std::getline(stream, line)) {
-    if (line.find("UUID: ") == 0) {
-      cl.uuid = line.substr(6);
-    } else if (line.find("Message: ") == 0) {
-      cl.message = line.substr(9);
-    } else if (line.find("CreateTime: ") == 0) {
-      cl.createTime = std::stod(line.substr(12));
-    } else if (line.find("DefaultPath: ") == 0) {
-      cl.defaultPath = line.substr(13);
-    } else if (line.find("StoragePath: ") == 0) {
-      cl.storagePath = line.substr(13);
-    } else if (line.find("Author: ") == 0) {
-      cl.author = line.substr(8);
-    } else if (line.find("IsEncrypt: ") == 0) {
-      cl.isEncrypt = (line.substr(11) == "true");
-    } else if (line.find("IsDelete: ") == 0) {
-      cl.isDelete = (line.substr(10) == "true");
-    }
-  }
-
-  return cl;
-}
-
 /**
- * @brief 读取指定的CommitLog文件，返回一个CommitLog数组
+ * @brief 读取指定的CommitLog文件，返回一个Json::Value数组
  *
- * todo: 将CommitLog替换为Json value形式
+ * @param src 指定的log文件路径
+ *
+ * @return Json::Value 包含所有CommitLog的Json数组
  */
-std::vector<CommitLog> readCommitLog(const fs::path& src) {
+Json::Value readCommitLog(const fs::path& src) {
+  // 先打开文件输出流，因为可能目标不存在，那么此时会创造一个新文件
+  std::ofstream logFileNew(src, std::ios::app);
+  logFileNew.close();
+
+  // 再以输入流打开文件
   std::ifstream logFile(src);
   if (!logFile.is_open()) {
     throw std::runtime_error("Unable to open log file");
   }
 
-  std::vector<CommitLog> commitLogs;
-  std::string line;
-  std::string logEntry;
+  // 把文件指针移到末尾
+  logFile.seekg(0, std::ios::end);
 
-  while (std::getline(logFile, line)) {
-    if (line == "-") {
-      commitLogs.push_back(parseCommitLog(logEntry));
-      logEntry.clear();
-    } else {
-      logEntry += line + "\n";
+  if (logFile.tellg() == 0) {
+    // 空文件错误
+    logFile.close();
+
+    // 创建一个新的Json对象
+    Json::Value root;
+    root["data"] = Json::arrayValue;
+
+    std::ofstream logFileWrite(src);
+    logFileWrite << root.toStyledString();
+    logFileWrite.close();
+
+    // 重新打开文件
+    logFile.open(src);
+    if (!logFile.is_open()) {
+      throw std::runtime_error("Unable to open log file");
     }
+  } else {
+    // 不是空，那么回移指针
+    logFile.seekg(0, std::ios::beg);
   }
 
-  if (!logEntry.empty()) {
-    commitLogs.push_back(parseCommitLog(logEntry));
+  Json::Value commitLogs;
+  Json::CharReaderBuilder readerBuilder;
+  std::string errs;
+
+  if (!Json::parseFromStream(readerBuilder, logFile, &commitLogs, &errs)) {
+    // 若出错，说明文件是错误编码的
+    throw std::runtime_error("Failed to parse JSON: " + errs);
   }
 
   logFile.close();
+
   return commitLogs;
 }
 
