@@ -23,7 +23,7 @@ void doHandle(int client_fd) {
     ReqPtr request = Socket::receive(client_fd);
 
     log4cpp::Category::getRoot().infoStream()
-      << "Request received: " << request->timestamp;
+      << "Request received: " << request->toJson();
 
     ResPtr response = std::visit(
       overload{
@@ -34,7 +34,7 @@ void doHandle(int client_fd) {
           MetaDataFilter filter;
           return makeResGetFileList(getFileList(req.path, false, filter));
         },
-        [](request::PostCommit& req) {},
+        [](request::PostCommit&) { return makeResPostCommit({}); },
         [](request::MockNeedTime& req) { return makeResMockNeedTime(req.id); },
         [](auto&&) {
           throw std::runtime_error("Unknown request type");
@@ -48,15 +48,14 @@ void doHandle(int client_fd) {
     response->status = StatusCode::OK;
     response->timestamp = request->timestamp;
     response->uuid = request->uuid;
-
+    log4cpp::Category::getRoot().infoStream()
+      << "Response sent: " << response->toJson();
     Socket::send(client_fd, response);
 
-    log4cpp::Category::getRoot().infoStream()
-      << "Response sent: " << response->timestamp;
   } catch (const std::exception& e) {
     // 如果是SocketTemporarilyUnavailable
     if (const auto* e_ptr = dynamic_cast<const SocketTemporarilyUnavailable*>(&e)) {
-      log4cpp::Category::getRoot().infoStream() << e_ptr->what();
+      // log4cpp::Category::getRoot().infoStream() << e_ptr->what();
       return;
     }
     log4cpp::Category::getRoot().errorStream()

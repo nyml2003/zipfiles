@@ -16,6 +16,7 @@ enum class StatusCode {
 enum class ApiEnum {
   IGNORE = 1,
   ERROR = 0,
+  MOCK_NEED_TIME = 99,
   GET_FILE_DETAIL = 100,
   GET_FILE_LIST = 101,
   POST_COMMIT = 102,
@@ -39,6 +40,8 @@ struct MockNeedTime {
   int id;
 };
 
+struct PostCommit {};
+
 }  // namespace response
 
 struct Res;
@@ -46,7 +49,8 @@ struct Res;
 using ResKind = std::variant<
   response::GetFileDetail,
   response::GetFileList,
-  response::MockNeedTime>;
+  response::MockNeedTime,
+  response::PostCommit>;
 using ResPtr = std::shared_ptr<Res>;
 
 struct Res {
@@ -60,10 +64,16 @@ struct Res {
 };
 
 ResPtr makeResGetFileDetail(FileDetail metadata);
+ResPtr makeResGetFileDetail(Json::Value payload);
 
 ResPtr makeResGetFileList(std::vector<File> files);
+ResPtr makeResGetFileList(Json::Value payload);
 
 ResPtr makeResMockNeedTime(int id);
+ResPtr makeResMockNeedTime(Json::Value payload);
+
+ResPtr makeResPostCommit();
+ResPtr makeResPostCommit(Json::Value payload);
 
 }  // namespace zipfiles
 
