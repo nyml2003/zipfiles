@@ -3,6 +3,7 @@
 #include <json/json.h>
 #include <string>
 #include <variant>
+#include "json/value.h"
 #include "mp/dto.h"
 namespace zipfiles {
 namespace request {
@@ -45,9 +46,13 @@ struct Req {
 };
 
 ReqPtr makeReqGetFileDetail(std::string path);
+ReqPtr makeReqGetFileDetail(Json::Value payload);
 ReqPtr makeReqGetFileList(std::string path);
+ReqPtr makeReqGetFileList(Json::Value payload);
 ReqPtr makeReqMockNeedTime(int id);
+ReqPtr makeReqMockNeedTime(Json::Value payload);
 ReqPtr makeReqPostCommit(CommitLog commitLog);
+ReqPtr makeReqPostCommit(Json::Value payload);
 
 }  // namespace zipfiles
 

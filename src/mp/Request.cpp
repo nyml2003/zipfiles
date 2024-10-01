@@ -12,10 +12,34 @@ ReqPtr makeReqGetFileDetail(std::string path) {
     << "Making a request to get file detail";
   return std::make_shared<Req>(request::GetFileDetail{std::move(path)});
 }
+/**
+ * @brief
+ * 通过fromJson来还原一个ReqPtr，代价是会丢失Req的timestamp和uuid
+ * @param payload
+ * @return ReqPtr
+ */
+ReqPtr makeReqGetFileDetail(Json::Value payload) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a request to get file detail";
+  Json::Value json;
+  json["payload"] = std::move(payload);
+  json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_DETAIL);
+  return Req::fromJson(json);
+}
+
 ReqPtr makeReqGetFileList(std::string path) {
   log4cpp::Category::getRoot().infoStream()
     << "Making a request to get file list";
   return std::make_shared<Req>(request::GetFileList{std::move(path)});
+}
+
+ReqPtr makeReqGetFileList(Json::Value payload) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a request to get file list";
+  Json::Value json;
+  json["payload"] = std::move(payload);
+  json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_LIST);
+  return Req::fromJson(json);
 }
 
 ReqPtr makeReqPostCommit(CommitLog commitLog) {
@@ -24,10 +48,28 @@ ReqPtr makeReqPostCommit(CommitLog commitLog) {
   return std::make_shared<Req>(request::PostCommit{std::move(commitLog)});
 }
 
+ReqPtr makeReqPostCommit(Json::Value payload) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a request to post commit";
+  Json::Value json;
+  json["payload"] = std::move(payload);
+  json["apiEnum"] = toSizeT(ApiEnum::POST_COMMIT);
+  return Req::fromJson(json);
+}
+
 ReqPtr makeReqMockNeedTime(int id) {
   log4cpp::Category::getRoot().infoStream()
     << "Making a request to mock need time";
   return std::make_shared<Req>(request::MockNeedTime{id});
+}
+
+ReqPtr makeReqMockNeedTime(Json::Value payload) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a request to mock need time";
+  Json::Value json;
+  json["payload"] = std::move(payload);
+  json["apiEnum"] = toSizeT(ApiEnum::MOCK_NEED_TIME);
+  return Req::fromJson(json);
 }
 
 Json::Value Req::toJson() {
@@ -37,7 +79,6 @@ Json::Value Req::toJson() {
   std::visit(
     overload{
       [&json](request::GetFileDetail& req) {
-        // 获取variant index
         json["payload"]["path"] = req.path;
         json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_DETAIL);
       },
@@ -47,7 +88,7 @@ Json::Value Req::toJson() {
       },
       [&json](request::MockNeedTime& req) {
         json["payload"]["id"] = req.id;
-        json["apiEnum"] = toSizeT(ApiEnum::IGNORE);
+        json["apiEnum"] = toSizeT(ApiEnum::MOCK_NEED_TIME);
       },
       [&json](request::PostCommit& req) {
         json["apiEnum"] = toSizeT(ApiEnum::POST_COMMIT);
@@ -76,8 +117,20 @@ ReqPtr Req::fromJson(const Json::Value& json) {
     case ApiEnum::GET_FILE_LIST:
       req = makeReqGetFileList(json["payload"]["path"].asString());
       break;
-    case ApiEnum::IGNORE:
+    case ApiEnum::MOCK_NEED_TIME:
       req = makeReqMockNeedTime(json["payload"]["id"].asInt());
+      break;
+    case ApiEnum::POST_COMMIT:
+      req = makeReqPostCommit(CommitLog{
+        json["payload"]["uuid"].asString(),
+        json["payload"]["message"].asString(),
+        json["payload"]["createTime"].asDouble(),
+        json["payload"]["defaultPath"].asString(),
+        json["payload"]["storagePath"].asString(),
+        json["payload"]["author"].asString(),
+        json["payload"]["isEncrypt"].asBool(),
+        json["payload"]["isDelete"].asBool(),
+      });
       break;
     default:
       break;

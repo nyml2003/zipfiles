@@ -5,7 +5,7 @@
  * @brief 最大支持的并发线程数
  *
  */
-#define MAX_THREADS 8
+#define MAX_THREADS 16
 
 /**
  * @brief 最大支持的epoll_event数

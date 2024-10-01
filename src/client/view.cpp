@@ -143,16 +143,16 @@ void handleMessage(
     switch (api) {
       case ApiEnum::GET_FILE_LIST: {
         // getFileList
-        request = makeReqGetFileList(
-          jsc_value_to_string(jsc_value_object_get_property(params, "path"))
-        );
+        std::string path =
+          jsc_value_to_string(jsc_value_object_get_property(params, "path"));
+        request = makeReqGetFileList(path);
         break;
       }
       case ApiEnum::GET_FILE_DETAIL: {
         // getFileDetail
-        request = makeReqGetFileDetail(
-          jsc_value_to_string(jsc_value_object_get_property(params, "path"))
-        );
+        std::string path =
+          jsc_value_to_string(jsc_value_object_get_property(params, "path"));
+        request = makeReqGetFileDetail(path);
         break;
       }
       default:

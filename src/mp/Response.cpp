@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <filesystem>
 #include <log4cpp/Category.hh>
 #include <utility>
@@ -28,26 +29,55 @@ ResPtr makeResGetFileDetail(FileDetail metadata) {
   return std::make_shared<Res>(response::GetFileDetail{std::move(metadata)});
 }
 
+ResPtr makeResGetFileDetail(Json::Value payload) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a response to get file detail";
+  Json::Value json;
+  json["payload"] = std::move(payload);
+  json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_DETAIL);
+  return Res::fromJson(json);
+}
+
 ResPtr makeResGetFileList(std::vector<File> files) {
   return std::make_shared<Res>(response::GetFileList{std::move(files)});
 }
 
-// Json::Value json;
+ResPtr makeResGetFileList(Json::Value payload) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a response to get file list";
+  Json::Value json;
+  json["payload"] = std::move(payload);
+  json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_LIST);
+  return Res::fromJson(json);
+}
 
-// Json::Value newJson;
-// newJson["payload"] = json;
-// newJson["apiEnum"] = 1;
-// fromJson(newJson);
-
-// ResPtr makeResPostCommit(Json::Value json) {
-//   json::Value newJson;
-//   newJson["payload"] = json;
-//   newJson["apiEnum"] = 1;
-//   return Res::fromJson(newJson);
-// }
 ResPtr makeResMockNeedTime(int id) {
+  sleep(10);
   return std::make_shared<Res>(response::MockNeedTime{id});
 }
+
+ResPtr makeResMockNeedTime(Json::Value payload) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a response to mock need time";
+  Json::Value json;
+  json["payload"] = std::move(payload);
+  json["apiEnum"] = toSizeT(ApiEnum::MOCK_NEED_TIME);
+  return Res::fromJson(json);
+}
+
+ResPtr makeResPostCommit() {
+  return std::make_shared<Res>(response::PostCommit{});
+}
+
+ResPtr makeResPostCommit(Json::Value payload) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a response to post commit";
+  Json::Value json;
+  json["payload"] = std::move(payload);
+  json["apiEnum"] = toSizeT(ApiEnum::POST_COMMIT);
+  return Res::fromJson(json);
+}
+
 size_t toSizeT(ApiEnum apiEnum) {
   return static_cast<size_t>(apiEnum);
 }
@@ -82,8 +112,11 @@ Json::Value Res::toJson() {
         }
       },
       [&json](response::MockNeedTime& res) {
-        json["apiEnum"] = Json::Value(toSizeT(ApiEnum::IGNORE));
+        json["apiEnum"] = Json::Value(toSizeT(ApiEnum::MOCK_NEED_TIME));
         json["payload"]["id"] = res.id;
+      },
+      [&json](response::PostCommit&) {
+        json["apiEnum"] = Json::Value(toSizeT(ApiEnum::POST_COMMIT));
       },
       [](auto&&) { throw std::runtime_error("Unknown response type"); }},
     kind
@@ -121,8 +154,11 @@ ResPtr Res::fromJson(const Json::Value& json) {
       res = makeResGetFileList(files);
       break;
     }
-    case ApiEnum::IGNORE:
+    case ApiEnum::MOCK_NEED_TIME:
       res = makeResMockNeedTime(json["payload"]["id"].asInt());
+      break;
+    case ApiEnum::POST_COMMIT:
+      res = makeResPostCommit();
       break;
     default:
       throw std::runtime_error("Invalid response kind");
