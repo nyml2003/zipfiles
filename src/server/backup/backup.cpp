@@ -10,6 +10,7 @@
 #include "server/backup/backup.h"
 #include "server/pack/pack.h"
 #include "server/restore/restore.h"
+#include "server/tools/fsapi.h"
 
 namespace zipfiles::server {
 
@@ -25,8 +26,11 @@ void backupFiles(const std::vector<fs::path>& files, const Json::Value& cl) {
     << "Backup started, log messeag is \"" << cl["message"].asString()
     << "\" at " << cl["createTime"].asString();
 
-  fs::path src = "~/.zip";
+  // log文件地址
+  // ? 待更改
+  fs::path src = "~/.zip/commit.log";
 
+  // 读出后保存当前视图
   Json::Value cls = readCommitLog(src);
 
   if (isCommitted(cls, cl)) {
@@ -41,24 +45,39 @@ void backupFiles(const std::vector<fs::path>& files, const Json::Value& cl) {
     for (const auto& file : files) {
       packFileToArchive(archive, file);
     }
+    // ? 后继会使用archive吗
+    archive.close();
   } catch (const std::exception& e) {
     throw std::runtime_error(
       "Error occurred when trying to pack, its uuid is " +
-      cl["uuid"].asString() + ", because " + e.what()
-    );
-  }
-
-  try {
-    appendCommitLog(cls, cl);
-  } catch (const std::exception& e) {
-    throw std::runtime_error(
-      "Error occurred when trying to append commit log, its uuid is " +
-      cl["uuid"].asString() + ", because " + e.what()
+      cl["uuid"].asString() + ", because " + std::string(e.what())
     );
   }
 
   // todo: 压缩
   // todo: 加密
+
+  // 生成目录文件
+  try {
+    // todo: 目录文件的dst还没有确定
+    writeDirectoryFile(cl["storagePath"].asString(), files);
+  } catch (std::exception& e) {
+    throw std::runtime_error(
+      "Error occurred when trying to write directory file, its uuid is " +
+      cl["uuid"].asString() + ", because " + std::string(e.what())
+    );
+  }
+
+  // 完成后添加到commitlog
+  try {
+    appendCommitLog(cls, cl);
+    writeCommitLog(src, cls);
+  } catch (const std::exception& e) {
+    throw std::runtime_error(
+      "Error occurred when trying to append commit log, its uuid is " +
+      cl["uuid"].asString() + ", because " + std::string(e.what())
+    );
+  }
 }
 
 /**
@@ -69,7 +88,7 @@ void backupFiles(const std::vector<fs::path>& files, const Json::Value& cl) {
  * @param cl 指定的CommitLog对象
  *
  */
-bool isCommitted(Json::Value& cls, const Json::Value& cl) {
+bool isCommitted(const Json::Value& cls, const Json::Value& cl) {
   if (!(cls.isMember("data") && cls["data"].isArray())) {
     throw std::runtime_error("Illegal Json format");
   }
@@ -100,6 +119,14 @@ void appendCommitLog(Json::Value& dst, const Json::Value& cl) {
   }
 }
 
+/**
+ * @brief 给定一个路径，将commitLogs文件写入(json形式)
+ *
+ * @param dst 指定的log文件路径
+ *
+ * @param cls 指定的CommitLogs对象
+ *
+ */
 void writeCommitLog(const fs::path& dst, const Json::Value& cls) {
   // 写回文件
   std::ofstream logFileWrite(dst, std::ios::binary);
@@ -108,48 +135,45 @@ void writeCommitLog(const fs::path& dst, const Json::Value& cls) {
 }
 
 /**
- * @brief 依据传进的路径数组生成一个目录树
- *
- * @param files 一个文件路径数组
- */
-DirectoryTreeNode generateDirectoryTree(const std::vector<fs::path>& files) {
-  // 插入根目录
-  DirectoryTreeNode root;
-  root.name = "/";
-  root.type = fs::file_type::directory;
-
-  for (const auto& file : files) {
-    DirectoryTreeNode* cur = &root;
-
-    for (const auto& part : file) {
-      std::string partStr = part.string();
-
-      if (cur->children.find(partStr) == cur->children.end()) {
-        // 没有找到已经记录的子节点
-        DirectoryTreeNode newNode;
-        newNode.name = partStr;
-        newNode.type = fs::symlink_status(file).type();
-        cur->children[partStr] = newNode;
-      }
-
-      // 这个节点已经记录了一个目录信息，继续深入
-      cur = &cur->children[partStr];
-    }
-  }
-
-  return root;
-}
-
-/**
- * @brief 给定一个路径，生成一个描述Commit内容的目录树文件
+ * @brief 给定一个路径，生成一个描述Commit内容的目录树文件(json形式)
  *
  * @param dst 指定的目录文件路径
  *
- * @param root 用以创建目录文件的目录树根目录
+ * @param root 用以创建目录文件路径
+ *
  */
 void writeDirectoryFile(
-  const fs::path& /*dst*/,
-  const DirectoryTreeNode& /*root*/
-) {}
+  const fs::path& dst,
+  const std::vector<fs::path>& files
+) {
+  std::ofstream outFile(dst);
+  if (!outFile) {
+    throw std::runtime_error("Failed to open file: " + dst.string());
+  }
+
+  Json::Value root;
+  root["data"] = Json::arrayValue;
+
+  for (const auto& path : files) {
+    FileDetail fd = getFileDetail(path);
+    Json::Value temp;
+
+    temp["type"] = static_cast<int>(fd.type);  // 将文件类型转换为整数
+    temp["createTime"] = fd.createTime;
+    temp["updateTime"] = fd.updateTime;
+    temp["size"] = static_cast<Json::Int64>(fd.size);  // 确保大小是64位整数
+    temp["owner"] = fd.owner;
+    temp["group"] = fd.group;
+    temp["mode"] = fd.mode;
+    temp["path"] = fd.path;
+    temp["name"] = fd.name;
+
+    root["data"].append(temp);
+  }
+
+  Json::StreamWriterBuilder writer;
+  outFile << Json::writeString(writer, root);
+  outFile.close();
+}
 
 }  // namespace zipfiles::server

@@ -5,22 +5,25 @@
 #include <stdexcept>
 #include <string>
 
+namespace fs = std::filesystem;
+
 namespace zipfiles::server {
 
-namespace fs = std::filesystem;
 /**
- * @brief
+ * @brief 解压缩存档文件到指定的输出目录。
+ *
+ * @param archivePath 存档文件的路径。
+ *
+ * @param outputDir 文件解压到的输出目录路径。
+ *
  */
-void unpackArchive(
-  const std::string& archivePath,
-  const std::string& outputDir
-) {
+void unpackArchive(const fs::path& archivePath, const fs::path& outputDir) {
   std::ifstream archive(archivePath, std::ios::binary);
   if (!archive) {
-    throw std::runtime_error("Failed to open archive: " + archivePath);
+    throw std::runtime_error("Unable to open " + archivePath.string());
   }
 
-  // 创建输出目录
+  // 如果输出目录不存在，则创建
   if (!fs::exists(outputDir)) {
     fs::create_directories(outputDir);
   }
@@ -41,17 +44,17 @@ void unpackArchive(
     archive.read(reinterpret_cast<char*>(&fileSize), sizeof(fileSize));
 
     // 生成输出路径
-    fs::path outputPath = fs::path(outputDir) / fs::path(pathStr).filename();
+    fs::path outputPath = outputDir / fs::path(pathStr).filename();
     // 打开输出文件
     std::ofstream file(outputPath, std::ios::binary);
     if (!file) {
-      throw std::runtime_error("Failed to create file: " + outputPath.string());
+      throw std::runtime_error("无法创建文件: " + outputPath.string());
     }
 
-    // 缓冲区
+    // 文件内容缓冲区
     std::array<char, 8192> buffer{};
     size_t remaining_size = fileSize;
-    // 把文件内容导出
+    // 导出文件内容
     while (remaining_size > 0) {
       size_t readSize = std::min(sizeof(buffer), remaining_size);
       archive.read(buffer.data(), readSize);
@@ -60,4 +63,5 @@ void unpackArchive(
     }
   }
 }
+
 }  // namespace zipfiles::server

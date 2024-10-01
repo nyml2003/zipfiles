@@ -3,13 +3,30 @@
 
 #include <filesystem>
 #include "json/value.h"
-#include "mp/dto.h"
+
+namespace fs = std::filesystem;
 
 namespace zipfiles::server {
 
-namespace fs = std::filesystem;
-DirectoryTreeNode readDirectoryFile(const fs::path& src);
+/**
+ * * restore
+ *
+ */
+void restoreTo(const fs::path& dst, const std::string& uuid);
+
+/**
+ * * commit log
+ *
+ */
 Json::Value readCommitLog(const fs::path& src);
+
+Json::Value getCommitLogById(const Json::Value& cls, const std::string& uuid);
+
+/**
+ * * directory
+ *
+ */
+Json::Value readDirectoryFile(const fs::path& src);
 
 }  // namespace zipfiles::server
    //

@@ -2,7 +2,6 @@
 #define ZIPFILES_MP_DATA_TRANSFER_OBJECT_H
 
 #include <filesystem>
-#include <map>
 #include <string>
 
 namespace zipfiles {
@@ -31,14 +30,6 @@ struct FileDetail {
   std::string path;
   // 文件名
   std::string name;
-};
-
-/**
- * @brief 用以展示目录结构的结构体
- *
- */
-struct DirectoryTreeNode : public FileDetail {
-  std::map<std::string, DirectoryTreeNode> children;
 };
 
 /**
