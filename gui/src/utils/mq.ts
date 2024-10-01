@@ -26,6 +26,7 @@ class MQ<T extends () => void> implements IMQ<T> {
             task();
             resolve();
           } catch (error) {
+            console.log('Task execution failed:', error);
             reject(error);
           }
         });

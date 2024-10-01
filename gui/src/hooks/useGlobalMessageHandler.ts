@@ -48,7 +48,7 @@ export const handler = (event: MessageEvent) => {
   const callbackIndex = callbacks.findIndex(
     callback => callback.request.timestamp === timestamp && callback.request.apiEnum === apiEnum && callback.request.uuid === uuid,
   );
-  console.log('callbacks: ', JSON.stringify(callbacks));
+  //console.log('callbacks: ', JSON.stringify(callbacks));
   if (callbackIndex === -1) {
     if (type === 'fatal') {
       notification.error({
@@ -57,45 +57,45 @@ export const handler = (event: MessageEvent) => {
     }
     return;
   }
-  console.log('event.type: ', event.type);
-  console.log('event.timestamp: ', response.timestamp);
-  console.log('event.apiEnum: ', response.apiEnum);
-  console.log('callbacks: ', JSON.stringify(callbacks));
+  // console.log('event.type: ', event.type);
+  // console.log('event.timestamp: ', response.timestamp);
+  // console.log('event.apiEnum: ', response.apiEnum);
+  // console.log('callbacks: ', JSON.stringify(callbacks));
   const [callback] = callbacks.splice(callbackIndex, 1);
   mq.push(() => handleCallback(callback)(response));
 };
-const MAX_REQUEST_TIMEOUT = 200;
+const MAX_REQUEST_TIMEOUT = 500;
 const MAX_REQUEST_RETRY = 3;
 export const useGlobalMessageHandler = () => {
   useEffect(() => {
     window.addEventListener('message', handler);
-    // const intervalId = setInterval(() => {
-    //   const now = Date.now();
-    //   callbacks = callbacks.filter(callback => {
-    //     if (callback.request.timestamp + MAX_REQUEST_TIMEOUT < now) {
-    //       const { request } = callback;
-    //       callback.request.timestamp = now;
-    //       if (
-    //         window.webkit &&
-    //         window.webkit.messageHandlers &&
-    //         window.webkit.messageHandlers.handleMessage
-    //       ) {
-    //         window.webkit.messageHandlers.handleMessage.postMessage(request);
-    //       }
-    //       callback.retries += 1;
-    //       if (callback.retries > MAX_REQUEST_RETRY) {
-    //         notification.error({
-    //           message: '请求超时',
-    //         });
-    //         return false; // 移除超时的回调
-    //       }
-    //     }
-    //     return true; // 保留未超时的回调
-    //   });
-    // }, MAX_REQUEST_TIMEOUT);
+    const intervalId = setInterval(() => {
+      const now = Date.now();
+      callbacks = callbacks.filter(callback => {
+        if (callback.request.timestamp + MAX_REQUEST_TIMEOUT < now) {
+          const { request } = callback;
+          callback.request.timestamp = now;
+          if (
+            window.webkit &&
+            window.webkit.messageHandlers &&
+            window.webkit.messageHandlers.handleMessage
+          ) {
+            window.webkit.messageHandlers.handleMessage.postMessage(request);
+          }
+          callback.retries += 1;
+          if (callback.retries > MAX_REQUEST_RETRY) {
+            notification.error({
+              message: '请求超时',
+            });
+            return false; // 移除超时的回调
+          }
+        }
+        return true; // 保留未超时的回调
+      });
+    }, MAX_REQUEST_TIMEOUT);
     return () => {
       window.removeEventListener('message', handler);
-      //clearInterval(intervalId);
+      clearInterval(intervalId);
     };
   }, []);
 };

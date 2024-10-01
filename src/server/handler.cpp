@@ -16,14 +16,14 @@ namespace zipfiles::server {
 void doHandle(int client_fd) {
   try {
     // 主eventloop
-    log4cpp::Category::getRoot().infoStream()
-      << "Thread " << std::this_thread::get_id()
-      << " is waiting for request from " << client_fd << "...";
+    // log4cpp::Category::getRoot().infoStream()
+    //   << "Thread " << std::this_thread::get_id()
+    //   << " is waiting for request from " << client_fd << "...";
 
     ReqPtr request = Socket::receive(client_fd);
 
-    log4cpp::Category::getRoot().infoStream()
-      << "Request received: " << request->toJson();
+    // log4cpp::Category::getRoot().infoStream()
+    //   << "Request received: " << request->toJson();
 
     ResPtr response = std::visit(
       overload{
@@ -48,8 +48,8 @@ void doHandle(int client_fd) {
     response->status = StatusCode::OK;
     response->timestamp = request->timestamp;
     response->uuid = request->uuid;
-    log4cpp::Category::getRoot().infoStream()
-      << "Response sent: " << response->toJson();
+    // log4cpp::Category::getRoot().infoStream()
+    //   << "Response sent: " << response->toJson();
     Socket::send(client_fd, response);
 
   } catch (const std::exception& e) {

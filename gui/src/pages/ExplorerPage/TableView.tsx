@@ -56,7 +56,9 @@ const columns: TableColumnsType<DataType> = [
     dataIndex: 'size',
     key: 'size',
     render: (text, record) => {
-      return text ? <span>{text}</span> : <span>加载中...</span>;
+      if (text === undefined) return <span>加载中...</span>;
+      if (text === null) return <span>未知</span>;
+      return <span>{text}</span>;
     },
   },
   {

@@ -41,7 +41,7 @@ void sendRequest(int sock, int totalRequests) {
     }
 
     usedCounters.insert(currentCounter);
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));  // 延迟20毫秒
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));  // 延迟20毫秒
     requestCount++;
   }
 

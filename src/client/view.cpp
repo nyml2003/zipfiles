@@ -54,7 +54,8 @@ void sendResponse(Json::Value& root) {
   Json::StreamWriterBuilder writer;
   std::string json_str = Json::writeString(writer, root);
   std::string script = "window.postMessage(" + json_str + ", '*');";
-  log4cpp::Category::getRoot().infoStream() << "evaluating script: " << script;
+  // log4cpp::Category::getRoot().infoStream() << "evaluating script: " <<
+  // script;
   webkit_web_view_evaluate_javascript(
     launcher::webView, script.c_str(), -1, nullptr, nullptr, nullptr, nullptr,
     nullptr
@@ -168,9 +169,9 @@ void handleMessage(
     auto future = std::async(
       std::launch::async,
       [](const ReqPtr& request) {
-        log4cpp::Category::getRoot().infoStream()
-          << "Sending request to server: "
-          << request->toJson().toStyledString();
+        // log4cpp::Category::getRoot().infoStream()
+        //   << "Sending request to server: "
+        //   << request->toJson().toStyledString();
         // 发送请求
         socket::Socket::getInstance().send(request);
         // 接收请求

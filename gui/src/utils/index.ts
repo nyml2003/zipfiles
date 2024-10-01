@@ -1,5 +1,3 @@
-
-
 export function selectEnvironment<T>(production: T, development: T) {
   if (process.env.BASE_ENV === 'prod') {
     return production;
@@ -15,3 +13,5 @@ export function isProduction() {
 export function isDevelopment() {
   return process.env.BASE_ENV === 'dev';
 }
+
+
