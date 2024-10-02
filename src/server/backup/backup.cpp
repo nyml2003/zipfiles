@@ -8,6 +8,7 @@
 #include "json/writer.h"
 #include "mp/dto.h"
 #include "server/backup/backup.h"
+#include "server/crypto/crypto.h"
 #include "server/pack/pack.h"
 #include "server/restore/restore.h"
 #include "server/tools/fsapi.h"
@@ -19,9 +20,15 @@ namespace zipfiles::server {
  *
  * @param files 一个文件路径数组
  *
- * todo: 将CommitLog替换为Json value形式
+ * @param cl 一个commitlog的json对象
+ *
+ * @param key 加密密钥
  */
-void backupFiles(const std::vector<fs::path>& files, const Json::Value& cl) {
+void backupFiles(
+  const std::vector<fs::path>& files,
+  const Json::Value& cl,
+  const std::string& key
+) {
   log4cpp::Category::getRoot().infoStream()
     << "Backup started, log messeag is \"" << cl["message"].asString()
     << "\" at " << cl["createTime"].asString();
@@ -56,6 +63,22 @@ void backupFiles(const std::vector<fs::path>& files, const Json::Value& cl) {
 
   // todo: 压缩
   // todo: 加密
+
+  // 加密
+  if (cl["isEncrypt"].asBool()) {
+    try {
+      AESEncryptor encryptor(key);
+
+      encryptor.encryptFile(
+        cl["storagePath"].asString(), cl["storagePath"].asString()
+      );
+    } catch (std::exception& e) {
+      throw std::runtime_error(
+        "Error occurred when trying to encrypt, its uuid is " +
+        cl["uuid"].asString() + ", because " + std::string(e.what())
+      );
+    }
+  }
 
   // 生成目录文件
   try {

@@ -27,12 +27,15 @@ pkg_check_modules(GTK REQUIRED gtk+-3.0)
 pkg_check_modules(WEBKIT REQUIRED webkit2gtk-4.1)
 pkg_check_modules(JSONCPP REQUIRED jsoncpp)
 pkg_check_modules(LOG4CPP REQUIRED log4cpp)
+pkg_check_modules(CRYPTOPP REQUIRED libcrypto++)
+
 
 # 指定头文件搜索路径
 include_directories(${GTK_INCLUDE_DIRS})
 include_directories(${WEBKIT_INCLUDE_DIRS})
 include_directories(${JSONCPP_INCLUDE_DIRS})
 include_directories(${LOG4CPP_INCLUDE_DIRS})
+include_directories(${CRYPTOPP_INCLUDE_DIRS})
 # 本项目搜索路径仅为include目录
 include_directories(${ZIPFILES_HEADER_DIR})
 
@@ -105,6 +108,7 @@ target_link_libraries(
     server
     ${JSONCPP_LIBRARIES}
     ${LOG4CPP_LIBRARIES}
+    ${CRYPTOPP_LIBRARIES}
 )
 
 # 客户端打包
@@ -143,7 +147,7 @@ add_executable(
     ${ZIPFILES_MOCK_SERVER_ENTRY}
     ${ZIPFILES_SOURCE_FILES}
     ${ZIPFILES_MP_SOURCE_FILES}
-    
+
 )
 
 target_link_libraries(
@@ -167,7 +171,7 @@ foreach(TEST_FILE ${ZIPFILES_SERVER_UNIT_TEST_FILES})
     add_executable(${TEST_NAME} ${TEST_FILE} ${ZIPFILES_SERVER_SOURCE_FILES} ${ZIPFILES_MP_SOURCE_FILES})
 
     # 链接 Google Test 库
-    target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main ${LOG4CPP_LIBRARIES} ${JSONCPP_LIBRARIES})
+    target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main ${LOG4CPP_LIBRARIES} ${JSONCPP_LIBRARIES} ${CRYPTOPP_LIBRARIES})
 
     # 添加测试到 CTest
     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
