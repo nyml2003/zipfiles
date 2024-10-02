@@ -30,7 +30,8 @@ RUN apt-get update && apt-get install -y \
     lsb-release \
     software-properties-common \
     gnupg \
-    liblog4cpp5-dev
+    liblog4cpp5-dev \
+    libcrypto++-dev
 
 
 RUN wget https://apt.llvm.org/llvm.sh && \

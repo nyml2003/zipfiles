@@ -55,7 +55,7 @@ TEST(DirectoryFileTest, WriteDirectoryFile) {
   createTestFiles();
 
   fs::path testFile = "/app/test_read.json";
-  std::vector<fs::path> files = {"app/file1.txt", "app/file2.txt"};
+  std::vector<fs::path> files = {"/app/file1.txt", "/app/file2.txt"};
 
   writeDirectoryFile(testFile, files);
 
@@ -74,7 +74,7 @@ TEST(DirectoryFileTest, ReadWriteDirectoryFile) {
   createTestFiles();
 
   fs::path testFile = "/app/test_combined.json";
-  std::vector<fs::path> files = {"app/file1.txt", "app/file2.txt"};
+  std::vector<fs::path> files = {"/app/file1.txt", "/app/file2.txt"};
 
   writeDirectoryFile(testFile, files);
   Json::Value readResult = readDirectoryFile(testFile);
