@@ -2,7 +2,7 @@
 #define ZIPFILES_UTILS_H
 
 #include <cstdint>
-#include <fstream>
+#include <string>
 
 namespace zipfiles {
 int add(int, int);

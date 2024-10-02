@@ -5,16 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "lz77",
+            "name": "zip1",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/ZIPFILES_DEMO",
-            "args": [
-                "25748832503-1-16.mp4",
-                "copyed.mp4"
-            ],
+            "program": "${workspaceFolder}/build/ZIPFILES_UNIT_TEST",
+            "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/tests/unittest/lz77",
+            "cwd": "${workspaceFolder}/tests/unittest/zip",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",

@@ -1,0 +1,38 @@
+InlayHints:
+  BlockEnd: Yes
+  Designators: Yes
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+  TypeNameLimit: 24
+Diagnostics:
+  UnusedIncludes: Strict
+  ClangTidy:
+    Add:
+    [
+      performance-*,
+      bugprone-*,
+      modernize-*,
+      clang-analyzer-*,
+      readability-*,
+      cert-*,
+      cppcoreguidelines-*,
+      google-*,
+      hicpp-*,
+      misc-*,
+    ]
+    Remove:
+    [
+      misc-non-private-member-variables-in-classes,
+      cppcoreguidelines-avoid-const-or-ref-data-members,
+      cppcoreguidelines-pro-bounds-constant-array-index,
+      hicpp-signed-bitwise,
+      cppcoreguidelines-avoid-magic-numbers,
+      readability-identifier-length,
+      readability-implicit-bool-conversion,
+      readability-magic-numbers,
+      bugprone-easily-swappable-parameters,
+      modernize-use-trailing-return-type,
+      cppcoreguidelines-pro-bounds-pointer-arithmetic,
+      cppcoreguidelines-pro-type-reinterpret-cast,
+    ]

@@ -2,6 +2,6 @@ cmake-*
 .idea
 build/
 .cache/
-lz77/
+unittest/
 lib/
 gzip*

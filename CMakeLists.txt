@@ -4,6 +4,8 @@ project(zipfiles)
 # 设置编译选项
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
+SET(CMAKE_C_COMPILER /usr/bin/clang-18)
+SET(CMAKE_CXX_COMPILER /usr/bin/clang++-18)
 # set(CMAKE_CXX_FLAGS_MINSIZEREL "-O3 -DNDEBUG")
 
 # 设置目录
@@ -28,7 +30,7 @@ set(ZIPFILES_DEMO_ENTRY_FILE ${ZIPFILES_DEMO_DIR}/demo.cpp)
 # 源码格式化
 add_custom_target(
     CPP_FORMAT
-    COMMAND clang-format -i -style=file ${ZIPFILES_SOURCE_FILES} ${ZIPFILES_HEADER_FILES} ${ZIPFILES_UNIT_TEST_FILES}
+    COMMAND clang-format-18 -i -style=file ${ZIPFILES_SOURCE_FILES} ${ZIPFILES_HEADER_FILES} ${ZIPFILES_UNIT_TEST_FILES}
     COMMENT "Formatting source files"
 )
 

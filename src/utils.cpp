@@ -1,13 +1,13 @@
 #include "utils.h"
 
 #include <iostream>
+#include <fstream>
 
 namespace zipfiles {
 
-uint64_t read_bytes = 0;
-
-std::ifstream ifile;
-std::ofstream ofile;
+uint64_t read_bytes = 0;  // NOLINT
+std::ifstream ifile;      // NOLINT
+std::ofstream ofile;      // NOLINT
 
 int add(int a, int b) {
   return a + b;
@@ -48,7 +48,7 @@ int read_buf(uint8_t* buf, uint32_t size) {
     return 0;
   }
   ifile.read(reinterpret_cast<char*>(buf), size);
-  int len = ifile.gcount();
+  int len = static_cast<int>(ifile.gcount());
   read_bytes += len;
   return len;
 }
