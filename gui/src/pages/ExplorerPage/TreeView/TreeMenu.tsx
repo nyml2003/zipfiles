@@ -65,7 +65,7 @@ const TreeMenu: React.FC<Props> = ({
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
         path,
       });
-      console.log('GetFileListResponse: ', JSON.stringify(res));
+      //console.log('GetFileListResponse: ', JSON.stringify(res));
       const newTreeData = res.files.map(item => {
         const isDirectory = item.type === FileType.Directory;
         return {

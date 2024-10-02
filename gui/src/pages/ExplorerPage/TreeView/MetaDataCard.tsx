@@ -23,7 +23,7 @@ const MetaDataCard: React.FC<Props> = ({ currentFile }) => {
           path: currentFile,
         })
         .then((res: GetFileDetailResponse) => {
-          console.log('GetFileListResponse: ', JSON.stringify(res));
+          //console.log('GetFileListResponse: ', JSON.stringify(res));
           setMetadata(res);
           setLoading(LoadingState.Done);
         })
