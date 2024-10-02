@@ -95,7 +95,7 @@ bool isCommitted(const Json::Value& cls, const Json::Value& cl) {
 
   for (const auto& log : cls["data"]) {
     // 检查每个元素是否包含"uuid"字段且和目标cl匹配
-    if (log.isMember("uuid") || log["uuid"].asString() == cl["uuid"].asString()) {
+    if (log.isMember("uuid") && log["uuid"].asString() == cl["uuid"].asString()) {
       return true;
     }
   }

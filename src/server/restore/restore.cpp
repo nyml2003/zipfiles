@@ -48,14 +48,18 @@ void restoreTo(const fs::path& dst, const std::string& uuid) {
 /**
  * @brief 读取指定的CommitLog文件，返回一个Json::Value数组
  *
- * @param src 指定的log文件路径
+ * @param src 指定的log文件绝对路径
  *
  * @return 包含所有CommitLog的Json数组
  *
  */
 Json::Value readCommitLog(const fs::path& src) {
   // 先创建相应的目录
-  fs::create_directories(src.parent_path());
+  // src有可能是一个相对目录或者根目录，此时是没有parent_path的
+  // 要求src是一个绝对路径
+  if (src.has_parent_path()) {
+    fs::create_directories(src.parent_path());
+  }
 
   // 先打开文件输出流，因为可能目标不存在，那么此时会创造一个新文件
   std::ofstream logFileNew(src, std::ios::app);
@@ -117,7 +121,7 @@ Json::Value getCommitLogById(const Json::Value& cls, const std::string& uuid) {
 
   for (const auto& log : cls["data"]) {
     // 检查每个元素是否包含"uuid"字段且和目标uuid匹配
-    if (log.isMember("uuid") || log["uuid"].asString() == uuid) {
+    if (log.isMember("uuid") && log["uuid"].asString() == uuid) {
       return log;
     }
   }
