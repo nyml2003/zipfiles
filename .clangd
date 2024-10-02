@@ -35,4 +35,8 @@ Diagnostics:
       modernize-use-trailing-return-type,
       cppcoreguidelines-pro-bounds-pointer-arithmetic,
       cppcoreguidelines-pro-type-reinterpret-cast,
+      cppcoreguidelines-avoid-non-const-global-variables,
+      cppcoreguidelines-pro-type-cstyle-cast
     ]
+CompileFlags:
+  Add: [$(pkg-config --cflags --libs webkit2gtk-4.1)]

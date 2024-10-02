@@ -1,7 +1,7 @@
 cmake-*
 .idea
-build/
-.cache/
-unittest/
-lib/
-gzip*
+/build
+.cache
+lib/*.so
+.pnpm-store
+/bin

@@ -1,0 +1,36 @@
+node_nodules
+/dist
+/src/**/*.scss.d.ts
+/src/**/*.less.d.ts
+
+*.sh
+node_modules
+*.md
+*.woff
+*.ttf
+.vscode
+.idea
+dist
+/public
+/docs
+.husky
+.local
+/bin
+/config/*
+/src/registerServiceWorker.js
+/node_modules/*
+/src/index/static/json/*
+
+tsconfig.json
+react-app-env.d.ts
+# eslint
+.eslintrc.js
+
+# commitizen
+commitlint.config.js
+
+# prettier
+.prettierrc.js
+
+# build
+dist
