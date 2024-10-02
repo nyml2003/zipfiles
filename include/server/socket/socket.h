@@ -1,5 +1,8 @@
 #ifndef ZIPFILE_SERVER_SOCKET_H
 #define ZIPFILE_SERVER_SOCKET_H
+
+
+#include <atomic>
 #include <netinet/in.h>
 #include "mp/Request.h"
 #include "mp/Response.h"
@@ -38,7 +41,7 @@ class Socket {
   int server_fd;
   struct sockaddr_in address;
   int addrlen;
-  int connectionCount;
+  std::atomic<int> connectionCount;
 };
 }  // namespace zipfiles::server
 #endif  // !ZIPFILE_SERVER_SOCKET_SOCKET_H

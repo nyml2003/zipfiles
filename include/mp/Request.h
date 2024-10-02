@@ -14,11 +14,17 @@ struct GetFileList {
   std::string path;
 };
 
+// 模拟耗时请求
+struct MockNeedTime {
+  int id;
+};
+
 };  // namespace request
 
 struct Req;
 
-using ReqKind = std::variant<request::GetFileDetail, request::GetFileList>;
+using ReqKind = std::
+  variant<request::GetFileDetail, request::GetFileList, request::MockNeedTime>;
 using ReqPtr = std::shared_ptr<Req>;
 
 struct Req {
@@ -32,6 +38,7 @@ struct Req {
 
 ReqPtr makeReqGetFileDetail(std::string path);
 ReqPtr makeReqGetFileList(std::string path);
+ReqPtr makeReqMockNeedTime(int id);
 
 }  // namespace zipfiles
 

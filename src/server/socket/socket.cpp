@@ -1,17 +1,18 @@
 #include <arpa/inet.h>
 #include <sys/epoll.h>
+#include <mutex>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <unordered_set>
+#include "json/value.h"
 #include "log4cpp/Category.hh"
 #include "mp/Request.h"
 #include "mp/Response.h"
+#include "mp/error.h"
 #include "mp/mp.h"
 #include "server/socket/socket.h"
 
-/**
- * @brief 当前正在运行的连接数
- * @details 因为只有一个acceptor，所以不需要做并发处理
- *
- */
-int connectionCount = 0;
 
 namespace zipfiles::server {
 Socket::Socket()
@@ -24,6 +25,10 @@ Socket::Socket()
   // 若程序退出则立刻释放socket
   int opt = 1;
   setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+  // 非阻塞
+  int flags = fcntl(server_fd, F_GETFL, 0);
+  fcntl(server_fd, F_SETFL, flags | O_NONBLOCK);
 
   // 初始化实例
   std::memset(&address, 0, sizeof(address));
@@ -77,9 +82,13 @@ void Socket::acceptConnection(int epoll_fd) {
       << " client_fd: " << client_fd;
   }
 
+  // 设置非阻塞
+  int flags = fcntl(client_fd, F_GETFL, 0);
+  fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
+
   // 将client_fd加入epoll
   struct epoll_event event {};
-  event.events = EPOLLIN | EPOLLET;
+  event.events = EPOLLIN;
   event.data.fd = client_fd;
   if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) == -1) {
     log4cpp::Category::getRoot().errorStream()
@@ -91,7 +100,7 @@ void Socket::acceptConnection(int epoll_fd) {
     log4cpp::Category::getRoot().infoStream()
       << "Add client_fd " << client_fd << " to epoll_fd " << epoll_fd;
 
-    getInstance().connectionCount++;
+    getInstance().connectionCount.fetch_add(1);
   }
 }
 
@@ -101,18 +110,49 @@ ReqPtr Socket::receive(int client_fd) {
   ssize_t valread = read(client_fd, buffer.data(), mp::MAX_MESSAGE_SIZE);
 
   if (valread == 0) {
+    // 断开连接
     close(client_fd);
-    getInstance().connectionCount--;
+
+    // 减少connectionCount
+    static std::mutex mtx;
+    static std::unordered_set<int> closedConnections;
+    {
+      std::lock_guard<std::mutex> lock(mtx);
+      if (closedConnections.find(client_fd) == closedConnections.end()) {
+        closedConnections.insert(client_fd);
+        getInstance().connectionCount.fetch_sub(1);
+      }
+    }
+
     log4cpp::Category::getRoot().infoStream()
-      << "Client disconnect, which has client_fd " << client_fd;
-    log4cpp::Category::getRoot().infoStream()
-      << "Connection count: " << Socket::getConnectionCount();
+      << "Client disconnect, which has client_fd " << client_fd
+      << ", and now connection count is " << Socket::getConnectionCount();
+
     throw std::runtime_error("Client disconnected");
   }
 
   if (valread < 0) {
-    perror("Failed to receive request");
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      std::stringstream ss;
+      ss << client_fd;
+      ss << " has no more data, now disconnect and connection count is ";
+      ss << Socket::getConnectionCount();
+      // 没有更多数据可读
+      throw SocketTemporarilyUnavailable(ss.str());
+    }
+
     close(client_fd);
+    // 减少connectionCount
+    static std::mutex mtx;
+    static std::unordered_set<int> closedConnections;
+    {
+      std::lock_guard<std::mutex> lock(mtx);
+      if (closedConnections.find(client_fd) == closedConnections.end()) {
+        closedConnections.insert(client_fd);
+        getInstance().connectionCount.fetch_sub(1);
+      }
+    }
+    throw std::runtime_error("Failed to receive request, now disconnect");
   }
 
   static Json::CharReaderBuilder reader;
@@ -123,7 +163,6 @@ ReqPtr Socket::receive(int client_fd) {
   if (Json::parseFromStream(reader, stream, &jsonData, &errs)) {
     return Req::fromJson(jsonData);
   }
-
   throw std::runtime_error("Failed to parse request");
 }
 
@@ -135,6 +174,7 @@ void Socket::send(int client_fd, const ResPtr& res) {
 }
 
 int Socket::getConnectionCount() {
-  return getInstance().connectionCount;
+  return getInstance().connectionCount.load();
 }
+
 }  // namespace zipfiles::server

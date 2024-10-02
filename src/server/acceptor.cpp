@@ -1,18 +1,16 @@
 #include <fcntl.h>
 #include <sys/epoll.h>
 #include <unistd.h>
-#include <future>
-#include <vector>
 #include "log4cpp/Category.hh"
 #include "server/acceptor.h"
 #include "server/handler.h"
 #include "server/socket/socket.h"
+#include "server/tools/threadpool.h"
 
 namespace zipfiles::server {
 
 void doAccept() {
   fd_set readfds;
-  std::vector<std::future<void>> futures;  // 用于存储 future 对象
 
   // 初始化server_fd
   int server_fd = Socket::getServerFd();
@@ -39,6 +37,7 @@ void doAccept() {
   }
 
   std::array<struct epoll_event, MAX_EPOLL_EVENTS> events{};
+  ThreadPool tp(MAX_THREADS);
 
   while (true) {
     // 调用epoll_wait
@@ -64,7 +63,7 @@ void doAccept() {
           // todo: connection数量过多的处理
           // ? 不处理，前端直接不展示数据了
           log4cpp::Category::getRoot().warnStream()
-            << "Max threads reached, cannot accept new connection";  // 增加：输出连接数达到上限的警告
+            << "Max connections reached, cannot accept new connection";  // 增加：输出连接数达到上限的警告
 
           continue;
         }
@@ -74,19 +73,17 @@ void doAccept() {
         // 当前正在运行的连接数
         log4cpp::Category::getRoot().infoStream()
           << "Connection count: " << Socket::getConnectionCount();
+
       } else {
         // 不是server_fd，那么就是client_fd
         log4cpp::Category::getRoot().infoStream()
           << "Now processing event from " << events[i].data.fd
           << " as handle event.";
-        doHandle(events[i].data.fd);
-      }
-    }
 
-    // todo: future回调
-    for (auto& future : futures) {
-      future.get();
-      log4cpp::Category::getRoot().infoStream() << "Getting future result";
+        // todo: 线程池
+        int client_fd = events[i].data.fd;
+        tp.enqueue([&client_fd] { doHandle(client_fd); });
+      }
     }
   }
 }
