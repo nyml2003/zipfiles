@@ -41,7 +41,7 @@ void doAccept() {
 
   while (true) {
     // 调用epoll_wait
-    log4cpp::Category::getRoot().infoStream() << "Waiting for events...";
+    // log4cpp::Category::getRoot().infoStream() << "Waiting for events...";
     int numEvents = epoll_wait(epollFd, events.data(), events.size(), -1);
 
     if (numEvents == -1) {
@@ -49,8 +49,8 @@ void doAccept() {
       break;
     }
 
-    log4cpp::Category::getRoot().infoStream()
-      << "Number of events: " << numEvents;  // 增加：输出事件数量
+    // log4cpp::Category::getRoot().infoStream()
+    //   << "Number of events: " << numEvents;  // 增加：输出事件数量
 
     // 检查是否是server Fd
     for (int i = 0; i < numEvents; ++i) {
@@ -76,9 +76,9 @@ void doAccept() {
 
       } else {
         // 不是server_fd，那么就是client_fd
-        log4cpp::Category::getRoot().infoStream()
-          << "Now processing event from " << events[i].data.fd
-          << " as handle event.";
+        // log4cpp::Category::getRoot().infoStream()
+        //   << "Now processing event from " << events[i].data.fd
+        //   << " as handle event.";
 
         // todo: 线程池
         int client_fd = events[i].data.fd;

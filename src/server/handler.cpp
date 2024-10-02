@@ -1,7 +1,6 @@
 #include <unistd.h>
 #include <csignal>
 #include <log4cpp/Category.hh>
-#include <thread>
 #include "mp/Request.h"
 #include "mp/Response.h"
 #include "mp/common.h"
@@ -16,14 +15,14 @@ namespace zipfiles::server {
 void doHandle(int client_fd) {
   try {
     // 主eventloop
-    log4cpp::Category::getRoot().infoStream()
-      << "Thread " << std::this_thread::get_id()
-      << " is waiting for request from " << client_fd << "...";
+    // log4cpp::Category::getRoot().infoStream()
+    //   << "Thread " << std::this_thread::get_id()
+    //   << " is waiting for request from " << client_fd << "...";
 
     ReqPtr request = Socket::receive(client_fd);
 
-    log4cpp::Category::getRoot().infoStream()
-      << "Request received: " << request->timestamp;
+    // log4cpp::Category::getRoot().infoStream()
+    //   << "Request received: " << request->toJson();
 
     ResPtr response = std::visit(
       overload{
@@ -34,7 +33,11 @@ void doHandle(int client_fd) {
           MetaDataFilter filter;
           return makeResGetFileList(getFileList(req.path, false, filter));
         },
+        [](request::PostCommit&) { return makeResPostCommit({}); },
         [](request::MockNeedTime& req) { return makeResMockNeedTime(req.id); },
+        [](request::GetAllFileDetails& req) {
+          return makeResGetAllFileDetails(getAllFileDetails(req.path));
+        },
         [](auto&&) {
           throw std::runtime_error("Unknown request type");
           return nullptr;
@@ -47,15 +50,14 @@ void doHandle(int client_fd) {
     response->status = StatusCode::OK;
     response->timestamp = request->timestamp;
     response->uuid = request->uuid;
-
+    // log4cpp::Category::getRoot().infoStream()
+    //   << "Response sent: " << response->toJson();
     Socket::send(client_fd, response);
 
-    log4cpp::Category::getRoot().infoStream()
-      << "Response sent: " << response->timestamp;
   } catch (const std::exception& e) {
     // 如果是SocketTemporarilyUnavailable
     if (const auto* e_ptr = dynamic_cast<const SocketTemporarilyUnavailable*>(&e)) {
-      log4cpp::Category::getRoot().infoStream() << e_ptr->what();
+      // log4cpp::Category::getRoot().infoStream() << e_ptr->what();
       return;
     }
     log4cpp::Category::getRoot().errorStream()

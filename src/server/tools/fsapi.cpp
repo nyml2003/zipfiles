@@ -16,7 +16,7 @@ namespace zipfiles::server {
  */
 std::vector<File>
 getFileList(const fs::path& directory, bool doFilter, MetaDataFilter& filter) {
-  const fs::path directory_path = "/" / directory;
+  const fs::path& directory_path = directory;
 
   log4cpp::Category::getRoot().infoStream()
     << "Getting files list for " << directory_path;
@@ -57,7 +57,7 @@ getFileList(const fs::path& directory, bool doFilter, MetaDataFilter& filter) {
  *
  */
 FileDetail getFileDetail(const fs::path& file) {
-  const fs::path file_path = "/" / file;
+  const fs::path& file_path = file;
 
   log4cpp::Category::getRoot().infoStream()
     << "Getting file detail for " << file_path;
@@ -89,4 +89,27 @@ FileDetail getFileDetail(const fs::path& file) {
 
   return file_detail;
 }
+
+/**
+ * @brief 获取选定文件的元信息
+ *
+ * @param directory 指定的目录路径
+ *
+ * @return 返回一个FileDetail类型的数组
+ *
+ */
+std::vector<FileDetail> getAllFileDetails(const fs::path& directory) {
+  if (!fs::exists(directory) || !fs::is_directory(directory)) {
+    throw std::runtime_error("Directory does not exist or is not a directory");
+  }
+
+  std::vector<FileDetail> file_details;
+
+  for (const auto& entry : fs::directory_iterator(directory)) {
+    file_details.push_back(getFileDetail(entry.path()));
+  }
+
+  return file_details;
+}
+
 }  // namespace zipfiles::server

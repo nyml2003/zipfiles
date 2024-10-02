@@ -4,13 +4,20 @@
 #include <json/json.h>
 #include <webkit2/webkit2.h>
 #include <functional>
-namespace zipfiles::client::view {
+#include "mp/Request.h"
+namespace zipfiles::client {
 /**
- * @brief 检查请求头是否合法
+ * @brief 检查函数（此处指有返回值的h5调用）请求头是否合法
  * @param value JS请求对象
- * @return true 合法 false 不合法，此时会抛出异常
+ * @return 如果请求头不合法，返回false,否则返回true
  */
-auto isRequestHeaderValid(JSCValue* value) -> bool;
+bool isFunctionValid(JSCValue* value);
+/**
+ * @brief 检查过程（此处指无返回值的h5调用）请求头是否合法
+ * @param value JS请求对象
+ * @return 如果请求头不合法，返回false,否则返回true
+ */
+bool isProcedureValid(JSCValue* value);
 /**
  * @brief 发送响应
  * @details
@@ -19,58 +26,70 @@ auto isRequestHeaderValid(JSCValue* value) -> bool;
  */
 void sendResponse(Json::Value& root);
 /**
- * @brief 处理成功
- * @details
- * 生成一个成功的响应并发送到前端
- * @param value JS请求对象
+ * @brief 在root中构造JSON对象Result
+ * @details 用于完成和h5的双向通信,成功分支
+ * @param root
  * @param build_data 生成数据的回调函数
  */
-void handleSuccess(
+void handleResult(
   Json::Value& root,
   const std::function<void(Json::Value&)>& build_data
 );
 /**
- * @brief 处理错误
- * @details
- * 生成一个错误的响应并发送到前端
- * @param value JS请求对象
- * @param err 错误信息
+ * @brief 在root中构造JSON对象Error
+ * @details 用于完成和h5的双向通信,失败分支
+ * @param root
+ * @param err 异常对象
  */
-void handleError(Json::Value& root, const std::exception& err);
+void handleError(const std::string& message);
 /**
- * @brief 处理致命错误
- * 列举如下：
- * - 和后端通信失败
- * @param value
- * @param err
+ * @brief 在root中构造JSON对象Notify
+ * @details 容器主动通知h5的消息
+ * @param root
+ * @param build_data
  */
-void handleFatal(const std::exception& err);
+void handleNotify(const std::string& message);
+
 /**
- * @brief 处理日志
- * @details
- * 将JS请求对象中的数据打印到控制台
- * @param manager 用户内容管理器
- * @param js_result JS请求对象
- * @param user_data 用户数据
+ * @brief 转发请求到具体的处理函数
+ * @param manager
+ * @param js_result
+ * @param user_data
  */
-void log(
+void handleFunction(
   WebKitUserContentManager* manager,
   WebKitJavascriptResult* js_result,
   gpointer user_data
 );
-/**
- * @brief 处理消息
- * @details
- * 处理JS请求对象并发送到前端
- * @param manager 用户内容管理器
- * @param js_result JS请求对象
- * @param user_data 用户数据
- */
-void handleMessage(
+
+void handleRemoteResponse(const ReqPtr& request);
+
+// void handleLocalResponse(const ReqPtr& request);
+
+void handleProcedureLog(
   WebKitUserContentManager* manager,
   WebKitJavascriptResult* js_result,
   gpointer user_data
 );
-}  // namespace zipfiles::client::view
+
+void handleProcedureWarn(
+  WebKitUserContentManager* manager,
+  WebKitJavascriptResult* js_result,
+  gpointer user_data
+);
+
+void handleProcedureInfo(
+  WebKitUserContentManager* manager,
+  WebKitJavascriptResult* js_result,
+  gpointer user_data
+);
+
+void handleProcedureError(
+  WebKitUserContentManager* manager,
+  WebKitJavascriptResult* js_result,
+  gpointer user_data
+);
+
+}  // namespace zipfiles::client
 
 #endif  // !ZIPFILE_CLIENT_VIEW_H

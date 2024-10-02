@@ -57,8 +57,8 @@ make
   - [ ] 选定要还原的commit
   - [ ] 还原(restore)
 - [ ] 数据处理模块(data-processing)
-  - [ ] 数据打包(pack)
-  - [ ] 数据解包(unpack)
+  - [x] 数据打包(pack)
+  - [x] 数据解包(unpack)
   - [ ] 数据压缩(compress)
   - [ ] 数据解压(decompress)
   - [ ] 数据加密(encrypt)
@@ -73,10 +73,10 @@ make
     - [ ] 自定义配置文件
 - [ ] 工具模块(tools)
   - [ ] Linux API
-  - [ ] 读取目录/文件
-    - [ ] 文件类型支持(type support)
-    - [ ] 元数据支持(metadata)
-    - [ ] 自定义筛选(custom filter)
+  - [x] 读取目录/文件
+    - [x] 文件类型支持(type support)
+    - [x] 元数据支持(metadata)
+    - [x] 自定义筛选(custom filter)
   - [ ] 哈希(hash)
 
 ### 备份流程

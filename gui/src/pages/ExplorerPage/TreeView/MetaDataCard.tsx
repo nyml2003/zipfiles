@@ -20,10 +20,9 @@ const MetaDataCard: React.FC<Props> = ({ currentFile }) => {
       setLoading(LoadingState.Loading);
       api
         .request<GetFileDetailRequest, GetFileDetailResponse>(ApiEnum.GetFileDetail, {
-          path: currentFile,
+          path: currentFile === '' ? '/' : currentFile,
         })
         .then((res: GetFileDetailResponse) => {
-          console.log('GetFileListResponse: ', JSON.stringify(res));
           setMetadata(res);
           setLoading(LoadingState.Done);
         })

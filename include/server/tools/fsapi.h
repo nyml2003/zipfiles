@@ -11,6 +11,6 @@ namespace zipfiles::server {
 std::vector<File>
 getFileList(const fs::path& directory, bool doFilter, MetaDataFilter& filter);
 FileDetail getFileDetail(const fs::path& file);
-
+std::vector<FileDetail> getAllFileDetails(const fs::path& directory);
 }  // namespace zipfiles::server
 #endif  // !ZIPFILES_FSAPI_H

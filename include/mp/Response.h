@@ -2,7 +2,6 @@
 #define ZIPFILES_MP_RESPONSE_H
 #include <json/json.h>
 #include <variant>
-#include "mp/Request.h"
 #include "mp/dto.h"
 
 namespace zipfiles {
@@ -16,8 +15,11 @@ enum class StatusCode {
 enum class ApiEnum {
   IGNORE = 1,
   ERROR = 0,
+  MOCK_NEED_TIME = 99,
   GET_FILE_DETAIL = 100,
   GET_FILE_LIST = 101,
+  POST_COMMIT = 102,
+  GET_ALL_FILE_DETAILS = 103,
 };
 
 size_t toSizeT(ApiEnum apiEnum);
@@ -33,9 +35,14 @@ struct GetFileDetail {
 struct GetFileList {
   std::vector<File> files;
 };
-
 struct MockNeedTime {
   int id;
+};
+
+struct PostCommit {};
+
+struct GetAllFileDetails {
+  std::vector<FileDetail> files;
 };
 
 }  // namespace response
@@ -45,7 +52,10 @@ struct Res;
 using ResKind = std::variant<
   response::GetFileDetail,
   response::GetFileList,
-  response::MockNeedTime>;
+  response::MockNeedTime,
+  response::PostCommit,
+  response::GetAllFileDetails>;
+
 using ResPtr = std::shared_ptr<Res>;
 
 struct Res {
@@ -59,10 +69,19 @@ struct Res {
 };
 
 ResPtr makeResGetFileDetail(FileDetail metadata);
+ResPtr makeResGetFileDetail(Json::Value payload);
 
 ResPtr makeResGetFileList(std::vector<File> files);
+ResPtr makeResGetFileList(Json::Value payload);
 
 ResPtr makeResMockNeedTime(int id);
+ResPtr makeResMockNeedTime(Json::Value payload);
+
+ResPtr makeResPostCommit();
+ResPtr makeResPostCommit(Json::Value payload);
+
+ResPtr makeResGetAllFileDetails(std::vector<FileDetail> metadata);
+ResPtr makeResGetAllFileDetails(Json::Value payload);
 
 }  // namespace zipfiles
 

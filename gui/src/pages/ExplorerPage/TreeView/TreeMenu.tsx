@@ -63,9 +63,9 @@ const TreeMenu: React.FC<Props> = ({
     if (needLoading) setLoading(LoadingState.Loading);
     try {
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
-        path,
+        path: path === '' ? '/' : path,
       });
-      console.log('GetFileListResponse: ', JSON.stringify(res));
+      //console.log('GetFileListResponse: ', JSON.stringify(res));
       const newTreeData = res.files.map(item => {
         const isDirectory = item.type === FileType.Directory;
         return {
@@ -130,7 +130,6 @@ const TreeMenu: React.FC<Props> = ({
   const handleSelect: TreeProps['onSelect'] = (selectedKeys, info) => {
     const currentTime = new Date().getTime();
     if (currentTime - lastClickTime < 300) {
-      console.log(currentTime, lastClickTime);
       if (!info.node.isLeaf) {
         setCurrentPath(selectedKeys[0].toString());
       }

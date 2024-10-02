@@ -1,6 +1,8 @@
+#include <unistd.h>
 #include <filesystem>
 #include <log4cpp/Category.hh>
 #include <utility>
+#include <vector>
 #include "json/value.h"
 #include "mp/Response.h"
 #include "mp/common.h"
@@ -24,17 +26,6 @@ std::ostream& operator<<(std::ostream& os, const StatusCode& status) {
   return os;
 }
 
-ResPtr makeResGetFileDetail(FileDetail metadata) {
-  return std::make_shared<Res>(response::GetFileDetail{std::move(metadata)});
-}
-
-ResPtr makeResGetFileList(std::vector<File> files) {
-  return std::make_shared<Res>(response::GetFileList{std::move(files)});
-}
-
-ResPtr makeResMockNeedTime(int id) {
-  return std::make_shared<Res>(response::MockNeedTime{id});
-}
 size_t toSizeT(ApiEnum apiEnum) {
   return static_cast<size_t>(apiEnum);
 }
@@ -69,8 +60,28 @@ Json::Value Res::toJson() {
         }
       },
       [&json](response::MockNeedTime& res) {
-        json["apiEnum"] = Json::Value(toSizeT(ApiEnum::IGNORE));
+        json["apiEnum"] = Json::Value(toSizeT(ApiEnum::MOCK_NEED_TIME));
         json["payload"]["id"] = res.id;
+      },
+      [&json](response::PostCommit&) {
+        json["apiEnum"] = Json::Value(toSizeT(ApiEnum::POST_COMMIT));
+      },
+      [&json](response::GetAllFileDetails& res) {
+        json["apiEnum"] = Json::Value(toSizeT(ApiEnum::GET_ALL_FILE_DETAILS));
+        json["payload"]["files"] = Json::arrayValue;
+        for (const auto& file : res.files) {
+          Json::Value fileJson;
+          fileJson["type"] = static_cast<int>(file.type);
+          fileJson["createTime"] = file.createTime;
+          fileJson["updateTime"] = file.updateTime;
+          fileJson["size"] = static_cast<Json::UInt64>(file.size);
+          fileJson["owner"] = file.owner;
+          fileJson["group"] = file.group;
+          fileJson["mode"] = file.mode;
+          fileJson["path"] = file.path;
+          fileJson["name"] = file.name;
+          json["payload"]["files"].append(fileJson);
+        }
       },
       [](auto&&) { throw std::runtime_error("Unknown response type"); }},
     kind
@@ -108,9 +119,28 @@ ResPtr Res::fromJson(const Json::Value& json) {
       res = makeResGetFileList(files);
       break;
     }
-    case ApiEnum::IGNORE:
+    case ApiEnum::MOCK_NEED_TIME:
       res = makeResMockNeedTime(json["payload"]["id"].asInt());
       break;
+    case ApiEnum::POST_COMMIT:
+      res = makeResPostCommit();
+      break;
+    case ApiEnum::GET_ALL_FILE_DETAILS: {
+      std::vector<FileDetail> files;
+      for (const auto& file : json["payload"]["files"]) {
+        files.push_back(
+          {static_cast<fs::file_type>(file["type"].asInt()),
+           file["createTime"].asDouble(), file["updateTime"].asDouble(),
+           static_cast<__off_t>(file["size"].asUInt64()),
+           file["owner"].asString(), file["group"].asString(),
+           file["mode"].asUInt(), file["path"].asString(),
+           file["name"].asString()}
+        );
+      }
+      res = makeResGetAllFileDetails(files);
+      break;
+    }
+
     default:
       throw std::runtime_error("Invalid response kind");
       break;
@@ -119,6 +149,72 @@ ResPtr Res::fromJson(const Json::Value& json) {
   res->timestamp = json["timestamp"].asDouble();
   res->uuid = json["uuid"].asString();
   return res;
+}
+ResPtr makeResGetFileDetail(FileDetail metadata) {
+  return std::make_shared<Res>(response::GetFileDetail{std::move(metadata)});
+}
+
+ResPtr makeResGetFileDetail(Json::Value payload) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a response to get file detail";
+  Json::Value json;
+  json["payload"] = std::move(payload);
+  json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_DETAIL);
+  return Res::fromJson(json);
+}
+
+ResPtr makeResGetFileList(std::vector<File> files) {
+  return std::make_shared<Res>(response::GetFileList{std::move(files)});
+}
+
+ResPtr makeResGetFileList(Json::Value payload) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a response to get file list";
+  Json::Value json;
+  json["payload"] = std::move(payload);
+  json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_LIST);
+  return Res::fromJson(json);
+}
+
+ResPtr makeResMockNeedTime(int id) {
+  sleep(10);
+  return std::make_shared<Res>(response::MockNeedTime{id});
+}
+
+ResPtr makeResMockNeedTime(Json::Value payload) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a response to mock need time";
+  Json::Value json;
+  json["payload"] = std::move(payload);
+  json["apiEnum"] = toSizeT(ApiEnum::MOCK_NEED_TIME);
+  return Res::fromJson(json);
+}
+
+ResPtr makeResPostCommit() {
+  return std::make_shared<Res>(response::PostCommit{});
+}
+
+ResPtr makeResPostCommit(Json::Value payload) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a response to post commit";
+  Json::Value json;
+  json["payload"] = std::move(payload);
+  json["apiEnum"] = toSizeT(ApiEnum::POST_COMMIT);
+  return Res::fromJson(json);
+}
+
+ResPtr makeResGetAllFileDetails(std::vector<FileDetail> metadata) {
+  return std::make_shared<Res>(response::GetAllFileDetails{std::move(metadata)}
+  );
+}
+
+ResPtr makeResGetAllFileDetails(Json::Value payload) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a response to get all file details";
+  Json::Value json;
+  json["payload"] = std::move(payload);
+  json["apiEnum"] = toSizeT(ApiEnum::GET_ALL_FILE_DETAILS);
+  return Res::fromJson(json);
 }
 
 }  // namespace zipfiles

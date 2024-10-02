@@ -3,27 +3,42 @@
 
 #include <filesystem>
 #include <vector>
-#include "mp/dto.h"
-
-namespace zipfiles::server {
+#include "json/value.h"
 
 namespace fs = std::filesystem;
 
-void backupFiles(const std::vector<fs::path>& files, const CommitLog& cl);
+namespace zipfiles::server {
 
-DirectoryTreeNode generateDirectoryTree(
-  const std::vector<const fs::path&>& files
+/**
+ * * backup
+ *
+ */
+void backupFiles(
+  const std::vector<fs::path>& files,
+  const Json::Value& cl,
+  const std::string& key
 );
 
-bool isCommitted(const CommitLog& cl);
+/**
+ * * commit log
+ *
+ */
+bool isCommitted(const Json::Value& cls, const Json::Value& cl);
 
-void writeCommitLog(const fs::path& dst, const CommitLog& cl);
+void appendCommitLog(Json::Value& dst, const Json::Value& cl);
 
-void writeDirectoryFile(const fs::path& dst, const DirectoryTreeNode& root);
+void writeCommitLog(const fs::path& dst, const Json::Value& cls);
 
-void deleteCommit();
+void deleteCommitLog(Json::Value& cls, const std::string& uuid);
 
-void deleteCommitLog();
+/**
+ * * directory
+ *
+ */
+void writeDirectoryFile(
+  const fs::path& dst,
+  const std::vector<fs::path>& files
+);
 
 }  // namespace zipfiles::server
 #endif  // !ZIPFILES_BACKUP_H

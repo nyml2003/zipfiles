@@ -5,7 +5,7 @@
 #include <log4cpp/Category.hh>
 #include <string>
 
-namespace zipfiles::client::launcher {
+namespace zipfiles::client {
 /**
  * @brief 文件路径长度
  * @details 用于获取可执行文件路径, 一般不会超过1024
@@ -75,6 +75,6 @@ class Launcher {
   static void run(int argc, char** argv);
   static void startLogger();
 };
-}  // namespace zipfiles::client::launcher
+}  // namespace zipfiles::client
 
 #endif  // !ZIPFILE_CLIENT_CLIENT_H

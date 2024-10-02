@@ -8,7 +8,7 @@
 #include "client/view.h"
 #include "glib-object.h"
 
-namespace zipfiles::client::launcher {
+namespace zipfiles::client {
 WebKitWebView* webView = nullptr;
 void loadDistUri() {
   std::array<char, EXE_PATH_SIZE> exe_path = {0};
@@ -25,9 +25,13 @@ void loadDistUri() {
 }
 
 void bindJS(WebKitUserContentManager* manager) {
-  std::array<Handler, 2> handlers = {
-    {{"handleMessage", reinterpret_cast<GCallback>(view::handleMessage)},
-     {"log", reinterpret_cast<GCallback>(view::log)}}};
+  std::array<Handler, 5> handlers = {{
+    {"function", reinterpret_cast<GCallback>(handleFunction)},
+    {"log", reinterpret_cast<GCallback>(handleProcedureLog)},
+    {"error", reinterpret_cast<GCallback>(handleProcedureError)},
+    {"info", reinterpret_cast<GCallback>(handleProcedureInfo)},
+    {"warn", reinterpret_cast<GCallback>(handleProcedureWarn)},
+  }};
 
   for (const auto& handler : handlers) {
     webkit_user_content_manager_register_script_message_handler(
@@ -70,4 +74,4 @@ void Launcher::startLogger() {
     std::cerr << "Configure Problem: " << f.what() << std::endl;
   }
 }
-}  // namespace zipfiles::client::launcher
+}  // namespace zipfiles::client

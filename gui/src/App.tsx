@@ -5,7 +5,7 @@ import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { useGlobalMessageHandler } from './hooks/useGlobalMessageHandler';
 import useApi from './hooks/useApi';
-import { LogRequest, LogResponse } from './apis/log';
+import { LogRequest } from './apis/log';
 import { ApiEnum } from './apis';
 // 定义路由配置
 
@@ -16,13 +16,28 @@ const App = () => {
   useEffect(() => {
     if (process.env.BASE_ENV === 'prod') {
       const api = useApi();
-
       if (process.env.BASE_ENV === 'prod') {
         console.log = new Proxy(console.log, {
           apply: (target, thisArg, argArray) => {
-            api.request<LogRequest, LogResponse>(ApiEnum.Log, {
-              message: argArray.join(' '),
-            });
+            api.call(ApiEnum.Log, { message: argArray.join(' ') } as LogRequest);
+            target(...argArray);
+          },
+        });
+        console.error = new Proxy(console.error, {
+          apply: (target, thisArg, argArray) => {
+            api.call(ApiEnum.Log, { message: argArray.join(' ') } as LogRequest);
+            target(...argArray);
+          },
+        });
+        console.warn = new Proxy(console.warn, {
+          apply: (target, thisArg, argArray) => {
+            api.call(ApiEnum.Log, { message: argArray.join(' ') } as LogRequest);
+            target(...argArray);
+          },
+        });
+        console.info = new Proxy(console.info, {
+          apply: (target, thisArg, argArray) => {
+            api.call(ApiEnum.Log, { message: argArray.join(' ') } as LogRequest);
             target(...argArray);
           },
         });
