@@ -9,7 +9,7 @@ export interface ResponseWrapper {
   timestamp: number;
   apiEnum: ApiEnum;
   data?: any;
-  type: 'resolve' | 'reject' | 'fatal';
+  type: 'resolve' | 'reject' | 'notify';
   message: string;
 }
 
@@ -22,21 +22,16 @@ export interface CallBack<T> {
 
 let callbacks: CallBack<any>[] = [];
 const handleCallback = (callback: CallBack<any>) => {
-  const { request, resolve, reject } = callback;
+  const { resolve, reject } = callback;
   return (response: ResponseWrapper) => {
-    const { type, data, message, apiEnum, timestamp } = response;
+    const { type, data, message } = response;
     if (type === 'resolve') {
       resolve(data);
     } else if (type === 'reject') {
       reject(message);
-    } else {
-      notification.error({
-        message: message,
-      });
     }
   };
 };
-const mq = new MQ<() => void>();
 
 export const setGlobalCallback = (callback: CallBack<any>) => {
   callbacks.push(callback);
@@ -44,25 +39,30 @@ export const setGlobalCallback = (callback: CallBack<any>) => {
 
 export const handler = (event: MessageEvent) => {
   const response = event.data as ResponseWrapper;
-  const { type, data, message, apiEnum, timestamp , uuid } = response;
-  const callbackIndex = callbacks.findIndex(
-    callback => callback.request.timestamp === timestamp && callback.request.apiEnum === apiEnum && callback.request.uuid === uuid,
-  );
-  //console.log('callbacks: ', JSON.stringify(callbacks));
-  if (callbackIndex === -1) {
-    if (type === 'fatal') {
-      notification.error({
-        message: message,
-      });
-    }
+  const { type, data, message, apiEnum, timestamp, uuid } = response;
+  if (type === 'notify') {
+    notification.error({
+      message: message,
+    });
     return;
   }
+  const callbackIndex = callbacks.findIndex(
+    callback =>
+      callback.request.timestamp === timestamp &&
+      callback.request.apiEnum === apiEnum &&
+      callback.request.uuid === uuid,
+  );
+
   // console.log('event.type: ', event.type);
   // console.log('event.timestamp: ', response.timestamp);
   // console.log('event.apiEnum: ', response.apiEnum);
   // console.log('callbacks: ', JSON.stringify(callbacks));
   const [callback] = callbacks.splice(callbackIndex, 1);
-  mq.push(() => handleCallback(callback)(response));
+  if (type === 'resolve') {
+    callback.resolve(data);
+  } else if (type === 'reject') {
+    callback.reject(message);
+  }
 };
 const MAX_REQUEST_TIMEOUT = 500;
 const MAX_REQUEST_RETRY = 3;

@@ -1,8 +1,9 @@
 export enum ApiEnum {
-  Sum = 'sum',
-  GetVersion = 'getVersion',
+  UNKNOWN = 0,
   Log = 'log',
-  GetFileList = 101,
-  PostBackup = 'postBackup',
+  Error = 'error',
   GetFileDetail = 100,
+  GetFileList = 101,
+  PostCommit = 102,
+  GetAllFileDetails = 103,
 }

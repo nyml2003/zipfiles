@@ -16,7 +16,7 @@ namespace zipfiles::server {
  */
 std::vector<File>
 getFileList(const fs::path& directory, bool doFilter, MetaDataFilter& filter) {
-  const fs::path directory_path = "/" / directory;
+  const fs::path& directory_path = directory;
 
   log4cpp::Category::getRoot().infoStream()
     << "Getting files list for " << directory_path;
@@ -57,7 +57,7 @@ getFileList(const fs::path& directory, bool doFilter, MetaDataFilter& filter) {
  *
  */
 FileDetail getFileDetail(const fs::path& file) {
-  const fs::path file_path = "/" / file;
+  const fs::path& file_path = file;
 
   log4cpp::Category::getRoot().infoStream()
     << "Getting file detail for " << file_path;

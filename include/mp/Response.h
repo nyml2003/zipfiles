@@ -2,7 +2,6 @@
 #define ZIPFILES_MP_RESPONSE_H
 #include <json/json.h>
 #include <variant>
-#include "mp/Request.h"
 #include "mp/dto.h"
 
 namespace zipfiles {
@@ -20,6 +19,7 @@ enum class ApiEnum {
   GET_FILE_DETAIL = 100,
   GET_FILE_LIST = 101,
   POST_COMMIT = 102,
+  GET_ALL_FILE_DETAILS = 103,
 };
 
 size_t toSizeT(ApiEnum apiEnum);
@@ -35,12 +35,15 @@ struct GetFileDetail {
 struct GetFileList {
   std::vector<File> files;
 };
-// TODO 测试耗时请求
 struct MockNeedTime {
   int id;
 };
 
 struct PostCommit {};
+
+struct GetAllFileDetails {
+  std::vector<FileDetail> files;
+};
 
 }  // namespace response
 
@@ -50,7 +53,9 @@ using ResKind = std::variant<
   response::GetFileDetail,
   response::GetFileList,
   response::MockNeedTime,
-  response::PostCommit>;
+  response::PostCommit,
+  response::GetAllFileDetails>;
+
 using ResPtr = std::shared_ptr<Res>;
 
 struct Res {
@@ -74,6 +79,9 @@ ResPtr makeResMockNeedTime(Json::Value payload);
 
 ResPtr makeResPostCommit();
 ResPtr makeResPostCommit(Json::Value payload);
+
+ResPtr makeResGetAllFileDetails(std::vector<FileDetail> metadata);
+ResPtr makeResGetAllFileDetails(Json::Value payload);
 
 }  // namespace zipfiles
 
