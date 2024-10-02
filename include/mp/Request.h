@@ -16,6 +16,10 @@ struct GetFileList {
   std::string path;
 };
 
+struct GetAllFileDetails {
+  std::string path;
+};
+
 // 模拟耗时请求
 struct MockNeedTime {
   int id;
@@ -33,7 +37,9 @@ using ReqKind = std::variant<
   request::GetFileDetail,
   request::GetFileList,
   request::MockNeedTime,
-  request::PostCommit>;
+  request::PostCommit,
+  request::GetAllFileDetails>;
+
 using ReqPtr = std::shared_ptr<Req>;
 
 struct Req {
@@ -53,6 +59,8 @@ ReqPtr makeReqMockNeedTime(int id);
 ReqPtr makeReqMockNeedTime(Json::Value payload);
 ReqPtr makeReqPostCommit(CommitLog commitLog);
 ReqPtr makeReqPostCommit(Json::Value payload);
+ReqPtr makeReqGetAllFileDetails(std::string path);
+ReqPtr makeReqGetAllFileDetails(Json::Value payload);
 
 }  // namespace zipfiles
 

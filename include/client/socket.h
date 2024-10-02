@@ -4,7 +4,7 @@
 #include "mp/Request.h"
 #include "mp/Response.h"
 
-namespace zipfiles::client::socket {
+namespace zipfiles::client {
 
 /**
  * @brief 客户端套接字
@@ -32,5 +32,5 @@ class Socket {
   int sock;
   struct sockaddr_in serv_addr;
 };
-}  // namespace zipfiles::client::socket
+}  // namespace zipfiles::client
 #endif  // !ZIPFILE_CLIENT_SOCKET_H

@@ -20,18 +20,15 @@ const useApi: useApiType = () => {
     const timestamp = Date.now();
     const uuid = uuidv4();
     const message: RequestWrapper<Request> = { apiEnum, params: request, timestamp, uuid };
-
-    if (typeof apiEnum === 'number') {
-      dilute(() => window.webkit.messageHandlers.handleMessage.postMessage(message));
-    } else {
-      dilute(() => window.webkit.messageHandlers[apiEnum].postMessage(message));
+    if (!(window as any).webkit?.messageHandlers) {
+      console.error('No webkit message handlers');
+      return Promise.reject('No webkit message handlers');
     }
-
-    if (apiEnum === ApiEnum.Log) {
-      return new Promise((resolve, reject) => {
-        resolve({} as Response);
-      });
+    if (!(typeof apiEnum === 'number') && !window.webkit.messageHandlers[apiEnum]) {
+      console.error('No such api: ', apiEnum);
+      return Promise.reject('No such api: ' + apiEnum);
     }
+    dilute(() => window.webkit.messageHandlers.function.postMessage(message));
 
     return new Promise((resolve, reject) => {
       setGlobalCallback({
@@ -47,8 +44,13 @@ const useApi: useApiType = () => {
     });
   };
 
+  const call = (apiEnum: ApiEnum, request: any) => {
+    window.webkit.messageHandlers[apiEnum].postMessage({ "params": request });
+  };
+
   apiInstance = {
     request,
+    call,
   };
 
   return apiInstance;

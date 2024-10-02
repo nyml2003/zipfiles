@@ -3,9 +3,10 @@ import { mock as GetFileDetail } from './GetFileDetail';
 import { ApiEnum } from '..';
 export const mockApi: { [key in ApiEnum]: Function } = {
   [ApiEnum.GetFileList]: GetFileList,
-  [ApiEnum.Sum]: () => 0,
-  [ApiEnum.GetVersion]: () => '1.0.0',
-  [ApiEnum.Log]: () => {},
-  [ApiEnum.PostBackup]: () => {},
+  [ApiEnum.Log]: () => { },
+  [ApiEnum.UNKNOWN]: () => { },
+  [ApiEnum.Error]: () => { },
   [ApiEnum.GetFileDetail]: GetFileDetail,
+  [ApiEnum.PostCommit]: () => { },
+  [ApiEnum.GetAllFileDetails]: () => { },
 };

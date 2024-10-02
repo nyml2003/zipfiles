@@ -2,6 +2,7 @@ import { ApiEnum } from "@/apis";
 
 export interface Api {
   request<Request, Response>(apiEnum: ApiEnum, request: Request): Promise<Response>;
+  call(apiEnum: ApiEnum, request: any): void;
 }
 export interface ResponseWrapper {
   timestamp: number;

@@ -1,7 +1,6 @@
 #include <unistd.h>
 #include <csignal>
 #include <log4cpp/Category.hh>
-#include <thread>
 #include "mp/Request.h"
 #include "mp/Response.h"
 #include "mp/common.h"
@@ -36,6 +35,9 @@ void doHandle(int client_fd) {
         },
         [](request::PostCommit&) { return makeResPostCommit({}); },
         [](request::MockNeedTime& req) { return makeResMockNeedTime(req.id); },
+        [](request::GetAllFileDetails& req) {
+          return makeResGetAllFileDetails(getAllFileDetails(req.path));
+        },
         [](auto&&) {
           throw std::runtime_error("Unknown request type");
           return nullptr;

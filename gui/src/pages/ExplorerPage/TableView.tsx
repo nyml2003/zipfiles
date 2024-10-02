@@ -7,6 +7,7 @@ import useApi from '@/hooks/useApi';
 import { ApiEnum } from '@/apis';
 import { FileType, FileTypeToString } from '@/types';
 import { FileFilled, FolderFilled } from '@ant-design/icons';
+import { GetAllFileDetailsRequest, GetAllFileDetailsResponse } from '@/apis/GetAllFileDetails';
 
 interface DataType extends Partial<FileDetail> {
   hasDetail: boolean;
@@ -95,16 +96,14 @@ interface TableViewProps {
 
 const TableView: React.FC<TableViewProps> = ({ currentPath, refresh, setRefresh: setRrefresh }) => {
   const api = useApi();
-  const [files, setFiles] = useState<File[]>([]);
   const [data, setData] = useState<DataType[]>([]);
 
   const fetchFileList = (path: string): Promise<File[]> =>
     api
       .request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
-        path,
+        path : path === '' ? '/' : path
       })
       .then((res: GetFileListResponse) => {
-        setFiles(res.files);
         setData(
           res.files.map(file => {
             return {
@@ -116,33 +115,22 @@ const TableView: React.FC<TableViewProps> = ({ currentPath, refresh, setRefresh:
         );
         return res.files;
       });
-
-  const fetchDetail = (path: string, file: File): Promise<FileDetail> =>
-    api
-      .request<GetFileDetailRequest, FileDetail>(ApiEnum.GetFileDetail, {
-        path: `${path}/${file.name}`,
-      })
-      .then(res => {
-        return res;
-      });
-
   const fetchData = (path: string) => {
     fetchFileList(path).then((files: File[]) => {
-      files.forEach(file => {
-        fetchDetail(path, file).then(res => {
-          setData((prevData: DataType[]) => {
-            const index = prevData.findIndex(item => item.name === file.name);
-            if (index !== -1) {
-              if (prevData[index].hasDetail) return prevData;
-              const newData = [...prevData];
-              newData[index] = { ...newData[index], ...res, hasDetail: true };
-              return newData;
-            } else {
-              throw new Error('未找到对应文件');
-            }
-          });
+      api
+        .request<GetAllFileDetailsRequest, GetAllFileDetailsResponse>(ApiEnum.GetAllFileDetails, {
+          path: path === '' ? '/' : path,
+        })
+        .then((res: GetAllFileDetailsResponse) => {
+          setData(
+            res.files.map(file => {
+              return {
+                ...file,
+                hasDetail: true,
+              };
+            }),
+          );
         });
-      });
     });
   };
 
@@ -164,7 +152,7 @@ const TableView: React.FC<TableViewProps> = ({ currentPath, refresh, setRefresh:
       pagination={false}
       className='overflow-auto'
       size='small'
-      rowKey={"name"}
+      rowKey={'name'}
     />
   );
 };

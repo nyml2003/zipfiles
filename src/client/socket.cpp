@@ -1,12 +1,13 @@
 #include <arpa/inet.h>
 #include <thread>
 #include "client/socket.h"
+#include "client/view.h"
 #include "log4cpp/Category.hh"
 #include "mp/Request.h"
 #include "mp/Response.h"
 #include "mp/mp.h"
 
-namespace zipfiles::client::socket {
+namespace zipfiles::client {
 
 void Socket::initializeSocket() {
   log4cpp::Category::getRoot().infoStream() << "Initializing socket...";
@@ -92,9 +93,11 @@ void Socket::send(const ReqPtr& req) {
           throw std::runtime_error("Failed to send request after reconnecting");
         }
       } catch (const std::exception& e) {
+        handleNotify("Failed to reconnect: " + std::string(e.what()));
         throw std::runtime_error("Reconnection failed");
       }
     } else {
+      handleNotify("Failed to send request: " + std::string(strerror(errno)));
       throw std::runtime_error("Failed to send request");
     }
   }
@@ -116,4 +119,4 @@ ResPtr Socket::receive() const {
   throw std::runtime_error("Failed to receive response");
 }
 
-}  // namespace zipfiles::client::socket
+}  // namespace zipfiles::client

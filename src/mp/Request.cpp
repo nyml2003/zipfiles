@@ -7,6 +7,81 @@
 namespace zipfiles {
 Req::Req(ReqKind kind) : kind(std::move(kind)) {}
 
+Json::Value Req::toJson() {
+  Json::Value json;
+  json["timestamp"] = timestamp;
+  json["uuid"] = uuid;
+  std::visit(
+    overload{
+      [&json](request::GetFileDetail& req) {
+        json["payload"]["path"] = req.path;
+        json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_DETAIL);
+      },
+      [&json](request::GetFileList& req) {
+        json["payload"]["path"] = req.path;
+        json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_LIST);
+      },
+      [&json](request::MockNeedTime& req) {
+        json["payload"]["id"] = req.id;
+        json["apiEnum"] = toSizeT(ApiEnum::MOCK_NEED_TIME);
+      },
+      [&json](request::PostCommit& req) {
+        json["apiEnum"] = toSizeT(ApiEnum::POST_COMMIT);
+        json["payload"]["message"] = req.commitLog.message;
+        json["payload"]["createTime"] = req.commitLog.createTime;
+        json["payload"]["defaultPath"] = req.commitLog.defaultPath;
+        json["payload"]["storagePath"] = req.commitLog.storagePath;
+        json["payload"]["author"] = req.commitLog.author;
+        json["payload"]["isEncrypt"] = req.commitLog.isEncrypt;
+        json["payload"]["isDelete"] = req.commitLog.isDelete;
+      },
+      [&json](request::GetAllFileDetails& req) {
+        json["payload"]["path"] = req.path;
+        json["apiEnum"] = toSizeT(ApiEnum::GET_ALL_FILE_DETAILS);
+      },
+      [](auto&&) { throw std::runtime_error("Unknown request type"); },
+    },
+    kind
+  );
+  return json;
+}
+
+ReqPtr Req::fromJson(const Json::Value& json) {
+  ReqPtr req;
+  auto api = static_cast<ApiEnum>(json["apiEnum"].asInt());
+  switch (api) {
+    case ApiEnum::GET_FILE_DETAIL:
+      req = makeReqGetFileDetail(json["payload"]["path"].asString());
+      break;
+    case ApiEnum::GET_FILE_LIST:
+      req = makeReqGetFileList(json["payload"]["path"].asString());
+      break;
+    case ApiEnum::MOCK_NEED_TIME:
+      req = makeReqMockNeedTime(json["payload"]["id"].asInt());
+      break;
+    case ApiEnum::POST_COMMIT:
+      req = makeReqPostCommit(CommitLog{
+        json["payload"]["uuid"].asString(),
+        json["payload"]["message"].asString(),
+        json["payload"]["createTime"].asDouble(),
+        json["payload"]["defaultPath"].asString(),
+        json["payload"]["storagePath"].asString(),
+        json["payload"]["author"].asString(),
+        json["payload"]["isEncrypt"].asBool(),
+        json["payload"]["isDelete"].asBool(),
+      });
+      break;
+    case ApiEnum::GET_ALL_FILE_DETAILS:
+      req = makeReqGetAllFileDetails(json["payload"]["path"].asString());
+      break;
+    default:
+      break;
+  }
+  req->timestamp = json["timestamp"].asDouble();
+  req->uuid = json["uuid"].asString();
+  return req;
+}
+
 ReqPtr makeReqGetFileDetail(std::string path) {
   log4cpp::Category::getRoot().infoStream()
     << "Making a request to get file detail";
@@ -72,71 +147,18 @@ ReqPtr makeReqMockNeedTime(Json::Value payload) {
   return Req::fromJson(json);
 }
 
-Json::Value Req::toJson() {
-  Json::Value json;
-  json["timestamp"] = timestamp;
-  json["uuid"] = uuid;
-  std::visit(
-    overload{
-      [&json](request::GetFileDetail& req) {
-        json["payload"]["path"] = req.path;
-        json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_DETAIL);
-      },
-      [&json](request::GetFileList& req) {
-        json["payload"]["path"] = req.path;
-        json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_LIST);
-      },
-      [&json](request::MockNeedTime& req) {
-        json["payload"]["id"] = req.id;
-        json["apiEnum"] = toSizeT(ApiEnum::MOCK_NEED_TIME);
-      },
-      [&json](request::PostCommit& req) {
-        json["apiEnum"] = toSizeT(ApiEnum::POST_COMMIT);
-        json["payload"]["message"] = req.commitLog.message;
-        json["payload"]["createTime"] = req.commitLog.createTime;
-        json["payload"]["defaultPath"] = req.commitLog.defaultPath;
-        json["payload"]["storagePath"] = req.commitLog.storagePath;
-        json["payload"]["author"] = req.commitLog.author;
-        json["payload"]["isEncrypt"] = req.commitLog.isEncrypt;
-        json["payload"]["isDelete"] = req.commitLog.isDelete;
-      },
-      [](auto&&) { throw std::runtime_error("Unknown request type"); },
-    },
-    kind
-  );
-  return json;
+ReqPtr makeReqGetAllFileDetails(std::string path) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a request to get all file details";
+  return std::make_shared<Req>(request::GetAllFileDetails{std::move(path)});
 }
 
-ReqPtr Req::fromJson(const Json::Value& json) {
-  ReqPtr req;
-  auto api = static_cast<ApiEnum>(json["apiEnum"].asInt());
-  switch (api) {
-    case ApiEnum::GET_FILE_DETAIL:
-      req = makeReqGetFileDetail(json["payload"]["path"].asString());
-      break;
-    case ApiEnum::GET_FILE_LIST:
-      req = makeReqGetFileList(json["payload"]["path"].asString());
-      break;
-    case ApiEnum::MOCK_NEED_TIME:
-      req = makeReqMockNeedTime(json["payload"]["id"].asInt());
-      break;
-    case ApiEnum::POST_COMMIT:
-      req = makeReqPostCommit(CommitLog{
-        json["payload"]["uuid"].asString(),
-        json["payload"]["message"].asString(),
-        json["payload"]["createTime"].asDouble(),
-        json["payload"]["defaultPath"].asString(),
-        json["payload"]["storagePath"].asString(),
-        json["payload"]["author"].asString(),
-        json["payload"]["isEncrypt"].asBool(),
-        json["payload"]["isDelete"].asBool(),
-      });
-      break;
-    default:
-      break;
-  }
-  req->timestamp = json["timestamp"].asDouble();
-  req->uuid = json["uuid"].asString();
-  return req;
+ReqPtr makeReqGetAllFileDetails(Json::Value payload) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a request to get all file details";
+  Json::Value json;
+  json["payload"] = std::move(payload);
+  json["apiEnum"] = toSizeT(ApiEnum::GET_ALL_FILE_DETAILS);
+  return Req::fromJson(json);
 }
 }  // namespace zipfiles
