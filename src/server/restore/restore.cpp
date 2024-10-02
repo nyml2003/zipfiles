@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include "json/reader.h"
 #include "json/value.h"
+#include "server/crypto/crypto.h"
 #include "server/pack/unpack.h"
 #include "server/restore/restore.h"
 
@@ -16,8 +17,13 @@ namespace zipfiles::server {
  *
  * @param cl 给定的commitlog(json形式)
  *
+ * @param key 给定的解密密钥
  */
-void restoreTo(const fs::path& dst, const std::string& uuid) {
+void restoreTo(
+  const fs::path& dst,
+  const std::string& uuid,
+  const std::string& key
+) {
   // log文件地址
   // ? 待更改
   fs::path src = "~/.zip/commit.log";
@@ -27,9 +33,26 @@ void restoreTo(const fs::path& dst, const std::string& uuid) {
   Json::Value cl = getCommitLogById(cls, uuid);
 
   // 创建指定的目录
-  fs::create_directories(dst);
+  if (src.has_parent_path()) {
+    fs::create_directories(src.parent_path());
+  }
 
   // todo: 解密
+
+  // 解密
+  if (cl["isEncrypt"].asBool()) {
+    try {
+      AESEncryptor decryptor(key);
+
+      decryptor.decryptFile(cl["storagePath"].asString(), dst);
+    } catch (std::exception& e) {
+      throw std::runtime_error(
+        "Error occurred when trying to decrypt, its uuid is " + uuid +
+        ", because " + std::string(e.what())
+      );
+    }
+  }
+
   // todo: 解压缩
 
   // 解包
@@ -40,7 +63,8 @@ void restoreTo(const fs::path& dst, const std::string& uuid) {
     unpackArchive(fs::path(cl["storagePath"].asString()), dst);
   } catch (std::exception& e) {
     throw std::runtime_error(
-      "Error occurred when trying to unpack " + std::string(e.what())
+      "Error occurred when trying to unpack, its uuid is " + uuid +
+      ", because " + std::string(e.what())
     );
   }
 }

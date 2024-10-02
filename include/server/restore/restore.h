@@ -12,7 +12,11 @@ namespace zipfiles::server {
  * * restore
  *
  */
-void restoreTo(const fs::path& dst, const std::string& uuid);
+void restoreTo(
+  const fs::path& dst,
+  const std::string& uuid,
+  const std::string& key
+);
 
 /**
  * * commit log

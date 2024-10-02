@@ -13,7 +13,11 @@ namespace zipfiles::server {
  * * backup
  *
  */
-void backupFiles(const std::vector<fs::path>& files, const Json::Value& cl);
+void backupFiles(
+  const std::vector<fs::path>& files,
+  const Json::Value& cl,
+  const std::string& key
+);
 
 /**
  * * commit log
