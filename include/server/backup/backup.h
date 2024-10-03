@@ -1,6 +1,7 @@
 #ifndef ZIPFILES_SERVER_BACKUP_H
 #define ZIPFILES_SERVER_BACKUP_H
 
+#include <cstdint>
 #include <filesystem>
 #include <vector>
 #include "json/value.h"
@@ -18,6 +19,10 @@ void backupFiles(
   const Json::Value& cl,
   const std::string& key
 );
+
+std::vector<uint8_t> readFile(const fs::path& filepath);
+
+void writeFile(const fs::path& filepath, const std::vector<uint8_t>& data);
 
 /**
  * * commit log

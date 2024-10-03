@@ -1,9 +1,12 @@
+#include <cstdint>
 #include <exception>
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>
+#include <vector>
 #include "json/reader.h"
 #include "json/value.h"
+#include "server/backup/backup.h"
 #include "server/crypto/crypto.h"
 #include "server/pack/unpack.h"
 #include "server/restore/restore.h"
@@ -32,19 +35,24 @@ void restoreTo(
 
   Json::Value cl = getCommitLogById(cls, uuid);
 
-  // 创建指定的目录
-  if (src.has_parent_path()) {
-    fs::create_directories(src.parent_path());
-  }
+  std::vector<uint8_t> processedData;
 
-  // todo: 解密
+  // 读取备份文件
+  try {
+    processedData = readFile(cl["storagePath"].asString());
+  } catch (std::exception& e) {
+    throw std::runtime_error(
+      "Error occurred when trying to open target file, its uuid is " + uuid +
+      ", because " + std::string(e.what())
+    );
+  }
 
   // 解密
   if (cl["isEncrypt"].asBool()) {
     try {
       AESEncryptor decryptor(key);
 
-      decryptor.decryptFile(cl["storagePath"].asString(), dst);
+      processedData = decryptor.decryptFile(processedData);
     } catch (std::exception& e) {
       throw std::runtime_error(
         "Error occurred when trying to decrypt, its uuid is " + uuid +
@@ -54,13 +62,18 @@ void restoreTo(
   }
 
   // todo: 解压缩
+  // 解压缩
+  try {
+  } catch (std::exception& e) {
+    throw std::runtime_error(
+      "Error occurred when trying to unzip, its uuid is " + uuid +
+      ", because " + std::string(e.what())
+    );
+  }
 
   // 解包
   try {
-    // ?
-    // 如果解密和解压已经在目标目录产生了一个临时文件，那么src参数就是那个临时文件的路径
-    // 但是这里还没有确定具体逻辑
-    unpackArchive(fs::path(cl["storagePath"].asString()), dst);
+    unpackFiles(processedData, dst);
   } catch (std::exception& e) {
     throw std::runtime_error(
       "Error occurred when trying to unpack, its uuid is " + uuid +

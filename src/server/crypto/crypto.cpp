@@ -1,32 +1,44 @@
+#include <crypto++/filters.h>
 #include <cryptopp/aes.h>
 #include <cryptopp/files.h>
 #include <cryptopp/hex.h>
 #include <cryptopp/modes.h>
 #include <cryptopp/osrng.h>
-#include <memory>
+#include <cstdint>
 #include <string>
+#include <vector>
 #include "server/crypto/crypto.h"
 
 using CryptoPP::AES;
 using CryptoPP::AutoSeededRandomPool;
 using CryptoPP::byte;
 using CryptoPP::CBC_Mode;
-using CryptoPP::FileSink;
-using CryptoPP::FileSource;
-using CryptoPP::Redirector;
+using CryptoPP::HashFilter;
+using CryptoPP::HexEncoder;
+using CryptoPP::SHA256;
 using CryptoPP::StreamTransformationFilter;
+using CryptoPP::StringSink;
+using CryptoPP::StringSource;
+using CryptoPP::VectorSink;
 
 namespace zipfiles::server {
 
-AESEncryptor::AESEncryptor(const std::string& key) : key(key) {}
+AESEncryptor::AESEncryptor(const std::string& key) : key(generateKey(key)) {}
 
-void AESEncryptor::encryptFile(
-  const std::string& inputFilePath,
-  const std::string& outputFilePath
+std::string AESEncryptor::generateKey(const std::string& rawKey) {
+  SHA256 hash;
+  std::string digest;
+  StringSource ss(
+    rawKey, true, new HashFilter(hash, new HexEncoder(new StringSink(digest)))
+  );
+  return digest.substr(0, 32);  // 取前 32 字节作为密钥
+}
+
+std::vector<uint8_t> AESEncryptor::encryptFile(
+  const std::vector<uint8_t>& inputData
 ) {
-  std::string tempOutputFilePath = outputFilePath + ".tmp";
-
   try {
+    std::vector<uint8_t> outputData;
     std::array<byte, AES::BLOCKSIZE> iv{};
     AutoSeededRandomPool prng;
     prng.GenerateBlock(iv.data(), iv.size());
@@ -35,19 +47,15 @@ void AESEncryptor::encryptFile(
       reinterpret_cast<byte*>(key.data()), key.size(), iv.data()
     );
 
-    FileSink file(tempOutputFilePath.c_str());
-    file.Put(iv.data(), iv.size());  // 写入 IV
+    // 将 IV 添加到输出数据的开头
+    outputData.insert(outputData.end(), iv.begin(), iv.end());
 
-    FileSource temp(
-      inputFilePath.c_str(), true,
-      new StreamTransformationFilter(encryption, new Redirector(file))
+    StringSource ss(
+      inputData.data(), inputData.size(), true,
+      new StreamTransformationFilter(encryption, new VectorSink(outputData))
     );
 
-    // 替换原文件
-    if (std::rename(tempOutputFilePath.c_str(), outputFilePath.c_str()) != 0) {
-      throw std::runtime_error("Failed to rename temporary file to output file"
-      );
-    }
+    return outputData;
   } catch (const CryptoPP::Exception& e) {
     throw std::runtime_error("Encryption failed, " + std::string(e.what()));
   } catch (const std::exception& e) {
@@ -55,43 +63,36 @@ void AESEncryptor::encryptFile(
   }
 }
 
-void AESEncryptor::decryptFile(
-  const std::string& inputFilePath,
-  const std::string& outputFilePath
+std::vector<uint8_t> AESEncryptor::decryptFile(
+  const std::vector<uint8_t>& inputData
 ) {
-  std::string tempOutputFilePath = outputFilePath + ".tmp";
-
   try {
+    std::vector<uint8_t> outputData;
     std::array<byte, AES::BLOCKSIZE> iv{};
 
-    FileSource file(inputFilePath.c_str(), false);
-    file.Pump(iv.size());  // 读取 IV
-    file.Get(iv.data(), iv.size());
+    // 确保输入数据至少包含一个块大小的 IV
+    if (inputData.size() < AES::BLOCKSIZE) {
+      throw std::runtime_error("Data too short");
+    }
+
+    // 提取 IV
+    std::copy(
+      inputData.begin(), inputData.begin() + AES::BLOCKSIZE, iv.begin()
+    );
 
     CBC_Mode<AES>::Decryption decryption(
       reinterpret_cast<byte*>(key.data()), key.size(), iv.data()
     );
 
-    file.Attach(new StreamTransformationFilter(
-      decryption, new FileSink(tempOutputFilePath.c_str())
-    ));
+    StringSource ss(
+      inputData.data() + AES::BLOCKSIZE, inputData.size() - AES::BLOCKSIZE,
+      true,
+      new StreamTransformationFilter(decryption, new VectorSink(outputData))
+    );
 
-    // !使用智能指针会segment fault: double free or corruption
-    // auto fileSink = std::make_shared<FileSink>(tempOutputFilePath.c_str());
-    // auto filter =
-    //   std::make_shared<StreamTransformationFilter>(decryption,
-    //   fileSink.get());
-
-    // file.Attach(filter.get());
-    file.PumpAll();
-
-    // 替换原文件
-    if (std::rename(tempOutputFilePath.c_str(), outputFilePath.c_str()) != 0) {
-      throw std::runtime_error("Failed to rename temporary file to output file"
-      );
-    }
+    return outputData;
   } catch (const CryptoPP::Exception& e) {
-    throw std::runtime_error("Encryption failed, " + std::string(e.what()));
+    throw std::runtime_error("Failed to decrypt, " + std::string(e.what()));
   } catch (const std::exception& e) {
     throw std::runtime_error("An error occurred, " + std::string(e.what()));
   }
