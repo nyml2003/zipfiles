@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace zipfiles::server {
+namespace zipfiles::server::LZ77 {
 
 class LZ77 {
  private:
@@ -37,12 +37,12 @@ class LZ77 {
     std::vector<uint8_t>& literal_length_alphabet,
     std::vector<uint16_t>& distance_alphabet
   )
-    : lc_alphabet(literal_length_alphabet), dist_alphabet(distance_alphabet){};
+    : lc_alphabet(literal_length_alphabet), dist_alphabet(distance_alphabet) {};
 
   int encode(std::vector<uint8_t>& input_buffer);
 
   void decode(std::vector<uint8_t>& output_buffer);
 };
-}  // namespace zipfiles::server
+}  // namespace zipfiles::server::LZ77
 
 #endif  // ZIPFILES_INCLUDE_LZ77_H

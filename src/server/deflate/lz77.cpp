@@ -1,7 +1,8 @@
 #include <cstddef>
+
 #include "server/deflate/lz77.h"
 
-namespace zipfiles::server {
+namespace zipfiles::server::LZ77 {
 
 constexpr int WSIZE = 1 << 15;                            // window size
 constexpr int MAX_MATCH = 258;                            // max match length
@@ -123,7 +124,8 @@ int LZ77::encode(std::vector<uint8_t>& input_buffer) {
     shift(hash_head);
 
     match_length = 0;
-    if (hash_head && strstart - hash_head <= MAX_DIST && strstart <= WINDOW_SIZE - MIN_LOOKAHEAD) {
+    if (hash_head && strstart - hash_head <= MAX_DIST &&
+        strstart <= WINDOW_SIZE - MIN_LOOKAHEAD) {
       match_length = std::min(max_match(hash_head), lookahead);
     }
     if (match_length < MIN_MATCH) {
@@ -163,4 +165,4 @@ void LZ77::decode(std::vector<uint8_t>& output_buffer) {
   }
 }
 
-}  // namespace zipfiles::server
+}  // namespace zipfiles::server::LZ77

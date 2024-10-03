@@ -96,13 +96,14 @@
     "clangd.path": "/usr/bin/clangd-18",
     "clangd.checkUpdates": true,
     "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/build",
         "--background-index",
         "-j=8",
         "--clang-tidy",
         "--enable-config"
     ],
     "[cpp]": {
-        "editor.defaultFormatter": "xaver.clang-format"
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
     },
     "[dockerfile]": {
         "editor.defaultFormatter": "ms-azuretools.vscode-docker"
