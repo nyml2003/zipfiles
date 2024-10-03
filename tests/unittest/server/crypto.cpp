@@ -7,78 +7,48 @@ namespace zipfiles::server {
 class AESEncryptorTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    // Create a sample input file
-    std::ofstream inputFile(inputFilePath);
-    inputFile << "This is a test file for encryption.";
-    inputFile.close();
+    key = "testkey123451250p8asd";
+    encryptor = std::make_unique<AESEncryptor>(key);
   }
 
-  void TearDown() override {
-    // Clean up files
-    std::remove(inputFilePath.c_str());
-    std::remove(encryptedFilePath.c_str());
-    std::remove(decryptedFilePath.c_str());
-  }
-
-  const std::string key = "0123456789abcdef";  // 16-byte key for AES-128
-  const std::string inputFilePath = "test_input.txt";
-  const std::string encryptedFilePath = "test_encrypted.txt";
-  const std::string decryptedFilePath = "test_decrypted.txt";
+  std::string key;
+  std::unique_ptr<AESEncryptor> encryptor;
 };
 
-TEST_F(AESEncryptorTest, EncryptFile) {
-  AESEncryptor encryptor(key);
-  EXPECT_NO_THROW(encryptor.encryptFile(inputFilePath, encryptedFilePath));
+TEST_F(AESEncryptorTest, EncryptDecrypt) {
+  std::vector<uint8_t> inputData = {'H', 'e', 'l', 'l', 'o', ' ',
+                                    'W', 'o', 'r', 'l', 'd'};
+  std::vector<uint8_t> encryptedData = encryptor->encryptFile(inputData);
+  std::vector<uint8_t> decryptedData = encryptor->decryptFile(encryptedData);
 
-  // Check if the encrypted file exists
-  std::ifstream encryptedFile(encryptedFilePath);
-  EXPECT_TRUE(encryptedFile.good());
+  EXPECT_EQ(inputData, decryptedData);
 }
 
-TEST_F(AESEncryptorTest, DecryptFile) {
-  AESEncryptor encryptor(key);
-  encryptor.encryptFile(inputFilePath, encryptedFilePath);
-  EXPECT_NO_THROW(encryptor.decryptFile(encryptedFilePath, decryptedFilePath));
+TEST_F(AESEncryptorTest, EncryptDifferentOutputs) {
+  std::vector<uint8_t> inputData = {'H', 'e', 'l', 'l', 'o', ' ',
+                                    'W', 'o', 'r', 'l', 'd'};
+  std::vector<uint8_t> encryptedData1 = encryptor->encryptFile(inputData);
+  std::vector<uint8_t> encryptedData2 = encryptor->encryptFile(inputData);
 
-  // Check if the decrypted file exists
-  std::ifstream decryptedFile(decryptedFilePath);
-  EXPECT_TRUE(decryptedFile.good());
-
-  // Check if the decrypted content matches the original content
-  std::ifstream originalFile(inputFilePath);
-  std::string originalContent(
-    (std::istreambuf_iterator<char>(originalFile)),
-    std::istreambuf_iterator<char>()
-  );
-  std::string decryptedContent(
-    (std::istreambuf_iterator<char>(decryptedFile)),
-    std::istreambuf_iterator<char>()
-  );
-  EXPECT_EQ(originalContent, decryptedContent);
+  EXPECT_NE(encryptedData1, encryptedData2);
 }
 
-TEST_F(AESEncryptorTest, EncryptAndDecryptFile) {
-  AESEncryptor encryptor(key);
-  encryptor.encryptFile(inputFilePath, encryptedFilePath);
-  encryptor.decryptFile(encryptedFilePath, decryptedFilePath);
+TEST_F(AESEncryptorTest, DecryptInvalidData) {
+  std::vector<uint8_t> invalidData = {'I', 'n', 'v', 'a', 'l', 'i', 'd'};
+  EXPECT_THROW(encryptor->decryptFile(invalidData), std::runtime_error);
+}
 
-  // Check if the decrypted content matches the original content
-  std::ifstream originalFile(inputFilePath);
-  std::ifstream decryptedFile(decryptedFilePath);
-  std::string originalContent(
-    (std::istreambuf_iterator<char>(originalFile)),
-    std::istreambuf_iterator<char>()
-  );
-  std::string decryptedContent(
-    (std::istreambuf_iterator<char>(decryptedFile)),
-    std::istreambuf_iterator<char>()
-  );
-  EXPECT_EQ(originalContent, decryptedContent);
+TEST_F(AESEncryptorTest, DecryptWithWrongKey) {
+  std::vector<uint8_t> inputData = {'H', 'e', 'l', 'l', 'o', ' ',
+                                    'W', 'o', 'r', 'l', 'd'};
+  std::vector<uint8_t> encryptedData = encryptor->encryptFile(inputData);
+
+  // 使用不同的密钥创建一个新的 AESEncryptor 实例
+  std::string wrongKey = "wrongkey";
+  AESEncryptor wrongEncryptor(wrongKey);
+
+  // 尝试使用错误的密钥解密数据，应该抛出运行时错误
+  EXPECT_THROW(wrongEncryptor.decryptFile(encryptedData), std::runtime_error);
 }
 
 }  // namespace zipfiles::server
-
-int main(int argc, char** argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
