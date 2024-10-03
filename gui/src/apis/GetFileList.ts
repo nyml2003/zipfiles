@@ -12,3 +12,14 @@ export interface File {
   name: string;
   type: FileType;
 }
+
+export interface Filter {
+  type: FileType;
+  size: {
+    min: number;
+    max: number;
+  };
+  owner: string;
+  group: string;
+}
+                                        

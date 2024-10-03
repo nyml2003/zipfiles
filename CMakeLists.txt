@@ -14,11 +14,6 @@ set(CMAKE_CXX_FLAGS_MINSIZEREL "-O3 -DNDEBUG")
 # 设置编译器为clang
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
-# 集成clang-tidy
-find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
-if(CLANG_TIDY_EXE)
-    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
-endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
 set(ZIPFILES_HEADER_DIR ${CMAKE_SOURCE_DIR}/include) # 头文件目录
 set(ZIPFILES_SOURCE_DIR ${CMAKE_SOURCE_DIR}/src) # 源文件目录
@@ -44,8 +39,6 @@ include_directories(${ZIPFILES_HEADER_DIR})
 ############################################
 
 # 全局
-file(GLOB ZIPFILES_HEADER_FILES ${ZIPFILES_HEADER_DIR}/*.h)
-file(GLOB ZIPFILES_SOURCE_FILES ${ZIPFILES_SOURCE_DIR}/*.cpp)
 set(ZIPFILES_TEST_DIR ${CMAKE_SOURCE_DIR}/tests) # 测试目录
 set(ZIPFILES_UNIT_TEST_DIR ${ZIPFILES_TEST_DIR}/unittest) # 单元测试目录
 set(ZIPFILES_DIST_DIR ${CMAKE_SOURCE_DIR}/gui/dist)
@@ -94,7 +87,6 @@ set(ZIPFILES_MOCK_SERVER_ENTRY ${ZIPFILES_TEST_DIR}/mock/mock.cpp)
 # 服务端打包
 add_executable(
     server
-    ${ZIPFILES_SOURCE_FILES}
     ${ZIPFILES_MP_SOURCE_FILES}
     ${ZIPFILES_SERVER_SOURCE_FILES}
     ${ZIPFILES_SERVER_ENTRY}
@@ -115,7 +107,6 @@ target_link_libraries(
 
 add_executable(
     client
-    ${ZIPFILES_SOURCE_FILES}
     ${ZIPFILES_MP_SOURCE_FILES}
     ${ZIPFILES_CLIENT_SOURCE_FILES}
     ${ZIPFILES_CLINET_ENTRY}
@@ -145,7 +136,6 @@ install(FILES ${ZIPFILES_CLIENT_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR})
 add_executable(
     mock
     ${ZIPFILES_MOCK_SERVER_ENTRY}
-    ${ZIPFILES_SOURCE_FILES}
     ${ZIPFILES_MP_SOURCE_FILES}
 
 )
@@ -188,13 +178,10 @@ endforeach()
 # 源码格式化
 add_custom_target(
     CPP_FORMAT
-    COMMAND clang-format
-    -i
-    -style=file
-    ${ZIPFILES_HEADER_FILES}
-    ${ZIPFILES_SOURCE_FILES}
+    COMMAND clang-format -i -style=file -assume-filename=${CMAKE_SOURCE_DIR}/.clang-format ${ZIPFILES_HEADER_FILES} $ ${ZIPFILES_CLIENT_SOURCE_FILES} ${ZIPFILES_MP_SOURCE_FILES} ${ZIPFILES_SERVER_SOURCE_FILES} ${ZIPFILES_SERVER_UNIT_TEST_FILES} ${ZIPFILES_MOCK_SERVER_ENTRY}
     COMMENT "Formatting source files"
 )
+
 
 # 计算代码行数
 add_custom_target(
@@ -206,3 +193,17 @@ add_custom_target(
     -type f -name "*.h" -o -name "*.cpp" -o -name "*.ts" -o -name "*.tsx" | xargs wc -l
     COMMENT "Counting lines of code"
 )
+
+find_program(CLANGD clangd)
+
+if(CLANGD)
+    add_custom_target(RUN_CLANGD
+        COMMAND ${CLANGD} --compile-commands-dir=${CMAKE_BINARY_DIR} ${ZIPFILES_HEADER_FILES} ${ZIPFILES_HEADER_FILES}
+        COMMENT "Running clangd and collecting errors"
+    )
+else()
+    message(WARNING "clangd not found, skipping RUN_CLANGD target")
+endif()
+
+
+

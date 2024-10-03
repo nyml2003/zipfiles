@@ -2,6 +2,7 @@
     "clang-format.style": "file",
     "clang-format.assumeFilename": "${workspaceFolder}/.clang-format",
     "clang-format.executable": "/usr/bin/clang-format",
+    "clang-format.fallbackStyle": "Chromium",
     "files.associations": {
         "*.cu": "cpp",
         "*.css": "css",
@@ -93,7 +94,7 @@
     "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
     "editor.formatOnSave": true,
     "C_Cpp.intelliSenseEngine": "disabled",
-    "clangd.path": "/usr/bin/clangd-18",
+    "clangd.path": "/usr/bin/clangd",
     "clangd.checkUpdates": true,
     "clangd.arguments": [
         "--background-index",
@@ -112,5 +113,8 @@
     },
     "[jsonc]": {
         "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[yaml]": {
+        "editor.defaultFormatter": "redhat.vscode-yaml"
     },
 }

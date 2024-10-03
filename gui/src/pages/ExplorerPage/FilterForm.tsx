@@ -1,114 +1,102 @@
-import React, { useState } from 'react';
-import {
-  Button,
-  Cascader,
-  DatePicker,
-  Form,
-  Input,
-  InputNumber,
-  Mentions,
-  Select,
-  TreeSelect,
-  Segmented,
-} from 'antd';
-import type { FormProps } from 'antd';
+import React from 'react';
+import { Button, Form, Input, InputNumber, Mentions, Select, Space } from 'antd';
+import styles from './index.module.less';
+import { FileType, Filter } from '@/types';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/stores/store';
+import { updateFilter } from '@/stores/file/reducer';
 
-const { RangePicker } = DatePicker;
-
-const formItemLayout = {
-  labelCol: {
-    xs: { span: 24 },
-    sm: { span: 6 },
-  },
-  wrapperCol: {
-    xs: { span: 24 },
-    sm: { span: 14 },
-  },
-};
+const fileTypeOptions = [
+  { label: '文件', value: FileType.Regular },
+  { label: '文件夹', value: FileType.Directory },
+  { label: '链接', value: FileType.Symlink },
+  { label: '块设备', value: FileType.Block },
+  { label: '字符设备', value: FileType.Character },
+  { label: 'FIFO', value: FileType.Fifo },
+  { label: 'Socket', value: FileType.Socket },
+];
 
 const FilterForm: React.FC = () => {
-  const [componentVariant, setComponentVariant] = useState<FormProps['variant']>('filled');
+  const [form] = Form.useForm();
+  const filter = useSelector((state: RootState) => state.file.filter);
+  const dispatch = useDispatch();
 
-  const onFormVariantChange = ({ variant }: { variant: FormProps['variant'] }) => {
-    setComponentVariant(variant);
+  const onReset = () => {
+    form.resetFields();
+    dispatch(updateFilter({}));
   };
+
+  const validateSize = (_: any, value: any) => {
+    const { min, max } = value || {};
+    if (min !== undefined && max !== undefined && min > max) {
+      return Promise.reject(new Error('最小值不能大于最大值'));
+    }
+    return Promise.resolve();
+  };
+
   return (
-    <Form
-      {...formItemLayout}
-      onValuesChange={onFormVariantChange}
-      variant={componentVariant}
-      style={{ maxWidth: 600 }}
-      initialValues={{ variant: componentVariant }}>
-      <Form.Item label='Form variant' name='variant'>
-        <Segmented options={['outlined', 'filled', 'borderless']} />
-      </Form.Item>
+    <div className={`${styles['fade-in-down']} p-4 max-w-3xl`}>
+      <Form
+        labelCol={{ span: 4 }}
+        wrapperCol={{ span: 14 }}
+        layout='horizontal'
+        variant='outlined'
+        scrollToFirstError
+        form={form}
+        onFinish={(values: Filter) => {
+          dispatch(updateFilter(values));
+        }}>
+        <Form.Item
+          label='文件类型'
+          name='type'
+          rules={[{ required: false, message: 'Please select file type!' }]}>
+          <Select options={fileTypeOptions} />
+        </Form.Item>
+        <Form.Item label='文件大小' name='size' rules={[{ validator: validateSize }]}>
+          <Input.Group compact>
+            <Form.Item name={['size', 'min']} noStyle>
+              <InputNumber style={{ width: '40%' }} placeholder='最小值' min={0} />
+            </Form.Item>
+            <Input
+              style={{
+                width: '20%',
+                textAlign: 'center',
+              }}
+              placeholder='~'
+              disabled
+            />
+            <Form.Item name={['size', 'max']} noStyle>
+              <InputNumber style={{ width: '40%' }} placeholder='最大值' min={0} />
+            </Form.Item>
+          </Input.Group>
+        </Form.Item>
 
-      <Form.Item label='Input' name='Input' rules={[{ required: true, message: 'Please input!' }]}>
-        <Input />
-      </Form.Item>
+        <Form.Item
+          label='所有者'
+          name='owner'
+          rules={[{ required: false, message: 'Please input owner!' }]}>
+          <Mentions rows={1} placeholder='输入用户名' />
+        </Form.Item>
 
-      <Form.Item
-        label='InputNumber'
-        name='InputNumber'
-        rules={[{ required: true, message: 'Please input!' }]}>
-        <InputNumber style={{ width: '100%' }} />
-      </Form.Item>
+        <Form.Item
+          label='组'
+          name='group'
+          rules={[{ required: false, message: 'Please input group!' }]}>
+          <Mentions rows={1} placeholder='输入组名' />
+        </Form.Item>
 
-      <Form.Item
-        label='TextArea'
-        name='TextArea'
-        rules={[{ required: true, message: 'Please input!' }]}>
-        <Input.TextArea />
-      </Form.Item>
-
-      <Form.Item
-        label='Mentions'
-        name='Mentions'
-        rules={[{ required: true, message: 'Please input!' }]}>
-        <Mentions />
-      </Form.Item>
-
-      <Form.Item
-        label='Select'
-        name='Select'
-        rules={[{ required: true, message: 'Please input!' }]}>
-        <Select />
-      </Form.Item>
-
-      <Form.Item
-        label='Cascader'
-        name='Cascader'
-        rules={[{ required: true, message: 'Please input!' }]}>
-        <Cascader />
-      </Form.Item>
-
-      <Form.Item
-        label='TreeSelect'
-        name='TreeSelect'
-        rules={[{ required: true, message: 'Please input!' }]}>
-        <TreeSelect />
-      </Form.Item>
-
-      <Form.Item
-        label='DatePicker'
-        name='DatePicker'
-        rules={[{ required: true, message: 'Please input!' }]}>
-        <DatePicker />
-      </Form.Item>
-
-      <Form.Item
-        label='RangePicker'
-        name='RangePicker'
-        rules={[{ required: true, message: 'Please input!' }]}>
-        <RangePicker />
-      </Form.Item>
-
-      <Form.Item wrapperCol={{ offset: 6, span: 16 }}>
-        <Button type='primary' htmlType='submit'>
-          Submit
-        </Button>
-      </Form.Item>
-    </Form>
+        <Form.Item wrapperCol={{ offset: 4, span: 14 }}>
+          <Space>
+            <Button type='primary' htmlType='submit'>
+              Submit
+            </Button>
+            <Button htmlType='button' onClick={onReset}>
+              Reset
+            </Button>
+          </Space>
+        </Form.Item>
+      </Form>
+    </div>
   );
 };
 

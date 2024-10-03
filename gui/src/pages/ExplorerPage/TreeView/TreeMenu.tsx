@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useCallback, Key } from 'react';
-import { Button, Tree, TreeProps } from 'antd';
+import React, { useState, useEffect, Key } from 'react';
+import { Tree, TreeProps } from 'antd';
 import useApi from '@/hooks/useApi';
 import { GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
 import { ApiEnum } from '@/apis';
-import { ArrowsAltOutlined, DownOutlined } from '@ant-design/icons';
-import LoadingSpinner from '@/components/LoadingSpinner';
-import { FileType, FileTypeToString, LoadingState } from '@/types';
-import NoMoreData from '@/components/NoMoreData';
+import { DownOutlined } from '@ant-design/icons';
+import { FileType, LoadingState } from '@/types';
 import LoadingWrapper from '@/components/LoadingWrapper';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/stores/store';
+import { updateCurrentFile, updateCurrentPath, updateSelectedFile } from '@/stores/file/reducer';
 const { DirectoryTree } = Tree;
 
 interface DataNode {
@@ -17,29 +18,15 @@ interface DataNode {
   children?: DataNode[];
 }
 
-interface Props {
-  onSelect: (path: string[]) => void;
-  currentPath: string;
-  setCurrentPath: (path: string) => void;
-  setCurrentFile: (file: string) => void;
-  refresh: boolean;
-  setRefresh: (refresh: boolean) => void;
-}
-
-const TreeMenu: React.FC<Props> = ({
-  onSelect,
-  currentPath,
-  setCurrentPath,
-  refresh,
-  setRefresh,
-  setCurrentFile,
-}) => {
+const TreeMenu = () => {
   const api = useApi();
   const [treeData, setTreeData] = useState<DataNode[]>([]);
   const [checkedKeys, setCheckedKeys] = useState<Key[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Done);
   const [lastClickTime, setLastClickTime] = useState<number>(0);
+  const currentPath = useSelector((state: RootState) => state.file.currentPath);
+  const dispatch = useDispatch();
   useEffect(() => {
     // 清空已有数据
     setTreeData([]);
@@ -49,15 +36,7 @@ const TreeMenu: React.FC<Props> = ({
     setCheckedKeys([]);
     // 加载新的数据
     handleGetFileList(currentPath);
-    setCurrentFile(currentPath);
   }, [currentPath]);
-
-  useEffect(() => {
-    if (refresh) {
-      setRefresh(false);
-      handleGetFileList(currentPath);
-    }
-  }, [refresh]);
 
   const handleGetFileList = async (path: string, needLoading: boolean = true) => {
     if (needLoading) setLoading(LoadingState.Loading);
@@ -77,10 +56,12 @@ const TreeMenu: React.FC<Props> = ({
       setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
       // 如果当前选中的文件夹是checkedKeys中的一部分，就把新的文件夹也加入到checkedKeys中
       if (checkedKeys.includes(path)) {
-        onSelect([
-          ...checkedKeys.map(key => key.toString()),
-          ...newTreeData.map(item => item.key.toString()),
-        ]);
+        dispatch(
+          updateSelectedFile([
+            ...checkedKeys.map(key => key.toString()),
+            ...newTreeData.map(item => item.key.toString()),
+          ]),
+        );
       }
     } catch (err) {
       console.log('获取文件列表失败: ', err);
@@ -124,17 +105,17 @@ const TreeMenu: React.FC<Props> = ({
 
   const handleCheck: TreeProps['onCheck'] = (checkedKeysValue, info) => {
     setCheckedKeys(checkedKeysValue as Key[]);
-    onSelect(info.checkedNodes.map(node => node.key.toString()));
+    dispatch(updateSelectedFile((checkedKeysValue as Key[]).map(key => key.toString())));
   };
 
   const handleSelect: TreeProps['onSelect'] = (selectedKeys, info) => {
     const currentTime = new Date().getTime();
     if (currentTime - lastClickTime < 300) {
       if (!info.node.isLeaf) {
-        setCurrentPath(selectedKeys[0].toString());
+        dispatch(updateCurrentPath(selectedKeys[0].toString()));
       }
     } else {
-      setCurrentFile(selectedKeys[0].toString());
+      dispatch(updateCurrentFile(selectedKeys[0].toString()));
     }
     setLastClickTime(currentTime);
   };
@@ -156,7 +137,7 @@ const TreeMenu: React.FC<Props> = ({
           onSelect={handleSelect}
           expandedKeys={expandedKeys}
           onExpand={setExpandedKeys}
-          className='whitespace-nowrap bg-gray-100 flex-1 select-none'
+          className='whitespace-nowrap bg-gray-100 flex-1'
         />
       }
     />

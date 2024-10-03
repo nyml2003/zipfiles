@@ -12,8 +12,6 @@ RUN apt-get update && apt-get install -y \
     gdb \
     vim \
     libgtest-dev \
-    clang \
-    clang-format \
     tree \
     sudo \
     wget \
@@ -31,14 +29,24 @@ RUN apt-get update && apt-get install -y \
     software-properties-common \
     gnupg \
     liblog4cpp5-dev \
-    libcrypto++-dev
-
+    libcrypto++-dev 
 
 RUN wget https://apt.llvm.org/llvm.sh && \
     chmod +x llvm.sh && \
     ./llvm.sh 18 && \
+    apt-get update && apt-get install -y clang-18 clang-tools-18 clangd-18 clang-format-18 clang-tidy-18 lldb-18 lld-18 libc++-18-dev libc++abi-18-dev libclang-18-dev libclang-common-18-dev libclang-cpp18 libclang1-18 liblldb-18-dev libomp-18-dev && \
     rm llvm.sh && \
     rm -rf /var/lib/apt/lists/*
+
+# 把 clang18 设置为默认的编译器
+RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100 && \
+    update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 100 && \
+    update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-18 100 && \
+    update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-18 100 && \
+    update-alternatives --install /usr/bin/clangd clangd /usr/bin/clangd-18 100 && \
+    update-alternatives --install /usr/bin/lldb lldb /usr/bin/lldb-18 100 && \
+    update-alternatives --install /usr/bin/lld lld /usr/bin/lld-18 100 
+
 
 # 复制 perf 工具
 COPY tools/perf /usr/bin/perf
@@ -47,7 +55,7 @@ COPY tools/perf /usr/bin/perf
 RUN cd /usr/src/gtest && \
     mkdir build && \
     cd build && \
-    cmake .. && \
+    cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang .. && \
     make && \
     cp lib/libgtest*.a /usr/local/lib
 

@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Divider, Radio, Table } from 'antd';
-import type { TableColumnsType, TableProps } from 'antd';
-import { FileDetail, GetFileDetailRequest } from '@/apis/GetFileDetail';
+import { Table } from 'antd';
+import type { TableColumnsType } from 'antd';
+import { FileDetail } from '@/apis/GetFileDetail';
 import { File, GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
 import useApi from '@/hooks/useApi';
 import { ApiEnum } from '@/apis';
 import { FileType, FileTypeToString } from '@/types';
 import { FileFilled, FolderFilled } from '@ant-design/icons';
 import { GetAllFileDetailsRequest, GetAllFileDetailsResponse } from '@/apis/GetAllFileDetails';
+import styles from './index.module.less';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/stores/store';
+import { handleRefresh } from '@/stores/file/reducer';
 
-interface DataType extends Partial<FileDetail> {
-  hasDetail: boolean;
-}
+interface DataType extends Partial<FileDetail> {}
 
 const columns: TableColumnsType<DataType> = [
   {
@@ -41,7 +43,11 @@ const columns: TableColumnsType<DataType> = [
     dataIndex: 'createTime',
     key: 'createTime',
     render: (text, record) => {
-      return text ? <span>{text}</span> : <span>加载中...</span>;
+      return text ? (
+        <span>{new Date(text * 1000).toLocaleString()}</span>
+      ) : (
+        <span>加载中...</span>
+      );
     },
   },
   {
@@ -49,7 +55,11 @@ const columns: TableColumnsType<DataType> = [
     dataIndex: 'updateTime',
     key: 'updateTime',
     render: (text, record) => {
-      return text ? <span>{text}</span> : <span>加载中...</span>;
+      return text ? (
+        <span>{new Date(text * 1000).toLocaleString()}</span>
+      ) : (
+        <span>加载中...</span>
+      );
     },
   },
   {
@@ -88,15 +98,10 @@ const columns: TableColumnsType<DataType> = [
   },
 ];
 
-interface TableViewProps {
-  currentPath: string;
-  refresh: boolean;
-  setRefresh: (refresh: boolean) => void;
-}
-
-const TableView: React.FC<TableViewProps> = ({ currentPath, refresh, setRefresh: setRrefresh }) => {
+const TableView: React.FC = () => {
   const api = useApi();
   const [data, setData] = useState<DataType[]>([]);
+  const currentPath = useSelector((state: RootState) => state.file.currentPath);
 
   const fetchFileList = (path: string): Promise<File[]> =>
     api
@@ -109,7 +114,6 @@ const TableView: React.FC<TableViewProps> = ({ currentPath, refresh, setRefresh:
             return {
               name: file.name,
               type: file.type,
-              hasDetail: false,
             };
           }),
         );
@@ -123,12 +127,7 @@ const TableView: React.FC<TableViewProps> = ({ currentPath, refresh, setRefresh:
         })
         .then((res: GetAllFileDetailsResponse) => {
           setData(
-            res.files.map(file => {
-              return {
-                ...file,
-                hasDetail: true,
-              };
-            }),
+            res.files
           );
         });
     });
@@ -138,19 +137,12 @@ const TableView: React.FC<TableViewProps> = ({ currentPath, refresh, setRefresh:
     fetchData(currentPath);
   }, [currentPath]);
 
-  useEffect(() => {
-    if (refresh) {
-      setRrefresh(false);
-      fetchData(currentPath);
-    }
-  }, [refresh]);
-
   return (
     <Table<DataType>
       columns={columns}
       dataSource={data}
       pagination={false}
-      className='overflow-auto'
+      className={`overflow-auto ${styles['fade-in-down']}`}
       size='small'
       rowKey={'name'}
     />

@@ -6,8 +6,8 @@ export interface GetFileDetailRequest {
 export interface FileDetail {
   name: string;
   type: FileType;
-  createTime: string;
-  updateTime: string;
+  createTime: number;
+  updateTime: number;
   size: number;
   owner: string;
   group: string;

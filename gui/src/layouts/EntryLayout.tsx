@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOutlined, HomeOutlined } from '@ant-design/icons';
+import { BookOutlined, HomeOutlined, SettingOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import { Layout, Menu, theme } from 'antd';
@@ -18,6 +18,11 @@ const headerItems: MenuProps['items'] = [
     label: '文件列表',
     icon: React.createElement(BookOutlined),
   },
+  {
+    key: 'test',
+    label: '测试',
+    icon: React.createElement(SettingOutlined),
+  },
 ];
 
 const App: React.FC = () => {
@@ -35,7 +40,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <Layout hasSider className='h-screen'>
+    <Layout hasSider className='h-screen select-none'>
       <Sider
         style={{ background: colorBgContainer }}
         breakpoint='lg'

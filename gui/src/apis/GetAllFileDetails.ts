@@ -1,13 +1,17 @@
 import { FileType } from '@/types';
+
+
+
 export interface GetAllFileDetailsRequest {
   path: string;
+
 }
 
 export interface FileDetail {
   name: string;
   type: FileType;
-  createTime: string;
-  updateTime: string;
+  createTime: number;
+  updateTime: number;
   size: number;
   owner: string;
   group: string;

@@ -20,9 +20,13 @@ const useApi: useApiType = () => {
           //   }, 2000);
           //   return;
           // }
+        //  console.log(mockApi[apiEnum](request));
           resolve(mockApi[apiEnum](request));
         }, 10);
       });
+    },
+    call: (apiEnum: ApiEnum, request: Request) => {
+      return;
     },
   };
   return api;
