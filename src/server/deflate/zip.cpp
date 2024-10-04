@@ -4,8 +4,6 @@
 
 namespace zipfiles::server {
 
-constexpr int ZIP_BLOCK_SIZE = 1 << 20;
-
 struct ZipBuffer {
   std::vector<uint8_t> ibuffer;         // input buffer
   std::vector<uint8_t> obuffer;         // output buffer

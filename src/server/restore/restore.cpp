@@ -1,15 +1,14 @@
-#include <cstdint>
+#include "server/restore/restore.h"
 #include <exception>
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>
-#include <vector>
+#include <string>
 #include "json/reader.h"
 #include "json/value.h"
 #include "server/backup/backup.h"
 #include "server/crypto/crypto.h"
-#include "server/pack/unpack.h"
-#include "server/restore/restore.h"
+#include "server/deflate/zip.h"
 
 namespace zipfiles::server {
 
@@ -35,48 +34,65 @@ void restoreTo(
 
   Json::Value cl = getCommitLogById(cls, uuid);
 
-  std::vector<uint8_t> processedData;
+  // 检查目标路径是否存在，如果不存在则创建目录
+  if (!fs::exists(dst)) {
+    fs::create_directories(dst);
+  }
+
+  // 打开输入流
+  std::string filePath = cl["storagePath"].asString();
+  std::ifstream inFile(filePath, std::ios::binary);
+  if (!inFile) {
+    throw std::runtime_error("Failed to open: " + filePath);
+  }
+
+  // 如果有加密，则读取IV
+  bool decrypt = cl["isEncrypt"].asBool();
+  std::array<CryptoPP::byte, AES::BLOCKSIZE> iv{};
+  if (decrypt) {
+    inFile.read(reinterpret_cast<char*>(iv.data()), iv.size());
+  }
+
+  // 实例化解码器
+  AESEncryptor decryptor(key);
 
   // 读取备份文件
   try {
-    processedData = readFile(cl["storagePath"].asString());
-  } catch (std::exception& e) {
-    throw std::runtime_error(
-      "Error occurred when trying to open target file, its uuid is " + uuid +
-      ", because " + std::string(e.what())
-    );
-  }
+    std::vector<uint8_t> buffer(PACK_BLOCK_SIZE);
 
-  // 解密
-  if (cl["isEncrypt"].asBool()) {
-    try {
-      AESEncryptor decryptor(key);
+    while (inFile) {
+      inFile.read(reinterpret_cast<char*>(buffer.data()), buffer.size());
+      std::streamsize bytesRead = inFile.gcount();
 
-      processedData = decryptor.decryptFile(processedData);
-    } catch (std::exception& e) {
-      throw std::runtime_error(
-        "Error occurred when trying to decrypt, its uuid is " + uuid +
-        ", because " + std::string(e.what())
-      );
+      if (bytesRead > 0) {
+        std::vector<uint8_t> data(buffer.begin(), buffer.begin() + bytesRead);
+
+        if (decrypt) {
+          data = decryptor.decryptFile(data, iv);
+        }
+
+        for (unsigned char byte : data) {
+          auto [zipFlush, unzippedData] = unzip(byte);
+          if (zipFlush) {
+            // 处理解压后的数据
+            // todo: unpack
+            // processUnzippedData(unzippedData, dst);
+            unzippedData.clear();  // 清空缓冲区
+          }
+        }
+      }
     }
-  }
 
-  // todo: 解压缩
-  // 解压缩
-  try {
+    // 处理剩余的解压数据
+    auto [zipFlush, unzippedData] = unzip(0);
+    if (zipFlush) {
+      // todo: unpack
+      // processUnzippedData(unzippedData, dst);
+      unzippedData.clear();  // 清空缓冲区
+    }
   } catch (std::exception& e) {
     throw std::runtime_error(
-      "Error occurred when trying to unzip, its uuid is " + uuid +
-      ", because " + std::string(e.what())
-    );
-  }
-
-  // 解包
-  try {
-    unpackFiles(processedData, dst);
-  } catch (std::exception& e) {
-    throw std::runtime_error(
-      "Error occurred when trying to unpack, its uuid is " + uuid +
+      "Error occurred when trying to unpack file, its uuid is " + uuid +
       ", because " + std::string(e.what())
     );
   }

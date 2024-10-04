@@ -1,25 +1,8 @@
-#include <crypto++/filters.h>
-#include <cryptopp/aes.h>
-#include <cryptopp/files.h>
-#include <cryptopp/hex.h>
-#include <cryptopp/modes.h>
-#include <cryptopp/osrng.h>
+
+#include "server/crypto/crypto.h"
 #include <cstdint>
 #include <string>
 #include <vector>
-#include "server/crypto/crypto.h"
-
-using CryptoPP::AES;
-using CryptoPP::AutoSeededRandomPool;
-using CryptoPP::byte;
-using CryptoPP::CBC_Mode;
-using CryptoPP::HashFilter;
-using CryptoPP::HexEncoder;
-using CryptoPP::SHA256;
-using CryptoPP::StreamTransformationFilter;
-using CryptoPP::StringSink;
-using CryptoPP::StringSource;
-using CryptoPP::VectorSink;
 
 namespace zipfiles::server {
 
@@ -35,20 +18,15 @@ std::string AESEncryptor::generateKey(const std::string& rawKey) {
 }
 
 std::vector<uint8_t> AESEncryptor::encryptFile(
-  const std::vector<uint8_t>& inputData
+  const std::vector<uint8_t>& inputData,
+  const std::array<CryptoPP::byte, AES::BLOCKSIZE>& iv
 ) {
   try {
     std::vector<uint8_t> outputData;
-    std::array<byte, AES::BLOCKSIZE> iv{};
-    AutoSeededRandomPool prng;
-    prng.GenerateBlock(iv.data(), iv.size());
 
     CBC_Mode<AES>::Encryption encryption(
-      reinterpret_cast<byte*>(key.data()), key.size(), iv.data()
+      reinterpret_cast<CryptoPP::byte*>(key.data()), key.size(), iv.data()
     );
-
-    // 将 IV 添加到输出数据的开头
-    outputData.insert(outputData.end(), iv.begin(), iv.end());
 
     StringSource ss(
       inputData.data(), inputData.size(), true,
@@ -64,24 +42,14 @@ std::vector<uint8_t> AESEncryptor::encryptFile(
 }
 
 std::vector<uint8_t> AESEncryptor::decryptFile(
-  const std::vector<uint8_t>& inputData
+  const std::vector<uint8_t>& inputData,
+  const std::array<CryptoPP::byte, AES::BLOCKSIZE>& iv
 ) {
   try {
     std::vector<uint8_t> outputData;
-    std::array<byte, AES::BLOCKSIZE> iv{};
-
-    // 确保输入数据至少包含一个块大小的 IV
-    if (inputData.size() < AES::BLOCKSIZE) {
-      throw std::runtime_error("Data too short");
-    }
-
-    // 提取 IV
-    std::copy(
-      inputData.begin(), inputData.begin() + AES::BLOCKSIZE, iv.begin()
-    );
 
     CBC_Mode<AES>::Decryption decryption(
-      reinterpret_cast<byte*>(key.data()), key.size(), iv.data()
+      reinterpret_cast<CryptoPP::byte*>(key.data()), key.size(), iv.data()
     );
 
     StringSource ss(

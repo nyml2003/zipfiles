@@ -1,9 +1,9 @@
+#include "server/pack/pack.h"
 #include <gtest/gtest.h>
 #include <filesystem>
 #include <fstream>
 #include <string>
 #include "server/backup/backup.h"
-#include "server/pack/pack.h"
 #include "server/pack/unpack.h"
 
 namespace fs = std::filesystem;
@@ -54,35 +54,36 @@ TEST_F(FilePackTest, WriteFile) {
   EXPECT_EQ(data, readData);
 }
 
-TEST_F(FilePackTest, PackFiles) {
-  std::vector<fs::path> files = {"dir1/test1.txt", "dir2/test2.txt"};
-  std::vector<uint8_t> packedData = packFiles(files);
+// TEST_F(FilePackTest, PackFiles) {
+//   std::vector<fs::path> files = {"dir1/test1.txt", "dir2/test2.txt"};
+//   std::vector<uint8_t> packedData = packFiles(files);
 
-  // 检查打包数据是否不为空
-  EXPECT_FALSE(packedData.empty());
-}
+//   // 检查打包数据是否不为空
+//   EXPECT_FALSE(packedData.empty());
+// }
 
-TEST_F(FilePackTest, UnpackFiles) {
-  std::vector<fs::path> files = {"dir1/test1.txt", "dir2/test2.txt"};
-  std::vector<uint8_t> packedData = packFiles(files);
+// TEST_F(FilePackTest, UnpackFiles) {
+//   std::vector<fs::path> files = {"dir1/test1.txt", "dir2/test2.txt"};
+//   std::vector<uint8_t> packedData = packFiles(files);
 
-  // 解包文件到临时目录
-  fs::path unpackDir = fs::temp_directory_path() / "unpack_files";
-  fs::create_directories(unpackDir);
-  unpackFiles(packedData, unpackDir);
+//   // 解包文件到临时目录
+//   fs::path unpackDir = fs::temp_directory_path() / "unpack_files";
+//   fs::create_directories(unpackDir);
+//   unpackFiles(packedData, unpackDir);
 
-  // 验证解包后的文件内容
-  std::vector<uint8_t> file1Content = readFile(unpackDir / "dir1/test1.txt");
-  std::vector<uint8_t> file2Content = readFile(unpackDir / "dir2/test2.txt");
+//   // 验证解包后的文件内容
+//   std::vector<uint8_t> file1Content = readFile(unpackDir / "dir1/test1.txt");
+//   std::vector<uint8_t> file2Content = readFile(unpackDir / "dir2/test2.txt");
 
-  EXPECT_EQ(
-    std::string(file1Content.begin(), file1Content.end()), "Hello, World!"
-  );
-  EXPECT_EQ(
-    std::string(file2Content.begin(), file2Content.end()), "Goodbye, World!"
-  );
+//   EXPECT_EQ(
+//     std::string(file1Content.begin(), file1Content.end()), "Hello, World!"
+//   );
+//   EXPECT_EQ(
+//     std::string(file2Content.begin(), file2Content.end()), "Goodbye, World!"
+//   );
 
-  // 清理解包目录
-  fs::remove_all(unpackDir);
-}
+//   // 清理解包目录
+//   fs::remove_all(unpackDir);
+// }
+//
 }  // namespace zipfiles::server

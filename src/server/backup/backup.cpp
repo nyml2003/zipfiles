@@ -1,14 +1,16 @@
+#include "server/backup/backup.h"
 #include <exception>
 #include <filesystem>
 #include <fstream>
+#include <ios>
 #include <log4cpp/Category.hh>
 #include <stdexcept>
 #include <vector>
 #include "json/value.h"
 #include "json/writer.h"
 #include "mp/dto.h"
-#include "server/backup/backup.h"
 #include "server/crypto/crypto.h"
+#include "server/deflate/zip.h"
 #include "server/pack/pack.h"
 #include "server/restore/restore.h"
 #include "server/tools/fsapi.h"
@@ -18,7 +20,7 @@ namespace zipfiles::server {
 /**
  * @brief 前端的直接调用接口，处理整个commit流程
  *
- * @param files 一个文件路径数组，要求是去除最近公共祖先后的相对路径
+ * @param files 一个文件路径数组，要求是绝对路径
  *
  * @param cl 一个commitlog的json对象
  *
@@ -40,9 +42,6 @@ void backupFiles(
   // 读出后保存当前视图
   Json::Value cls = readCommitLog(src);
 
-  // 经过处理的数据
-  std::vector<uint8_t> processedData;
-
   // 检查是否提交过
   if (isCommitted(cls, cl)) {
     throw std::runtime_error(
@@ -50,40 +49,100 @@ void backupFiles(
     );
   }
 
-  // 打包
-  try {
-    processedData = packFiles(files);
-  } catch (const std::exception& e) {
-    throw std::runtime_error(
-      "Error occurred when trying to pack, its uuid is " +
-      cl["uuid"].asString() + ", because " + std::string(e.what())
-    );
+  // 创建输出目录
+  std::string path = cl["storagePath"].asString();
+  fs::path dir = fs::path(path).parent_path();
+
+  if (!fs::exists(dir)) {
+    fs::create_directories(dir);
   }
 
-  // todo: 压缩
-
-  try {
-  } catch (std::exception& e) {
-    throw std::runtime_error(
-      "Error occurred when trying to compress, its uuid is " +
-      cl["uuid"].asString() + ", because " + std::string(e.what())
-    );
+  // 打开输出流
+  std::ofstream outputFile(path, std::ios::binary);
+  if (!outputFile) {
+    throw std::runtime_error("Failed to open: " + path);
   }
 
-  // todo: 加密
+  // 获取是否加密
+  bool encrypt = cl["isEncrypt"].asBool();
 
-  // 加密
-  if (cl["isEncrypt"].asBool()) {
-    try {
-      AESEncryptor encryptor(key);
+  // 实例化加密IV
+  std::array<CryptoPP::byte, AES::BLOCKSIZE> iv{};
 
-      processedData = encryptor.encryptFile(processedData);
-    } catch (std::exception& e) {
-      throw std::runtime_error(
-        "Error occurred when trying to encrypt, its uuid is " +
-        cl["uuid"].asString() + ", because " + std::string(e.what())
-      );
+  // 实例化加密类
+  AESEncryptor encryptor(key);
+
+  if (encrypt) {
+    // 如果需要加密
+    AutoSeededRandomPool prng;
+    prng.GenerateBlock(iv.data(), iv.size());
+
+    // 把IV写入文件开头，这部分不需要压缩和加密
+    outputFile.write(reinterpret_cast<const char*>(iv.data()), iv.size());
+  }
+
+  bool flush = false;
+
+  // 主循环
+  try {
+    while (true) {
+      std::vector<uint8_t> processedData{};
+
+      // 获取输出
+      auto [packFlush, packedData] = packFilesByBlock(files, flush);
+
+      // 遍历pack的obuffer
+      for (unsigned char byte : packedData) {
+        // 将pack的obuffer的每个字节都加入zip的ibuffer
+        auto [zipFlush, zippedData] = zip(byte, flush);
+
+        if (zipFlush) {
+          // 如果zip的ibuffer满，那么压缩，并输出到processedData
+          processedData.insert(
+            processedData.end(), zippedData.begin(), zippedData.end()
+          );
+          // 清空zip的obuffer
+          zippedData.clear();  // 清空缓冲区
+        }
+      }
+
+      // 当processedData不为空
+      if (!processedData.empty()) {
+        // 如果需要加密，此时则将压缩后的processedData加密
+        if (encrypt) {
+          processedData = encryptor.encryptFile(processedData, iv);
+        }
+
+        // 写入输出流
+        outputFile.write(
+          reinterpret_cast<const char*>(processedData.data()),
+          static_cast<std::streamsize>(processedData.size())
+        );
+      }
+
+      // 如果所有文件都读取完毕，并且pack的obuffer还有内容，设置 flush 为 true
+      // 下一次循环会将pack的obuffer强制输出，加入zip的ibuffer，并且zip也会强制输出obuffer
+      // (pack的obuffer是zip的ibuffer的二分之一，因此不需要担心溢出，就算溢出也会全部写入processedData)
+      // 强制输出后，packFlush为true，flush也是true，此时可以退出
+      if (!packFlush && !packedData.empty()) {
+        flush = true;
+      }
+
+      // 退出循环条件
+      if (packFlush && flush) {
+        break;
+      }
     }
+
+  } catch (std::exception& e) {
+    // 移除失败文件
+    fs::remove(path);
+    outputFile.close();
+
+    throw std::runtime_error(
+      "Error occurred when trying to pack files, its uuid is " +
+      cl["uuid"].asString() + ", because " + std::string(e.what())
+    );
   }
 
   // 生成目录文件
@@ -96,16 +155,6 @@ void backupFiles(
   } catch (std::exception& e) {
     throw std::runtime_error(
       "Error occurred when trying to write directory file, its uuid is " +
-      cl["uuid"].asString() + ", because " + std::string(e.what())
-    );
-  }
-
-  // 写文件
-  try {
-    writeFile(cl["storagePath"].asString(), processedData);
-  } catch (std::exception& e) {
-    throw std::runtime_error(
-      "Error occurred when trying to write processed file, its uuid is " +
       cl["uuid"].asString() + ", because " + std::string(e.what())
     );
   }
@@ -126,6 +175,8 @@ void backupFiles(
  * @brief 读取文件为一个字节流
  *
  * @param filepath 文件的路径
+ *
+ * ! Deprecated
  *
  */
 std::vector<uint8_t> readFile(const fs::path& filepath) {
@@ -152,6 +203,8 @@ std::vector<uint8_t> readFile(const fs::path& filepath) {
  *
  * @param data 字节流
  *
+ * ! Deprecated
+ *
  */
 void writeFile(const fs::path& filepath, const std::vector<uint8_t>& data) {
   std::ofstream file(filepath, std::ios::binary);
@@ -167,6 +220,40 @@ void writeFile(const fs::path& filepath, const std::vector<uint8_t>& data) {
   if (file.fail()) {
     throw std::runtime_error("Failed to write to file: " + filepath.string());
   }
+}
+
+/**
+ * @brief 获取一个绝对路径数组的最近公共父目录
+ *
+ * @param paths 绝对路径数组
+ *
+ * ? 是否可以用字典树优化
+ */
+
+fs::path getCommonAncestor(const std::vector<fs::path>& paths) {
+  if (paths.empty()) {
+    throw std::runtime_error("Paths array is empty");
+  }
+
+  // 初始化公共祖先为第一个路径
+  fs::path commonAncestor = paths[0];
+
+  for (const auto& path : paths) {
+    fs::path tempAncestor;
+    auto it1 = commonAncestor.begin();
+    auto it2 = path.begin();
+
+    // 比较路径的每一部分，找到公共部分
+    while (it1 != commonAncestor.end() && it2 != path.end() && *it1 == *it2) {
+      tempAncestor /= *it1;
+      ++it1;
+      ++it2;
+    }
+
+    commonAncestor = tempAncestor;
+  }
+
+  return commonAncestor;
 }
 
 /**
