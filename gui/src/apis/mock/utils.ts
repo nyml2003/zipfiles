@@ -1,7 +1,10 @@
-import { FileType } from '@/types';
+import { FileType, Filter } from '@/types';
 import Mock from 'mockjs';
 import { File } from '../GetFileList';
 import { FileDetail } from '../GetFileDetail';
+import { filterBy } from '@/utils';
+
+const MockFileNumber: [number, number] = [10, 20];
 
 export function pickIndex(choices: any[], _weights?: number[]): number {
   if (!_weights) {
@@ -49,7 +52,9 @@ export let cachedFileList: MockFileDetail[] = [
   {
     name: '/',
     type: FileType.Directory,
-    children: Array.from({ length: randomNumber(15, 20) }).map(() => generateRandomFileDetail('/')),
+    children: Array.from({ length: randomNumber(...MockFileNumber) }).map(() =>
+      generateRandomFileDetail('/'),
+    ),
     createTime: new Date().getTime() / 1000,
     updateTime: new Date().getTime() / 1000,
     size: 0,
@@ -85,7 +90,12 @@ export function generateRandomFileDetail(path = '/'): MockFileDetail {
   };
 }
 // 递归查找函数
-export function findFilesByPath(files: MockFileDetail[], targetPath: string, currentPath: string): MockFileDetail[] | null {
+export function findFilesByPath(
+  files: MockFileDetail[],
+  targetPath: string,
+  currentPath: string,
+  filter?: Partial<Filter>,
+): MockFileDetail[] | null {
   for (const file of files) {
     function calPath() {
       if (currentPath === '/' && file.name === '/') return '/';
@@ -98,12 +108,18 @@ export function findFilesByPath(files: MockFileDetail[], targetPath: string, cur
     const newCurrentPath = calPath();
     if (newCurrentPath === targetPath) {
       if (!file.children) {
-        file.children = Array.from({ length: randomNumber(15, 30) }, () => generateRandomFileDetail(newCurrentPath));
+        file.children = Array.from({ length: randomNumber(...MockFileNumber) }, () =>
+          generateRandomFileDetail(newCurrentPath),
+        );
       }
-      return file.children;
+      const result = file.children;
+      if (filter && Object.keys(filter).length) {
+        return filterBy(result, filter);
+      }
+      return result;
     }
     if (file.type === FileType.Directory) {
-      const result = findFilesByPath(file.children || [], targetPath, newCurrentPath);
+      const result = findFilesByPath(file.children || [], targetPath, newCurrentPath, filter);
       if (result) {
         return result;
       }

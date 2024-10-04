@@ -4,7 +4,8 @@ import styles from './index.module.less';
 import { FileType, Filter } from '@/types';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
-import { updateFilter } from '@/stores/file/reducer';
+import { updateFilter, updateIsFiltering } from '@/stores/file/reducer';
+import { cleanObject } from '@/utils';
 
 const fileTypeOptions = [
   { label: '文件', value: FileType.Regular },
@@ -24,14 +25,31 @@ const FilterForm: React.FC = () => {
   const onReset = () => {
     form.resetFields();
     dispatch(updateFilter({}));
+    dispatch(updateIsFiltering(false));
   };
 
-  const validateSize = (_: any, value: any) => {
-    const { min, max } = value || {};
-    if (min !== undefined && max !== undefined && min > max) {
-      return Promise.reject(new Error('最小值不能大于最大值'));
+  const onFinish = (values: Filter) => {
+    console.log('Received values:', values);
+    dispatch(updateFilter(values));
+    dispatch(updateIsFiltering(false));
+  };
+
+  const handleSumbit = async () => {
+    const values = await form.validateFields();
+    const noNilValues = cleanObject(values);
+    if (noNilValues.size) {
+      const { min, max } = noNilValues.size;
+      if (min !== undefined && max !== undefined && min > max) {
+        form.setFields([
+          {
+            name: ['size', 'min'],
+            errors: ['最小值不能大于最大值'],
+          },
+        ]);
+        return;
+      }
     }
-    return Promise.resolve();
+    form.submit();
   };
 
   return (
@@ -43,18 +61,17 @@ const FilterForm: React.FC = () => {
         variant='outlined'
         scrollToFirstError
         form={form}
-        onFinish={(values: Filter) => {
-          dispatch(updateFilter(values));
-        }}>
+        initialValues={filter}
+        onFinish={onFinish}>
         <Form.Item
           label='文件类型'
           name='type'
           rules={[{ required: false, message: 'Please select file type!' }]}>
           <Select options={fileTypeOptions} />
         </Form.Item>
-        <Form.Item label='文件大小' name='size' rules={[{ validator: validateSize }]}>
-          <Input.Group compact>
-            <Form.Item name={['size', 'min']} noStyle>
+        <Form.Item label='大小'>
+          <Space.Compact>
+            <Form.Item name={['size', 'min']} noStyle rules={[{ type: 'number' }]}>
               <InputNumber style={{ width: '40%' }} placeholder='最小值' min={0} />
             </Form.Item>
             <Input
@@ -65,10 +82,10 @@ const FilterForm: React.FC = () => {
               placeholder='~'
               disabled
             />
-            <Form.Item name={['size', 'max']} noStyle>
+            <Form.Item name={['size', 'max']} noStyle rules={[{ type: 'number' }]}>
               <InputNumber style={{ width: '40%' }} placeholder='最大值' min={0} />
             </Form.Item>
-          </Input.Group>
+          </Space.Compact>
         </Form.Item>
 
         <Form.Item
@@ -87,7 +104,7 @@ const FilterForm: React.FC = () => {
 
         <Form.Item wrapperCol={{ offset: 4, span: 14 }}>
           <Space>
-            <Button type='primary' htmlType='submit'>
+            <Button type='primary' onClick={handleSumbit}>
               Submit
             </Button>
             <Button htmlType='button' onClick={onReset}>

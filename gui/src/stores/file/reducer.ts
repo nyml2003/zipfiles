@@ -6,6 +6,8 @@ export interface FileState {
   currentPath: string;
   selectedFile: string[];
   filter: Partial<Filter>;
+  view: 'table' | 'tree';
+  isFiltering: boolean;
 }
 
 const initialState: FileState = {
@@ -13,6 +15,8 @@ const initialState: FileState = {
   currentPath: '',
   selectedFile: [],
   filter: {},
+  view: 'table',
+  isFiltering: false,
 };
 
 const fileSlice = createSlice({
@@ -40,6 +44,12 @@ const fileSlice = createSlice({
     resetFilter(state) {
       state.filter = initialState.filter;
     },
+    updateCurrentView(state, action: PayloadAction<'table' | 'tree'>) {
+      state.view = action.payload;
+    },
+    updateIsFiltering(state, action: PayloadAction<boolean>) {
+      state.isFiltering = action.payload;
+    }
   },
 });
 
@@ -50,6 +60,8 @@ export const {
   handleRefresh,
   updateFilter,
   resetFilter,
+  updateCurrentView,
+  updateIsFiltering,
 } = fileSlice.actions;
 
 export const fileReducer = fileSlice.reducer;

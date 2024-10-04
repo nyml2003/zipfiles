@@ -19,6 +19,16 @@ const headerItems: MenuProps['items'] = [
     icon: React.createElement(BookOutlined),
   },
   {
+    key: 'commit_history',
+    label: '提交历史',
+    icon: React.createElement(SettingOutlined),
+  },
+  {
+    key: 'setting',
+    label: '设置',
+    icon: React.createElement(SettingOutlined),
+  },
+  {
     key: 'test',
     label: '测试',
     icon: React.createElement(SettingOutlined),
@@ -53,7 +63,7 @@ const App: React.FC = () => {
           onClick={handleClick}
         />
       </Sider>
-      <Layout className='h-screen'>
+      <Layout className='h-screen flex-1 w-full'>
         <Content
           style={{
             borderRadius: borderRadiusLG,

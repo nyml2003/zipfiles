@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ArrowLeftOutlined,
   ArrowsAltOutlined,
@@ -16,14 +16,16 @@ import TableView from './TableView';
 import {
   handleRefresh,
   updateCurrentPath,
+  updateCurrentView,
+  updateIsFiltering,
   updateSelectedFile,
 } from '@/stores/file/reducer';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
 
 const ExplorerPage: React.FC = () => {
-  const [filter, setFilter] = useState<boolean>(false);
-  const [view, setView] = useState<'table' | 'tree'>('tree');
+  const view = useSelector((state: RootState) => state.file.view);
+  const isFiltering = useSelector((state: RootState) => state.file.isFiltering);
   const currentPath = useSelector((state: RootState) => state.file.currentPath);
   const dispatch = useDispatch();
 
@@ -32,7 +34,7 @@ const ExplorerPage: React.FC = () => {
   };
 
   const renderContent = () => {
-    if (filter) {
+    if (isFiltering) {
       return <FilterForm />;
     }
     if (view === 'table') {
@@ -42,6 +44,7 @@ const ExplorerPage: React.FC = () => {
       return <TreeView />;
     }
   };
+
 
   return (
     <div className='flex-1 flex flex-col'>
@@ -57,8 +60,7 @@ const ExplorerPage: React.FC = () => {
             type='text'
             onClick={() => dispatch(handleRefresh())}
             icon={<Loading3QuartersOutlined />}
-            disabled={filter}
-          />
+            disabled={isFiltering}></Button>
           <Breadcrumb
             items={currentPath.split('/').reduce((acc, item, index, arr) => {
               const path = arr.slice(0, index + 1).join('/');
@@ -75,14 +77,14 @@ const ExplorerPage: React.FC = () => {
           <Button
             type='text'
             icon={view === 'table' ? <ArrowsAltOutlined /> : <DownOutlined />}
-            onClick={() => setView(view === 'table' ? 'tree' : 'table')}
-            disabled={filter}>
+            onClick={() => dispatch(updateCurrentView(view === 'table' ? 'tree' : 'table'))}
+            disabled={isFiltering}>
             视图
           </Button>
           <Button
             type='text'
-            icon={filter ? <FilterFilled /> : <FilterOutlined />}
-            onClick={() => setFilter(!filter)}>
+            icon={isFiltering ? <FilterFilled /> : <FilterOutlined />}
+            onClick={() => dispatch(updateIsFiltering(!isFiltering))}>
             筛选
           </Button>
         </div>

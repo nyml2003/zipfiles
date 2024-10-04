@@ -2,6 +2,7 @@ import { FileType } from '@/types';
 
 export interface GetFileListRequest {
   path: string;
+  filter?: Partial<Filter>;
 }
 
 export interface GetFileListResponse {
@@ -22,4 +23,3 @@ export interface Filter {
   owner: string;
   group: string;
 }
-                                        

@@ -1,19 +1,36 @@
 import React, { useEffect, useState } from 'react';
-import { Table } from 'antd';
+import { message, Table } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { FileDetail } from '@/apis/GetFileDetail';
-import { File, GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
-import useApi from '@/hooks/useApi';
 import { ApiEnum } from '@/apis';
 import { FileType, FileTypeToString } from '@/types';
-import { FileFilled, FolderFilled } from '@ant-design/icons';
+import { CopyOutlined, FileFilled, FolderFilled } from '@ant-design/icons';
 import { GetAllFileDetailsRequest, GetAllFileDetailsResponse } from '@/apis/GetAllFileDetails';
 import styles from './index.module.less';
+import CopyToClipboard from 'react-copy-to-clipboard';
+import useApi from '@/hooks/useApi';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
-import { handleRefresh } from '@/stores/file/reducer';
+import { GetFileListRequest } from '@/apis/GetFileList';
+import { cleanObject, filterBy } from '@/utils';
 
 interface DataType extends Partial<FileDetail> {}
+
+const Copy: React.FC<{ text: string; onCopy: () => void; isShow: boolean }> = ({
+  text,
+  onCopy,
+  isShow,
+}) => {
+  return isShow ? (
+    <CopyToClipboard text={text} onCopy={onCopy}>
+      <CopyOutlined
+        onClick={() => {
+          navigator.clipboard.writeText(text);
+        }}
+      />
+    </CopyToClipboard>
+  ) : null;
+};
 
 const columns: TableColumnsType<DataType> = [
   {
@@ -43,11 +60,7 @@ const columns: TableColumnsType<DataType> = [
     dataIndex: 'createTime',
     key: 'createTime',
     render: (text, record) => {
-      return text ? (
-        <span>{new Date(text * 1000).toLocaleString()}</span>
-      ) : (
-        <span>加载中...</span>
-      );
+      return text ? <span>{new Date(text * 1000).toLocaleString()}</span> : <span>加载中...</span>;
     },
   },
   {
@@ -55,11 +68,7 @@ const columns: TableColumnsType<DataType> = [
     dataIndex: 'updateTime',
     key: 'updateTime',
     render: (text, record) => {
-      return text ? (
-        <span>{new Date(text * 1000).toLocaleString()}</span>
-      ) : (
-        <span>加载中...</span>
-      );
+      return text ? <span>{new Date(text * 1000).toLocaleString()}</span> : <span>加载中...</span>;
     },
   },
   {
@@ -69,7 +78,12 @@ const columns: TableColumnsType<DataType> = [
     render: (text, record) => {
       if (text === undefined) return <span>加载中...</span>;
       if (text === null) return <span>未知</span>;
-      return <span>{text}</span>;
+      return (
+        <span>
+          {text}
+          <Copy text={text.toString()} onCopy={() => message.success('复制成功')} isShow={text} />
+        </span>
+      );
     },
   },
   {
@@ -77,7 +91,10 @@ const columns: TableColumnsType<DataType> = [
     dataIndex: 'owner',
     key: 'owner',
     render: (text, record) => {
-      return text ? <span>{text}</span> : <span>加载中...</span>;
+      return text ? <span>
+        {text}
+        <Copy text={text} onCopy={() => message.success('复制成功')} isShow={true} />
+      </span> : <span>加载中...</span>;
     },
   },
   {
@@ -85,7 +102,10 @@ const columns: TableColumnsType<DataType> = [
     dataIndex: 'group',
     key: 'group',
     render: (text, record) => {
-      return text ? <span>{text}</span> : <span>加载中...</span>;
+      return text ? <span>
+        {text}
+        <Copy text={text} onCopy={() => message.success('复制成功')} isShow={true} />
+      </span> : <span>加载中...</span>;
     },
   },
   {
@@ -102,35 +122,15 @@ const TableView: React.FC = () => {
   const api = useApi();
   const [data, setData] = useState<DataType[]>([]);
   const currentPath = useSelector((state: RootState) => state.file.currentPath);
-
-  const fetchFileList = (path: string): Promise<File[]> =>
-    api
-      .request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
-        path : path === '' ? '/' : path
-      })
-      .then((res: GetFileListResponse) => {
-        setData(
-          res.files.map(file => {
-            return {
-              name: file.name,
-              type: file.type,
-            };
-          }),
-        );
-        return res.files;
-      });
+  const filter = useSelector((state: RootState) => state.file.filter);
   const fetchData = (path: string) => {
-    fetchFileList(path).then((files: File[]) => {
-      api
-        .request<GetAllFileDetailsRequest, GetAllFileDetailsResponse>(ApiEnum.GetAllFileDetails, {
-          path: path === '' ? '/' : path,
-        })
-        .then((res: GetAllFileDetailsResponse) => {
-          setData(
-            res.files
-          );
-        });
-    });
+    api
+      .request<GetAllFileDetailsRequest, GetAllFileDetailsResponse>(ApiEnum.GetAllFileDetails, {
+        path: path === '' ? '/' : path,
+      })
+      .then((res: GetAllFileDetailsResponse) => {
+        setData(filterBy(res.files, filter));
+      });
   };
 
   useEffect(() => {

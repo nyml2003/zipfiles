@@ -6,7 +6,7 @@ const Fallback = lazy(() => import('@/components/Fallback'));
 const EntryLayout = lazy(() => import('@/layouts/EntryLayout'));
 const NotFound = lazy(() => import('@/components/NotFound'));
 const ExplorerPage = lazy(() => import('@/pages/ExplorerPage'));
-const IndexPage = lazy(() => import('@/pages/IndexPage'));
+const IndexPage = lazy(() => import('@/pages/ExplorerPage/IndexPage'));
 const TestPage = lazy(() => import('@/pages/TestPage'));
 
 const fallbackWrapper = (component: React.ReactNode) => {

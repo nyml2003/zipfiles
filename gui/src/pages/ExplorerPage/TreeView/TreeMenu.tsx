@@ -26,6 +26,7 @@ const TreeMenu = () => {
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Done);
   const [lastClickTime, setLastClickTime] = useState<number>(0);
   const currentPath = useSelector((state: RootState) => state.file.currentPath);
+  const filter = useSelector((state: RootState) => state.file.filter);
   const dispatch = useDispatch();
   useEffect(() => {
     // 清空已有数据
@@ -43,8 +44,8 @@ const TreeMenu = () => {
     try {
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
         path: path === '' ? '/' : path,
+        filter: filter,
       });
-      //console.log('GetFileListResponse: ', JSON.stringify(res));
       const newTreeData = res.files.map(item => {
         const isDirectory = item.type === FileType.Directory;
         return {
