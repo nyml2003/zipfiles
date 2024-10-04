@@ -1,3 +1,4 @@
+#include <optional>
 #include <utility>
 #include "log4cpp/Category.hh"
 #include "mp/Request.h"
@@ -20,6 +21,25 @@ Json::Value Req::toJson() {
       [&json](request::GetFileList& req) {
         json["payload"]["path"] = req.path;
         json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_LIST);
+        if (req.filter.has_value()) {
+          Filter filter = req.filter.value();
+          if (filter.type.has_value()) {
+            json["payload"]["filter"]["type"] =
+              static_cast<int>(filter.type.value());
+          }
+          if (filter.minSize.has_value()) {
+            json["payload"]["filter"]["minSize"] = filter.minSize.value();
+          }
+          if (filter.maxSize.has_value()) {
+            json["payload"]["filter"]["maxSize"] = filter.maxSize.value();
+          }
+          if (filter.owner.has_value()) {
+            json["payload"]["filter"]["owner"] = filter.owner.value();
+          }
+          if (filter.group.has_value()) {
+            json["payload"]["filter"]["group"] = filter.group.value();
+          }
+        }
       },
       [&json](request::MockNeedTime& req) {
         json["payload"]["id"] = req.id;
@@ -53,9 +73,31 @@ ReqPtr Req::fromJson(const Json::Value& json) {
     case ApiEnum::GET_FILE_DETAIL:
       req = makeReqGetFileDetail(json["payload"]["path"].asString());
       break;
-    case ApiEnum::GET_FILE_LIST:
-      req = makeReqGetFileList(json["payload"]["path"].asString());
+    case ApiEnum::GET_FILE_LIST: {
+      if (json["payload"]["filter"].isNull()) {
+        req = makeReqGetFileList(json["payload"]["path"].asString());
+        break;
+      }
+      Filter filter;
+      if (!json["payload"]["filter"]["type"].isNull()) {
+        filter.type =
+          static_cast<fs::file_type>(json["payload"]["filter"]["type"].asInt());
+      }
+      if (!json["payload"]["filter"]["minSize"].isNull()) {
+        filter.minSize = json["payload"]["filter"]["minSize"].asInt();
+      }
+      if (!json["payload"]["filter"]["maxSize"].isNull()) {
+        filter.maxSize = json["payload"]["filter"]["maxSize"].asInt();
+      }
+      if (!json["payload"]["filter"]["owner"].isNull()) {
+        filter.owner = json["payload"]["filter"]["owner"].asString();
+      }
+      if (!json["payload"]["filter"]["group"].isNull()) {
+        filter.group = json["payload"]["filter"]["group"].asString();
+      }
+      req = makeReqGetFileList(json["payload"]["path"].asString(), filter);
       break;
+    }
     case ApiEnum::MOCK_NEED_TIME:
       req = makeReqMockNeedTime(json["payload"]["id"].asInt());
       break;
@@ -105,7 +147,17 @@ ReqPtr makeReqGetFileDetail(Json::Value payload) {
 ReqPtr makeReqGetFileList(std::string path) {
   log4cpp::Category::getRoot().infoStream()
     << "Making a request to get file list";
-  return std::make_shared<Req>(request::GetFileList{std::move(path)});
+  return std::make_shared<Req>(
+    request::GetFileList{std::move(path), std::nullopt}
+  );
+}
+
+ReqPtr makeReqGetFileList(std::string path, Filter filter) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a request to get file list";
+  return std::make_shared<Req>(
+    request::GetFileList{std::move(path), std::move(filter)}
+  );
 }
 
 ReqPtr makeReqGetFileList(Json::Value payload) {

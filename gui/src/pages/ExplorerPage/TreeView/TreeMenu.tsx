@@ -9,6 +9,7 @@ import LoadingWrapper from '@/components/LoadingWrapper';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
 import { updateCurrentFile, updateCurrentPath, updateSelectedFile } from '@/stores/file/reducer';
+import { cleanObject } from '@/utils';
 const { DirectoryTree } = Tree;
 
 interface DataNode {
@@ -42,10 +43,12 @@ const TreeMenu = () => {
   const handleGetFileList = async (path: string, needLoading: boolean = true) => {
     if (needLoading) setLoading(LoadingState.Loading);
     try {
+      console.log('cleanObject(filter): ', JSON.stringify(cleanObject(filter)));
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
         path: path === '' ? '/' : path,
-        filter: filter,
+        filter: cleanObject(filter),
       });
+      
       const newTreeData = res.files.map(item => {
         const isDirectory = item.type === FileType.Directory;
         return {

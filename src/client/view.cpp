@@ -287,7 +287,46 @@ void handleFunction(
         std::string path = jsc_value_to_string(jsc_value_object_get_property(
           jsc_value_object_get_property(value, "params"), "path"
         ));
-        request = makeReqGetFileList(path);
+        if (jsc_value_object_has_property(
+              jsc_value_object_get_property(value, "params"), "filter"
+            ) == 0) {
+          request = makeReqGetFileList(path);
+          break;
+        }
+        Filter filter;
+        JSCValue* filterValue = jsc_value_object_get_property(
+          jsc_value_object_get_property(value, "params"), "filter"
+        );
+        if (jsc_value_object_has_property(filterValue, "type") != 0) {
+          filter.type = static_cast<fs::file_type>(jsc_value_to_int32(
+            jsc_value_object_get_property(filterValue, "type")
+          ));
+        }
+        if (jsc_value_object_has_property(filterValue, "size") != 0) {
+          JSCValue* sizeValue =
+            jsc_value_object_get_property(filterValue, "size");
+          if (jsc_value_object_has_property(sizeValue, "min") != 0) {
+            filter.minSize =
+              jsc_value_to_int32(jsc_value_object_get_property(sizeValue, "min")
+              );
+          }
+          if (jsc_value_object_has_property(sizeValue, "max") != 0) {
+            filter.maxSize =
+              jsc_value_to_int32(jsc_value_object_get_property(sizeValue, "max")
+              );
+          }
+        }
+        if (jsc_value_object_has_property(filterValue, "owner") != 0) {
+          filter.owner = jsc_value_to_string(
+            jsc_value_object_get_property(filterValue, "owner")
+          );
+        }
+        if (jsc_value_object_has_property(filterValue, "group") != 0) {
+          filter.group = jsc_value_to_string(
+            jsc_value_object_get_property(filterValue, "group")
+          );
+        }
+        request = makeReqGetFileList(path, filter);
         break;
       }
       case ApiEnum::GET_FILE_DETAIL: {

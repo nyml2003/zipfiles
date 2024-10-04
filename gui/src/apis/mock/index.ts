@@ -10,4 +10,6 @@ export const mockApi: { [key in ApiEnum]: Function } = {
   [ApiEnum.GetFileDetail]: GetFileDetail,
   [ApiEnum.PostCommit]: () => { },
   [ApiEnum.GetAllFileDetails]: GetAllFileDetails,
+  [ApiEnum.Warn]: () => { },
+  [ApiEnum.Info]: () => { },
 };

@@ -2,10 +2,28 @@
 #define ZIPFILES_MP_DATA_TRANSFER_OBJECT_H
 
 #include <filesystem>
+#include <optional>
 #include <string>
 
 namespace zipfiles {
 namespace fs = std::filesystem;
+// export interface Filter {
+//   type: FileType;
+//   size: {
+//     min: number;
+//     max: number;
+//   };
+//   owner: string;
+//   group: string;
+// }
+
+struct Filter {
+  std::optional<fs::file_type> type;
+  std::optional<__off_t> minSize;
+  std::optional<__off_t> maxSize;
+  std::optional<std::string> owner;
+  std::optional<std::string> group;
+};
 
 /**
  * @brief 选中文件后展示的文件信息

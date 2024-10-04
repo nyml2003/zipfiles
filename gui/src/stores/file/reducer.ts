@@ -15,7 +15,7 @@ const initialState: FileState = {
   currentPath: '',
   selectedFile: [],
   filter: {},
-  view: 'table',
+  view: 'tree',
   isFiltering: false,
 };
 
