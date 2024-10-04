@@ -7,15 +7,6 @@
 
 namespace zipfiles {
 namespace fs = std::filesystem;
-// export interface Filter {
-//   type: FileType;
-//   size: {
-//     min: number;
-//     max: number;
-//   };
-//   owner: string;
-//   group: string;
-// }
 
 struct Filter {
   std::optional<fs::file_type> type;

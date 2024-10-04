@@ -1,6 +1,7 @@
 import { createHashRouter, Navigate, RouteObject } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import React from 'react';
+const CommitPage = lazy(() => import('@/pages/CommitPage'));
 const Fallback = lazy(() => import('@/components/Fallback'));
 
 const EntryLayout = lazy(() => import('@/layouts/EntryLayout'));
@@ -29,6 +30,10 @@ const routes: RouteObject[] = [
       {
         path: 'explorer',
         element: fallbackWrapper(<ExplorerPage />),
+      },
+      {
+        path: 'commit_history',
+        element: fallbackWrapper(<CommitPage />),
       },
       {
         path: 'test',

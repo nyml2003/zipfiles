@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOutlined, HomeOutlined, SettingOutlined } from '@ant-design/icons';
+import { BookOutlined, HomeOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import { Layout, Menu, theme } from 'antd';
@@ -21,12 +21,12 @@ const headerItems: MenuProps['items'] = [
   {
     key: 'commit_history',
     label: '提交历史',
-    icon: React.createElement(SettingOutlined),
+    icon: React.createElement(UploadOutlined),
   },
   {
     key: 'setting',
     label: '设置',
-    icon: React.createElement(SettingOutlined),
+    icon: React.createElement(UploadOutlined),
   },
   {
     key: 'test',
