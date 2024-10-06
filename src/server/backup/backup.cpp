@@ -37,7 +37,7 @@ void backupFiles(
 
   // log文件地址
   // ? 待更改
-  fs::path src = "~/.zip/commit.log";
+  fs::path src = std::getenv("HOME") + std::string("/.zip/commit.log");
 
   // 读出后保存当前视图
   Json::Value cls = readCommitLog(src);
@@ -91,18 +91,20 @@ void backupFiles(
       // 获取输出
       auto [packFlush, packedData] = packFilesByBlock(files, flush);
 
-      // 遍历pack的obuffer
-      for (unsigned char byte : packedData) {
-        // 将pack的obuffer的每个字节都加入zip的ibuffer
-        auto [zipFlush, zippedData] = zip(byte, flush);
+      if (packFlush) {
+        // 遍历pack的obuffer
+        for (unsigned char byte : packedData) {
+          // 将pack的obuffer的每个字节都加入zip的ibuffer
+          auto [zipFlush, zippedData] = zip(byte, flush);
 
-        if (zipFlush) {
-          // 如果zip的ibuffer满，那么压缩，并输出到processedData
-          processedData.insert(
-            processedData.end(), zippedData.begin(), zippedData.end()
-          );
-          // 清空zip的obuffer
-          zippedData.clear();  // 清空缓冲区
+          if (zipFlush) {
+            // 如果zip的ibuffer满，那么压缩，并输出到processedData
+            processedData.insert(
+              processedData.end(), zippedData.begin(), zippedData.end()
+            );
+            // 清空zip的obuffer
+            zippedData.clear();
+          }
         }
       }
 

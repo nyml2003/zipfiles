@@ -15,6 +15,7 @@
 namespace zipfiles::server {
 
 using CryptoPP::AES;
+using CryptoPP::ArraySource;
 using CryptoPP::AutoSeededRandomPool;
 using CryptoPP::CBC_Mode;
 using CryptoPP::HashFilter;

@@ -1,54 +1,69 @@
-#include <gtest/gtest.h>
-#include <fstream>
-#include "server/crypto/crypto.h"
+#include <cryptopp/aes.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
+#include <cryptopp/modes.h>
+#include <iostream>
+#include <vector>
 
-namespace zipfiles::server {
+using namespace CryptoPP;
+using namespace std;
 
-class AESEncryptorTest : public ::testing::Test {
- protected:
-  void SetUp() override {
-    key = "testkey123451250p8asd";
-    encryptor = std::make_unique<AESEncryptor>(key);
+int main() {
+  // 明文数据块
+  vector<uint8_t> plaintext = {'H', 'e', 'l', 'l', 'o', ',', ' ', 'C',
+                               'r', 'y', 'p', 't', 'o', '+', '+'};
+  string key = "1234567890123456";  // AES-128密钥长度为16字节
+
+  // 打印明文
+  cout << "明文：";
+  for (auto c : plaintext) {
+    cout << c;
   }
+  cout << endl;
 
-  std::string key;
-  std::unique_ptr<AESEncryptor> encryptor;
-};
+  // 加密过程
+  CryptoPP::byte iv[AES::BLOCKSIZE];
+  memset(iv, 0x00, AES::BLOCKSIZE);
+  CBC_Mode<AES>::Encryption encryption(
+    (CryptoPP::byte*)key.c_str(), key.length(), iv
+  );
+  vector<uint8_t> ciphertext;
 
-TEST_F(AESEncryptorTest, EncryptDecrypt) {
-  std::vector<uint8_t> inputData = {'H', 'e', 'l', 'l', 'o', ' ',
-                                    'W', 'o', 'r', 'l', 'd'};
-  std::vector<uint8_t> encryptedData = encryptor->encryptFile(inputData);
-  std::vector<uint8_t> decryptedData = encryptor->decryptFile(encryptedData);
+  ArraySource(
+    plaintext.data(), plaintext.size(), true,
+    new StreamTransformationFilter(
+      encryption, new VectorSink(ciphertext),
+      StreamTransformationFilter::PKCS_PADDING
+    )
+  );
 
-  EXPECT_EQ(inputData, decryptedData);
+  // 打印加密后的密文
+  cout << "密文：";
+  for (auto c : ciphertext) {
+    cout << hex << (int)c;
+  }
+  cout << endl;
+
+  // 解密过程
+  CBC_Mode<AES>::Decryption decryption(
+    (CryptoPP::byte*)key.c_str(), key.length(), iv
+  );
+  vector<uint8_t> decryptedtext;
+
+  ArraySource(
+    ciphertext.data(), ciphertext.size(), true,
+    new StreamTransformationFilter(
+      decryption, new VectorSink(decryptedtext),
+      StreamTransformationFilter::PKCS_PADDING
+    )
+  );
+
+  // 打印解密后的明文
+  cout << "解密后的明文：";
+  for (auto c : decryptedtext) {
+    cout << c;
+  }
+  cout << endl;
+
+  return 0;
 }
-
-TEST_F(AESEncryptorTest, EncryptDifferentOutputs) {
-  std::vector<uint8_t> inputData = {'H', 'e', 'l', 'l', 'o', ' ',
-                                    'W', 'o', 'r', 'l', 'd'};
-  std::vector<uint8_t> encryptedData1 = encryptor->encryptFile(inputData);
-  std::vector<uint8_t> encryptedData2 = encryptor->encryptFile(inputData);
-
-  EXPECT_NE(encryptedData1, encryptedData2);
-}
-
-TEST_F(AESEncryptorTest, DecryptInvalidData) {
-  std::vector<uint8_t> invalidData = {'I', 'n', 'v', 'a', 'l', 'i', 'd'};
-  EXPECT_THROW(encryptor->decryptFile(invalidData), std::runtime_error);
-}
-
-TEST_F(AESEncryptorTest, DecryptWithWrongKey) {
-  std::vector<uint8_t> inputData = {'H', 'e', 'l', 'l', 'o', ' ',
-                                    'W', 'o', 'r', 'l', 'd'};
-  std::vector<uint8_t> encryptedData = encryptor->encryptFile(inputData);
-
-  // 使用不同的密钥创建一个新的 AESEncryptor 实例
-  std::string wrongKey = "wrongkey";
-  AESEncryptor wrongEncryptor(wrongKey);
-
-  // 尝试使用错误的密钥解密数据，应该抛出运行时错误
-  EXPECT_THROW(wrongEncryptor.decryptFile(encryptedData), std::runtime_error);
-}
-
-}  // namespace zipfiles::server

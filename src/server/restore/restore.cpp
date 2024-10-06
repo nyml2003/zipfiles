@@ -2,13 +2,16 @@
 #include <exception>
 #include <filesystem>
 #include <fstream>
+#include <ios>
+#include <log4cpp/Category.hh>
 #include <stdexcept>
 #include <string>
+#include <vector>
 #include "json/reader.h"
 #include "json/value.h"
-#include "server/backup/backup.h"
 #include "server/crypto/crypto.h"
 #include "server/deflate/zip.h"
+#include "server/pack/unpack.h"
 
 namespace zipfiles::server {
 
@@ -26,9 +29,12 @@ void restoreTo(
   const std::string& uuid,
   const std::string& key
 ) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Restore started, log uuid is " << uuid << ", to " << dst;
+
   // log文件地址
   // ? 待更改
-  fs::path src = "~/.zip/commit.log";
+  fs::path src = std::getenv("HOME") + std::string("/.zip/commit.log");
 
   Json::Value cls = readCommitLog(src);
 
@@ -56,40 +62,49 @@ void restoreTo(
   // 实例化解码器
   AESEncryptor decryptor(key);
 
+  // 实例化解包器
+  FileUnpacker fileUnpacker(dst);
+
   // 读取备份文件
   try {
-    std::vector<uint8_t> buffer(PACK_BLOCK_SIZE);
+    std::vector<uint8_t> buffer(ZIP_BLOCK_SIZE);
+    std::vector<uint8_t> decryptedData;
+    std::vector<uint8_t> unzippedData;
 
-    while (inFile) {
-      inFile.read(reinterpret_cast<char*>(buffer.data()), buffer.size());
-      std::streamsize bytesRead = inFile.gcount();
+    while (inFile.read(
+             reinterpret_cast<char*>(buffer.data()),
+             static_cast<std::streamsize>(buffer.size())
+           ) ||
+           inFile.gcount() > 0) {
+      size_t bytesRead = inFile.gcount();
+      buffer.resize(bytesRead);
 
-      if (bytesRead > 0) {
-        std::vector<uint8_t> data(buffer.begin(), buffer.begin() + bytesRead);
+      if (decrypt) {
+        decryptedData = decryptor.decryptFile(buffer, iv);
+      } else {
+        decryptedData = buffer;
+      }
 
-        if (decrypt) {
-          data = decryptor.decryptFile(data, iv);
-        }
-
-        for (unsigned char byte : data) {
-          auto [zipFlush, unzippedData] = unzip(byte);
-          if (zipFlush) {
-            // 处理解压后的数据
-            // todo: unpack
-            // processUnzippedData(unzippedData, dst);
-            unzippedData.clear();  // 清空缓冲区
-          }
+      for (auto byte : decryptedData) {
+        auto [done, output] = unzip(byte);
+        if (done) {
+          unzippedData.insert(unzippedData.end(), output.begin(), output.end());
         }
       }
+
+      auto done = fileUnpacker.unpackFilesByBlock(unzippedData, false);
+      if (done) {
+        // 解包完成
+        break;
+      }
+      // 否则继续循环
+
+      buffer.resize(ZIP_BLOCK_SIZE);  // 重置缓冲区大小
+      unzippedData.clear();
     }
 
-    // 处理剩余的解压数据
-    auto [zipFlush, unzippedData] = unzip(0);
-    if (zipFlush) {
-      // todo: unpack
-      // processUnzippedData(unzippedData, dst);
-      unzippedData.clear();  // 清空缓冲区
-    }
+    // 最后一次flush
+    fileUnpacker.unpackFilesByBlock(unzippedData, true);
   } catch (std::exception& e) {
     throw std::runtime_error(
       "Error occurred when trying to unpack file, its uuid is " + uuid +

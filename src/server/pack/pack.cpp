@@ -109,15 +109,17 @@ std::vector<uint8_t> createHeader(const fs::path& filePath, size_t dataSize) {
   size_t totalSize = sizeof(size_t) * 2 + relativePathSize;
 
   header.reserve(totalSize);
+
   // 写入文件路径大小
   header.insert(
     header.end(), reinterpret_cast<uint8_t*>(&relativePathSize),
     reinterpret_cast<uint8_t*>(&relativePathSize) + sizeof(size_t)
   );
-  // 写入文件路径
-  header.insert(
-    header.end(), filePath.string().begin(), filePath.string().end()
-  );
+
+  std::string filePathStr = filePath.string();
+  // 写入文件路径，这里需要一个临时变量来获得一致的地址
+  header.insert(header.end(), filePathStr.begin(), filePathStr.end());
+
   // 写入文件数据大小
   header.insert(
     header.end(), reinterpret_cast<uint8_t*>(&dataSize),
@@ -202,6 +204,7 @@ packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
   // 没有文件可读
   // 如果flush为true，输出剩余的缓冲区内容
   if (flush && obufferSize > 0) {
+    obuffer.resize(obufferSize);
     obufferSize = 0;  // 清空缓冲区
     return {true, obuffer};
     ;

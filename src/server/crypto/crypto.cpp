@@ -1,5 +1,6 @@
 
 #include "server/crypto/crypto.h"
+#include <crypto++/filters.h>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -28,9 +29,12 @@ std::vector<uint8_t> AESEncryptor::encryptFile(
       reinterpret_cast<CryptoPP::byte*>(key.data()), key.size(), iv.data()
     );
 
-    StringSource ss(
+    ArraySource as(
       inputData.data(), inputData.size(), true,
-      new StreamTransformationFilter(encryption, new VectorSink(outputData))
+      new StreamTransformationFilter(
+        encryption, new VectorSink(outputData),
+        StreamTransformationFilter::PKCS_PADDING
+      )
     );
 
     return outputData;
@@ -52,10 +56,13 @@ std::vector<uint8_t> AESEncryptor::decryptFile(
       reinterpret_cast<CryptoPP::byte*>(key.data()), key.size(), iv.data()
     );
 
-    StringSource ss(
-      inputData.data() + AES::BLOCKSIZE, inputData.size() - AES::BLOCKSIZE,
+    ArraySource as(
+      inputData.data(), inputData.size(),
       true,
-      new StreamTransformationFilter(decryption, new VectorSink(outputData))
+      new StreamTransformationFilter(
+        decryption, new VectorSink(outputData),
+        StreamTransformationFilter::PKCS_PADDING
+      )
     );
 
     return outputData;
