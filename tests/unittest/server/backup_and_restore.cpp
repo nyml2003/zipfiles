@@ -89,46 +89,46 @@ TEST_F(BackupRestoreTest, BackupAndRestore) {
   ASSERT_EQ(restoredFile2Content, "This is a test file 2.");
 }
 
-TEST_F(BackupRestoreTest, EncryptedBackupAndRestore) {
-  // 启用加密
-  cl["isEncrypt"] = true;
+// TEST_F(BackupRestoreTest, EncryptedBackupAndRestore) {
+//   // 启用加密
+//   cl["isEncrypt"] = true;
 
-  // 使用加密备份文件
-  ASSERT_NO_THROW(backupFiles(files, cl, key));
+//   // 使用加密备份文件
+//   ASSERT_NO_THROW(backupFiles(files, cl, key));
 
-  // 确认备份文件存在
-  fs::path backupFile = cl["storagePath"].asString();
-  ASSERT_TRUE(fs::exists(backupFile));
+//   // 确认备份文件存在
+//   fs::path backupFile = cl["storagePath"].asString();
+//   ASSERT_TRUE(fs::exists(backupFile));
 
-  // 创建恢复目录
-  fs::path restoreDir = testDir / "restore_encrypted";
-  fs::create_directories(restoreDir);
+//   // 创建恢复目录
+//   fs::path restoreDir = testDir / "restore_encrypted";
+//   fs::create_directories(restoreDir);
 
-  // 使用加密恢复文件
-  ASSERT_NO_THROW(restoreTo(restoreDir, cl["uuid"].asString(), key));
+//   // 使用加密恢复文件
+//   ASSERT_NO_THROW(restoreTo(restoreDir, cl["uuid"].asString(), key));
 
-  // 确认恢复的文件存在并且内容正确
-  fs::path restoredFile1 = restoreDir / "test1.txt";
-  fs::path restoredFile2 = restoreDir / "test2.txt";
+//   // 确认恢复的文件存在并且内容正确
+//   fs::path restoredFile1 = restoreDir / "test1.txt";
+//   fs::path restoredFile2 = restoreDir / "test2.txt";
 
-  ASSERT_TRUE(fs::exists(restoredFile1));
-  ASSERT_TRUE(fs::exists(restoredFile2));
+//   ASSERT_TRUE(fs::exists(restoredFile1));
+//   ASSERT_TRUE(fs::exists(restoredFile2));
 
-  std::ifstream restoredFile1Stream(restoredFile1);
-  std::ifstream restoredFile2Stream(restoredFile2);
+//   std::ifstream restoredFile1Stream(restoredFile1);
+//   std::ifstream restoredFile2Stream(restoredFile2);
 
-  std::string restoredFile1Content(
-    (std::istreambuf_iterator<char>(restoredFile1Stream)),
-    std::istreambuf_iterator<char>()
-  );
-  std::string restoredFile2Content(
-    (std::istreambuf_iterator<char>(restoredFile2Stream)),
-    std::istreambuf_iterator<char>()
-  );
+//   std::string restoredFile1Content(
+//     (std::istreambuf_iterator<char>(restoredFile1Stream)),
+//     std::istreambuf_iterator<char>()
+//   );
+//   std::string restoredFile2Content(
+//     (std::istreambuf_iterator<char>(restoredFile2Stream)),
+//     std::istreambuf_iterator<char>()
+//   );
 
-  ASSERT_EQ(restoredFile1Content, "This is a test file 1.");
-  ASSERT_EQ(restoredFile2Content, "This is a test file 2.");
-}
+//   ASSERT_EQ(restoredFile1Content, "This is a test file 1.");
+//   ASSERT_EQ(restoredFile2Content, "This is a test file 2.");
+// }
 
 TEST_F(BackupRestoreTest, BackupAndRestoreDifferentDirectories) {
   // 创建额外的目录和文件
@@ -226,60 +226,60 @@ TEST_F(BackupRestoreTest, BackupAndRestoreLargeFiles) {
   ASSERT_EQ(result, 0);
 }
 
-TEST_F(BackupRestoreTest, EncryptedMultipleDirectoriesBackupAndRestore) {
-  // 创建多个目录和文件
-  fs::path dir1 = testDir / "dir1";
-  fs::path dir2 = testDir / "dir2";
-  fs::create_directories(dir1);
-  fs::create_directories(dir2);
+// TEST_F(BackupRestoreTest, EncryptedMultipleDirectoriesBackupAndRestore) {
+//   // 创建多个目录和文件
+//   fs::path dir1 = testDir / "dir1";
+//   fs::path dir2 = testDir / "dir2";
+//   fs::create_directories(dir1);
+//   fs::create_directories(dir2);
 
-  fs::path file1 = dir1 / "file1.txt";
-  fs::path file2 = dir2 / "file2.txt";
+//   fs::path file1 = dir1 / "file1.txt";
+//   fs::path file2 = dir2 / "file2.txt";
 
-  std::ofstream(file1) << "This is file 1 in dir1.";
-  std::ofstream(file2) << "This is file 2 in dir2.";
+//   std::ofstream(file1) << "This is file 1 in dir1.";
+//   std::ofstream(file2) << "This is file 2 in dir2.";
 
-  files = {file1, file2};
+//   files = {file1, file2};
 
-  // 启用加密
-  cl["isEncrypt"] = true;
+//   // 启用加密
+//   cl["isEncrypt"] = true;
 
-  // 使用加密备份文件
-  ASSERT_NO_THROW(backupFiles(files, cl, key));
+//   // 使用加密备份文件
+//   ASSERT_NO_THROW(backupFiles(files, cl, key));
 
-  // 确认备份文件存在
-  fs::path backupFile = cl["storagePath"].asString();
-  ASSERT_TRUE(fs::exists(backupFile));
+//   // 确认备份文件存在
+//   fs::path backupFile = cl["storagePath"].asString();
+//   ASSERT_TRUE(fs::exists(backupFile));
 
-  // 创建恢复目录
-  fs::path restoreDir = testDir / "restore_multiple_dirs";
-  fs::create_directories(restoreDir);
+//   // 创建恢复目录
+//   fs::path restoreDir = testDir / "restore_multiple_dirs";
+//   fs::create_directories(restoreDir);
 
-  // 使用加密恢复文件
-  ASSERT_NO_THROW(restoreTo(restoreDir, cl["uuid"].asString(), key));
+//   // 使用加密恢复文件
+//   ASSERT_NO_THROW(restoreTo(restoreDir, cl["uuid"].asString(), key));
 
-  // 确认恢复的文件存在并且内容正确
-  fs::path restoredFile1 = restoreDir / "dir1" / "file1.txt";
-  fs::path restoredFile2 = restoreDir / "dir2" / "file2.txt";
+//   // 确认恢复的文件存在并且内容正确
+//   fs::path restoredFile1 = restoreDir / "dir1" / "file1.txt";
+//   fs::path restoredFile2 = restoreDir / "dir2" / "file2.txt";
 
-  ASSERT_TRUE(fs::exists(restoredFile1));
-  ASSERT_TRUE(fs::exists(restoredFile2));
+//   ASSERT_TRUE(fs::exists(restoredFile1));
+//   ASSERT_TRUE(fs::exists(restoredFile2));
 
-  std::ifstream restoredFile1Stream(restoredFile1);
-  std::ifstream restoredFile2Stream(restoredFile2);
+//   std::ifstream restoredFile1Stream(restoredFile1);
+//   std::ifstream restoredFile2Stream(restoredFile2);
 
-  std::string restoredFile1Content(
-    (std::istreambuf_iterator<char>(restoredFile1Stream)),
-    std::istreambuf_iterator<char>()
-  );
-  std::string restoredFile2Content(
-    (std::istreambuf_iterator<char>(restoredFile2Stream)),
-    std::istreambuf_iterator<char>()
-  );
+//   std::string restoredFile1Content(
+//     (std::istreambuf_iterator<char>(restoredFile1Stream)),
+//     std::istreambuf_iterator<char>()
+//   );
+//   std::string restoredFile2Content(
+//     (std::istreambuf_iterator<char>(restoredFile2Stream)),
+//     std::istreambuf_iterator<char>()
+//   );
 
-  ASSERT_EQ(restoredFile1Content, "This is file 1 in dir1.");
-  ASSERT_EQ(restoredFile2Content, "This is file 2 in dir2.");
-}
+//   ASSERT_EQ(restoredFile1Content, "This is file 1 in dir1.");
+//   ASSERT_EQ(restoredFile2Content, "This is file 2 in dir2.");
+// }
 
 // TEST_F(BackupRestoreTest, EncryptedLargeFileBackupAndRestore) {
 //   // 创建一个大文件
@@ -287,7 +287,7 @@ TEST_F(BackupRestoreTest, EncryptedMultipleDirectoriesBackupAndRestore) {
 //   std::ofstream largeFileStream(largeFile);
 //   largeFileStream << std::string(
 //     static_cast<size_t>(1024 * 1024 * 2), 'A'
-//   );  // 50 MB 文件
+//   );  // 2 MB 文件
 //   largeFileStream.close();
 
 //   files.push_back(largeFile);

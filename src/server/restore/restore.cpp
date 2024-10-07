@@ -9,6 +9,7 @@
 #include <vector>
 #include "json/reader.h"
 #include "json/value.h"
+#include "server/backup/backup.h"
 #include "server/crypto/crypto.h"
 #include "server/deflate/zip.h"
 #include "server/pack/unpack.h"
@@ -67,15 +68,22 @@ void restoreTo(
 
   // // 打开日志文件流
   // std::ofstream logFile(
-  //   "/app/restore_buffer_unzipped_data.log", std::ios::out | std::ios::trunc
+  //   "/app/restore_data.log", std::ios::out | std::ios::trunc
   // );
   // if (!logFile) {
   //   throw std::runtime_error("Failed to open log file");
   // }
 
+  // // 打印IV到输出流
+  // logFile << "IV: ";
+  // for (const auto& byte : iv) {
+  //   logFile << std::hex << static_cast<int>(byte) << " ";
+  // }
+  // logFile << std::endl;
+
   // 读取备份文件
   try {
-    std::vector<uint8_t> buffer(ZIP_BLOCK_SIZE);
+    std::vector<uint8_t> buffer(PACK_BLOCK_SIZE);
     std::vector<uint8_t> decryptedData;
     std::vector<uint8_t> unzippedData;
 
@@ -88,7 +96,7 @@ void restoreTo(
       buffer.resize(bytesRead);
 
       // // 记录buffer
-      // logFile << "Buffer: ";
+      // logFile << "buffer: ";
       // for (const auto& byte : buffer) {
       //   logFile << std::hex << static_cast<int>(byte) << " ";
       // }
@@ -99,6 +107,13 @@ void restoreTo(
       } else {
         decryptedData = buffer;
       }
+
+      // // 记录decryptedData
+      // logFile << "decryptedData: ";
+      // for (const auto& byte : decryptedData) {
+      //   logFile << std::hex << static_cast<int>(byte) << " ";
+      // }
+      // logFile << std::endl;
 
       for (auto byte : decryptedData) {
         auto [done, output] = unzip(byte);
@@ -121,7 +136,7 @@ void restoreTo(
       }
       // 否则继续循环
 
-      buffer.resize(ZIP_BLOCK_SIZE);  // 重置缓冲区大小
+      buffer.resize(PACK_BLOCK_SIZE);  // 重置缓冲区大小
       unzippedData.clear();
     }
 

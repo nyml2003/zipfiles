@@ -83,8 +83,18 @@ void backupFiles(
 
   bool flush = false;
 
+  // // 打开日志文件流
+  // std::ofstream logFile(
+  //   "/app/backup_data.log", std::ios::out | std::ios::trunc
+  // );
+  // if (!logFile) {
+  //   throw std::runtime_error("Failed to open log file");
+  // }
+
   // 主循环
   try {
+    std::vector<uint8_t> leftoverZippedData;
+
     while (true) {
       std::vector<uint8_t> processedData{};
 
@@ -105,6 +115,14 @@ void backupFiles(
             processedData.insert(
               processedData.end(), zippedData.begin(), zippedData.end()
             );
+
+            // // 记录zippedData
+            // logFile << "zippedData: ";
+            // for (const auto& byte : zippedData) {
+            //   logFile << std::hex << static_cast<int>(byte) << " ";
+            // }
+            // logFile << std::endl;
+
             // 清空zip的obuffer
             zippedData.clear();
           }
@@ -119,6 +137,13 @@ void backupFiles(
         if (encrypt) {
           processedData = encryptor.encryptFile(processedData, iv);
         }
+
+        // // 记录processedData
+        // logFile << "processedData: ";
+        // for (const auto& byte : processedData) {
+        //   logFile << std::hex << static_cast<int>(byte) << " ";
+        // }
+        // logFile << std::endl;
 
         // 写入输出流
         outputFile.write(

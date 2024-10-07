@@ -15,7 +15,7 @@ std::string AESEncryptor::generateKey(const std::string& rawKey) {
   StringSource ss(
     rawKey, true, new HashFilter(hash, new HexEncoder(new StringSink(digest)))
   );
-  return digest.substr(0, 32);  // 取前 32 字节作为密钥
+  return digest.substr(0, 32);  // 32 字节作为密钥
 }
 
 std::vector<uint8_t> AESEncryptor::encryptFile(
@@ -57,8 +57,7 @@ std::vector<uint8_t> AESEncryptor::decryptFile(
     );
 
     ArraySource as(
-      inputData.data(), inputData.size(),
-      true,
+      inputData.data(), inputData.size(), true,
       new StreamTransformationFilter(
         decryption, new VectorSink(outputData),
         StreamTransformationFilter::PKCS_PADDING

@@ -25,11 +25,10 @@ void packFileToArchive(std::ofstream& archive, const fs::path& filePath);
  */
 std::vector<uint8_t> readChunkFromFile(std::ifstream& inFile, size_t chunkSize);
 
-size_t insertHeader(
+void createHeader(
   const fs::path& filePath,
   size_t dataSize,
-  std::vector<uint8_t>& target,
-  size_t targetOffset
+  std::vector<uint8_t>& header
 );
 
 std::pair<bool, std::vector<uint8_t>&>

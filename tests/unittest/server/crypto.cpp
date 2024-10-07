@@ -50,7 +50,7 @@ int main() {
   );
   vector<uint8_t> decryptedtext;
 
-  ArraySource(
+  ArraySource as(
     ciphertext.data(), ciphertext.size(), true,
     new StreamTransformationFilter(
       decryption, new VectorSink(decryptedtext),

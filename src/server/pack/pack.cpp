@@ -1,4 +1,5 @@
 #include "server/pack/pack.h"
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -12,7 +13,6 @@
 #include "server/tools/fsapi.h"
 
 namespace zipfiles::server {
-
 /**
  * @brief 给定一个打包后的文件名(路径形式)，返回一个archive实例
  *
@@ -103,44 +103,29 @@ bool readChunk(
  * @param dataSize 文件大小
  *
  */
-size_t insertHeader(
+void createHeader(
   const fs::path& filePath,
   size_t dataSize,
-  std::vector<uint8_t>& target,
-  size_t targetOffset
+  std::vector<uint8_t>& header
 ) {
   size_t relativePathSize = filePath.string().size();
   size_t totalSize = sizeof(size_t) * 2 + relativePathSize;
 
-  std::cout << "Creating header for: " << filePath
-            << " totalSize is: " << totalSize << std::endl;
+  header.reserve(totalSize);
 
   // 写入文件路径大小
-  target.insert(
-    target.begin() + static_cast<std::ptrdiff_t>(targetOffset),
-    reinterpret_cast<uint8_t*>(&relativePathSize),
+  header.insert(
+    header.end(), reinterpret_cast<uint8_t*>(&relativePathSize),
     reinterpret_cast<uint8_t*>(&relativePathSize) + sizeof(size_t)
   );
-
-  targetOffset += sizeof(size_t);
-
   std::string filePathStr = filePath.string();
-  // 写入文件路径，这里需要一个临时变量来获得一致的地址
-  target.insert(
-    target.begin() + static_cast<std::ptrdiff_t>(targetOffset),
-    filePathStr.begin(), filePathStr.end()
-  );
-
-  targetOffset += relativePathSize;
-
+  // 写入文件路径
+  header.insert(header.end(), filePathStr.begin(), filePathStr.end());
   // 写入文件数据大小
-  target.insert(
-    target.begin() + static_cast<std::ptrdiff_t>(targetOffset),
-    reinterpret_cast<uint8_t*>(&dataSize),
+  header.insert(
+    header.end(), reinterpret_cast<uint8_t*>(&dataSize),
     reinterpret_cast<uint8_t*>(&dataSize) + sizeof(size_t)
   );
-
-  return totalSize;
 }
 
 /**
@@ -157,6 +142,8 @@ packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
   static thread_local std::ifstream inFile;
   static thread_local std::string commonAncestor;
   static thread_local size_t obufferSize = 0;
+  static thread_local std::vector<uint8_t> header_buffer;
+  static thread_local size_t header_offset = 0;
 
   obuffer.reserve(PACK_BLOCK_SIZE);
 
@@ -181,7 +168,30 @@ packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
       // 计算文件大小
       FileDetail fd = getFileDetail(files[currentFileIndex]);
       size_t dataSize = fd.size;
-      obufferSize += insertHeader(filePath, dataSize, obuffer, obufferSize);
+
+      if (header_buffer.empty()) {
+        createHeader(filePath, dataSize, header_buffer);
+      }
+
+      // 计算要往obuffer拷贝多少数据
+      size_t to_copy =
+        std::min(obuffer.capacity() - obufferSize, header_buffer.size());
+
+      obuffer.insert(
+        obuffer.end(),
+        header_buffer.begin() + static_cast<std::ptrdiff_t>(header_offset),
+        header_buffer.begin() +
+          static_cast<std::ptrdiff_t>(header_offset + to_copy)
+      );
+
+      header_offset += to_copy;
+      obufferSize += to_copy;
+
+      // 如果header_buffer已经全部拷贝完，则清空
+      if (header_offset >= header_buffer.size()) {
+        header_buffer.clear();
+        header_offset = 0;
+      }
     }
 
     // 读取文件数据并写入缓冲区

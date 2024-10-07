@@ -7,7 +7,6 @@
 #include <fstream>
 #include <ios>
 #include <iostream>
-#include <ostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
