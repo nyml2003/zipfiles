@@ -103,30 +103,44 @@ bool readChunk(
  * @param dataSize 文件大小
  *
  */
-std::vector<uint8_t> createHeader(const fs::path& filePath, size_t dataSize) {
-  std::vector<uint8_t> header;
+size_t insertHeader(
+  const fs::path& filePath,
+  size_t dataSize,
+  std::vector<uint8_t>& target,
+  size_t targetOffset
+) {
   size_t relativePathSize = filePath.string().size();
   size_t totalSize = sizeof(size_t) * 2 + relativePathSize;
 
-  header.reserve(totalSize);
+  std::cout << "Creating header for: " << filePath
+            << " totalSize is: " << totalSize << std::endl;
 
   // 写入文件路径大小
-  header.insert(
-    header.end(), reinterpret_cast<uint8_t*>(&relativePathSize),
+  target.insert(
+    target.begin() + static_cast<std::ptrdiff_t>(targetOffset),
+    reinterpret_cast<uint8_t*>(&relativePathSize),
     reinterpret_cast<uint8_t*>(&relativePathSize) + sizeof(size_t)
   );
 
+  targetOffset += sizeof(size_t);
+
   std::string filePathStr = filePath.string();
   // 写入文件路径，这里需要一个临时变量来获得一致的地址
-  header.insert(header.end(), filePathStr.begin(), filePathStr.end());
+  target.insert(
+    target.begin() + static_cast<std::ptrdiff_t>(targetOffset),
+    filePathStr.begin(), filePathStr.end()
+  );
+
+  targetOffset += relativePathSize;
 
   // 写入文件数据大小
-  header.insert(
-    header.end(), reinterpret_cast<uint8_t*>(&dataSize),
+  target.insert(
+    target.begin() + static_cast<std::ptrdiff_t>(targetOffset),
+    reinterpret_cast<uint8_t*>(&dataSize),
     reinterpret_cast<uint8_t*>(&dataSize) + sizeof(size_t)
   );
 
-  return header;
+  return totalSize;
 }
 
 /**
@@ -138,12 +152,13 @@ std::vector<uint8_t> createHeader(const fs::path& filePath, size_t dataSize) {
  */
 std::pair<bool, std::vector<uint8_t>&>
 packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
-  static thread_local std::vector<uint8_t> obuffer(PACK_BLOCK_SIZE
-  );  // 默认为512 KB
+  static thread_local std::vector<uint8_t> obuffer;  // 默认为1<<19
   static thread_local size_t currentFileIndex = 0;
   static thread_local std::ifstream inFile;
   static thread_local std::string commonAncestor;
   static thread_local size_t obufferSize = 0;
+
+  obuffer.reserve(PACK_BLOCK_SIZE);
 
   // 获取公共祖先
   if (commonAncestor.empty() && !flush) {
@@ -166,29 +181,33 @@ packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
       // 计算文件大小
       FileDetail fd = getFileDetail(files[currentFileIndex]);
       size_t dataSize = fd.size;
-      std::vector<uint8_t> header = createHeader(filePath, dataSize);
-      obuffer.insert(
-        obuffer.begin() + static_cast<std::ptrdiff_t>(obufferSize),
-        header.begin(), header.end()
-      );
-      obufferSize += header.size();
+      obufferSize += insertHeader(filePath, dataSize, obuffer, obufferSize);
     }
 
     // 读取文件数据并写入缓冲区
     while (true) {
+      // 计算obuffer还能读入多少数据
       size_t remainingSpace = obuffer.capacity() - obufferSize;
+
+      // 先扩大obuffer
+      obuffer.resize(obuffer.capacity());
+
+      // 尽量填满obuffer
       inFile.read(
-        reinterpret_cast<char*>(
-          obuffer.data() + static_cast<std::ptrdiff_t>(obufferSize)
-        ),
+        reinterpret_cast<char*>(obuffer.data() + obufferSize),
         static_cast<std::streamsize>(remainingSpace)
       );
+
+      // 计算实际的读入数
       auto bytesRead = static_cast<size_t>(inFile.gcount());
       obufferSize += bytesRead;
 
+      // 调整为实际的读入数
+      obuffer.resize(obufferSize);
+
       // 如果缓冲区满，则返回
       if (obufferSize >= obuffer.capacity()) {
-        obufferSize = 0;  // 清空缓冲区
+        obufferSize = 0;  // 清空标记
         return {true, obuffer};
       }
 
@@ -207,7 +226,6 @@ packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
     obuffer.resize(obufferSize);
     obufferSize = 0;  // 清空缓冲区
     return {true, obuffer};
-    ;
   }
 
   // 重置状态，等待下次复用
@@ -216,6 +234,6 @@ packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
 
   // 没有文件可读，flush也为false，那么返回false
   return {false, obuffer};
-}
+}  // namespace zipfiles::server
 
 }  // namespace zipfiles::server

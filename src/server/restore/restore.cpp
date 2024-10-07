@@ -65,6 +65,14 @@ void restoreTo(
   // 实例化解包器
   FileUnpacker fileUnpacker(dst);
 
+  // // 打开日志文件流
+  // std::ofstream logFile(
+  //   "/app/restore_buffer_unzipped_data.log", std::ios::out | std::ios::trunc
+  // );
+  // if (!logFile) {
+  //   throw std::runtime_error("Failed to open log file");
+  // }
+
   // 读取备份文件
   try {
     std::vector<uint8_t> buffer(ZIP_BLOCK_SIZE);
@@ -79,6 +87,13 @@ void restoreTo(
       size_t bytesRead = inFile.gcount();
       buffer.resize(bytesRead);
 
+      // // 记录buffer
+      // logFile << "Buffer: ";
+      // for (const auto& byte : buffer) {
+      //   logFile << std::hex << static_cast<int>(byte) << " ";
+      // }
+      // logFile << std::endl;
+
       if (decrypt) {
         decryptedData = decryptor.decryptFile(buffer, iv);
       } else {
@@ -91,6 +106,13 @@ void restoreTo(
           unzippedData.insert(unzippedData.end(), output.begin(), output.end());
         }
       }
+
+      // // 记录unzippedData
+      // logFile << "Unzipped Data: ";
+      // for (const auto& byte : unzippedData) {
+      //   logFile << std::hex << static_cast<int>(byte) << " ";
+      // }
+      // logFile << std::endl;
 
       auto done = fileUnpacker.unpackFilesByBlock(unzippedData, false);
       if (done) {

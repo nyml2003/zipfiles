@@ -1,6 +1,7 @@
 #ifndef ZIPFILES_SERVER_PACK_H
 #define ZIPFILES_SERVER_PACK_H
 
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -24,7 +25,12 @@ void packFileToArchive(std::ofstream& archive, const fs::path& filePath);
  */
 std::vector<uint8_t> readChunkFromFile(std::ifstream& inFile, size_t chunkSize);
 
-std::vector<uint8_t> createHeader(const fs::path& filePath, size_t dataSize);
+size_t insertHeader(
+  const fs::path& filePath,
+  size_t dataSize,
+  std::vector<uint8_t>& target,
+  size_t targetOffset
+);
 
 std::pair<bool, std::vector<uint8_t>&>
 packFilesByBlock(const std::vector<fs::path>& files, bool flush);

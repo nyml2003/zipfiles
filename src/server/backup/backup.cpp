@@ -93,9 +93,12 @@ void backupFiles(
 
       if (packFlush) {
         // 遍历pack的obuffer
-        for (unsigned char byte : packedData) {
+        for (size_t i = 0; i < packedData.size(); ++i) {
+          // 如果当前的byte是最后一个byte，并且flush为真，说明不会再有后继输出，则zip输出所有剩余数据
+          // 否则还是只将数据拷贝入zip ibuffer而不输出
+          bool isLastByte = (i == packedData.size() - 1) && flush;
           // 将pack的obuffer的每个字节都加入zip的ibuffer
-          auto [zipFlush, zippedData] = zip(byte, flush);
+          auto [zipFlush, zippedData] = zip(packedData[i], isLastByte);
 
           if (zipFlush) {
             // 如果zip的ibuffer满，那么压缩，并输出到processedData
@@ -106,6 +109,8 @@ void backupFiles(
             zippedData.clear();
           }
         }
+
+        packedData.clear();
       }
 
       // 当processedData不为空
