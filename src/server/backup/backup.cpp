@@ -93,8 +93,6 @@ void backupFiles(
 
   // 主循环
   try {
-    std::vector<uint8_t> leftoverZippedData;
-
     while (true) {
       std::vector<uint8_t> processedData{};
 
@@ -102,18 +100,18 @@ void backupFiles(
       auto [packFlush, packedData] = packFilesByBlock(files, flush);
 
       if (packFlush) {
-        // 遍历pack的obuffer
-        for (size_t i = 0; i < packedData.size(); ++i) {
-          // 如果当前的byte是最后一个byte，并且flush为真，说明不会再有后继输出，则zip输出所有剩余数据
+        // 将pack的obuffer拷入zip
+        while (true) {
+          // 如果当前flush为真，说明不会再有后继输出，则zip输出所有剩余数据
           // 否则还是只将数据拷贝入zip ibuffer而不输出
-          bool isLastByte = (i == packedData.size() - 1) && flush;
-          // 将pack的obuffer的每个字节都加入zip的ibuffer
-          auto [zipFlush, zippedData] = zip(packedData[i], isLastByte);
+          // 将pack的obuffer的数据都加入zip的ibuffer
+          // zipLack代表packedData是否还有数据可读，如果zipLack为真，说明已经读完当前packedData
+          auto [zipFlush, zipLack, zippedData] = zip(packedData, flush);
 
           if (zipFlush) {
             // 如果zip的ibuffer满，那么压缩，并输出到processedData
             processedData.insert(
-              processedData.end(), zippedData.begin(), zippedData.end()
+              processedData.end(), zippedData->begin(), zippedData->end()
             );
 
             // // 记录zippedData
@@ -124,7 +122,12 @@ void backupFiles(
             // logFile << std::endl;
 
             // 清空zip的obuffer
-            zippedData.clear();
+            zippedData->clear();
+          }
+
+          if (zipLack) {
+            // packedData已经被读完，退出
+            break;
           }
         }
 
@@ -152,11 +155,11 @@ void backupFiles(
         );
       }
 
-      // 如果所有文件都读取完毕，并且pack的obuffer还有内容，设置 flush 为 true
-      // 下一次循环会将pack的obuffer强制输出，加入zip的ibuffer，并且zip也会强制输出obuffer
-      // (pack的obuffer是zip的ibuffer的二分之一，因此不需要担心溢出，就算溢出也会全部写入processedData)
+      // 如果所有文件都读取完毕，设置 flush 为 true
+      // 下一次循环会将pack的obuffer强制输出，全部加入zip的ibuffer，并且zip也会强制输出obuffer
+      // (pack的obuffer是zip的ibuffer的二分之一，并且有循环读机制，因此不需要担心溢出，就算溢出也会全部写入processedData)
       // 强制输出后，packFlush为true，flush也是true，此时可以退出
-      if (!packFlush && !packedData.empty()) {
+      if (!packFlush) {
         flush = true;
       }
 
