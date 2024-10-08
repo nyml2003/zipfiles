@@ -196,6 +196,10 @@ void backupFiles(
     appendCommitLog(cls, cl);
     writeCommitLog(src, cls);
   } catch (const std::exception& e) {
+    // 移除失败文件
+    fs::remove(path);
+    outputFile.close();
+
     throw std::runtime_error(
       "Error occurred when trying to append commit log, its uuid is " +
       cl["uuid"].asString() + ", because " + std::string(e.what())
