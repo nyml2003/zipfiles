@@ -52,13 +52,13 @@ const FileList: React.FC = () => {
   const selectedFile = useSelector((state: RootState) => state.file.selectedFile);
   return (
     <div>
-      <Table<DataType> columns={columns} dataSource={selectedFile} />
+      <Table<DataType> columns={columns} dataSource={selectedFile} size='small'
+      rowKey={'name'}/>
       <div className='flex flex-row justify-between m-4'>
         总大小：{selectedFile.reduce((acc, cur) => acc + cur.size, 0)}
         <div className='flex flex-row space-x-2 '>
-          <button className='bg-blue-500 text-white p-2 rounded'>打包</button>
-          <button className='bg-blue-500 text-white p-2 rounded'>加密</button>
-          <button className='bg-blue-500 text-white p-2 rounded'>浏览</button>
+          <button className='bg-blue-500 text-white p-2 rounded'>添加</button>
+          <button className='bg-blue-500 text-white p-2 rounded'>删除</button>
         </div>
       </div>
     </div>

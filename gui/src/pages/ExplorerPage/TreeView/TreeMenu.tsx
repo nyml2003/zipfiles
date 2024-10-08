@@ -126,6 +126,7 @@ const TreeMenu = () => {
       return;
     }
     await handleGetFileList(key as string, false);
+    
   };
 
   const handleCheck: TreeProps['onCheck'] = (checkedKeysValue, info) => {
@@ -170,7 +171,7 @@ const TreeMenu = () => {
             onSelect={handleSelect}
             expandedKeys={expandedKeys}
             onExpand={setExpandedKeys}
-            className='whitespace-nowrap bg-gray-100 flex-1'
+            className='whitespace-nowrap bg-white flex-1'
           />
         </div>
       }

@@ -4,7 +4,7 @@ import PackOption from "./PackOption";
 
 const NewCommit: React.FC = () => {
     return (
-        <div className="w-full h-full flex flex-col">
+        <div className="w-full h-full flex flex-col bg-white">
             <FileList />
             <PackOption />
         </div>

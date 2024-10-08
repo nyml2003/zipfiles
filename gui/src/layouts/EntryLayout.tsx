@@ -57,25 +57,21 @@ const App: React.FC = () => {
 
   return (
     <Layout hasSider className='h-screen select-none'>
-      <Sider breakpoint='lg' className='overflow-hidden bg-gray-200'>
+      <Sider breakpoint='lg' className='overflow-hidden bg-white'>
         <Menu
           //mode='inline'
           defaultSelectedKeys={['1']}
           defaultOpenKeys={['sub1']}
           items={headerItems}
           onClick={handleClick}
-          className='bg-gray-200'
+          className='bg-white'
           style={{
             borderInlineEnd: 'none',
           }}
         />
       </Sider>
       <Layout className='h-screen flex-1 w-full'>
-        <Content
-          style={{
-            borderRadius: borderRadiusLG,
-          }}
-          className='flex flex-1'>
+        <Content className='flex flex-1'>
           <Outlet />
         </Content>
         <FootContent />

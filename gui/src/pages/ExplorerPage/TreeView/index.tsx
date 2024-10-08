@@ -11,7 +11,7 @@ const TreeView = () => {
         defaultSize='20%'
         min='10%'
         max='70%'
-        className='overflow-y-auto overflow-x-hidden bg-gray-100 flex '>
+        className='overflow-y-auto overflow-x-hidden bg-white flex '>
         <TreeMenu />
       </Splitter.Panel>
       <Splitter.Panel>
