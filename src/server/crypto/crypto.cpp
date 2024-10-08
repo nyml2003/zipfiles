@@ -1,3 +1,4 @@
+#include "server/crypto/crypto.h"
 #include <cryptopp/aes.h>
 #include <cryptopp/files.h>
 #include <cryptopp/hex.h>
@@ -5,7 +6,6 @@
 #include <cryptopp/osrng.h>
 #include <memory>
 #include <string>
-#include "server/crypto/crypto.h"
 
 using CryptoPP::AES;
 using CryptoPP::AutoSeededRandomPool;

@@ -4,8 +4,9 @@ import type { MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import { Layout, Menu, theme } from 'antd';
 import { Outlet, useNavigate } from 'react-router-dom';
+import FootContent from './FootContent';
 
-const { Content, Sider } = Layout;
+const { Content, Sider, Footer } = Layout;
 
 const headerItems: MenuProps['items'] = [
   {
@@ -71,6 +72,9 @@ const App: React.FC = () => {
           className='flex flex-1'>
           <Outlet />
         </Content>
+        <Footer>
+          <FootContent />
+        </Footer>
       </Layout>
     </Layout>
   );

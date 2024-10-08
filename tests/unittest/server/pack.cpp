@@ -1,8 +1,8 @@
+#include "server/pack/pack.h"
 #include <gtest/gtest.h>
 #include <filesystem>
 #include <fstream>
 #include <string>
-#include "server/pack/pack.h"
 #include "server/pack/unpack.h"
 
 namespace fs = std::filesystem;
@@ -76,7 +76,8 @@ TEST(UnpackArchiveTest, UnpacksMultipleFilesCorrectly) {
   std::vector<std::pair<std::string, std::string>> files = {
     {"file1.txt", "Hello, World!"},
     {"file2.txt", "Goodbye, World!"},
-    {"file3.txt", "Hello again!"}};
+    {"file3.txt", "Hello again!"}
+  };
 
   for (const auto& [filePath, fileContent] : files) {
     size_t pathLength = filePath.size();
@@ -123,7 +124,8 @@ TEST(ArchiveIntegrationTest, PackAndUnpackMultipleFiles) {
   std::vector<std::pair<std::string, std::string>> files = {
     {"file1.txt", "Hello, World!"},
     {"file2.txt", "Goodbye, World!"},
-    {"file3.txt", "Hello again!"}};
+    {"file3.txt", "Hello again!"}
+  };
 
   // 创建并打包文件到归档
   std::ofstream archive = zipfiles::server::createArchive(archiveName);

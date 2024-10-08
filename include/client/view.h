@@ -1,5 +1,6 @@
 #ifndef ZIPFILE_CLIENT_VIEW_H
 #define ZIPFILE_CLIENT_VIEW_H
+#include <JavaScriptCore/JavaScript.h>
 #include <gtk/gtk.h>
 #include <json/json.h>
 #include <webkit2/webkit2.h>

@@ -1,3 +1,4 @@
+#include "server/handler.h"
 #include <unistd.h>
 #include <csignal>
 #include <log4cpp/Category.hh>
@@ -6,7 +7,6 @@
 #include "mp/common.h"
 #include "mp/error.h"
 #include "mp/filter.h"
-#include "server/handler.h"
 #include "server/socket/socket.h"
 #include "server/tools/fsapi.h"
 

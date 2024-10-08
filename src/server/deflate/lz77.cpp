@@ -1,5 +1,5 @@
-#include <cstddef>
 #include "server/deflate/lz77.h"
+#include <cstddef>
 
 namespace zipfiles::server {
 
@@ -123,7 +123,8 @@ int LZ77::encode(std::vector<uint8_t>& input_buffer) {
     shift(hash_head);
 
     match_length = 0;
-    if (hash_head && strstart - hash_head <= MAX_DIST && strstart <= WINDOW_SIZE - MIN_LOOKAHEAD) {
+    if (hash_head && strstart - hash_head <= MAX_DIST &&
+        strstart <= WINDOW_SIZE - MIN_LOOKAHEAD) {
       match_length = std::min(max_match(hash_head), lookahead);
     }
     if (match_length < MIN_MATCH) {

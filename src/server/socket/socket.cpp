@@ -1,3 +1,4 @@
+#include "server/socket/socket.h"
 #include <arpa/inet.h>
 #include <sys/epoll.h>
 #include <mutex>
@@ -11,8 +12,6 @@
 #include "mp/Response.h"
 #include "mp/error.h"
 #include "mp/mp.h"
-#include "server/socket/socket.h"
-
 
 namespace zipfiles::server {
 Socket::Socket()
@@ -37,7 +36,9 @@ Socket::Socket()
   address.sin_port = htons(mp::PORT);
   addrlen = sizeof(address);
 
-  if (bind(server_fd, reinterpret_cast<struct sockaddr*>(&address), sizeof(address)) < 0) {
+  if (bind(
+        server_fd, reinterpret_cast<struct sockaddr*>(&address), sizeof(address)
+      ) < 0) {
     perror("bind failed");
     close(server_fd);
     exit(EXIT_FAILURE);

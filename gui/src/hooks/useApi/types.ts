@@ -10,8 +10,8 @@ export interface ResponseWrapper {
   data?: any;
   // resolve: 返回数据
   // reject: 返回错误信息
-  // fatal: 严重错误
-  type: 'resolve' | 'reject' | 'fatal';
+  // notify: 返回通知信息
+  type: 'resolve' | 'reject' | 'notify';
   message: string;
 }
 

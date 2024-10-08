@@ -1,6 +1,6 @@
+#include "client/socket.h"
 #include <arpa/inet.h>
 #include <thread>
-#include "client/socket.h"
 #include "client/view.h"
 #include "log4cpp/Category.hh"
 #include "mp/Request.h"
@@ -44,7 +44,10 @@ void Socket::connectWithRetries() {
   const int max_retries = 5;
   int retries = 0;
   while (retries < max_retries) {
-    if (connect(sock, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
+    if (connect(
+          sock, reinterpret_cast<struct sockaddr*>(&serv_addr),
+          sizeof(serv_addr)
+        ) < 0) {
       log4cpp::Category::getRoot().errorStream() << "Connection failed";
       retries++;
       log4cpp::Category::getRoot().errorStream()

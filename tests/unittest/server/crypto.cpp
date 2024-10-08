@@ -1,6 +1,6 @@
+#include "server/crypto/crypto.h"
 #include <gtest/gtest.h>
 #include <fstream>
-#include "server/crypto/crypto.h"
 
 namespace zipfiles::server {
 

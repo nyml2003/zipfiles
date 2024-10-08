@@ -43,7 +43,8 @@ namespace init {
 // bit length of extra bits of length code
 constexpr std::array<int, LEN_CODE_COUNT> LEN_EXTRA_BITS = {
   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2,
-  2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0};
+  2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0
+};
 constexpr std::pair<std::array<int, LEN_CODE_COUNT>, std::array<int, MAX_LEN>>
 GEN_LENGTH_CODE() {
   std::array<int, LEN_CODE_COUNT> base_length{};
@@ -69,7 +70,8 @@ constexpr std::array<int, MAX_LEN> LEN_CODE_TABLE = GEN_LENGTH_CODE().second;
 // bit length of extra bits of distance code
 constexpr std::array<int, DIST_CODE_COUNT> DIST_EXTRA_BITS = {
   0, 0, 0, 0, 1, 1, 2, 2,  3,  3,  4,  4,  5,  5,  6,
-  6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13};
+  6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13
+};
 constexpr std::
   pair<std::array<int, DIST_CODE_COUNT>, std::array<int, DIST_CODE_TABLE_SIZE>>
   GEN_DISTANCE_CODE() {
@@ -425,20 +427,22 @@ constexpr decode_table GEN_STATIC_LC_DECODE_TABLE() {
           static_cast<uint16_t>(
             STATIC_LC_TREE.code[i] << (16 - STATIC_LC_TREE.bit_len[i])
           ),
-          STATIC_LC_TREE.bit_len[i]};
+          STATIC_LC_TREE.bit_len[i]
+        };
       }
     } else {
       if (!table[STATIC_LC_TREE.code[i] >> 1].letter) {
         table[STATIC_LC_TREE.code[i] >> 1] = {
-          static_cast<uint16_t>(256 + extra_count), 0,
-          STATIC_LC_TREE.bit_len[i]};
+          static_cast<uint16_t>(256 + extra_count), 0, STATIC_LC_TREE.bit_len[i]
+        };
       }
       table[256 + extra_count] = {
         i,
         static_cast<uint16_t>(
           STATIC_LC_TREE.code[i] << (16 - STATIC_LC_TREE.bit_len[i])
         ),
-        STATIC_LC_TREE.bit_len[i]};
+        STATIC_LC_TREE.bit_len[i]
+      };
       ++extra_count;
     }
   }
@@ -492,18 +496,20 @@ void gen_decode_table(decode_table& table, std::array<uint8_t, size>& bit_len) {
         table[i] = {
           static_cast<uint16_t>(letter),
           static_cast<uint16_t>(code[letter] << (16 - len)),
-          static_cast<uint8_t>(len)};
+          static_cast<uint8_t>(len)
+        };
       }
     } else {
       if (!table[code[letter] >> (len - 8)].letter) {
         table[code[letter] >> (len - 8)] = {
-          static_cast<uint16_t>(256 + extra_count), 0,
-          static_cast<uint8_t>(len)};
+          static_cast<uint16_t>(256 + extra_count), 0, static_cast<uint8_t>(len)
+        };
       }
       table[256 + extra_count++] = {
         static_cast<uint16_t>(letter),
         static_cast<uint16_t>(code[letter] << (16 - len)),
-        static_cast<uint8_t>(len)};
+        static_cast<uint8_t>(len)
+      };
     }
   }
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   ArrowLeftOutlined,
   ArrowsAltOutlined,
@@ -7,8 +7,9 @@ import {
   FilterOutlined,
   HomeOutlined,
   Loading3QuartersOutlined,
+  ProfileOutlined,
 } from '@ant-design/icons';
-import { Breadcrumb, Button, Input, Splitter } from 'antd';
+import { Breadcrumb, Button, Modal} from 'antd';
 import styles from './index.module.less';
 import FilterForm from './FilterForm';
 import TreeView from './TreeView';
@@ -28,6 +29,7 @@ const ExplorerPage: React.FC = () => {
   const isFiltering = useSelector((state: RootState) => state.file.isFiltering);
   const currentPath = useSelector((state: RootState) => state.file.currentPath);
   const dispatch = useDispatch();
+  
 
   const handleSelect = (paths: string[]) => {
     dispatch(updateSelectedFile(paths.sort()));
@@ -73,6 +75,8 @@ const ExplorerPage: React.FC = () => {
           />
         </div>
         <div>
+          
+        
           <Button
             type='text'
             icon={view === 'table' ? <ArrowsAltOutlined /> : <DownOutlined />}

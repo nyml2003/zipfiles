@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Key } from 'react';
-import { Tree, TreeProps } from 'antd';
+import { Checkbox, Space, Tree, TreeProps } from 'antd';
 import useApi from '@/hooks/useApi';
 import { GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
 import { ApiEnum } from '@/apis';
@@ -11,6 +11,8 @@ import { RootState } from '@/stores/store';
 import { updateCurrentFile, updateCurrentPath, updateSelectedFile } from '@/stores/file/reducer';
 import { cleanObject } from '@/utils';
 const { DirectoryTree } = Tree;
+import { MinusSquareOutlined } from '@ant-design/icons';
+import { GetFileDetailRequest, GetFileDetailResponse } from '@/apis/GetFileDetail';
 
 interface DataNode {
   title: React.ReactNode;
@@ -40,17 +42,36 @@ const TreeMenu = () => {
     handleGetFileList(currentPath);
   }, [currentPath]);
 
+  const getRootFile = async (path: string) => {
+    const res = await api.request<GetFileDetailRequest, GetFileDetailResponse>(
+      ApiEnum.GetFileDetail,
+      {
+        path: path === '' ? '/' : path,
+      },
+    );
+    setTreeData([
+      {
+        title: '.',
+        key: path,
+        isLeaf: res.type !== FileType.Directory,
+      },
+    ]);
+  };
+
   const handleGetFileList = async (path: string, needLoading: boolean = true) => {
     if (needLoading) setLoading(LoadingState.Loading);
+    if (path === currentPath) {
+      await getRootFile(currentPath);
+    }
     try {
-      console.log('cleanObject(filter): ', JSON.stringify(cleanObject(filter)));
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
         path: path === '' ? '/' : path,
         filter: cleanObject(filter),
       });
-      
+
       const newTreeData = res.files.map(item => {
         const isDirectory = item.type === FileType.Directory;
+        // title是path减去currentPath + item.name
         return {
           title: item.name,
           key: `${path}/${item.name}`,
@@ -98,8 +119,8 @@ const TreeMenu = () => {
     });
   };
 
-  const onLoadData = async (treeNode: any) => {
-    const { key, children } = treeNode;
+  const onLoadData = async (treeNode: DataNode) => {
+    const { key, children,title } = treeNode;
     const targetNode = treeData.find(item => item.key === key);
     if (targetNode && targetNode.children) {
       return;
@@ -129,20 +150,29 @@ const TreeMenu = () => {
       loading={loading}
       hasData={() => treeData.length > 0}
       children={
-        <DirectoryTree
-          showLine
-          checkable
-          multiple
-          switcherIcon={<DownOutlined />}
-          loadData={onLoadData}
-          treeData={treeData}
-          checkedKeys={checkedKeys}
-          onCheck={handleCheck}
-          onSelect={handleSelect}
-          expandedKeys={expandedKeys}
-          onExpand={setExpandedKeys}
-          className='whitespace-nowrap bg-gray-100 flex-1'
-        />
+        <div className='flex flex-col'>
+          <div className='w-full'>
+            {/* 全选、折叠按钮 antd-icon
+            <Space>
+              <Checkbox onChange={selectAll}>全选</Checkbox>
+              <MinusSquareOutlined />
+            </Space> */}
+          </div>
+          <DirectoryTree
+            showLine
+            checkable
+            multiple
+            switcherIcon={<DownOutlined />}
+            loadData={onLoadData}
+            treeData={treeData}
+            checkedKeys={checkedKeys}
+            onCheck={handleCheck}
+            onSelect={handleSelect}
+            expandedKeys={expandedKeys}
+            onExpand={setExpandedKeys}
+            className='whitespace-nowrap bg-gray-100 flex-1'
+          />
+        </div>
       }
     />
   );

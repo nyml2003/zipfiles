@@ -1,10 +1,10 @@
+#include "mp/Response.h"
 #include <unistd.h>
 #include <filesystem>
 #include <log4cpp/Category.hh>
 #include <utility>
 #include <vector>
 #include "json/value.h"
-#include "mp/Response.h"
 #include "mp/common.h"
 namespace zipfiles {
 namespace fs = std::filesystem;
@@ -83,7 +83,8 @@ Json::Value Res::toJson() {
           json["payload"]["files"].append(fileJson);
         }
       },
-      [](auto&&) { throw std::runtime_error("Unknown response type"); }},
+      [](auto&&) { throw std::runtime_error("Unknown response type"); }
+    },
     kind
   );
   return json;

@@ -1,8 +1,8 @@
+#include "server/pack/pack.h"
 #include <array>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include "server/pack/pack.h"
 
 namespace zipfiles::server {
 /**
