@@ -1,25 +1,24 @@
 #include <gtest/gtest.h>
+#include <cstdint>
 #include <cstdio>
 #include <fstream>
 #include <ios>
+#include <vector>
 
 #include "server/deflate/zip.h"
 
 bool test(const std::string& src_filename);
 
 TEST(ZIP, test1) {
-  std::string src_filename = "test.txt";
-  ASSERT_TRUE(test(src_filename));
+  ASSERT_TRUE(test("test.txt"));
 }
 
 TEST(ZIP, test2) {
-  std::string src_filename = "test.pdf";
-  ASSERT_TRUE(test(src_filename));
+  ASSERT_TRUE(test("test.pdf"));
 }
 
 TEST(ZIP, test3) {
-  std::string src_filename = "test.exe";
-  ASSERT_TRUE(test(src_filename));
+  ASSERT_TRUE(test("test.exe"));
 }
 
 bool test(const std::string& src_filename) {
@@ -35,16 +34,20 @@ bool test(const std::string& src_filename) {
   auto oflag = std::ios::out | std::ios::binary | std::ios::trunc;
   ifile.open(base_dir + src_filename, iflag);
   ofile.open(base_dir + dst_filename, oflag);
-  char buf = 0;
-  // int64_t count = 0;
-  ifile.get(buf);
+  const int ibuf_size = (1143 << 16) + 191981;
+  std::vector<std::uint8_t> ibuffer(ibuf_size);
   while (!ifile.eof()) {
-    auto [flush, obuffer] = zip(buf, (ifile.get(buf), ifile.eof()));
-    if (flush) {
-      ofile.write(
-        reinterpret_cast<char*>(obuffer.data()),
-        static_cast<int>(obuffer.size())
-      );
+    ifile.read(reinterpret_cast<char*>(ibuffer.data()), ibuf_size);
+    ibuffer.resize(ifile.gcount());
+    ZipStatus zip_ret = {false, false, nullptr};
+    while (!zip_ret.lack) {
+      zip_ret = zip(ibuffer, ifile.eof());
+      if (zip_ret.flush) {
+        ofile.write(
+          reinterpret_cast<char*>(zip_ret.obuffer->data()),
+          static_cast<int>(zip_ret.obuffer->size())
+        );
+      }
     }
   }
   ifile.close();
@@ -53,6 +56,7 @@ bool test(const std::string& src_filename) {
   // unzip
   ifile.open(base_dir + dst_filename, iflag);
   ofile.open(base_dir + src_filename_ex, oflag);
+  char buf = 0;
   while (ifile.get(buf), !ifile.eof()) {
     auto [flush, obuffer] = unzip(buf);
     if (flush) {

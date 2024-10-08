@@ -1,6 +1,9 @@
-#include "server/deflate/zip.h"
+#include <cstdint>
+#include <vector>
+
 #include "server/deflate/huffman.h"
 #include "server/deflate/lz77.h"
+#include "server/deflate/zip.h"
 
 namespace zipfiles::server {
 
@@ -17,32 +20,61 @@ struct ZipBuffer {
   }
 };
 
+// ! Scrapped
 std::pair<bool, std::vector<uint8_t>&> zip(uint8_t byte, bool flush) {
+  static std::vector<uint8_t> ret = {byte};
+  return {flush, ret};
+};
+
+ZipStatus zip(const std::vector<uint8_t>& input, bool flush) {
   static thread_local ZipBuffer buffer;
-  static thread_local LZ77::LZ77 lz77(buffer.lc_alphabet, buffer.dist_alphabet);
+  static thread_local LZ77::Encoder lz77(
+    buffer.ibuffer, buffer.lc_alphabet, buffer.dist_alphabet
+  );
   static thread_local huffman::Encoder encoder(
     buffer.lc_alphabet, buffer.dist_alphabet, buffer.obuffer
   );
 
-  buffer.ibuffer.push_back(byte);
+  static thread_local size_t last = 0;  // the start index of last input
+  auto append_ibuffer = [&](size_t len) {
+    buffer.ibuffer.insert(
+      buffer.ibuffer.end(),
+      input.begin() + static_cast<std::vector<uint8_t>::difference_type>(last),
+      input.begin() +
+        static_cast<std::vector<uint8_t>::difference_type>(last + len)
+    );
+    last += len;
+  };
 
-  // if data is not enough or not flush, wait for more data
-  if (buffer.ibuffer.size() < ZIP_BLOCK_SIZE && !flush) {
-    return {false, buffer.obuffer};
+  bool lack = (last == input.size());
+
+  if (!lack) {
+    append_ibuffer(
+      std::min(ZIP_BLOCK_SIZE - buffer.ibuffer.size(), input.size() - last)
+    );
+
+    // if data is enough or force flush, zip and flush
+    if (buffer.ibuffer.size() == ZIP_BLOCK_SIZE || flush) {
+      // zip
+      lz77.run();
+      encoder.encode();
+      buffer.ibuffer.clear();
+      lack = (last == input.size());
+      if (lack) {
+        last = 0;
+      }
+      return {true, lack, &buffer.obuffer};
+    }
   }
-
-  // zip
-  lz77.encode(buffer.ibuffer);
-  encoder.encode();
-  buffer.ibuffer.clear();
-
-  return {true, buffer.obuffer};
-  // TODO(zxn_64)
+  last = 0;
+  return {false, true, &buffer.obuffer};
 }
 
 std::pair<bool, std::vector<uint8_t>&> unzip(uint8_t byte) {
   static thread_local ZipBuffer buffer;
-  static thread_local LZ77::LZ77 lz77(buffer.lc_alphabet, buffer.dist_alphabet);
+  static thread_local LZ77::Decoder lz77(
+    buffer.lc_alphabet, buffer.dist_alphabet, buffer.obuffer
+  );
   static thread_local huffman::Decoder decoder(
     buffer.lc_alphabet, buffer.dist_alphabet
   );
@@ -50,9 +82,8 @@ std::pair<bool, std::vector<uint8_t>&> unzip(uint8_t byte) {
   if (!decoder.decode(byte)) {
     return {false, buffer.obuffer};
   }
-  lz77.decode(buffer.obuffer);
+  lz77.run();
 
   return {true, buffer.obuffer};
-  // TODO(zxn_64)
 }
 }  // namespace zipfiles::server

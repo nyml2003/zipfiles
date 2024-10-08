@@ -6,8 +6,10 @@
 
 namespace zipfiles::server::LZ77 {
 
-class LZ77 {
+class Encoder {
  private:
+  std::vector<uint8_t>& ibuffer;  // input data buffer
+
   std::vector<uint8_t>& lc_alphabet;     // length or character alphabet
   std::vector<uint16_t>& dist_alphabet;  // distance alpabet
 
@@ -27,21 +29,42 @@ class LZ77 {
   // shift window 1 byte to the right
   void shift(int& hash_head);
   int fill_window();
-  void append(uint8_t literal_length, uint16_t distance);
-  void init(std::vector<uint8_t>& input_buffer);
+  void append(uint8_t lc, uint16_t dist);
+  void init();
 
   [[nodiscard]] int max_match(int cur_match);
 
  public:
-  LZ77(
+  Encoder(
+    std::vector<uint8_t>& ibuffer,
     std::vector<uint8_t>& literal_length_alphabet,
     std::vector<uint16_t>& distance_alphabet
   )
-    : lc_alphabet(literal_length_alphabet), dist_alphabet(distance_alphabet) {};
+    : ibuffer(ibuffer),
+      lc_alphabet(literal_length_alphabet),
+      dist_alphabet(distance_alphabet) {};
 
-  int encode(std::vector<uint8_t>& input_buffer);
+  int run();
+};
 
-  void decode(std::vector<uint8_t>& output_buffer);
+class Decoder {
+ private:
+  std::vector<uint8_t>& lc_alphabet;     // length or character alphabet
+  std::vector<uint16_t>& dist_alphabet;  // distance alpabet
+
+  std::vector<uint8_t>& obuffer;  // output data buffer
+
+ public:
+  Decoder(
+    std::vector<uint8_t>& lc_alphabet,
+    std::vector<uint16_t>& dist_alphabet,
+    std::vector<uint8_t>& obuffer
+  )
+    : lc_alphabet(lc_alphabet),
+      dist_alphabet(dist_alphabet),
+      obuffer(obuffer) {};
+
+  void run();
 };
 }  // namespace zipfiles::server::LZ77
 

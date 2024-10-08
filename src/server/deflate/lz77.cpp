@@ -17,17 +17,17 @@ constexpr int HSHIFT = 5;                        // bits of shift when cal hash
 constexpr int NICE_MATCH = 128;                  // match length of stop search
 constexpr int MAX_CHAIN = 128;  // max list length in hash table
 
-inline uint32_t LZ77::next_hash(uint8_t byte) {
+inline uint32_t Encoder::next_hash(uint8_t byte) {
   return now_hash = ((now_hash << HSHIFT) ^ byte) & HMASK;
 }
 
-void LZ77::shift(int& hash_head) {
+void Encoder::shift(int& hash_head) {
   next_hash(window[strstart + 2]);
   prev[strstart] = hash_head = head[now_hash];
   head[now_hash] = strstart;
 }
 
-int LZ77::fill_window() {
+int Encoder::fill_window() {
   int space = WINDOW_SIZE - lookahead - strstart;
   if (strstart >= WSIZE + MAX_DIST) {
     window += WSIZE;
@@ -52,21 +52,21 @@ int LZ77::fill_window() {
   return len;
 }
 
-void LZ77::append(uint8_t literal_length, uint16_t distance) {
-  lc_alphabet.push_back(literal_length);
-  dist_alphabet.push_back(distance);
+void Encoder::append(uint8_t lc, uint16_t dist) {
+  lc_alphabet.push_back(lc);
+  dist_alphabet.push_back(dist);
 }
 
-void LZ77::init(std::vector<uint8_t>& input_buffer) {
+void Encoder::init() {
   strstart = 0;
   eof = false;
 
   head.assign(HTABLE_SIZE, 0);
   prev.resize(WINDOW_SIZE);
-  input_buffer.resize(input_buffer.size() + MIN_LOOKAHEAD);
-  input_buffer_end = input_buffer.end() - MIN_LOOKAHEAD;
+  ibuffer.resize(ibuffer.size() + MIN_LOOKAHEAD);
+  input_buffer_end = ibuffer.end() - MIN_LOOKAHEAD;
   std::fill_n(input_buffer_end, MIN_LOOKAHEAD, 0);
-  window = input_buffer.begin();
+  window = ibuffer.begin();
   lc_alphabet.clear();
   dist_alphabet.clear();
 
@@ -83,7 +83,7 @@ void LZ77::init(std::vector<uint8_t>& input_buffer) {
   }
 }
 
-int LZ77::max_match(int cur_match) {
+int Encoder::max_match(int cur_match) {
   int best_len = MIN_MATCH - 1;
   int len = 0;
   int chain_length = MAX_CHAIN;
@@ -114,11 +114,11 @@ int LZ77::max_match(int cur_match) {
   return best_len;
 }
 
-int LZ77::encode(std::vector<uint8_t>& input_buffer) {
+int Encoder::run() {
   int match_length = 0;
   int hash_head = 0;
 
-  init(input_buffer);
+  init();
 
   while (lookahead) {
     shift(hash_head);
@@ -149,17 +149,17 @@ int LZ77::encode(std::vector<uint8_t>& input_buffer) {
   return static_cast<int>(lc_alphabet.size());
 }
 
-void LZ77::decode(std::vector<uint8_t>& output_buffer) {
-  output_buffer.clear();
+void Decoder::run() {
+  obuffer.clear();
   int length = 0;
   for (std::size_t i = 0; i < lc_alphabet.size(); ++i) {
     if (dist_alphabet[i]) {
       for (int j = 0; j < lc_alphabet[i] + MIN_MATCH; ++j) {
-        output_buffer.push_back(output_buffer[length + j - dist_alphabet[i]]);
+        obuffer.push_back(obuffer[length + j - dist_alphabet[i]]);
       }
       length += lc_alphabet[i] + MIN_MATCH;
     } else {
-      output_buffer.push_back(lc_alphabet[i]);
+      obuffer.push_back(lc_alphabet[i]);
       ++length;
     }
   }
