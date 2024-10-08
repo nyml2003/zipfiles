@@ -1,6 +1,11 @@
-import production from './production';
-import development from './development';
-import { selectEnvironment } from '@/utils';
-import { Api, useApiType } from './types';
-const useApi = selectEnvironment<useApiType>(production, development);
+import { useApiType } from './types';
+
+let useApi: useApiType;
+
+if (process.env.NODE_ENV === 'production') {
+  useApi = require('./production').default;
+} else {
+  useApi = require('./development').default;
+}
+
 export default useApi;

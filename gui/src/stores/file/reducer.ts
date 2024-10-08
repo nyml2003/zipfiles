@@ -1,10 +1,11 @@
+import { FileDetail } from '@/apis/GetFileDetail';
 import { Filter } from '@/types';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface FileState {
   currentFile: string;
   currentPath: string;
-  selectedFile: string[];
+  selectedFile: FileDetail[];
   filter: Partial<Filter>;
   view: 'table' | 'tree';
   isFiltering: boolean;
@@ -26,7 +27,7 @@ const fileSlice = createSlice({
     updateCurrentFile(state, action: PayloadAction<string>) {
       state.currentFile = action.payload;
     },
-    updateSelectedFile(state, action: PayloadAction<string[]>) {
+    updateSelectedFile(state, action: PayloadAction<FileDetail[]>) {
       state.selectedFile = action.payload;
     },
     updateCurrentPath(state, action: PayloadAction<string>) {

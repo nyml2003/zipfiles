@@ -20,6 +20,11 @@ const headerItems: MenuProps['items'] = [
     icon: React.createElement(BookOutlined),
   },
   {
+    key: 'new_commit',
+    label: '新建提交',
+    icon: React.createElement(UploadOutlined),
+  },
+  {
     key: 'commit_history',
     label: '提交历史',
     icon: React.createElement(UploadOutlined),
@@ -52,16 +57,17 @@ const App: React.FC = () => {
 
   return (
     <Layout hasSider className='h-screen select-none'>
-      <Sider
-        style={{ background: colorBgContainer }}
-        breakpoint='lg'
-        className='overflow-hidden lg:rounded-r-2xl rounded-r-xl'>
+      <Sider breakpoint='lg' className='overflow-hidden bg-gray-200'>
         <Menu
-          mode='inline'
+          //mode='inline'
           defaultSelectedKeys={['1']}
           defaultOpenKeys={['sub1']}
           items={headerItems}
           onClick={handleClick}
+          className='bg-gray-200'
+          style={{
+            borderInlineEnd: 'none',
+          }}
         />
       </Sider>
       <Layout className='h-screen flex-1 w-full'>
@@ -72,9 +78,7 @@ const App: React.FC = () => {
           className='flex flex-1'>
           <Outlet />
         </Content>
-        <Footer>
-          <FootContent />
-        </Footer>
+        <FootContent />
       </Layout>
     </Layout>
   );
