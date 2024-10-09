@@ -3,20 +3,19 @@ import React from 'react';
 import MetaDataCard from './MetaDataCard';
 import TreeMenu from './TreeMenu';
 import styles from '../index.module.less';
+import TableView from './TableView';
 
 const TreeView = () => {
   return (
-    <Splitter className={`flex-grow overflow-hidden ${styles['fade-in-down']}`}>
+    <Splitter className={`flex-1 overflow-hidden ${styles['fade-in-down']}`}>
       <Splitter.Panel
         defaultSize='20%'
         min='10%'
-        max='70%'
-        className='overflow-y-auto overflow-x-hidden bg-white flex '>
+        max='70%'>
         <TreeMenu />
       </Splitter.Panel>
       <Splitter.Panel>
-        {/* 文件信息 */}
-        <MetaDataCard />
+        <TableView></TableView>
       </Splitter.Panel>
     </Splitter>
   );

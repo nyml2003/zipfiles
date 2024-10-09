@@ -15,7 +15,6 @@ import { GetFileListRequest } from '@/apis/GetFileList';
 import { cleanObject, filterBy } from '@/utils';
 
 interface DataType extends Partial<FileDetail> {}
-
 const Copy: React.FC<{ text: string; onCopy: () => void; isShow: boolean }> = ({
   text,
   onCopy,
@@ -36,14 +35,17 @@ const columns: TableColumnsType<DataType> = [
   {
     title: '文件名',
     dataIndex: 'name',
+
     key: 'name',
     render: (text, record) => {
       return <a>{text}</a>;
     },
+    ellipsis: true,
   },
   {
     title: '类型',
     dataIndex: 'type',
+
     key: 'type',
     render: (text, record) => {
       if (text === FileType.Directory) {
@@ -54,27 +56,33 @@ const columns: TableColumnsType<DataType> = [
       }
       return FileTypeToString(text);
     },
+    ellipsis: true,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     key: 'createTime',
+
     render: (text, record) => {
       return text ? <span>{new Date(text * 1000).toLocaleString()}</span> : <span>加载中...</span>;
     },
+    ellipsis: true,
   },
   {
     title: '更新时间',
     dataIndex: 'updateTime',
     key: 'updateTime',
+
     render: (text, record) => {
       return text ? <span>{new Date(text * 1000).toLocaleString()}</span> : <span>加载中...</span>;
     },
+    ellipsis: true,
   },
   {
     title: '大小',
     dataIndex: 'size',
     key: 'size',
+
     render: (text, record) => {
       if (text === undefined) return <span>加载中...</span>;
       if (text === null) return <span>未知</span>;
@@ -85,33 +93,47 @@ const columns: TableColumnsType<DataType> = [
         </span>
       );
     },
+    ellipsis: true,
   },
   {
     title: '所有者',
     dataIndex: 'owner',
     key: 'owner',
+
     render: (text, record) => {
-      return text ? <span>
-        {text}
-        <Copy text={text} onCopy={() => message.success('复制成功')} isShow={true} />
-      </span> : <span>加载中...</span>;
+      return text ? (
+        <span>
+          {text}
+          <Copy text={text} onCopy={() => message.success('复制成功')} isShow={true} />
+        </span>
+      ) : (
+        <span>加载中...</span>
+      );
     },
+    ellipsis: true,
   },
   {
     title: '组',
     dataIndex: 'group',
     key: 'group',
+
     render: (text, record) => {
-      return text ? <span>
-        {text}
-        <Copy text={text} onCopy={() => message.success('复制成功')} isShow={true} />
-      </span> : <span>加载中...</span>;
+      return text ? (
+        <span>
+          {text}
+          <Copy text={text} onCopy={() => message.success('复制成功')} isShow={true} />
+        </span>
+      ) : (
+        <span>加载中...</span>
+      );
     },
+    ellipsis: true,
   },
   {
     title: '权限',
     dataIndex: 'mode',
     key: 'mode',
+    ellipsis: true,
     render: (text, record) => {
       return text ? <span>{text}</span> : <span>加载中...</span>;
     },

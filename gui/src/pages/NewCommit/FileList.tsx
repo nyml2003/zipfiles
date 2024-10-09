@@ -1,9 +1,8 @@
 import { FileDetail } from '@/apis/GetAllFileDetails';
-import Explorer from '@/components/Explorer';
 import { RootState } from '@/stores/store';
-import { Button, Modal, Table } from 'antd';
+import { Button, Table } from 'antd';
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 const columns = [
   {
@@ -49,12 +48,16 @@ const columns = [
 ];
 
 type DataType = FileDetail;
-const FileList: React.FC = () => {
-  const selectedFile = useSelector((state: RootState) => state.file.selectedFile);
 
+interface FileListProps {
+  addExplorer: () => void;
+}
+
+const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
+  const selectedFile = useSelector((state: RootState) => state.file.selectedFile);
+  const dispatch = useDispatch();
   const handleAdd = () => {
-    //打开一个新窗口
-    
+    addExplorer();
   };
 
   const handleDelete = () => {

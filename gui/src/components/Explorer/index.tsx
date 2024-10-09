@@ -7,13 +7,11 @@ import {
   FilterOutlined,
   HomeOutlined,
   Loading3QuartersOutlined,
-  ProfileOutlined,
 } from '@ant-design/icons';
 import { Breadcrumb, Button, Modal } from 'antd';
 import styles from './index.module.less';
 import FilterForm from './FilterForm';
 import TreeView from './TreeView';
-import TableView from './TableView';
 import {
   handleRefresh,
   updateCurrentPath,
@@ -38,12 +36,7 @@ const Explorer: React.FC = () => {
     if (isFiltering) {
       return <FilterForm />;
     }
-    if (view === 'table') {
-      return <TableView />;
-    }
-    if (view === 'tree') {
       return <TreeView />;
-    }
   };
 
   return (
@@ -76,20 +69,13 @@ const Explorer: React.FC = () => {
         <div>
           <Button
             type='text'
-            icon={view === 'table' ? <ArrowsAltOutlined /> : <DownOutlined />}
-            onClick={() => dispatch(updateCurrentView(view === 'table' ? 'tree' : 'table'))}
-            disabled={isFiltering}>
-            视图
-          </Button>
-          <Button
-            type='text'
             icon={isFiltering ? <FilterFilled /> : <FilterOutlined />}
             onClick={() => dispatch(updateIsFiltering(!isFiltering))}>
             筛选
           </Button>
         </div>
       </div>
-      <div className={`bg-white rounded-xl m-2 p-2 ${styles['fade-in-down']} overflow-auto flex-1`}>
+      <div className={`bg-white rounded-xl m-2 p-2 ${styles['fade-in-down']}`}>
         {renderContent()}
       </div>
     </div>

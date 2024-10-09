@@ -3,7 +3,7 @@ import Mock from 'mockjs';
 import { File } from '../GetFileList';
 import { FileDetail } from '../GetFileDetail';
 import { filterBy } from '@/utils';
-const MockFileNumber: [number, number] = [10, 20];
+const MockFileNumber: [number, number] = [100, 200];
 
 
 export function pickIndex(choices: any[], _weights?: number[]): number {

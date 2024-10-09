@@ -62,7 +62,7 @@ const fileSlice = createSlice({
     },
     updateBackupConfig(state, action: PayloadAction<FileState['backupConfig']>) {
       state.backupConfig = action.payload
-    }
+    },
   },
 });
 
