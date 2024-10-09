@@ -27,18 +27,26 @@ using CryptoPP::StringSink;
 using CryptoPP::StringSource;
 using CryptoPP::VectorSink;
 
+struct CryptStatus {
+  bool flush;
+  bool lack;
+  std::vector<uint8_t>* obuffer;
+};
+
 class AESEncryptor {
  public:
   explicit AESEncryptor(const std::string& key);
 
-  std::vector<uint8_t> encryptFile(
+  CryptStatus encryptFile(
     const std::vector<uint8_t>& inputData,
-    const std::array<CryptoPP::byte, AES::BLOCKSIZE>& iv
+    const std::array<CryptoPP::byte, AES::BLOCKSIZE>& iv,
+    bool flush
   );
 
-  std::vector<uint8_t> decryptFile(
+  CryptStatus decryptFile(
     const std::vector<uint8_t>& inputData,
-    const std::array<CryptoPP::byte, AES::BLOCKSIZE>& iv
+    const std::array<CryptoPP::byte, AES::BLOCKSIZE>& iv,
+    bool flush
   );
 
  private:

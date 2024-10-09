@@ -20,12 +20,6 @@ struct ZipBuffer {
   }
 };
 
-// ! Scrapped
-std::pair<bool, std::vector<uint8_t>&> zip(uint8_t byte, bool flush) {
-  static std::vector<uint8_t> ret = {byte};
-  return {flush, ret};
-};
-
 ZipStatus zip(const std::vector<uint8_t>& input, bool flush) {
   static thread_local ZipBuffer buffer;
   static thread_local LZ77::Encoder lz77(
@@ -52,6 +46,8 @@ ZipStatus zip(const std::vector<uint8_t>& input, bool flush) {
     append_ibuffer(
       std::min(ZIP_BLOCK_SIZE - buffer.ibuffer.size(), input.size() - last)
     );
+    lack = (last == input.size());
+    last %= input.size();
 
     // if data is enough or force flush, zip and flush
     if (buffer.ibuffer.size() == ZIP_BLOCK_SIZE || flush) {
@@ -59,10 +55,6 @@ ZipStatus zip(const std::vector<uint8_t>& input, bool flush) {
       lz77.run();
       encoder.encode();
       buffer.ibuffer.clear();
-      lack = (last == input.size());
-      if (lack) {
-        last = 0;
-      }
       return {true, lack, &buffer.obuffer};
     }
   }
