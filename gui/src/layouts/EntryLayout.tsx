@@ -1,23 +1,18 @@
 import React from 'react';
-import { BookOutlined, HomeOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons';
+import { HomeOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import { Layout, Menu, theme } from 'antd';
 import { Outlet, useNavigate } from 'react-router-dom';
 import FootContent from './FootContent';
 
-const { Content, Sider, Footer } = Layout;
+const { Content, Sider } = Layout;
 
 const headerItems: MenuProps['items'] = [
   {
     key: 'index',
     label: '首页',
     icon: React.createElement(HomeOutlined),
-  },
-  {
-    key: 'explorer',
-    label: '文件列表',
-    icon: React.createElement(BookOutlined),
   },
   {
     key: 'new_commit',

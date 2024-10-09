@@ -3,24 +3,20 @@
 import { Button, Checkbox, Form, Input } from 'antd';
 import React from 'react';
 import styles from './index.module.less';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
+import { updateBackupConfig } from '@/stores/file/reducer';
 
-const PackOption: React.FC = () => {
+const BackupOption: React.FC = () => {
   const [form] = Form.useForm();
   const backupConfig = useSelector((state: RootState) => state.file.backupConfig);
-
+  const dispatch = useDispatch();
   const onFinish = (values: any) => {
-    console.log('Received values:', values);
-  };
-
-  const handleSumbit = async () => {
-    const values = await form.validateFields();
-    console.log('values', values);
+    dispatch(updateBackupConfig(values));
   };
 
   return (
-    <div className='flex flex-col w-full'>
+    <div className='flex flex-col w-full flex-1'>
       备份文件设置
       <div className={`${styles['fade-in-down']} p-4 max-w-3xl`}>
         <Form
@@ -54,7 +50,12 @@ const PackOption: React.FC = () => {
                 <Form.Item
                   label='密码'
                   name='password'
-                  rules={[{ required: !!backupConfig.encrypt, message: '请输入密码' }]}
+                  rules={[
+                    {
+                      required: !!backupConfig.encrypt,
+                      message: '请输入密码',
+                    },
+                  ]}
                   shouldUpdate>
                   <Input.Password />
                 </Form.Item>
@@ -62,7 +63,7 @@ const PackOption: React.FC = () => {
             }}
           </Form.Item>
           <Form.Item wrapperCol={{ offset: 4, span: 14 }}>
-            <Button type='primary' onClick={handleSumbit}>
+            <Button type='primary' htmlType='submit'>
               提交
             </Button>
           </Form.Item>
@@ -72,4 +73,4 @@ const PackOption: React.FC = () => {
   );
 };
 
-export default PackOption;
+export default BackupOption;

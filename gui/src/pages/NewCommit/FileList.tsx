@@ -1,6 +1,7 @@
 import { FileDetail } from '@/apis/GetAllFileDetails';
+import Explorer from '@/components/Explorer';
 import { RootState } from '@/stores/store';
-import { Table } from 'antd';
+import { Button, Modal, Table } from 'antd';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
@@ -50,15 +51,34 @@ const columns = [
 type DataType = FileDetail;
 const FileList: React.FC = () => {
   const selectedFile = useSelector((state: RootState) => state.file.selectedFile);
+
+  const handleAdd = () => {
+    //打开一个新窗口
+    
+  };
+
+  const handleDelete = () => {
+    console.log('删除');
+  };
+
   return (
-    <div>
-      <Table<DataType> columns={columns} dataSource={selectedFile} size='small'
-      rowKey={'name'}/>
+    <div className='h-full flex flex-col'>
+      <Table<DataType>
+        columns={columns}
+        dataSource={selectedFile}
+        size='small'
+        rowKey={'name'}
+        className='flex-1 w-full'
+      />
       <div className='flex flex-row justify-between m-4'>
         总大小：{selectedFile.reduce((acc, cur) => acc + cur.size, 0)}
-        <div className='flex flex-row space-x-2 '>
-          <button className='bg-blue-500 text-white p-2 rounded'>添加</button>
-          <button className='bg-blue-500 text-white p-2 rounded'>删除</button>
+        <div className='flex flex-row space-x-2'>
+          <Button type='primary' onClick={handleAdd}>
+            添加
+          </Button>
+          <Button type='primary' onClick={handleDelete}>
+            删除
+          </Button>
         </div>
       </div>
     </div>

@@ -9,7 +9,7 @@ import {
   Loading3QuartersOutlined,
   ProfileOutlined,
 } from '@ant-design/icons';
-import { Breadcrumb, Button, Modal} from 'antd';
+import { Breadcrumb, Button, Modal } from 'antd';
 import styles from './index.module.less';
 import FilterForm from './FilterForm';
 import TreeView from './TreeView';
@@ -24,12 +24,11 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
 
-const ExplorerPage: React.FC = () => {
+const Explorer: React.FC = () => {
   const view = useSelector((state: RootState) => state.file.view);
   const isFiltering = useSelector((state: RootState) => state.file.isFiltering);
   const currentPath = useSelector((state: RootState) => state.file.currentPath);
   const dispatch = useDispatch();
-  
 
   const handleSelect = (paths: string[]) => {
     dispatch(updateSelectedFile(paths.sort()));
@@ -75,8 +74,6 @@ const ExplorerPage: React.FC = () => {
           />
         </div>
         <div>
-          
-        
           <Button
             type='text'
             icon={view === 'table' ? <ArrowsAltOutlined /> : <DownOutlined />}
@@ -99,4 +96,4 @@ const ExplorerPage: React.FC = () => {
   );
 };
 
-export default ExplorerPage;
+export default Explorer;

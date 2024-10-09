@@ -75,6 +75,7 @@ export const {
   resetFilter,
   updateCurrentView,
   updateIsFiltering,
+  updateBackupConfig,
 } = fileSlice.actions;
 
 export const fileReducer = fileSlice.reducer;
