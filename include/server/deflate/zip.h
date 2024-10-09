@@ -42,9 +42,6 @@ class Unzip {
   void run();
 };
 
-// ! Scrapped, retain this only for compiling the backup.cpp when testing zip
-std::pair<bool, std::vector<uint8_t>&> zip(uint8_t byte, bool flush = false);
-
 ZipStatus zip(const std::vector<uint8_t>& input, bool flush = false);
 std::pair<bool, std::vector<uint8_t>&> unzip(uint8_t byte);
 
