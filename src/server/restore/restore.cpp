@@ -1,12 +1,18 @@
+#include "server/restore/restore.h"
 #include <exception>
 #include <filesystem>
 #include <fstream>
+#include <ios>
+#include <log4cpp/Category.hh>
 #include <stdexcept>
+#include <string>
+#include <vector>
 #include "json/reader.h"
 #include "json/value.h"
+#include "server/backup/backup.h"
 #include "server/crypto/crypto.h"
+#include "server/deflate/zip.h"
 #include "server/pack/unpack.h"
-#include "server/restore/restore.h"
 
 namespace zipfiles::server {
 
@@ -24,46 +30,85 @@ void restoreTo(
   const std::string& uuid,
   const std::string& key
 ) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Restore started, log uuid is " << uuid << ", to " << dst;
+
   // log文件地址
   // ? 待更改
-  fs::path src = "~/.zip/commit.log";
+  fs::path src = std::getenv("HOME") + std::string("/.zip/commit.log");
 
   Json::Value cls = readCommitLog(src);
 
   Json::Value cl = getCommitLogById(cls, uuid);
 
-  // 创建指定的目录
-  if (src.has_parent_path()) {
-    fs::create_directories(src.parent_path());
+  // 检查目标路径是否存在，如果不存在则创建目录
+  if (!fs::exists(dst)) {
+    fs::create_directories(dst);
   }
 
-  // todo: 解密
-
-  // 解密
-  if (cl["isEncrypt"].asBool()) {
-    try {
-      AESEncryptor decryptor(key);
-
-      decryptor.decryptFile(cl["storagePath"].asString(), dst);
-    } catch (std::exception& e) {
-      throw std::runtime_error(
-        "Error occurred when trying to decrypt, its uuid is " + uuid +
-        ", because " + std::string(e.what())
-      );
-    }
+  // 打开输入流
+  std::string filePath = cl["storagePath"].asString();
+  std::ifstream inFile(filePath, std::ios::binary);
+  if (!inFile) {
+    throw std::runtime_error("Failed to open: " + filePath);
   }
 
-  // todo: 解压缩
+  // 如果有加密，则读取IV
+  bool decrypt = cl["isEncrypt"].asBool();
+  std::array<CryptoPP::byte, AES::BLOCKSIZE> iv{};
+  if (decrypt) {
+    inFile.read(reinterpret_cast<char*>(iv.data()), iv.size());
+  }
 
-  // 解包
+  // 实例化解码器
+  AESEncryptor decryptor(key);
+
+  // 实例化解包器
+  FileUnpacker fileUnpacker(dst);
+
+  // 读取备份文件
   try {
-    // ?
-    // 如果解密和解压已经在目标目录产生了一个临时文件，那么src参数就是那个临时文件的路径
-    // 但是这里还没有确定具体逻辑
-    unpackArchive(fs::path(cl["storagePath"].asString()), dst);
+    std::vector<uint8_t> buffer(PACK_BLOCK_SIZE);
+    std::vector<uint8_t> decryptedData;
+    std::vector<uint8_t> unzippedData;
+
+    while (inFile.read(
+             reinterpret_cast<char*>(buffer.data()),
+             static_cast<std::streamsize>(buffer.size())
+           ) ||
+           inFile.gcount() > 0) {
+      size_t bytesRead = inFile.gcount();
+      buffer.resize(bytesRead);
+
+      if (decrypt) {
+        decryptedData = decryptor.decryptFile(buffer, iv);
+      } else {
+        decryptedData = buffer;
+      }
+
+      for (auto byte : decryptedData) {
+        auto [done, output] = unzip(byte);
+        if (done) {
+          unzippedData.insert(unzippedData.end(), output.begin(), output.end());
+        }
+      }
+
+      auto done = fileUnpacker.unpackFilesByBlock(unzippedData, false);
+      if (done) {
+        // 解包完成
+        break;
+      }
+      // 否则继续循环
+
+      buffer.resize(PACK_BLOCK_SIZE);  // 重置缓冲区大小
+      unzippedData.clear();
+    }
+
+    // 最后一次flush
+    fileUnpacker.unpackFilesByBlock(unzippedData, true);
   } catch (std::exception& e) {
     throw std::runtime_error(
-      "Error occurred when trying to unpack, its uuid is " + uuid +
+      "Error occurred when trying to unpack file, its uuid is " + uuid +
       ", because " + std::string(e.what())
     );
   }

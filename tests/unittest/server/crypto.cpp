@@ -1,84 +1,102 @@
-#include <gtest/gtest.h>
+#include <cryptopp/aes.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
+#include <cryptopp/modes.h>
 #include <fstream>
-#include "server/crypto/crypto.h"
+#include <iostream>
+#include <vector>
 
-namespace zipfiles::server {
+using namespace CryptoPP;
+using namespace std;
 
-class AESEncryptorTest : public ::testing::Test {
- protected:
-  void SetUp() override {
-    // Create a sample input file
-    std::ofstream inputFile(inputFilePath);
-    inputFile << "This is a test file for encryption.";
-    inputFile.close();
+void ReadFile(const string& filename, vector<uint8_t>& data) {
+  ifstream file(filename, ios::binary);
+  if (file.is_open()) {
+    file.seekg(0, ios::end);
+    size_t size = file.tellg();
+    file.seekg(0, ios::beg);
+    data.resize(size);
+    file.read(reinterpret_cast<char*>(data.data()), size);
+    file.close();
+  } else {
+    cerr << "无法打开文件: " << filename << endl;
   }
+}
 
-  void TearDown() override {
-    // Clean up files
-    std::remove(inputFilePath.c_str());
-    std::remove(encryptedFilePath.c_str());
-    std::remove(decryptedFilePath.c_str());
+void WriteFile(const string& filename, const vector<uint8_t>& data) {
+  ofstream file(filename, ios::binary);
+  if (file.is_open()) {
+    file.write(reinterpret_cast<const char*>(data.data()), data.size());
+    file.close();
+  } else {
+    cerr << "无法写入文件: " << filename << endl;
   }
-
-  const std::string key = "0123456789abcdef";  // 16-byte key for AES-128
-  const std::string inputFilePath = "test_input.txt";
-  const std::string encryptedFilePath = "test_encrypted.txt";
-  const std::string decryptedFilePath = "test_decrypted.txt";
-};
-
-TEST_F(AESEncryptorTest, EncryptFile) {
-  AESEncryptor encryptor(key);
-  EXPECT_NO_THROW(encryptor.encryptFile(inputFilePath, encryptedFilePath));
-
-  // Check if the encrypted file exists
-  std::ifstream encryptedFile(encryptedFilePath);
-  EXPECT_TRUE(encryptedFile.good());
 }
 
-TEST_F(AESEncryptorTest, DecryptFile) {
-  AESEncryptor encryptor(key);
-  encryptor.encryptFile(inputFilePath, encryptedFilePath);
-  EXPECT_NO_THROW(encryptor.decryptFile(encryptedFilePath, decryptedFilePath));
+int main() {
+  // 从文件读取明文数据
+  vector<uint8_t> plaintext;
+  ReadFile("/app/test.txt", plaintext);
 
-  // Check if the decrypted file exists
-  std::ifstream decryptedFile(decryptedFilePath);
-  EXPECT_TRUE(decryptedFile.good());
+  string key = "1234567890123456";  // AES-128密钥长度为16字节
 
-  // Check if the decrypted content matches the original content
-  std::ifstream originalFile(inputFilePath);
-  std::string originalContent(
-    (std::istreambuf_iterator<char>(originalFile)),
-    std::istreambuf_iterator<char>()
+  // 打印明文
+  cout << "明文：";
+  for (auto c : plaintext) {
+    cout << c;
+  }
+  cout << endl;
+
+  // 加密过程
+  CryptoPP::byte iv[AES::BLOCKSIZE];
+  memset(iv, 0x00, AES::BLOCKSIZE);
+  CBC_Mode<AES>::Encryption encryption(
+    (CryptoPP::byte*)key.c_str(), key.length(), iv
   );
-  std::string decryptedContent(
-    (std::istreambuf_iterator<char>(decryptedFile)),
-    std::istreambuf_iterator<char>()
+  vector<uint8_t> ciphertext;
+
+  ArraySource(
+    plaintext.data(), plaintext.size(), true,
+    new StreamTransformationFilter(
+      encryption, new VectorSink(ciphertext),
+      StreamTransformationFilter::PKCS_PADDING
+    )
   );
-  EXPECT_EQ(originalContent, decryptedContent);
-}
 
-TEST_F(AESEncryptorTest, EncryptAndDecryptFile) {
-  AESEncryptor encryptor(key);
-  encryptor.encryptFile(inputFilePath, encryptedFilePath);
-  encryptor.decryptFile(encryptedFilePath, decryptedFilePath);
+  // 将密文写入文件
+  WriteFile("/app/ciphertext.bin", ciphertext);
 
-  // Check if the decrypted content matches the original content
-  std::ifstream originalFile(inputFilePath);
-  std::ifstream decryptedFile(decryptedFilePath);
-  std::string originalContent(
-    (std::istreambuf_iterator<char>(originalFile)),
-    std::istreambuf_iterator<char>()
+  // 打印加密后的密文
+  cout << "密文：";
+  for (auto c : ciphertext) {
+    cout << hex << (int)c;
+  }
+  cout << endl;
+
+  // 从文件读取密文数据
+  vector<uint8_t> readCiphertext;
+  ReadFile("/app/ciphertext.bin", readCiphertext);
+
+  // 解密过程
+  CBC_Mode<AES>::Decryption decryption(
+    (CryptoPP::byte*)key.c_str(), key.length(), iv
   );
-  std::string decryptedContent(
-    (std::istreambuf_iterator<char>(decryptedFile)),
-    std::istreambuf_iterator<char>()
+  vector<uint8_t> decryptedtext;
+
+  ArraySource as(
+    readCiphertext.data(), readCiphertext.size(), true,
+    new StreamTransformationFilter(
+      decryption, new VectorSink(decryptedtext),
+      StreamTransformationFilter::PKCS_PADDING
+    )
   );
-  EXPECT_EQ(originalContent, decryptedContent);
-}
 
-}  // namespace zipfiles::server
+  // 打印解密后的明文
+  cout << "解密后的明文：";
+  for (auto c : decryptedtext) {
+    cout << c;
+  }
+  cout << endl;
 
-int main(int argc, char** argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  return 0;
 }

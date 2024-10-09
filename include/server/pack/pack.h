@@ -1,12 +1,32 @@
 #ifndef ZIPFILES_SERVER_PACK_H
 #define ZIPFILES_SERVER_PACK_H
 
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
-#include <fstream>
+#include <vector>
+#include "mp/dto.h"
 
 namespace zipfiles::server {
-namespace fs = std::filesystem;
-void packFileToArchive(std::ofstream& archive, const fs::path& filePath);
-std::ofstream createArchive(const std::string& archiveName);
+/**
+ * * pack
+ *
+ */
+void fileDetailSerialize(
+  const FileDetail& fd,
+  std::vector<uint8_t>& header,
+  size_t structSize
+);
+
+void createHeader(
+  const fs::path& filePath,
+  const FileDetail& fd,
+  std::vector<uint8_t>& header
+);
+
+std::pair<bool, std::vector<uint8_t>&>
+packFilesByBlock(const std::vector<fs::path>& files, bool flush);
+
 }  // namespace zipfiles::server
+
 #endif  // !ZIPFILES_PACK_H

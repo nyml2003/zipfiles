@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace zipfiles::server {
+namespace zipfiles::server::huffman {
 
 constexpr int LC_TREE_SIZE = 577;   // length or character huffman tree size
 constexpr int DIST_TREE_SIZE = 61;  // distance huffman tree size
@@ -68,7 +68,7 @@ class Encoder {
       dist_alphabet(distance_alphabet),
       output_buffer(output_buffer),
       d_lc_tree(*new Tree<LC_TREE_SIZE>),
-      d_dist_tree(*new Tree<DIST_TREE_SIZE>){};
+      d_dist_tree(*new Tree<DIST_TREE_SIZE>) {};
 
   ~Encoder() {
     delete &d_lc_tree;
@@ -128,11 +128,11 @@ class Decoder {
     std::vector<uint8_t>& lc_alphabet,
     std::vector<uint16_t>& dist_alphabet
   )
-    : lc_alphabet(lc_alphabet), dist_alphabet(dist_alphabet){};
+    : lc_alphabet(lc_alphabet), dist_alphabet(dist_alphabet) {};
 
   bool decode(uint8_t data);
 };  // namespace decoder
 
-}  // namespace zipfiles::server
+}  // namespace zipfiles::server::huffman
 
 #endif  // ZIPFILES_INCLUDE_HUFFMAN_H
