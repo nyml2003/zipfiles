@@ -4,30 +4,23 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
-#include <fstream>
 #include <vector>
-
-namespace fs = std::filesystem;
+#include "mp/dto.h"
 
 namespace zipfiles::server {
-
-/**
- * !Deprecated
- *
- */
-std::ofstream createArchive(const std::string& archiveName);
-
-void packFileToArchive(std::ofstream& archive, const fs::path& filePath);
-
 /**
  * * pack
  *
  */
-std::vector<uint8_t> readChunkFromFile(std::ifstream& inFile, size_t chunkSize);
+void fileDetailSerialize(
+  const FileDetail& fd,
+  std::vector<uint8_t>& header,
+  size_t structSize
+);
 
 void createHeader(
   const fs::path& filePath,
-  size_t dataSize,
+  const FileDetail& fd,
   std::vector<uint8_t>& header
 );
 

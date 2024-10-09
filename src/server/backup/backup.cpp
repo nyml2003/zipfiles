@@ -5,6 +5,7 @@
 #include <ios>
 #include <log4cpp/Category.hh>
 #include <stdexcept>
+#include <string>
 #include <vector>
 #include "json/value.h"
 #include "json/writer.h"
@@ -83,14 +84,6 @@ void backupFiles(
 
   bool flush = false;
 
-  // // 打开日志文件流
-  // std::ofstream logFile(
-  //   "/app/backup_data.log", std::ios::out | std::ios::trunc
-  // );
-  // if (!logFile) {
-  //   throw std::runtime_error("Failed to open log file");
-  // }
-
   // 主循环
   try {
     while (true) {
@@ -114,13 +107,6 @@ void backupFiles(
               processedData.end(), zippedData->begin(), zippedData->end()
             );
 
-            // // 记录zippedData
-            // logFile << "zippedData: ";
-            // for (const auto& byte : zippedData) {
-            //   logFile << std::hex << static_cast<int>(byte) << " ";
-            // }
-            // logFile << std::endl;
-
             // 清空zip的obuffer
             zippedData->clear();
           }
@@ -140,13 +126,6 @@ void backupFiles(
         if (encrypt) {
           processedData = encryptor.encryptFile(processedData, iv);
         }
-
-        // // 记录processedData
-        // logFile << "processedData: ";
-        // for (const auto& byte : processedData) {
-        //   logFile << std::hex << static_cast<int>(byte) << " ";
-        // }
-        // logFile << std::endl;
 
         // 写入输出流
         outputFile.write(
@@ -207,57 +186,6 @@ void backupFiles(
       "Error occurred when trying to append commit log, its uuid is " +
       cl["uuid"].asString() + ", because " + std::string(e.what())
     );
-  }
-}
-
-/**
- * @brief 读取文件为一个字节流
- *
- * @param filepath 文件的路径
- *
- * ! Deprecated
- *
- */
-std::vector<uint8_t> readFile(const fs::path& filepath) {
-  std::ifstream file(filepath, std::ios::binary);
-  if (!file.is_open()) {
-    throw std::runtime_error("Failed to open file: " + filepath.string());
-  }
-
-  std::vector<uint8_t> data(
-    (std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>()
-  );
-
-  if (file.fail() && !file.eof()) {
-    throw std::runtime_error("Failed to read file: " + filepath.string());
-  }
-
-  return data;
-}
-
-/**
- * @brief 把字节流写入文件
- *
- * @param filepath 目的路径
- *
- * @param data 字节流
- *
- * ! Deprecated
- *
- */
-void writeFile(const fs::path& filepath, const std::vector<uint8_t>& data) {
-  std::ofstream file(filepath, std::ios::binary);
-  if (!file.is_open()) {
-    throw std::runtime_error("Failed to open file: " + filepath.string());
-  }
-
-  file.write(
-    reinterpret_cast<const char*>(data.data()),
-    static_cast<std::streamsize>(data.size())
-  );
-
-  if (file.fail()) {
-    throw std::runtime_error("Failed to write to file: " + filepath.string());
   }
 }
 
@@ -379,8 +307,8 @@ void writeDirectoryFile(
     temp["owner"] = fd.owner;
     temp["group"] = fd.group;
     temp["mode"] = fd.mode;
-    temp["path"] = fd.path;
     temp["name"] = fd.name;
+    temp["dev"] = fd.dev;
 
     root["data"].append(temp);
   }

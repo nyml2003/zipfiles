@@ -1,10 +1,10 @@
+#include "mp/Response.h"
 #include <unistd.h>
 #include <filesystem>
 #include <log4cpp/Category.hh>
 #include <utility>
 #include <vector>
 #include "json/value.h"
-#include "mp/Response.h"
 #include "mp/common.h"
 namespace zipfiles {
 namespace fs = std::filesystem;
@@ -46,7 +46,6 @@ Json::Value Res::toJson() {
         json["payload"]["owner"] = metadata.owner;
         json["payload"]["group"] = metadata.group;
         json["payload"]["mode"] = metadata.mode;
-        json["payload"]["path"] = metadata.path;
         json["payload"]["size"] = static_cast<Json::UInt64>(metadata.size);
       },
       [&json](response::GetFileList& res) {
@@ -78,12 +77,12 @@ Json::Value Res::toJson() {
           fileJson["owner"] = file.owner;
           fileJson["group"] = file.group;
           fileJson["mode"] = file.mode;
-          fileJson["path"] = file.path;
           fileJson["name"] = file.name;
           json["payload"]["files"].append(fileJson);
         }
       },
-      [](auto&&) { throw std::runtime_error("Unknown response type"); }},
+      [](auto&&) { throw std::runtime_error("Unknown response type"); }
+    },
     kind
   );
   return json;
@@ -102,7 +101,6 @@ ResPtr Res::fromJson(const Json::Value& json) {
         json["payload"]["owner"].asString(),
         json["payload"]["group"].asString(),
         json["payload"]["mode"].asUInt(),
-        json["payload"]["path"].asString(),
         json["payload"]["name"].asString(),
       };
       res = makeResGetFileDetail(metadata);
@@ -133,8 +131,7 @@ ResPtr Res::fromJson(const Json::Value& json) {
            file["createTime"].asDouble(), file["updateTime"].asDouble(),
            static_cast<__off_t>(file["size"].asUInt64()),
            file["owner"].asString(), file["group"].asString(),
-           file["mode"].asUInt(), file["path"].asString(),
-           file["name"].asString()}
+           file["mode"].asUInt(), file["name"].asString()}
         );
       }
       res = makeResGetAllFileDetails(files);

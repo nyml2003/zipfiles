@@ -1,6 +1,7 @@
 #ifndef ZIPFILES_MP_DATA_TRANSFER_OBJECT_H
 #define ZIPFILES_MP_DATA_TRANSFER_OBJECT_H
 
+#include <sys/types.h>
 #include <filesystem>
 #include <string>
 
@@ -26,10 +27,10 @@ struct FileDetail {
   std::string group;
   // 权限
   mode_t mode{};
-  // 路径
-  std::string path;
   // 文件名
   std::string name;
+  // 设备号
+  dev_t dev{};
 };
 
 /**

@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <json/json.h>
 #include <openssl/sha.h>
-#include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include "server/backup/backup.h"

@@ -1,98 +1,89 @@
 #include "server/pack/pack.h"
 #include <algorithm>
-#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <ios>
 #include <iostream>
+#include <string>
 #include <vector>
 #include "mp/dto.h"
 #include "server/backup/backup.h"
 #include "server/tools/fsapi.h"
 
 namespace zipfiles::server {
-/**
- * @brief 给定一个打包后的文件名(路径形式)，返回一个archive实例
- *
- * ! Deprecated
- *
- */
-std::ofstream createArchive(const std::string& archiveName) {
-  std::ofstream archive(archiveName, std::ios::binary | std::ios::app);
-  if (!archive) {
-    throw std::runtime_error("Failed to create archive: " + archiveName);
-  }
-
-  return archive;
-}
 
 /**
- * @brief 传入目标流和文件路径，将未压缩的文件流拼接到目标流中
+ * @brief 将FileDetail实例序列化并插入header
  *
- * ! Deprecated
+ * @param fd FileDetail实例
  *
- */
-void packFileToArchive(std::ofstream& archive, const fs::path& filePath) {
-  std::ifstream file(filePath, std::ios::binary);
-  if (!file) {
-    throw std::runtime_error("Failed to open file: " + filePath.string());
-  }
-
-  // 写入文件路径长度和路径
-  std::string pathStr = filePath.string();
-  size_t pathLength = pathStr.size();
-  archive.write(reinterpret_cast<const char*>(&pathLength), sizeof(pathLength));
-  archive.write(pathStr.c_str(), static_cast<std::streamsize>(pathLength));
-
-  // 写入文件大小和内容
-  file.seekg(0, std::ios::end);
-  size_t file_size = file.tellg();
-  file.seekg(0, std::ios::beg);
-  archive.write(reinterpret_cast<const char*>(&file_size), sizeof(file_size));
-
-  std::array<char, 8192> buffer{};
-  while (file.read(buffer.data(), sizeof(buffer))) {
-    archive.write(buffer.data(), file.gcount());
-  }
-  archive.write(buffer.data(), file.gcount());
-}
-
-/**
- * @brief 从给定的输入流读入指定大小的chunk
+ * @param header header
  *
- * @param inFile 输入流
- *
- * @param chunkSize 指定的大小，单位是byte
+ * @param structSize fd的大小
  *
  */
-bool readChunk(
-  std::vector<uint8_t>& buffer,
-  std::ifstream& inFile,
-  size_t chunkSize
+void fileDetailSerialize(
+  const FileDetail& fd,
+  std::vector<uint8_t>& header,
+  size_t structSize
 ) {
-  if (!inFile.is_open()) {
-    throw std::runtime_error("File is not open");
-  }
+  size_t initialSize = header.size();
 
-  std::vector<uint8_t> buffers(chunkSize);
-  try {
-    inFile.read(
-      reinterpret_cast<char*>(buffer.data()),
-      static_cast<std::streamsize>(buffer.size())
-    );
+  header.resize(
+    initialSize + sizeof(size_t) + structSize
+  );  // 预留空间存储结构体大小和内容
+  size_t offset = initialSize;
 
-    if (inFile.bad()) {
-      throw std::runtime_error("Failed to read data from stream");
-    }
+  // 写入结构体大小
+  std::memcpy(header.data() + offset, &structSize, sizeof(size_t));
+  offset += sizeof(size_t);
 
-    buffer.resize(inFile.gcount());
-  } catch (const std::ios_base::failure& e) {
-    throw std::runtime_error("Failed to read file: " + std::string(e.what()));
-  }
+  // 写入结构体内容
+  // 写入文件类型
+  std::memcpy(header.data() + offset, &fd.type, sizeof(fd.type));
+  offset += sizeof(fd.type);
 
-  return true;
+  // 写入创建时间
+  std::memcpy(header.data() + offset, &fd.createTime, sizeof(fd.createTime));
+  offset += sizeof(fd.createTime);
+
+  // 写入修改时间
+  std::memcpy(header.data() + offset, &fd.updateTime, sizeof(fd.updateTime));
+  offset += sizeof(fd.updateTime);
+
+  // 写入文件大小
+  std::memcpy(header.data() + offset, &fd.size, sizeof(fd.size));
+  offset += sizeof(fd.size);
+
+  // 写入文件权限
+  std::memcpy(header.data() + offset, &fd.mode, sizeof(fd.mode));
+  offset += sizeof(fd.mode);
+
+  // 写入拥有者
+  size_t ownerSize = fd.owner.size();
+  std::memcpy(header.data() + offset, &ownerSize, sizeof(ownerSize));
+  offset += sizeof(ownerSize);
+  std::memcpy(header.data() + offset, fd.owner.c_str(), ownerSize);
+  offset += ownerSize;
+
+  // 写入用户组
+  size_t groupSize = fd.group.size();
+  std::memcpy(header.data() + offset, &groupSize, sizeof(groupSize));
+  offset += sizeof(groupSize);
+  std::memcpy(header.data() + offset, fd.group.c_str(), groupSize);
+  offset += groupSize;
+
+  // 写入文件名
+  size_t nameSize = fd.name.size();
+  std::memcpy(header.data() + offset, &nameSize, sizeof(nameSize));
+  offset += sizeof(nameSize);
+  std::memcpy(header.data() + offset, fd.name.c_str(), nameSize);
+  offset += nameSize;
+
+  // 写入设备号
+  std::memcpy(header.data() + offset, &fd.dev, sizeof(fd.dev));
 }
 
 /**
@@ -105,11 +96,15 @@ bool readChunk(
  */
 void createHeader(
   const fs::path& filePath,
-  size_t dataSize,
+  const FileDetail& fd,
   std::vector<uint8_t>& header
 ) {
   size_t relativePathSize = filePath.string().size();
-  size_t totalSize = sizeof(size_t) * 2 + relativePathSize;
+  size_t structSize = sizeof(fd.type) + sizeof(fd.createTime) +
+                      sizeof(fd.updateTime) + sizeof(fd.size) +
+                      sizeof(fd.mode) + sizeof(size_t) * 3 + fd.owner.size() +
+                      fd.group.size() + fd.name.size() + sizeof(fd.dev);
+  size_t totalSize = sizeof(size_t) * 3 + relativePathSize + structSize;
 
   header.reserve(totalSize);
 
@@ -118,10 +113,16 @@ void createHeader(
     header.end(), reinterpret_cast<uint8_t*>(&relativePathSize),
     reinterpret_cast<uint8_t*>(&relativePathSize) + sizeof(size_t)
   );
-  std::string filePathStr = filePath.string();
+
   // 写入文件路径
+  std::string filePathStr = filePath.string();
   header.insert(header.end(), filePathStr.begin(), filePathStr.end());
+
+  // 写入FileDetail
+  fileDetailSerialize(fd, header, structSize);
+
   // 写入文件数据大小
+  size_t dataSize = fd.size;
   header.insert(
     header.end(), reinterpret_cast<uint8_t*>(&dataSize),
     reinterpret_cast<uint8_t*>(&dataSize) + sizeof(size_t)
@@ -134,6 +135,7 @@ void createHeader(
  *
  * @param files 一个文件路径数组
  *
+ * @param flush 是否强制输出缓冲区
  */
 std::pair<bool, std::vector<uint8_t>&>
 packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
@@ -155,8 +157,19 @@ packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
   for (; currentFileIndex < files.size() && !flush; ++currentFileIndex) {
     fs::path filePath = fs::relative(files[currentFileIndex], commonAncestor);
 
+    // 获取文件信息
+    FileDetail fd = getFileDetail(files[currentFileIndex]);
+
+    if (fd.type == fs::file_type::socket) {
+      // 不备份socket
+      continue;
+    }
+
+    bool isRegular =
+      (fd.type == fs::file_type::regular || fd.type == fs::file_type::symlink);
+
     // 打开文件
-    if (!inFile.is_open()) {
+    if (!inFile.is_open() && isRegular) {
       inFile.open(files[currentFileIndex], std::ios::binary);
       if (!inFile) {
         throw std::runtime_error("Failed to open: " + filePath.string());
@@ -164,13 +177,9 @@ packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
     }
 
     // 创造header
-    if (inFile.tellg() == 0) {
-      // 计算文件大小
-      FileDetail fd = getFileDetail(files[currentFileIndex]);
-      size_t dataSize = fd.size;
-
+    if (inFile.tellg() == 0 || !isRegular) {
       if (header_buffer.empty()) {
-        createHeader(filePath, dataSize, header_buffer);
+        createHeader(filePath, fd, header_buffer);
       }
 
       // 计算要往obuffer拷贝多少数据
@@ -192,6 +201,13 @@ packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
         header_buffer.clear();
         header_offset = 0;
       }
+    }
+
+    if (!isRegular) {
+      // 文件不是普通文件或者链接
+      // 可能是设备文件、FIFO、Socket、目录
+      // 不要从这些文件读取数据，它们的大小是0
+      continue;
     }
 
     // 读取文件数据并写入缓冲区

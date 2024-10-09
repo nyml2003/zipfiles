@@ -6,8 +6,7 @@
 #include <fstream>
 #include <utility>
 #include <vector>
-
-namespace fs = std::filesystem;
+#include "mp/dto.h"
 
 namespace zipfiles::server {
 
@@ -16,18 +15,12 @@ constexpr int UNPACK_BLOCK_SIZE = 1 << 21;
 enum class State {
   READ_PATH_SIZE,
   READ_PATH,
+  READ_FILEDETAIL_SIZE,
+  READ_FILEDETAIL,
   READ_DATA_SIZE,
   READ_DATA,
   FLUSH
 };
-
-/**
- * ! Deprecated
- *
- */
-void unpackArchive(const fs::path& archivePath, const fs::path& outputDir);
-
-void unpackFiles(const std::vector<uint8_t>& packedData, const fs::path& dst);
 
 /**
  * * unpack
@@ -45,9 +38,11 @@ class FileUnpacker {
   fs::path dst;
   State state{};
   size_t path_size{};
+  size_t fileDetail_size{};
   size_t data_size{};
   size_t buffer_pos{};
   std::string file_path;
+  FileDetail fd;
   std::ofstream output_file;
   std::vector<uint8_t> output_buffer;
   size_t output_buffer_pos{};
@@ -55,8 +50,16 @@ class FileUnpacker {
 
   static constexpr size_t UNPACK_BLOCK_SIZE = 4096;
 
+  static void
+  fileDetailDeserialize(FileDetail& fd, const std::vector<uint8_t>& header);
+  void openOutputFileStream();
+  void createDeviceFile();
+  void createFIFO();
+
   void readPathSize(std::vector<uint8_t>& ibuffer);
   void readPath(std::vector<uint8_t>& ibuffer);
+  void readFileDetailSize(std::vector<uint8_t>& ibuffer);
+  void readFileDetail(std::vector<uint8_t>& ibuffer);
   void readDataSize(std::vector<uint8_t>& ibuffer);
   void readData(std::vector<uint8_t>& ibuffer);
   void flushBuffer();
