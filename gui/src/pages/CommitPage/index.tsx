@@ -3,7 +3,7 @@ import CommitTable from './CommitTable';
 
 const CommitPage: React.FC = () => {
   return (
-    <div className='p-4 flex-1 flex flex-col'>
+    <div className='p-4 '>
       <CommitTable />
     </div>
   );

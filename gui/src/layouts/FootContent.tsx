@@ -7,9 +7,9 @@ const FootContent = () => {
   const [modal, contextHolder] = Modal.useModal();
   return (
     <div className='bg-white flex flex-row-reverse p-2'>
-      <MessageOutlined />
+      <Button icon={<MessageOutlined />} ></Button>
     </div>
   );
 };
 
-export default FootContent
+export default FootContent;

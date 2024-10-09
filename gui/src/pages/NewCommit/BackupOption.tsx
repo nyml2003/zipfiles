@@ -16,7 +16,7 @@ const BackupOption: React.FC = () => {
   };
 
   return (
-    <div className='flex flex-col w-full flex-1'>
+    <div className='p-2'>
       备份文件设置
       <div className={`${styles['fade-in-down']} p-4 max-w-3xl`}>
         <Form

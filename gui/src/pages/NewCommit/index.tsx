@@ -1,10 +1,8 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import FileList from './FileList';
 import BackupOption from './BackupOption';
-import { TabPaneProps, Tabs, TabsProps } from 'antd';
+import { Tabs, TabsProps } from 'antd';
 import Explorer from '@/components/Explorer';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/stores/store';
 
 const NewCommit: React.FC = () => {
   const [activeKey, setActiveKey] = React.useState('1');
@@ -22,11 +20,13 @@ const NewCommit: React.FC = () => {
               </>
             ),
             closable: false,
+            className: 'grow-item',
           },
           {
             label: '浏览文件',
             key: '2',
             children: <Explorer />,
+            className: 'grow-item',
           },
         ];
       }
@@ -38,6 +38,7 @@ const NewCommit: React.FC = () => {
           label: '浏览文件',
           key: newKey,
           children: <Explorer />,
+          className: 'grow-item',
         },
       ];
     });
@@ -53,7 +54,7 @@ const NewCommit: React.FC = () => {
         </>
       ),
       closable: false,
-      className: 'astyle',
+      className: 'grow-item',
     },
   ]);
 
@@ -72,14 +73,14 @@ const NewCommit: React.FC = () => {
   };
 
   return (
-    <div className='w-full h-full flex flex-col bg-white'>
+    <div className=' bg-white grow-item split-container-row'>
       <Tabs
         type='editable-card'
         activeKey={activeKey}
         onChange={setActiveKey}
         onEdit={handleEdit}
         hideAdd
-        className='flex-1'
+        className='split-container-col grow-item'
         items={panes}></Tabs>
     </div>
   );

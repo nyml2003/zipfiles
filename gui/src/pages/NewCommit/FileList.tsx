@@ -65,17 +65,11 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
   };
 
   return (
-    <div className='h-full flex flex-col'>
-      <Table<DataType>
-        columns={columns}
-        dataSource={selectedFile}
-        size='small'
-        rowKey={'name'}
-        className='flex-1 w-full'
-      />
-      <div className='flex flex-row justify-between m-4'>
-        总大小：{selectedFile.reduce((acc, cur) => acc + cur.size, 0)}
-        <div className='flex flex-row space-x-2'>
+    <>
+      <Table<DataType> columns={columns} dataSource={selectedFile} size='small' rowKey={'name'} />
+      <div className='m-4 flex flex-row justify-between items-center'>
+        <div className='text-center'>总大小：{selectedFile.reduce((acc, cur) => acc + cur.size, 0)}</div>
+        <div className='space-x-2'>
           <Button type='primary' onClick={handleAdd}>
             添加
           </Button>
@@ -84,7 +78,7 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
           </Button>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

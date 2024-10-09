@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Key } from 'react';
-import { Checkbox, Space, Tree, TreeProps } from 'antd';
+import { Tree, TreeProps } from 'antd';
 import useApi from '@/hooks/useApi';
 import { GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
 import { ApiEnum } from '@/apis';
@@ -11,7 +11,6 @@ import { RootState } from '@/stores/store';
 import { updateCurrentFile, updateCurrentPath, updateSelectedFile } from '@/stores/file/reducer';
 import { cleanObject } from '@/utils';
 const { DirectoryTree } = Tree;
-import { MinusSquareOutlined } from '@ant-design/icons';
 import { GetFileDetailRequest, GetFileDetailResponse } from '@/apis/GetFileDetail';
 
 interface DataNode {
@@ -19,6 +18,7 @@ interface DataNode {
   key: string;
   isLeaf?: boolean;
   children?: DataNode[];
+  expanded?: boolean;
 }
 
 const TreeMenu = () => {
@@ -54,8 +54,10 @@ const TreeMenu = () => {
         title: '.',
         key: path,
         isLeaf: res.type !== FileType.Directory,
+        expanded: true,
       },
     ]);
+    setExpandedKeys([path]);
   };
 
   const handleGetFileList = async (path: string, needLoading: boolean = true) => {
@@ -120,13 +122,12 @@ const TreeMenu = () => {
   };
 
   const onLoadData = async (treeNode: DataNode) => {
-    const { key, children,title } = treeNode;
+    const { key } = treeNode;
     const targetNode = treeData.find(item => item.key === key);
     if (targetNode && targetNode.children) {
       return;
     }
     await handleGetFileList(key as string, false);
-    
   };
 
   const handleCheck: TreeProps['onCheck'] = (checkedKeysValue, info) => {
@@ -151,29 +152,20 @@ const TreeMenu = () => {
       loading={loading}
       hasData={() => treeData.length > 0}
       children={
-        <div className='flex flex-col'>
-          <div className='w-full'>
-            {/* 全选、折叠按钮 antd-icon
-            <Space>
-              <Checkbox onChange={selectAll}>全选</Checkbox>
-              <MinusSquareOutlined />
-            </Space> */}
-          </div>
-          <DirectoryTree
-            showLine
-            checkable
-            multiple
-            switcherIcon={<DownOutlined />}
-            loadData={onLoadData}
-            treeData={treeData}
-            checkedKeys={checkedKeys}
-            onCheck={handleCheck}
-            onSelect={handleSelect}
-            expandedKeys={expandedKeys}
-            onExpand={setExpandedKeys}
-            className='whitespace-nowrap bg-white flex-1'
-          />
-        </div>
+        <DirectoryTree
+          showLine
+          checkable
+          multiple
+          switcherIcon={<DownOutlined />}
+          loadData={onLoadData}
+          treeData={treeData}
+          checkedKeys={checkedKeys}
+          onCheck={handleCheck}
+          onSelect={handleSelect}
+          expandedKeys={expandedKeys}
+          onExpand={setExpandedKeys}
+          className='whitespace-nowrap bg-white grow-item'
+        />
       }
     />
   );

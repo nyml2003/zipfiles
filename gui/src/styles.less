@@ -46,3 +46,20 @@ body {
   -ms-overflow-style: none;  /* 适用于 IE 和 Edge */
   scrollbar-width: none;  /* 适用于 Firefox */
 }
+
+
+.grow-item {
+  @apply flex-1 overflow-auto;
+}
+
+.split-container-row {
+  @apply flex flex-row h-full;
+}
+
+.split-container-col {
+  @apply flex flex-col h-full;
+}
+
+.ant-tabs-content {
+  @apply split-container-col;
+}

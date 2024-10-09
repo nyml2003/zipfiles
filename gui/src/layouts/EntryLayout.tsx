@@ -51,8 +51,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <Layout hasSider className='h-screen select-none'>
-      <Sider breakpoint='lg' className='overflow-hidden bg-white'>
+    <Layout hasSider className='select-none flex flex-row h-screen'>
+      <Sider breakpoint='lg' className=' bg-white'>
         <Menu
           //mode='inline'
           defaultSelectedKeys={['1']}
@@ -65,8 +65,8 @@ const App: React.FC = () => {
           }}
         />
       </Sider>
-      <Layout className='h-screen flex-1 w-full'>
-        <Content className='flex flex-1'>
+      <Layout className='grow-item split-container-col'>
+        <Content className='grow-item'>
           <Outlet />
         </Content>
         <FootContent />

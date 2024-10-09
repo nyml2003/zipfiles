@@ -7,15 +7,16 @@ import TableView from './TableView';
 
 const TreeView = () => {
   return (
-    <Splitter className={`flex-1 overflow-hidden ${styles['fade-in-down']}`}>
+    <Splitter className={`${styles['fade-in-down']} split-container-row grow-item`}>
       <Splitter.Panel
         defaultSize='20%'
         min='10%'
-        max='70%'>
+        max='70%'
+        className='split-container-row grow-item'>
         <TreeMenu />
       </Splitter.Panel>
-      <Splitter.Panel>
-        <TableView></TableView>
+      <Splitter.Panel className='split-container-row grow-item'>
+        <TableView/>
       </Splitter.Panel>
     </Splitter>
   );

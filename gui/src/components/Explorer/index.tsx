@@ -36,13 +36,13 @@ const Explorer: React.FC = () => {
     if (isFiltering) {
       return <FilterForm />;
     }
-      return <TreeView />;
+    return <TreeView />;
   };
 
   return (
-    <div className='flex-1 flex flex-col'>
-      <div className='bg-white rounded-xl p-2 m-2 flex items-center justify-between'>
-        <div className='p-2 flex flex-row items-center'>
+    <div className='split-container-col grow-item'>
+      <div className='flex rounded-xl items-center justify-between bg-gray-100'>
+        <div className='flex p-2 items-center'>
           <Button
             type='text'
             icon={<ArrowLeftOutlined />}
@@ -75,7 +75,16 @@ const Explorer: React.FC = () => {
           </Button>
         </div>
       </div>
-      <div className={`bg-white rounded-xl m-2 p-2 ${styles['fade-in-down']}`}>
+      <div
+        className={`
+        bg-white
+        rounded-xl
+        m-2
+        p-2
+        ${styles['fade-in-down']}
+        grow-item 
+        split-container-row
+        `}>
         {renderContent()}
       </div>
     </div>
