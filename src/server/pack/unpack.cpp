@@ -3,6 +3,7 @@
 #include <pwd.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/un.h>
 #include <unistd.h>
@@ -68,16 +69,6 @@ bool FileUnpacker::unpackFilesByBlock(
         } catch (std::exception& e) {
           throw std::runtime_error(
             "Failed to read file detail: " + std::string(e.what())
-          );
-        }
-        break;
-
-      case State::READ_DATA_SIZE:
-        try {
-          readDataSize(ibuffer);
-        } catch (std::exception& e) {
-          throw std::runtime_error(
-            "Failed to read data size: " + std::string(e.what())
           );
         }
         break;
@@ -188,6 +179,13 @@ void FileUnpacker::openOutputFileStream() {
       throw std::runtime_error("Failed to open file: " + path.string());
     }
   }
+}
+
+void FileUnpacker::createSymlink(const std::string& target) {
+  fs::path path = (dst / file_path);
+  // 删除原来的软链接
+  fs::remove(path);
+  fs::create_symlink(target, path);
 }
 
 void FileUnpacker::createDeviceFile() {
@@ -301,6 +299,9 @@ void FileUnpacker::readFileDetail(std::vector<uint8_t>& ibuffer) {
     // header_buffer内容足够
     fileDetailDeserialize(fd, header_buffer);
 
+    // 获得文件大小
+    data_size = fd.size;
+
     // 根据文件类型处理
     switch (fd.type) {
       case std::filesystem::file_type::none:
@@ -316,7 +317,7 @@ void FileUnpacker::readFileDetail(std::vector<uint8_t>& ibuffer) {
         fs::create_directories(dst / file_path);
         break;
       case std::filesystem::file_type::symlink:
-        openOutputFileStream();
+        // 留到READ_DATA处理
         break;
       case std::filesystem::file_type::character:
         createDeviceFile();
@@ -334,30 +335,6 @@ void FileUnpacker::readFileDetail(std::vector<uint8_t>& ibuffer) {
         break;
     }
 
-    // 清空并转入下一状态
-    header_buffer.clear();
-    state = State::READ_DATA_SIZE;
-  }
-}
-
-void FileUnpacker::readDataSize(std::vector<uint8_t>& ibuffer) {
-  if (header_buffer.size() < sizeof(size_t)) {
-    // 若header_buffer没有读够预期的内容
-    // 从ibuffer读满header_buffer，或ibuffer数据不足，则读取ibuffer剩下的全部内容
-    size_t to_copy = std::min(
-      sizeof(size_t) - header_buffer.size(), ibuffer.size() - buffer_pos
-    );
-    header_buffer.insert(
-      header_buffer.end(),
-      ibuffer.begin() + static_cast<std::ptrdiff_t>(buffer_pos),
-      ibuffer.begin() + static_cast<std::ptrdiff_t>(buffer_pos + to_copy)
-    );
-    buffer_pos += to_copy;
-  }
-
-  if (header_buffer.size() >= sizeof(size_t)) {
-    // header_buffer内容足够
-    data_size = *reinterpret_cast<size_t*>(header_buffer.data());
     // 清空并转入下一状态
     header_buffer.clear();
     state = State::READ_DATA;
@@ -419,13 +396,25 @@ void FileUnpacker::readData(std::vector<uint8_t>& ibuffer) {
       output_buffer_pos = 0;
     }
 
+    // 文件类型是symlink，此时才拿到指向的路径信息
+    if (fd.type == fs::file_type::symlink) {
+      std::string target(
+        output_buffer.begin(),
+        output_buffer.begin() + static_cast<std::ptrdiff_t>(output_buffer_pos)
+      );
+      createSymlink(target);
+      output_buffer_pos = 0;
+    }
+
     // 收尾时恢复文件信息
     // 设置文件修改时间
     std::string path = dst / file_path;
-    struct utimbuf new_times {};
-    new_times.actime = time(nullptr);  // 保持当前访问时间不变
-    new_times.modtime = static_cast<time_t>(fd.updateTime);
-    if (utime(path.c_str(), &new_times) != 0) {
+    std::array<timeval, 2> new_times{};
+    new_times[0].tv_sec = time(nullptr);  // 保持当前访问时间不变
+    new_times[0].tv_usec = 0;
+    new_times[1].tv_sec = static_cast<time_t>(fd.updateTime);
+    new_times[1].tv_usec = 0;
+    if (lutimes(path.c_str(), new_times.data()) != 0) {
       throw std::runtime_error("Cannot set time correctly, file: " + path);
     }
 
@@ -433,7 +422,7 @@ void FileUnpacker::readData(std::vector<uint8_t>& ibuffer) {
     struct passwd* pwd = getpwnam(fd.owner.c_str());
     struct group* grp = getgrnam(fd.group.c_str());
     if (pwd != nullptr && grp != nullptr) {
-      if (chown(path.c_str(), pwd->pw_uid, grp->gr_gid) != 0) {
+      if (lchown(path.c_str(), pwd->pw_uid, grp->gr_gid) != 0) {
         throw std::runtime_error(
           "Cannot set owner and group correctly, file: " + path
         );
@@ -443,10 +432,13 @@ void FileUnpacker::readData(std::vector<uint8_t>& ibuffer) {
     }
 
     // 设置文件权限
-    if (chmod(path.c_str(), fd.mode) != 0) {
-      throw std::runtime_error("Cannot set mode correctly, file: " + path);
+    if (fd.type != fs::file_type::symlink) {
+      if (chmod(path.c_str(), fd.mode) != 0) {
+        throw std::runtime_error("Cannot set mode correctly, file: " + path);
+      }
     }
 
+    // 下一状态
     state = State::READ_PATH_SIZE;
   } else {
     // 没有完成，则也清空ibuffer
