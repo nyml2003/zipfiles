@@ -23,11 +23,14 @@ namespace zipfiles::server {
 class BackupRestoreTest : public ::testing::Test {
  protected:
   fs::path log = std::getenv("HOME") + std::string("/.zip/commit.log");
+
   void SetUp() override {
     // 清理文件
     fs::remove_all("/tmp/test_dir1");
     fs::remove_all("/tmp/test_dir2");
     fs::remove_all("/tmp/test_dir3");
+    fs::remove_all("/tmp/backup");
+    fs::remove_all("/tmp/restore");
     fs::remove(log);
 
     // 创建测试目录和文件
@@ -64,6 +67,18 @@ class BackupRestoreTest : public ::testing::Test {
     std::vector<char> largeContent(100 * 1024 * 1024, 'A');  // 100MB of 'A'
     largeFile.write(largeContent.data(), largeContent.size());
     largeFile.close();
+
+    // 创建软链接
+    fs::create_symlink(
+      "/tmp/test_dir1/regular_file.txt",
+      "/tmp/test_dir1/symlink_to_regular_file"
+    );
+
+    // 创建硬链接
+    fs::create_hard_link(
+      "/tmp/test_dir1/regular_file.txt",
+      "/tmp/test_dir1/hardlink_to_regular_file"
+    );
   }
 
   void TearDown() override {
@@ -71,6 +86,8 @@ class BackupRestoreTest : public ::testing::Test {
     fs::remove_all("/tmp/test_dir1");
     fs::remove_all("/tmp/test_dir2");
     fs::remove_all("/tmp/test_dir3");
+    fs::remove_all("/tmp/backup");
+    fs::remove_all("/tmp/restore");
     fs::remove(log);
   }
 };
@@ -78,17 +95,21 @@ class BackupRestoreTest : public ::testing::Test {
 TEST_F(BackupRestoreTest, BackupAndRestore) {
   // 备份文件
   std::vector<fs::path> files = {
-    "/tmp/test_dir1/regular_file.txt", "/tmp/test_dir2/text_file.txt",
-    "/tmp/test_dir3/fifo_file",        "/tmp/test_dir3/socket_file",
-    "/tmp/test_dir3/device_file",      "/tmp/test_dir1/large_file.bin"
-  };
+    "/tmp/test_dir1/regular_file.txt",
+    "/tmp/test_dir2/text_file.txt",
+    "/tmp/test_dir3/fifo_file",
+    "/tmp/test_dir3/socket_file",
+    "/tmp/test_dir3/device_file",
+    "/tmp/test_dir1/large_file.bin",
+    "/tmp/test_dir1/symlink_to_regular_file",
+    "/tmp/test_dir1/hardlink_to_regular_file"};
 
   Json::Value cl;
   cl["message"] = "Test backup";
   cl["createTime"] = 1234567890.0;
   cl["uuid"] = "test-uuid";
   cl["storagePath"] = "/tmp/backup/test_backup.zip";
-  cl["isEncrypt"] = false;
+  cl["isEncrypt"] = true;
 
   std::string key = "test-key";
 
@@ -105,8 +126,7 @@ TEST_F(BackupRestoreTest, BackupAndRestore) {
     std::string originalFile = file.string();
     std::string restoredFile = (restorePath / relativePath).string();
 
-    if (fs::is_fifo(file) || fs::is_block_file(file) ||
-        fs::is_character_file(file) || fs::is_socket(file)) {
+    if (fs::is_fifo(file) || fs::is_block_file(file) || fs::is_character_file(file) || fs::is_socket(file)) {
       continue;
     }
 
@@ -122,17 +142,26 @@ TEST_F(BackupRestoreTest, BackupAndRestore) {
     if (fs::is_socket(file)) {
       continue;
     }
-    fs::path relativePath = fs::relative(file, "/tmp");
+    fs::path relativePath = fs::relative(file.parent_path(), "/tmp");
+    relativePath = relativePath / file.filename();
     FileDetail originalDetail = getFileDetail(file);
     FileDetail restoredDetail = getFileDetail(restorePath / relativePath);
-    ASSERT_EQ(originalDetail.type, restoredDetail.type);
-    ASSERT_EQ(originalDetail.updateTime, restoredDetail.updateTime);
-    ASSERT_EQ(originalDetail.size, restoredDetail.size);
-    ASSERT_EQ(originalDetail.owner, restoredDetail.owner);
-    ASSERT_EQ(originalDetail.group, restoredDetail.group);
-    ASSERT_EQ(originalDetail.mode, restoredDetail.mode);
-    ASSERT_EQ(originalDetail.name, restoredDetail.name);
-    ASSERT_EQ(originalDetail.dev, restoredDetail.dev);
+    ASSERT_EQ(originalDetail.type, restoredDetail.type)
+      << file << "&" << restorePath / relativePath;
+    ASSERT_EQ(originalDetail.updateTime, restoredDetail.updateTime)
+      << file << "&" << restorePath / relativePath;
+    ASSERT_EQ(originalDetail.size, restoredDetail.size)
+      << file << "&" << restorePath / relativePath;
+    ASSERT_EQ(originalDetail.owner, restoredDetail.owner)
+      << file << "&" << restorePath / relativePath;
+    ASSERT_EQ(originalDetail.group, restoredDetail.group)
+      << file << "&" << restorePath / relativePath;
+    ASSERT_EQ(originalDetail.mode, restoredDetail.mode)
+      << file << "&" << restorePath / relativePath;
+    ASSERT_EQ(originalDetail.name, restoredDetail.name)
+      << file << "&" << restorePath / relativePath;
+    ASSERT_EQ(originalDetail.dev, restoredDetail.dev)
+      << file << "&" << restorePath / relativePath;
   }
 }
 

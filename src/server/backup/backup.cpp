@@ -1,4 +1,5 @@
 #include "server/backup/backup.h"
+#include <cstdint>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -87,7 +88,8 @@ void backupFiles(
   // 主循环
   try {
     while (true) {
-      std::vector<uint8_t> processedData{};
+      std::vector<uint8_t> zippedData{};
+      std::vector<uint8_t> encryptedData{};
 
       // 获取输出
       auto [packFlush, packedData] = packFilesByBlock(files, flush);
@@ -99,16 +101,16 @@ void backupFiles(
           // 否则还是只将数据拷贝入zip ibuffer而不输出
           // 将pack的obuffer的数据都加入zip的ibuffer
           // zipLack代表packedData是否还有数据可读，如果zipLack为真，说明已经读完当前packedData
-          auto [zipFlush, zipLack, zippedData] = zip(packedData, flush);
+          auto [zipFlush, zipLack, outputData] = zip(packedData, flush);
 
           if (zipFlush) {
-            // 如果zip的ibuffer满，那么压缩，并输出到processedData
-            processedData.insert(
-              processedData.end(), zippedData->begin(), zippedData->end()
+            // 如果zip的ibuffer满，那么压缩，并输出到zippedData
+            zippedData.insert(
+              zippedData.end(), outputData->begin(), outputData->end()
             );
 
             // 清空zip的obuffer
-            zippedData->clear();
+            outputData->clear();
           }
 
           if (zipLack) {
@@ -120,18 +122,39 @@ void backupFiles(
         packedData.clear();
       }
 
-      // 当processedData不为空
-      if (!processedData.empty()) {
+      // 当zippedData不为空
+      if (!zippedData.empty()) {
         // 如果需要加密，此时则将压缩后的processedData加密
-        if (encrypt) {  // ! disable the encrypt for compiling the unitest
-          // processedData = encryptor.encryptFile(processedData, iv);
+        while (encrypt) {
+          auto [encryptFlush, encryptLack, outputData] =
+            encryptor.encryptFile(zippedData, iv, flush);
+
+          if (encryptFlush) {
+            encryptedData.insert(
+              encryptedData.end(), outputData->begin(), outputData->end()
+            );
+
+            outputData->clear();
+          }
+
+          if (encryptLack) {
+            break;
+          }
         }
 
         // 写入输出流
-        outputFile.write(
-          reinterpret_cast<const char*>(processedData.data()),
-          static_cast<std::streamsize>(processedData.size())
-        );
+        if (encrypt) {
+          outputFile.write(
+            reinterpret_cast<const char*>(encryptedData.data()),
+            static_cast<std::streamsize>(encryptedData.size())
+          );
+        } else {
+          outputFile.write(
+            reinterpret_cast<const char*>(zippedData.data()),
+            static_cast<std::streamsize>(zippedData.size())
+          );
+        }
+
       }
 
       // 如果所有文件都读取完毕，设置 flush 为 true

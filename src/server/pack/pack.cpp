@@ -104,10 +104,10 @@ void createHeader(
                       sizeof(fd.updateTime) + sizeof(fd.size) +
                       sizeof(fd.mode) + sizeof(size_t) * 3 + fd.owner.size() +
                       fd.group.size() + fd.name.size() + sizeof(fd.dev);
-  size_t totalSize = sizeof(size_t) * 3 + relativePathSize + structSize;
+  size_t totalSize = sizeof(size_t) * 2 + relativePathSize + structSize;
 
   header.reserve(totalSize);
-
+  
   // 写入文件路径大小
   header.insert(
     header.end(), reinterpret_cast<uint8_t*>(&relativePathSize),
@@ -120,13 +120,6 @@ void createHeader(
 
   // 写入FileDetail
   fileDetailSerialize(fd, header, structSize);
-
-  // 写入文件数据大小
-  size_t dataSize = fd.size;
-  header.insert(
-    header.end(), reinterpret_cast<uint8_t*>(&dataSize),
-    reinterpret_cast<uint8_t*>(&dataSize) + sizeof(size_t)
-  );
 }
 
 /**
@@ -155,7 +148,9 @@ packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
   }
 
   for (; currentFileIndex < files.size() && !flush; ++currentFileIndex) {
-    fs::path filePath = fs::relative(files[currentFileIndex], commonAncestor);
+    fs::path filePath =
+      fs::relative(files[currentFileIndex].parent_path(), commonAncestor);
+    filePath = filePath / files[currentFileIndex].filename();
 
     // 获取文件信息
     FileDetail fd = getFileDetail(files[currentFileIndex]);
@@ -165,8 +160,7 @@ packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
       continue;
     }
 
-    bool isRegular =
-      (fd.type == fs::file_type::regular || fd.type == fs::file_type::symlink);
+    bool isRegular = (fd.type == fs::file_type::regular);
 
     // 打开文件
     if (!inFile.is_open() && isRegular) {
@@ -180,6 +174,13 @@ packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
     if (inFile.tellg() == 0 || !isRegular) {
       if (header_buffer.empty()) {
         createHeader(filePath, fd, header_buffer);
+        if (fd.type == fs::file_type::symlink) {
+          // 对于软链接，直接再插入其指向的链接作为数据
+          std::string target = fs::read_symlink(files[currentFileIndex]);
+          header_buffer.insert(
+            header_buffer.end(), target.begin(), target.end()
+          );
+        }
       }
 
       // 计算要往obuffer拷贝多少数据
@@ -205,8 +206,8 @@ packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
 
     if (!isRegular) {
       // 文件不是普通文件或者链接
-      // 可能是设备文件、FIFO、Socket、目录
-      // 不要从这些文件读取数据，它们的大小是0
+      // 可能是软链接，设备文件、FIFO、Socket、目录
+      // 不要从这些文件用fstream读取数据
       continue;
     }
 

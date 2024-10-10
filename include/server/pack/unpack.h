@@ -17,7 +17,6 @@ enum class State {
   READ_PATH,
   READ_FILEDETAIL_SIZE,
   READ_FILEDETAIL,
-  READ_DATA_SIZE,
   READ_DATA,
   FLUSH
 };
@@ -48,11 +47,10 @@ class FileUnpacker {
   size_t output_buffer_pos{};
   std::vector<uint8_t> header_buffer;
 
-  static constexpr size_t UNPACK_BLOCK_SIZE = 4096;
-
   static void
   fileDetailDeserialize(FileDetail& fd, const std::vector<uint8_t>& header);
   void openOutputFileStream();
+  void createSymlink(const std::string& target);
   void createDeviceFile();
   void createFIFO();
 
@@ -60,7 +58,6 @@ class FileUnpacker {
   void readPath(std::vector<uint8_t>& ibuffer);
   void readFileDetailSize(std::vector<uint8_t>& ibuffer);
   void readFileDetail(std::vector<uint8_t>& ibuffer);
-  void readDataSize(std::vector<uint8_t>& ibuffer);
   void readData(std::vector<uint8_t>& ibuffer);
   void flushBuffer();
 };
