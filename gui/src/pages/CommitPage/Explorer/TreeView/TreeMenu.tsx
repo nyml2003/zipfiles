@@ -9,13 +9,16 @@ import LoadingWrapper from '@/components/LoadingWrapper';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
 import { updateCurrentFile, updateCurrentPath, updateSelectedFile } from '@/stores/file/reducer';
+import { cleanObject } from '@/utils';
 const { DirectoryTree } = Tree;
+import { GetFileDetailRequest, GetFileDetailResponse } from '@/apis/GetFileDetail';
 
 interface DataNode {
   title: React.ReactNode;
   key: string;
   isLeaf?: boolean;
   children?: DataNode[];
+  expanded?: boolean;
 }
 
 const TreeMenu = () => {
@@ -39,15 +42,38 @@ const TreeMenu = () => {
     handleGetFileList(currentPath);
   }, [currentPath]);
 
+  const getRootFile = async (path: string) => {
+    const res = await api.request<GetFileDetailRequest, GetFileDetailResponse>(
+      ApiEnum.GetFileDetail,
+      {
+        path: path === '' ? '/' : path,
+      },
+    );
+    setTreeData([
+      {
+        title: '.',
+        key: path,
+        isLeaf: res.type !== FileType.Directory,
+        expanded: true,
+      },
+    ]);
+    setExpandedKeys([path]);
+  };
+
   const handleGetFileList = async (path: string, needLoading: boolean = true) => {
     if (needLoading) setLoading(LoadingState.Loading);
+    if (path === currentPath) {
+      await getRootFile(currentPath);
+    }
     try {
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
         path: path === '' ? '/' : path,
-        filter: filter,
+        filter: cleanObject(filter),
       });
+
       const newTreeData = res.files.map(item => {
         const isDirectory = item.type === FileType.Directory;
+        // title是path减去currentPath + item.name
         return {
           title: item.name,
           key: `${path}/${item.name}`,
@@ -95,8 +121,8 @@ const TreeMenu = () => {
     });
   };
 
-  const onLoadData = async (treeNode: any) => {
-    const { key, children } = treeNode;
+  const onLoadData = async (treeNode: DataNode) => {
+    const { key } = treeNode;
     const targetNode = treeData.find(item => item.key === key);
     if (targetNode && targetNode.children) {
       return;
@@ -138,7 +164,7 @@ const TreeMenu = () => {
           onSelect={handleSelect}
           expandedKeys={expandedKeys}
           onExpand={setExpandedKeys}
-          className='whitespace-nowrap bg-gray-100 flex-1'
+          className='whitespace-nowrap bg-white grow-item'
         />
       }
     />

@@ -40,7 +40,7 @@ module.exports = {
     'no-multi-spaces': 1, // 禁止使用多个空格
     radix: 1, // 强制在parseInt()使用基数参数
     // 'no-unused-vars': 'warn',
-    'no-unused-vars': 'on',
+    'no-unused-vars': 'error', // 禁止出现未使用过的变量
     '@typescript-eslint/no-unused-vars': ['error'], // 把该条提示信息转换成警告信息
     /**
      * 变量声明
@@ -63,7 +63,7 @@ module.exports = {
     'keyword-spacing': ['error', { before: true, after: true }],
     // 禁止出现多行空行
     'no-multiple-empty-lines': ['error', { max: 1 }],
-    semi: ['error', 'never'], // 禁止末尾分号
+    semi: ['error', 'always'], // 禁止末尾分号
     quotes: ['error', 'single'], // 单引号
     'space-infix-ops': 2, // 操作符周围必须有空格
     'spaced-comment': ['error', 'always'], // 注释后面必须跟随至少一个空白

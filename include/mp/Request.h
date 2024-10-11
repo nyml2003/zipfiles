@@ -1,6 +1,7 @@
 #ifndef ZIPFILES_MP_REQUEST_H
 #define ZIPFILES_MP_REQUEST_H
 #include <json/json.h>
+#include <optional>
 #include <string>
 #include <variant>
 #include "json/value.h"
@@ -14,6 +15,7 @@ struct GetFileDetail {
 
 struct GetFileList {
   std::string path;
+  std::optional<Filter> filter;
 };
 
 struct GetAllFileDetails {
@@ -54,6 +56,7 @@ struct Req {
 ReqPtr makeReqGetFileDetail(std::string path);
 ReqPtr makeReqGetFileDetail(Json::Value payload);
 ReqPtr makeReqGetFileList(std::string path);
+ReqPtr makeReqGetFileList(std::string path, Filter filter);
 ReqPtr makeReqGetFileList(Json::Value payload);
 ReqPtr makeReqMockNeedTime(int id);
 ReqPtr makeReqMockNeedTime(Json::Value payload);

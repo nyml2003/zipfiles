@@ -3,10 +3,19 @@
 
 #include <sys/types.h>
 #include <filesystem>
+#include <optional>
 #include <string>
 
 namespace zipfiles {
 namespace fs = std::filesystem;
+
+struct Filter {
+  std::optional<fs::file_type> type;
+  std::optional<__off_t> minSize;
+  std::optional<__off_t> maxSize;
+  std::optional<std::string> owner;
+  std::optional<std::string> group;
+};
 
 /**
  * @brief 选中文件后展示的文件信息

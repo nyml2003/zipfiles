@@ -104,7 +104,10 @@ int main() {
       return -1;
     }
 
-    if (connect(sock, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
+    if (connect(
+          sock, reinterpret_cast<struct sockaddr*>(&serv_addr),
+          sizeof(serv_addr)
+        ) < 0) {
       std::cerr << "Connection Failed" << std::endl;
       close(sock);
       return -1;

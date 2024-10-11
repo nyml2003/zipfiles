@@ -3,10 +3,9 @@ import Mock from 'mockjs';
 import { File } from '../GetFileList';
 import { FileDetail } from '../GetFileDetail';
 import { filterBy } from '@/utils';
+const MockFileNumber: [number, number] = [100, 200];
 
-const MockFileNumber: [number, number] = [10, 20];
-
-export function pickIndex(choices: any[], _weights?: number[]): number {
+export function pickIndex<T>(choices: T[], _weights?: number[]): number {
   if (!_weights) {
     return Math.floor(Math.random() * choices.length);
   }
@@ -46,9 +45,9 @@ export function pickFileType(): FileType {
     FileType.Unknown,
   ];
   const weights = [1, 1, 3, 5, 1, 1, 1, 1, 1, 1];
-  return pickIndex(fileTypes, weights);
+  return pickIndex<FileType>(fileTypes, weights);
 }
-export let cachedFileList: MockFileDetail[] = [
+export const cachedFileList: MockFileDetail[] = [
   {
     name: '/',
     type: FileType.Directory,
@@ -76,10 +75,10 @@ export function generateRandomFileDetail(path = '/'): MockFileDetail {
   const type = pickFileType(); // 随机选择文件类型
   const name = Mock.mock('@word(3, 10)');
   return {
-    name: name,
+    name,
     type,
     children: null,
-    //随机生成数值时间戳
+    // 随机生成数值时间戳
     createTime: new Date(Mock.mock('@datetime')).getTime() / 1000,
     updateTime: new Date(Mock.mock('@datetime')).getTime() / 1000,
     size: type === FileType.Regular ? Mock.mock('@integer(1024, 1024 * 1024)') : 0,
@@ -89,6 +88,13 @@ export function generateRandomFileDetail(path = '/'): MockFileDetail {
     path: path === '/' ? `/${name}` : `${path}/${name}`,
   };
 }
+function calPath(currentPath: string, file: MockFileDetail) {
+  if (currentPath === '/' && file.name === '/') return '/';
+  if (currentPath === '/') {
+    return `/${file.name}`;
+  }
+  return `${currentPath}/${file.name}`;
+}
 // 递归查找函数
 export function findFilesByPath(
   files: MockFileDetail[],
@@ -97,15 +103,7 @@ export function findFilesByPath(
   filter?: Partial<Filter>,
 ): MockFileDetail[] | null {
   for (const file of files) {
-    function calPath() {
-      if (currentPath === '/' && file.name === '/') return '/';
-      if (currentPath === '/') {
-        return `/${file.name}`;
-      } else {
-        return `${currentPath}/${file.name}`;
-      }
-    }
-    const newCurrentPath = calPath();
+    const newCurrentPath = calPath(currentPath, file);
     if (newCurrentPath === targetPath) {
       if (!file.children) {
         file.children = Array.from({ length: randomNumber(...MockFileNumber) }, () =>
@@ -128,17 +126,13 @@ export function findFilesByPath(
   return null;
 }
 
-export function findFile(files: MockFileDetail[], targetPath: string, currentPath: string): MockFileDetail | null {
+export function findFile(
+  files: MockFileDetail[],
+  targetPath: string,
+  currentPath: string,
+): MockFileDetail | null {
   for (const file of files) {
-    function calPath() {
-      if (currentPath === '/' && file.name === '/') return '/';
-      if (currentPath === '/') {
-        return `/${file.name}`;
-      } else {
-        return `${currentPath}/${file.name}`;
-      }
-    }
-    const newCurrentPath = calPath();
+    const newCurrentPath = calPath(currentPath, file);
     if (newCurrentPath === targetPath) {
       return file;
     }

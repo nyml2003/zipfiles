@@ -39,7 +39,6 @@ Diagnostics:
       cppcoreguidelines-pro-type-reinterpret-cast,
       cppcoreguidelines-avoid-non-const-global-variables,
       cppcoreguidelines-pro-type-cstyle-cast
-      clang-analyzer-optin.core.EnumCastOutOfRange
     ]
 CompileFlags:
   Add: [$(pkg-config --cflags --libs webkit2gtk-4.1)]

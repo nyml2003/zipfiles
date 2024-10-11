@@ -1,3 +1,4 @@
+#include "server/handler.h"
 #include <unistd.h>
 #include <csignal>
 #include <log4cpp/Category.hh>
@@ -6,7 +7,6 @@
 #include "mp/common.h"
 #include "mp/error.h"
 #include "mp/filter.h"
-#include "server/handler.h"
 #include "server/socket/socket.h"
 #include "server/tools/fsapi.h"
 
@@ -21,8 +21,8 @@ void doHandle(int client_fd) {
 
     ReqPtr request = Socket::receive(client_fd);
 
-    // log4cpp::Category::getRoot().infoStream()
-    //   << "Request received: " << request->toJson();
+    log4cpp::Category::getRoot().infoStream()
+      << "Request received: " << request->toJson();
 
     ResPtr response = std::visit(
       overload{
@@ -31,7 +31,34 @@ void doHandle(int client_fd) {
         },
         [](request::GetFileList& req) {
           MetaDataFilter filter;
-          return makeResGetFileList(getFileList(req.path, false, filter));
+          bool needFilter = false;
+          if (req.filter.has_value()) {
+            needFilter = true;
+            if (req.filter->type.has_value()) {
+              filter.filterByType(req.filter->type.value());
+            }
+            if (req.filter->minSize.has_value() &&
+                req.filter->maxSize.has_value()) {
+              filter.filterBySize(
+                req.filter->minSize.value(), req.filter->maxSize.value()
+              );
+            }
+            if (req.filter->minSize.has_value() &&
+                !req.filter->maxSize.has_value()) {
+              filter.filterBySize(req.filter->minSize.value(), INT64_MAX);
+            }
+            if (!req.filter->minSize.has_value() &&
+                req.filter->maxSize.has_value()) {
+              filter.filterBySize(0, req.filter->maxSize.value());
+            }
+            if (req.filter->owner.has_value()) {
+              filter.filterByOwner(req.filter->owner.value());
+            }
+            if (req.filter->group.has_value()) {
+              filter.filterByGroup(req.filter->group.value());
+            }
+          }
+          return makeResGetFileList(getFileList(req.path, needFilter, filter));
         },
         [](request::PostCommit&) { return makeResPostCommit({}); },
         [](request::MockNeedTime& req) { return makeResMockNeedTime(req.id); },
@@ -50,13 +77,14 @@ void doHandle(int client_fd) {
     response->status = StatusCode::OK;
     response->timestamp = request->timestamp;
     response->uuid = request->uuid;
-    // log4cpp::Category::getRoot().infoStream()
-    //   << "Response sent: " << response->toJson();
+    log4cpp::Category::getRoot().infoStream()
+      << "Response sent: " << response->toJson();
     Socket::send(client_fd, response);
 
   } catch (const std::exception& e) {
     // 如果是SocketTemporarilyUnavailable
-    if (const auto* e_ptr = dynamic_cast<const SocketTemporarilyUnavailable*>(&e)) {
+    if (const auto* e_ptr =
+          dynamic_cast<const SocketTemporarilyUnavailable*>(&e)) {
       // log4cpp::Category::getRoot().infoStream() << e_ptr->what();
       return;
     }

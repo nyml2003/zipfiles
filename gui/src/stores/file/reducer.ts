@@ -8,6 +8,11 @@ export interface FileState {
   filter: Partial<Filter>;
   view: 'table' | 'tree';
   isFiltering: boolean;
+  backupConfig: {
+    compress: boolean;
+    encrypt: boolean;
+    password?: string;
+  };
 }
 
 const initialState: FileState = {
@@ -15,8 +20,12 @@ const initialState: FileState = {
   currentPath: '',
   selectedFile: [],
   filter: {},
-  view: 'table',
+  view: 'tree',
   isFiltering: false,
+  backupConfig: {
+    compress: true,
+    encrypt: false,
+  },
 };
 
 const fileSlice = createSlice({
@@ -49,7 +58,10 @@ const fileSlice = createSlice({
     },
     updateIsFiltering(state, action: PayloadAction<boolean>) {
       state.isFiltering = action.payload;
-    }
+    },
+    updateBackupConfig(state, action: PayloadAction<FileState['backupConfig']>) {
+      state.backupConfig = action.payload;
+    },
   },
 });
 
@@ -62,6 +74,7 @@ export const {
   resetFilter,
   updateCurrentView,
   updateIsFiltering,
+  updateBackupConfig,
 } = fileSlice.actions;
 
 export const fileReducer = fileSlice.reducer;

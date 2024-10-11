@@ -1,9 +1,10 @@
 import React from 'react';
-import { BookOutlined, HomeOutlined, SettingOutlined } from '@ant-design/icons';
+import { HomeOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import { Layout, Menu, theme } from 'antd';
 import { Outlet, useNavigate } from 'react-router-dom';
+import FootContent from './FootContent';
 
 const { Content, Sider } = Layout;
 
@@ -14,19 +15,19 @@ const headerItems: MenuProps['items'] = [
     icon: React.createElement(HomeOutlined),
   },
   {
-    key: 'explorer',
-    label: '文件列表',
-    icon: React.createElement(BookOutlined),
+    key: 'new_commit',
+    label: '新建提交',
+    icon: React.createElement(UploadOutlined),
   },
   {
     key: 'commit_history',
     label: '提交历史',
-    icon: React.createElement(SettingOutlined),
+    icon: React.createElement(UploadOutlined),
   },
   {
     key: 'setting',
     label: '设置',
-    icon: React.createElement(SettingOutlined),
+    icon: React.createElement(UploadOutlined),
   },
   {
     key: 'test',
@@ -50,27 +51,25 @@ const App: React.FC = () => {
   };
 
   return (
-    <Layout hasSider className='h-screen select-none'>
-      <Sider
-        style={{ background: colorBgContainer }}
-        breakpoint='lg'
-        className='overflow-hidden lg:rounded-r-2xl rounded-r-xl'>
+    <Layout hasSider className='select-none flex flex-row h-screen'>
+      <Sider breakpoint='lg' className=' bg-white'>
         <Menu
-          mode='inline'
+          //mode='inline'
           defaultSelectedKeys={['1']}
           defaultOpenKeys={['sub1']}
           items={headerItems}
           onClick={handleClick}
+          className='bg-white'
+          style={{
+            borderInlineEnd: 'none',
+          }}
         />
       </Sider>
-      <Layout className='h-screen flex-1 w-full'>
-        <Content
-          style={{
-            borderRadius: borderRadiusLG,
-          }}
-          className='flex flex-1'>
+      <Layout className='grow-item split-container-col'>
+        <Content className='grow-item'>
           <Outlet />
         </Content>
+        <FootContent />
       </Layout>
     </Layout>
   );

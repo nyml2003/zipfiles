@@ -8,4 +8,5 @@ export enum ApiEnum {
   GetFileList = 101,
   PostCommit = 102,
   GetAllFileDetails = 103,
+  GetCommitList = 104,
 }

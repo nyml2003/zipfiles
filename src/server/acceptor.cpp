@@ -1,8 +1,8 @@
+#include "server/acceptor.h"
 #include <fcntl.h>
 #include <sys/epoll.h>
 #include <unistd.h>
 #include "log4cpp/Category.hh"
-#include "server/acceptor.h"
 #include "server/handler.h"
 #include "server/socket/socket.h"
 #include "server/tools/threadpool.h"

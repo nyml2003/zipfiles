@@ -7,6 +7,7 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 const path = require('path');
+const webpack = require('webpack');
 const CopyPlugin = require('copy-webpack-plugin');
 const { merge } = require('webpack-merge');
 const baseConfig = require('./webpack.base.js');
@@ -16,7 +17,6 @@ const TerserPlugin = require('terser-webpack-plugin'); //压缩js
 const globAll = require('glob-all');
 const { PurgeCSSPlugin } = require('purgecss-webpack-plugin'); // // 清理无用css
 const CompressionPlugin = require('compression-webpack-plugin');
-const WebpackCdnPlugin = require('webpack-cdn-plugin');
 
 module.exports = merge(baseConfig, {
   mode: 'production', // 生产模式,会开启tree-shaking和压缩代码,以及其他优化
@@ -27,6 +27,12 @@ module.exports = merge(baseConfig, {
       new TerserPlugin({
         // 压缩js
         parallel: true, // 开启多线程压缩
+        terserOptions: {
+          // 压缩配置
+          compress: {
+            dead_code: true, // 删除无用代码
+          },
+        },
       }),
     ],
     splitChunks: {
@@ -87,12 +93,9 @@ module.exports = merge(baseConfig, {
       threshold: 10240, // 只有大小大于该值的资源会被处理。默认值是 10k
       minRatio: 0.8, // 压缩率,默认值是 0.8
     }),
-    new WebpackCdnPlugin({
-      modules: [
-        { name: 'react', var: 'React', path: 'umd/react.production.min.js' },
-        { name: 'react-dom', var: 'ReactDOM', path: 'umd/react-dom.production.min.js' },
-      ],
-      publicPath: '/node_modules'
+    new webpack.IgnorePlugin({
+      resourceRegExp: /^\.\/mock$/,
+      contextRegExp: /src[\\/]apis$/
     }),
   ],
 });

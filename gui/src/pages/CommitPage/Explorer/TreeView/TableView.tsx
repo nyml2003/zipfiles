@@ -6,16 +6,13 @@ import { ApiEnum } from '@/apis';
 import { FileType, FileTypeToString } from '@/types';
 import { CopyOutlined, FileFilled, FolderFilled } from '@ant-design/icons';
 import { GetAllFileDetailsRequest, GetAllFileDetailsResponse } from '@/apis/GetAllFileDetails';
-import styles from './index.module.less';
 import CopyToClipboard from 'react-copy-to-clipboard';
 import useApi from '@/hooks/useApi';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
-import { GetFileListRequest } from '@/apis/GetFileList';
-import { cleanObject, filterBy } from '@/utils';
+import { filterBy } from '@/utils';
 
 interface DataType extends Partial<FileDetail> {}
-
 const Copy: React.FC<{ text: string; onCopy: () => void; isShow: boolean }> = ({
   text,
   onCopy,
@@ -36,14 +33,17 @@ const columns: TableColumnsType<DataType> = [
   {
     title: '文件名',
     dataIndex: 'name',
+
     key: 'name',
     render: (text, record) => {
       return <a>{text}</a>;
     },
+    ellipsis: true,
   },
   {
     title: '类型',
     dataIndex: 'type',
+    ellipsis: true,
     key: 'type',
     render: (text, record) => {
       if (text === FileType.Directory) {
@@ -59,6 +59,7 @@ const columns: TableColumnsType<DataType> = [
     title: '创建时间',
     dataIndex: 'createTime',
     key: 'createTime',
+    ellipsis: true,
     render: (text, record) => {
       return text ? <span>{new Date(text * 1000).toLocaleString()}</span> : <span>加载中...</span>;
     },
@@ -67,6 +68,7 @@ const columns: TableColumnsType<DataType> = [
     title: '更新时间',
     dataIndex: 'updateTime',
     key: 'updateTime',
+    ellipsis: true,
     render: (text, record) => {
       return text ? <span>{new Date(text * 1000).toLocaleString()}</span> : <span>加载中...</span>;
     },
@@ -75,6 +77,7 @@ const columns: TableColumnsType<DataType> = [
     title: '大小',
     dataIndex: 'size',
     key: 'size',
+    ellipsis: true,
     render: (text, record) => {
       if (text === undefined) return <span>加载中...</span>;
       if (text === null) return <span>未知</span>;
@@ -90,28 +93,39 @@ const columns: TableColumnsType<DataType> = [
     title: '所有者',
     dataIndex: 'owner',
     key: 'owner',
+    ellipsis: true,
     render: (text, record) => {
-      return text ? <span>
-        {text}
-        <Copy text={text} onCopy={() => message.success('复制成功')} isShow={true} />
-      </span> : <span>加载中...</span>;
+      return text ? (
+        <span>
+          {text}
+          <Copy text={text} onCopy={() => message.success('复制成功')} isShow={true} />
+        </span>
+      ) : (
+        <span>加载中...</span>
+      );
     },
   },
   {
     title: '组',
     dataIndex: 'group',
     key: 'group',
+    ellipsis: true,
     render: (text, record) => {
-      return text ? <span>
-        {text}
-        <Copy text={text} onCopy={() => message.success('复制成功')} isShow={true} />
-      </span> : <span>加载中...</span>;
+      return text ? (
+        <span>
+          {text}
+          <Copy text={text} onCopy={() => message.success('复制成功')} isShow={true} />
+        </span>
+      ) : (
+        <span>加载中...</span>
+      );
     },
   },
   {
     title: '权限',
     dataIndex: 'mode',
     key: 'mode',
+    ellipsis: true,
     render: (text, record) => {
       return text ? <span>{text}</span> : <span>加载中...</span>;
     },
@@ -142,7 +156,7 @@ const TableView: React.FC = () => {
       columns={columns}
       dataSource={data}
       pagination={false}
-      className={`overflow-auto ${styles['fade-in-down']}`}
+      className='overflow-auto fade-in-down'
       size='small'
       rowKey={'name'}
     />

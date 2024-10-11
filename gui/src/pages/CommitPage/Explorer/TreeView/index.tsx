@@ -1,22 +1,20 @@
 import { Splitter } from 'antd';
 import React from 'react';
-import MetaDataCard from './MetaDataCard';
 import TreeMenu from './TreeMenu';
-import styles from '../index.module.less';
+import TableView from './TableView';
 
 const TreeView = () => {
   return (
-    <Splitter className={`flex-grow overflow-hidden ${styles['fade-in-down']}`}>
+    <Splitter className='fade-in-down split-container-row grow-item'>
       <Splitter.Panel
         defaultSize='20%'
         min='10%'
         max='70%'
-        className='overflow-y-auto overflow-x-hidden bg-gray-100 flex '>
+        className='split-container-row grow-item'>
         <TreeMenu />
       </Splitter.Panel>
-      <Splitter.Panel>
-        {/* 文件信息 */}
-        <MetaDataCard />
+      <Splitter.Panel className='split-container-row grow-item'>
+        <TableView/>
       </Splitter.Panel>
     </Splitter>
   );

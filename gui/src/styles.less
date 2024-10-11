@@ -9,7 +9,7 @@ html,
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  @apply bg-gray-100 font-chinese;
+  @apply bg-white font-chinese;
 }
 
 @font-face {
@@ -45,4 +45,56 @@ body {
 .hide-scrollbar {
   -ms-overflow-style: none;  /* 适用于 IE 和 Edge */
   scrollbar-width: none;  /* 适用于 Firefox */
+}
+
+
+.grow-item {
+  @apply flex-1 overflow-auto;
+}
+
+.split-container-row {
+  @apply flex flex-row h-full;
+}
+
+.split-container-col {
+  @apply flex flex-col h-full;
+}
+
+.ant-tabs-content {
+  @apply split-container-col;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-down {
+  animation: fadeInDown 0.5s ease-in-out;
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.5s ease-in-out;
+}
+
+
+.ant-tabs-content {
+  flex-grow: 1;
 }
