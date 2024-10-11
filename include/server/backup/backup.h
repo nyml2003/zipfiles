@@ -25,14 +25,6 @@ void backupFiles(
 fs::path getCommonAncestor(const std::vector<fs::path>& paths);
 
 /**
- * ! Deprecated
- *
- */
-std::vector<uint8_t> readFile(const fs::path& filepath);
-
-void writeFile(const fs::path& filepath, const std::vector<uint8_t>& data);
-
-/**
  * * commit log
  *
  */

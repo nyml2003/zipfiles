@@ -17,6 +17,8 @@ class MetaDataFilter {
 
   MetaDataFilter& filterByType(const fs::file_type& type);
   MetaDataFilter& filterBySize(const __off_t& minSize, const __off_t& maxSize);
+  MetaDataFilter& filterByCreateTime(const double& min, const double& max);
+  MetaDataFilter& filterByUpdateTime(const double& min, const double& max);
   MetaDataFilter& filterByOwner(const std::string& owner);
   MetaDataFilter& filterByGroup(const std::string& group);
 
