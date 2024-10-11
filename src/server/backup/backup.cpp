@@ -154,7 +154,6 @@ void backupFiles(
             static_cast<std::streamsize>(zippedData.size())
           );
         }
-
       }
 
       // 如果所有文件都读取完毕，设置 flush 为 true
@@ -285,7 +284,7 @@ void appendCommitLog(Json::Value& dst, const Json::Value& cl) {
 }
 
 /**
- * @brief 给定一个路径，将commitLogs文件写入(json形式)
+ * @brief 给定一个路径，将CommitLogs文件写入(json形式)
  *
  * @param dst 指定的log文件路径
  *
@@ -294,7 +293,7 @@ void appendCommitLog(Json::Value& dst, const Json::Value& cl) {
  */
 void writeCommitLog(const fs::path& dst, const Json::Value& cls) {
   // 写回文件
-  std::ofstream logFileWrite(dst, std::ios::binary);
+  std::ofstream logFileWrite(dst, std::ios::binary | std::ios::trunc);
   logFileWrite << cls.toStyledString();
   logFileWrite.close();
 }
