@@ -1,8 +1,7 @@
 import { ApiEnum } from '@/apis';
 import { notification } from 'antd';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { RequestWrapper } from './useApi/types';
-import MQ from '@/utils/mq';
 
 export interface ResponseWrapper {
   uuid: string;
@@ -21,17 +20,6 @@ export interface CallBack<T> {
 }
 
 let callbacks: CallBack<any>[] = [];
-const handleCallback = (callback: CallBack<any>) => {
-  const { resolve, reject } = callback;
-  return (response: ResponseWrapper) => {
-    const { type, data, message } = response;
-    if (type === 'resolve') {
-      resolve(data);
-    } else if (type === 'reject') {
-      reject(message);
-    }
-  };
-};
 
 export const setGlobalCallback = (callback: CallBack<any>) => {
   callbacks.push(callback);
@@ -42,7 +30,7 @@ export const handler = (event: MessageEvent) => {
   const { type, data, message, apiEnum, timestamp, uuid } = response;
   if (type === 'notify') {
     notification.error({
-      message: message,
+      message,
     });
     return;
   }

@@ -1,6 +1,5 @@
 import React from 'react';
-import { Button, Form, Input, InputNumber, Mentions, Select, Space } from 'antd';
-import styles from './index.module.less';
+import { Button, Form, Input, InputNumber, Mentions, Select, Space } from 'antd'
 import { FileType, Filter } from '@/types';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
@@ -53,7 +52,7 @@ const FilterForm: React.FC = () => {
   };
 
   return (
-    <div className={`${styles['fade-in-down']} p-4 max-w-3xl`}>
+    <div className='fade-in-down p-4 max-w-3xl'>
       <Form
         labelCol={{ span: 4 }}
         wrapperCol={{ span: 14 }}

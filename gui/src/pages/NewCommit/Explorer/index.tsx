@@ -1,43 +1,26 @@
 import React from 'react';
 import {
   ArrowLeftOutlined,
-  ArrowsAltOutlined,
-  DownOutlined,
   FilterFilled,
   FilterOutlined,
   HomeOutlined,
   Loading3QuartersOutlined,
 } from '@ant-design/icons';
-import { Breadcrumb, Button, Modal } from 'antd';
-import styles from './index.module.less';
-import FilterForm from './FilterForm';
+import { Breadcrumb, Button } from 'antd';
 import TreeView from './TreeView';
 import {
   handleRefresh,
   updateCurrentPath,
-  updateCurrentView,
   updateIsFiltering,
-  updateSelectedFile,
 } from '@/stores/file/reducer';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
+import { BreadcrumbItemType } from 'antd/es/breadcrumb/Breadcrumb';
 
 const Explorer: React.FC = () => {
-  const view = useSelector((state: RootState) => state.file.view);
   const isFiltering = useSelector((state: RootState) => state.file.isFiltering);
   const currentPath = useSelector((state: RootState) => state.file.currentPath);
   const dispatch = useDispatch();
-
-  const handleSelect = (paths: string[]) => {
-    dispatch(updateSelectedFile(paths.sort()));
-  };
-
-  const renderContent = () => {
-    if (isFiltering) {
-      return <FilterForm />;
-    }
-    return <TreeView />;
-  };
 
   return (
     <div className='split-container-col grow-item'>
@@ -63,7 +46,7 @@ const Explorer: React.FC = () => {
                 className: 'cursor-pointer px-2 py-1 rounded hover:bg-gray-200',
               });
               return acc;
-            }, [] as any)}
+            }, [] as BreadcrumbItemType[])}
           />
         </div>
         <div>
@@ -76,16 +59,16 @@ const Explorer: React.FC = () => {
         </div>
       </div>
       <div
-        className={`
+        className='
         bg-white
         rounded-xl
         m-2
         p-2
-        ${styles['fade-in-down']}
+        fade-in-down
         grow-item 
         split-container-row
-        `}>
-        {renderContent()}
+        '>
+        <TreeView />
       </div>
     </div>
   );

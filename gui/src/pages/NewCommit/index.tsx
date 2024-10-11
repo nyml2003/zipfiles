@@ -2,7 +2,7 @@ import React from 'react';
 import FileList from './FileList';
 import BackupOption from './BackupOption';
 import { Tabs, TabsProps } from 'antd';
-import Explorer from '@/components/Explorer';
+import Explorer from './Explorer';
 
 const NewCommit: React.FC = () => {
   const [activeKey, setActiveKey] = React.useState('1');
@@ -73,7 +73,7 @@ const NewCommit: React.FC = () => {
   };
 
   return (
-    <div className=' bg-white grow-item split-container-row'>
+    <div className='bg-white grow-item split-container-row p-4'>
       <Tabs
         type='editable-card'
         activeKey={activeKey}

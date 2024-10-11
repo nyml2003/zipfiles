@@ -1,8 +1,15 @@
-import { FileDetail } from '@/apis/GetAllFileDetails';
+import { ApiEnum } from '@/apis';
+import {
+  FileDetail,
+  GetAllFileDetailsRequest,
+  GetAllFileDetailsResponse,
+} from '@/apis/GetAllFileDetails';
+import useApi from '@/hooks/useApi';
 import { RootState } from '@/stores/store';
+import { filterBy } from '@/utils';
 import { Button, Table } from 'antd';
-import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useSelector } from 'react-redux';
 
 const columns = [
   {
@@ -55,7 +62,18 @@ interface FileListProps {
 
 const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
   const selectedFile = useSelector((state: RootState) => state.file.selectedFile);
-  const dispatch = useDispatch();
+  const filter = useSelector((state: RootState) => state.file.filter);
+  const [data, setData] = React.useState<DataType[]>([]);
+  const api = useApi();
+
+  useEffect(() => {
+    setData([]);
+    selectedFile.map(async (path) => {
+      const res = await fetchData(path);
+      setData((prev) => [...prev, ...res]);
+    });
+  }, [selectedFile]);
+
   const handleAdd = () => {
     addExplorer();
   };
@@ -64,11 +82,21 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
     console.log('删除');
   };
 
+  const fetchData = async (path: string) => {
+    const res = await api.request<GetAllFileDetailsRequest, GetAllFileDetailsResponse>(
+      ApiEnum.GetAllFileDetails,
+      {
+        path: path === '' ? '/' : path,
+      },
+    );
+    return filterBy(res.files, filter);
+  };
+
   return (
     <>
-      <Table<DataType> columns={columns} dataSource={selectedFile} size='small' rowKey={'name'} />
+      <Table<DataType> columns={columns} dataSource={data} size='small' rowKey={'name'} />
       <div className='m-4 flex flex-row justify-between items-center'>
-        <div className='text-center'>总大小：{selectedFile.reduce((acc, cur) => acc + cur.size, 0)}</div>
+        <div className='text-center'>总大小：{data.reduce((acc, cur) => acc + cur.size, 0)}</div>
         <div className='space-x-2'>
           <Button type='primary' onClick={handleAdd}>
             添加

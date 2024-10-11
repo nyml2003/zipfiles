@@ -1,8 +1,5 @@
-//压缩，加密，浏览
-
 import { Button, Checkbox, Form, Input } from 'antd';
 import React from 'react';
-import styles from './index.module.less';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
 import { updateBackupConfig } from '@/stores/file/reducer';
@@ -11,14 +8,14 @@ const BackupOption: React.FC = () => {
   const [form] = Form.useForm();
   const backupConfig = useSelector((state: RootState) => state.file.backupConfig);
   const dispatch = useDispatch();
-  const onFinish = (values: any) => {
+  const onFinish = (values: typeof backupConfig) => {
     dispatch(updateBackupConfig(values));
   };
 
   return (
     <div className='p-2'>
       备份文件设置
-      <div className={`${styles['fade-in-down']} p-4 max-w-3xl`}>
+      <div className='fade-in-down p-4 max-w-3xl'>
         <Form
           labelCol={{ span: 4 }}
           wrapperCol={{ span: 14 }}
