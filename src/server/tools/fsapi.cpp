@@ -57,37 +57,34 @@ getFileList(const fs::path& directory, bool doFilter, MetaDataFilter& filter) {
  *
  */
 FileDetail getFileDetail(const fs::path& file) {
-  const fs::path& file_path = file;
-
   log4cpp::Category::getRoot().infoStream()
-    << "Getting file detail for " << file_path;
+    << "Getting file detail for " << file;
 
-  if (!fs::exists(file_path)) {
-    throw std::runtime_error("File does not exist.");
+  if (!fs::exists(file)) {
+    throw std::runtime_error("File does not exist");
   }
 
   struct stat file_stat {};
-
-  if (stat(file_path.c_str(), &file_stat) != 0) {
-    throw std::runtime_error("Failed to get file details.");
+  if (lstat(file.c_str(), &file_stat) != 0) {
+    throw std::runtime_error("Failed to get file details");
   }
 
   struct passwd* pwd = getpwuid(file_stat.st_uid);
   struct group* grp = getgrgid(file_stat.st_gid);
 
-  FileDetail file_detail = {
-    .type = fs::status(file_path).type(),
+  fs::file_status file_status = fs::symlink_status(file);
+
+  return {
+    .type = file_status.type(),
     .createTime = static_cast<double>(file_stat.st_ctime),
     .updateTime = static_cast<double>(file_stat.st_mtime),
     .size = file_stat.st_size,
-    .owner = pwd->pw_name,
-    .group = grp->gr_name,
+    .owner = pwd ? pwd->pw_name : "",
+    .group = grp ? grp->gr_name : "",
     .mode = file_stat.st_mode,
-    .path = file_path.string(),
-    .name = file_path.filename().string(),
+    .name = file.filename().string(),
+    .dev = file_stat.st_dev
   };
-
-  return file_detail;
 }
 
 /**

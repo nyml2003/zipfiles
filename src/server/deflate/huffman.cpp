@@ -12,7 +12,7 @@
 #include <utility>
 #include <vector>
 
-namespace zipfiles::server {
+namespace zipfiles::server::huffman {
 
 // generate std huffman code
 template <size_t size>
@@ -714,4 +714,4 @@ bool Decoder::decode(uint8_t data) {
   return res;
 }
 
-}  // namespace zipfiles::server
+}  // namespace zipfiles::server::huffman

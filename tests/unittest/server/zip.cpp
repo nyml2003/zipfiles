@@ -5,19 +5,19 @@
 #include <ios>
 #include <vector>
 
-#include "server/crypto/crypto.h"
+#include "server/deflate/zip.h"
 
 bool test(const std::string& src_filename);
 
-TEST(CRYPTO, test1) {
+TEST(ZIP, test1) {
   ASSERT_TRUE(test("test.txt"));
 }
 
-TEST(CRYPTO, test2) {
+TEST(ZIP, test2) {
   ASSERT_TRUE(test("test.pdf"));
 }
 
-TEST(CRYPTO, test3) {
+TEST(ZIP, test3) {
   ASSERT_TRUE(test("test.exe"));
 }
 
@@ -30,30 +30,22 @@ bool test(const std::string& src_filename) {
   // zip
   std::ifstream ifile;
   std::ofstream ofile;
-  std::ofstream log;
   auto iflag = std::ios::in | std::ios::binary;
   auto oflag = std::ios::out | std::ios::binary | std::ios::trunc;
   ifile.open(base_dir + src_filename, iflag);
   ofile.open(base_dir + dst_filename, oflag);
-  log.open(base_dir + "log", oflag);
   const int ibuf_size = (1143 << 16) + 191981;
   std::vector<std::uint8_t> ibuffer(ibuf_size);
-  AESEncryptor encryptor("123456");
-  std::array<CryptoPP::byte, AES::BLOCKSIZE> iv{};
-
-  AutoSeededRandomPool prng;
-  prng.GenerateBlock(iv.data(), iv.size());
-  ofile.write(reinterpret_cast<const char*>(iv.data()), iv.size());
   while (!ifile.eof()) {
     ifile.read(reinterpret_cast<char*>(ibuffer.data()), ibuf_size);
     ibuffer.resize(ifile.gcount());
-    CryptStatus crypt_ret = {false, false, nullptr};
-    while (!crypt_ret.lack) {
-      crypt_ret = encryptor.encryptFile(ibuffer, iv, ifile.eof());
-      if (crypt_ret.flush) {
+    ZipStatus zip_ret = {false, false, nullptr};
+    while (!zip_ret.lack) {
+      zip_ret = zip(ibuffer, ifile.eof());
+      if (zip_ret.flush) {
         ofile.write(
-          reinterpret_cast<char*>(crypt_ret.obuffer->data()),
-          static_cast<int>(crypt_ret.obuffer->size())
+          reinterpret_cast<char*>(zip_ret.obuffer->data()),
+          static_cast<int>(zip_ret.obuffer->size())
         );
       }
     }
@@ -64,20 +56,14 @@ bool test(const std::string& src_filename) {
   // unzip
   ifile.open(base_dir + dst_filename, iflag);
   ofile.open(base_dir + src_filename_ex, oflag);
-  ifile.read(reinterpret_cast<char*>(iv.data()), iv.size());
-  ibuffer.resize(ibuf_size);
-  while (!ifile.eof()) {
-    ifile.read(reinterpret_cast<char*>(ibuffer.data()), ibuf_size);
-    ibuffer.resize(ifile.gcount());
-    CryptStatus crypt_ret = {false, false, nullptr};
-    while (!crypt_ret.lack) {
-      crypt_ret = encryptor.decryptFile(ibuffer, iv, ifile.eof());
-      if (crypt_ret.flush) {
-        ofile.write(
-          reinterpret_cast<char*>(crypt_ret.obuffer->data()),
-          static_cast<int>(crypt_ret.obuffer->size())
-        );
-      }
+  char buf = 0;
+  while (ifile.get(buf), !ifile.eof()) {
+    auto [flush, obuffer] = unzip(buf);
+    if (flush) {
+      ofile.write(
+        reinterpret_cast<char*>(obuffer.data()),
+        static_cast<int>(obuffer.size())
+      );
     }
   }
   ifile.close();

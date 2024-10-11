@@ -5,3 +5,5 @@ cmake-*
 lib/*.so
 .pnpm-store
 /bin
+tests/unittest/data
+.vscode/launch.json

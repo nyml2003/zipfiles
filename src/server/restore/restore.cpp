@@ -2,10 +2,16 @@
 #include <exception>
 #include <filesystem>
 #include <fstream>
+#include <ios>
+#include <log4cpp/Category.hh>
 #include <stdexcept>
+#include <string>
+#include <vector>
 #include "json/reader.h"
 #include "json/value.h"
+#include "server/backup/backup.h"
 #include "server/crypto/crypto.h"
+#include "server/deflate/zip.h"
 #include "server/pack/unpack.h"
 
 namespace zipfiles::server {
@@ -24,46 +30,125 @@ void restoreTo(
   const std::string& uuid,
   const std::string& key
 ) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Restore started, log uuid is " << uuid << ", to " << dst;
+
   // log文件地址
   // ? 待更改
-  fs::path src = "~/.zip/commit.log";
+  fs::path src = std::getenv("HOME") + std::string("/.zip/commit.log");
 
   Json::Value cls = readCommitLog(src);
 
   Json::Value cl = getCommitLogById(cls, uuid);
 
-  // 创建指定的目录
-  if (src.has_parent_path()) {
-    fs::create_directories(src.parent_path());
+  // 检查目标路径是否存在，如果不存在则创建目录
+  if (!fs::exists(dst)) {
+    fs::create_directories(dst);
   }
 
-  // todo: 解密
-
-  // 解密
-  if (cl["isEncrypt"].asBool()) {
-    try {
-      AESEncryptor decryptor(key);
-
-      decryptor.decryptFile(cl["storagePath"].asString(), dst);
-    } catch (std::exception& e) {
-      throw std::runtime_error(
-        "Error occurred when trying to decrypt, its uuid is " + uuid +
-        ", because " + std::string(e.what())
-      );
-    }
+  // 打开输入流
+  std::string filePath = cl["storagePath"].asString();
+  std::ifstream inFile(filePath, std::ios::binary);
+  if (!inFile) {
+    throw std::runtime_error("Failed to open: " + filePath);
   }
 
-  // todo: 解压缩
+  // 如果有加密，则读取IV
+  bool decrypt = cl["isEncrypt"].asBool();
+  std::array<CryptoPP::byte, AES::BLOCKSIZE> iv{};
+  if (decrypt) {
+    inFile.read(reinterpret_cast<char*>(iv.data()), iv.size());
+  }
 
-  // 解包
+  // 实例化解码器
+  AESEncryptor decryptor(key);
+
+  // 实例化解包器
+  FileUnpacker fileUnpacker(dst);
+
+  // 读取备份文件
   try {
-    // ?
-    // 如果解密和解压已经在目标目录产生了一个临时文件，那么src参数就是那个临时文件的路径
-    // 但是这里还没有确定具体逻辑
-    unpackArchive(fs::path(cl["storagePath"].asString()), dst);
+    std::vector<uint8_t> buffer(PACK_BLOCK_SIZE);
+    std::vector<uint8_t> decryptedData{};
+    std::vector<uint8_t> unzippedData{};
+
+    bool flush = false;
+
+    while (inFile.read(
+             reinterpret_cast<char*>(buffer.data()),
+             static_cast<std::streamsize>(buffer.size())
+           ) ||
+           inFile.gcount() >= 0) {
+      // 从备份文件不断读，尝试读满buffer
+      // 如果buffer没有读满，或者刚好读到0，那么说明没有更多的数据了
+      size_t bytesRead = inFile.gcount();
+      // 更改buffer size为实际读取的大小
+      buffer.resize(bytesRead);
+
+      // 最后一次读取，使flush为true
+      if (buffer.size() < buffer.capacity()) {
+        flush = true;
+      }
+
+      if (decrypt) {
+        // 需要解密
+        while (true) {
+          // 将buffer数据加入decrypt的ibuffer
+          // 当flush为假时，decrypt会检查ibuffer的数据是否足够，如果足够则解密，并使decryptFlush为真
+          // 有可能buffer足够使ibuffer填满，但是buffer还有剩余，采用一个无限循环来保证消费完buffer
+          // flush为真则强制输出
+          auto [decryptFlush, decryptLack, outputData] =
+            decryptor.decryptFile(buffer, iv, flush);
+
+          if (decryptFlush) {
+            // decrypt输出
+            // 将数据加入到decryptedData
+            // decryptedData大小实际上由buffer决定，只要没有消费完buffer，那么就一直往其中填入数据
+            decryptedData.insert(
+              decryptedData.end(), outputData->begin(), outputData->end()
+            );
+
+            // 清空outputData
+            outputData->clear();
+          }
+          if (decryptLack) {
+            // 如果decrypt消费完了buffer，那么其会使lack为真，从循环中退出
+            // 当flush为真时，decryptLack也会为真，此时强制退出
+            break;
+          }
+        }
+      } else {
+        decryptedData = buffer;
+      }
+
+      // 对所有decryptedData解压缩
+      for (auto byte : decryptedData) {
+        auto [done, outputData] = unzip(byte);
+        if (done) {
+          unzippedData.insert(
+            unzippedData.end(), outputData.begin(), outputData.end()
+          );
+        }
+      }
+
+      // unpack不断循环直到解压数据被读取完
+      fileUnpacker.unpackFilesByBlock(unzippedData, false);
+
+      buffer.resize(PACK_BLOCK_SIZE);  // 重置缓冲区大小
+      unzippedData.clear();
+      decryptedData.clear();
+
+      if (flush) {
+        // 没有数据了，退出
+        break;
+      }
+    }
+
+    // 最后一次flush
+    fileUnpacker.unpackFilesByBlock(unzippedData, true);
   } catch (std::exception& e) {
     throw std::runtime_error(
-      "Error occurred when trying to unpack, its uuid is " + uuid +
+      "Error occurred when trying to unpack file, its uuid is " + uuid +
       ", because " + std::string(e.what())
     );
   }

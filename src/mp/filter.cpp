@@ -16,6 +16,22 @@ MetaDataFilter::filterBySize(const __off_t& minSize, const __off_t& maxSize) {
   return *this;
 }
 
+MetaDataFilter&
+MetaDataFilter::filterByCreateTime(const double& min, const double& max) {
+  filters.emplace_back([&min, &max](const FileDetail& fd) {
+    return fd.createTime >= min && fd.createTime <= max;
+  });
+  return *this;
+}
+
+MetaDataFilter&
+MetaDataFilter::filterByUpdateTime(const double& min, const double& max) {
+  filters.emplace_back([&min, &max](const FileDetail& fd) {
+    return fd.updateTime >= min && fd.updateTime <= max;
+  });
+  return *this;
+}
+
 MetaDataFilter& MetaDataFilter::filterByOwner(const std::string& owner) {
   filters.emplace_back([&owner](const FileDetail& fd) {
     return fd.owner == owner;

@@ -1,100 +1,140 @@
-#include "server/crypto/crypto.h"
-#include <cryptopp/aes.h>
-#include <cryptopp/files.h>
-#include <cryptopp/hex.h>
-#include <cryptopp/modes.h>
-#include <cryptopp/osrng.h>
-#include <memory>
-#include <string>
 
-using CryptoPP::AES;
-using CryptoPP::AutoSeededRandomPool;
-using CryptoPP::byte;
-using CryptoPP::CBC_Mode;
-using CryptoPP::FileSink;
-using CryptoPP::FileSource;
-using CryptoPP::Redirector;
-using CryptoPP::StreamTransformationFilter;
+#include "server/crypto/crypto.h"
+#include <crypto++/filters.h>
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <vector>
 
 namespace zipfiles::server {
 
-AESEncryptor::AESEncryptor(const std::string& key) : key(key) {}
+constexpr int CRYPTO_BLOCK_SIZE = 1 << 20;
 
-void AESEncryptor::encryptFile(
-  const std::string& inputFilePath,
-  const std::string& outputFilePath
-) {
-  std::string tempOutputFilePath = outputFilePath + ".tmp";
+AESEncryptor::AESEncryptor(const std::string& key) : key(generateKey(key)) {}
 
-  try {
-    std::array<byte, AES::BLOCKSIZE> iv{};
-    AutoSeededRandomPool prng;
-    prng.GenerateBlock(iv.data(), iv.size());
-
-    CBC_Mode<AES>::Encryption encryption(
-      reinterpret_cast<byte*>(key.data()), key.size(), iv.data()
-    );
-
-    FileSink file(tempOutputFilePath.c_str());
-    file.Put(iv.data(), iv.size());  // 写入 IV
-
-    FileSource temp(
-      inputFilePath.c_str(), true,
-      new StreamTransformationFilter(encryption, new Redirector(file))
-    );
-
-    // 替换原文件
-    if (std::rename(tempOutputFilePath.c_str(), outputFilePath.c_str()) != 0) {
-      throw std::runtime_error("Failed to rename temporary file to output file"
-      );
-    }
-  } catch (const CryptoPP::Exception& e) {
-    throw std::runtime_error("Encryption failed, " + std::string(e.what()));
-  } catch (const std::exception& e) {
-    throw std::runtime_error("An error occurred, " + std::string(e.what()));
-  }
+std::string AESEncryptor::generateKey(const std::string& rawKey) {
+  SHA256 hash;
+  std::string digest;
+  StringSource ss(
+    rawKey, true, new HashFilter(hash, new HexEncoder(new StringSink(digest)))
+  );
+  return digest.substr(0, 32);  // 32 字节作为密钥
 }
 
-void AESEncryptor::decryptFile(
-  const std::string& inputFilePath,
-  const std::string& outputFilePath
+CryptStatus AESEncryptor::encryptFile(
+  const std::vector<uint8_t>& inputData,
+  const std::array<CryptoPP::byte, AES::BLOCKSIZE>& iv,
+  bool flush
 ) {
-  std::string tempOutputFilePath = outputFilePath + ".tmp";
+  static thread_local std::vector<uint8_t> ibuffer;
+  static thread_local std::vector<uint8_t> outputData;
+  static thread_local size_t start = 0;
 
-  try {
-    std::array<byte, AES::BLOCKSIZE> iv{};
-
-    FileSource file(inputFilePath.c_str(), false);
-    file.Pump(iv.size());  // 读取 IV
-    file.Get(iv.data(), iv.size());
-
-    CBC_Mode<AES>::Decryption decryption(
-      reinterpret_cast<byte*>(key.data()), key.size(), iv.data()
+  auto append_buf = [&](size_t len) {
+    ibuffer.insert(
+      ibuffer.end(),
+      inputData.begin() +
+        static_cast<std::vector<uint8_t>::difference_type>(start),
+      inputData.begin() +
+        static_cast<std::vector<uint8_t>::difference_type>(start + len)
     );
+    start += len;
+  };
 
-    file.Attach(new StreamTransformationFilter(
-      decryption, new FileSink(tempOutputFilePath.c_str())
-    ));
+  bool lack = (start == inputData.size());
 
-    // !使用智能指针会segment fault: double free or corruption
-    // auto fileSink = std::make_shared<FileSink>(tempOutputFilePath.c_str());
-    // auto filter =
-    //   std::make_shared<StreamTransformationFilter>(decryption,
-    //   fileSink.get());
-
-    // file.Attach(filter.get());
-    file.PumpAll();
-
-    // 替换原文件
-    if (std::rename(tempOutputFilePath.c_str(), outputFilePath.c_str()) != 0) {
-      throw std::runtime_error("Failed to rename temporary file to output file"
-      );
+  if (!lack) {
+    append_buf(
+      std::min(CRYPTO_BLOCK_SIZE - ibuffer.size(), inputData.size() - start)
+    );
+    lack = (start == inputData.size());
+    start %= inputData.size();
+    if (ibuffer.size() == CRYPTO_BLOCK_SIZE || flush) {
+      try {
+        CBC_Mode<AES>::Encryption encryption(
+          reinterpret_cast<CryptoPP::byte*>(key.data()), key.size(), iv.data()
+        );
+        outputData.clear();
+        ArraySource as(
+          ibuffer.data(), ibuffer.size(), true,
+          new StreamTransformationFilter(
+            encryption, new VectorSink(outputData),
+            (ibuffer.size() != CRYPTO_BLOCK_SIZE && flush)
+              ? StreamTransformationFilter::PKCS_PADDING
+              : StreamTransformationFilter::NO_PADDING
+          )
+        );
+        assert(outputData.size() == CRYPTO_BLOCK_SIZE || flush);
+        ibuffer.clear();
+        return {true, lack, &outputData};
+      } catch (const CryptoPP::Exception& e) {
+        throw std::runtime_error("Encryption failed, " + std::string(e.what()));
+      } catch (const std::exception& e) {
+        throw std::runtime_error("An error occurred, " + std::string(e.what()));
+      }
     }
-  } catch (const CryptoPP::Exception& e) {
-    throw std::runtime_error("Encryption failed, " + std::string(e.what()));
-  } catch (const std::exception& e) {
-    throw std::runtime_error("An error occurred, " + std::string(e.what()));
   }
+  start = 0;
+  return {false, lack, &outputData};
+}
+
+CryptStatus AESEncryptor::decryptFile(
+  const std::vector<uint8_t>& inputData,
+  const std::array<CryptoPP::byte, AES::BLOCKSIZE>& iv,
+  bool flush
+) {
+  static thread_local std::vector<uint8_t> ibuffer;
+  static thread_local std::vector<uint8_t> outputData;
+  static thread_local size_t start = 0;
+
+  auto append_buf = [&](size_t len) {
+    ibuffer.insert(
+      ibuffer.end(),
+      inputData.begin() +
+        static_cast<std::vector<uint8_t>::difference_type>(start),
+      inputData.begin() +
+        static_cast<std::vector<uint8_t>::difference_type>(start + len)
+    );
+    start += len;
+  };
+
+  bool lack = (start == inputData.size());
+
+  if (!lack) {
+    append_buf(
+      std::min(CRYPTO_BLOCK_SIZE - ibuffer.size(), inputData.size() - start)
+    );
+    lack = (start == inputData.size());
+    start %= inputData.size();
+    if (ibuffer.size() == CRYPTO_BLOCK_SIZE || flush) {
+      try {
+        CBC_Mode<AES>::Decryption decryption(
+          reinterpret_cast<CryptoPP::byte*>(key.data()), key.size(), iv.data()
+        );
+        outputData.clear();
+        ArraySource as(
+          ibuffer.data(), ibuffer.size(), true,
+          new StreamTransformationFilter(
+            decryption, new VectorSink(outputData),
+            (ibuffer.size() != CRYPTO_BLOCK_SIZE && flush)
+              ? StreamTransformationFilter::PKCS_PADDING
+              : StreamTransformationFilter::NO_PADDING
+          )
+        );
+        assert(outputData.size() == CRYPTO_BLOCK_SIZE || flush);
+        ibuffer.clear();
+        return {true, lack, &outputData};
+      } catch (const CryptoPP::Exception& e) {
+        throw std::runtime_error("Failed to decrypt, " + std::string(e.what()));
+      } catch (const std::exception& e) {
+        throw std::runtime_error("An error occurred, " + std::string(e.what()));
+      }
+    }
+  }
+  start = 0;
+  return {false, lack, &outputData};
 }
 
 }  // namespace zipfiles::server
