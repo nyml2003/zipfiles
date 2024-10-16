@@ -39,7 +39,7 @@ Json::Value Res::toJson() {
       [&json](response::GetFileDetail& res) {
         json["apiEnum"] = Json::Value(toSizeT(ApiEnum::GET_FILE_DETAIL));
         const auto& metadata = res.metadata;
-        json["payload"]["name"] = metadata.name;
+        json["payload"]["absolutePath"] = metadata.absolutePath;
         json["payload"]["type"] = static_cast<int>(metadata.type);
         json["payload"]["createTime"] = metadata.createTime;
         json["payload"]["updateTime"] = metadata.updateTime;
@@ -77,7 +77,7 @@ Json::Value Res::toJson() {
           fileJson["owner"] = file.owner;
           fileJson["group"] = file.group;
           fileJson["mode"] = file.mode;
-          fileJson["name"] = file.name;
+          fileJson["absolutePath"] = file.absolutePath;
           json["payload"]["files"].append(fileJson);
         }
       },

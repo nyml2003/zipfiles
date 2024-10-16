@@ -1,11 +1,15 @@
-#include "server/pack/pack.h"
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <ios>
 #include <iostream>
+#include "mp/dto.h"
+#include "server/backup/backup.h"
+#include "server/pack/pack.h"
+#include "server/tools/fsapi.h"
 
 namespace zipfiles::server {
 
@@ -71,11 +75,15 @@ void fileDetailSerialize(
   offset += groupSize;
 
   // 写入文件名
-  size_t nameSize = fd.name.size();
-  std::memcpy(header.data() + offset, &nameSize, sizeof(nameSize));
-  offset += sizeof(nameSize);
-  std::memcpy(header.data() + offset, fd.name.c_str(), nameSize);
-  offset += nameSize;
+  size_t absolutePathSize = fd.absolutePath.size();
+  std::memcpy(
+    header.data() + offset, &absolutePathSize, sizeof(absolutePathSize)
+  );
+  offset += sizeof(absolutePathSize);
+  std::memcpy(
+    header.data() + offset, fd.absolutePath.c_str(), absolutePathSize
+  );
+  offset += absolutePathSize;
 
   // 写入设备号
   std::memcpy(header.data() + offset, &fd.dev, sizeof(fd.dev));
@@ -98,11 +106,11 @@ void createHeader(
   size_t structSize = sizeof(fd.type) + sizeof(fd.createTime) +
                       sizeof(fd.updateTime) + sizeof(fd.size) +
                       sizeof(fd.mode) + sizeof(size_t) * 3 + fd.owner.size() +
-                      fd.group.size() + fd.name.size() + sizeof(fd.dev);
+                      fd.group.size() + fd.absolutePath.size() + sizeof(fd.dev);
   size_t totalSize = sizeof(size_t) * 2 + relativePathSize + structSize;
 
   header.reserve(totalSize);
-  
+
   // 写入文件路径大小
   header.insert(
     header.end(), reinterpret_cast<uint8_t*>(&relativePathSize),
