@@ -22,7 +22,7 @@ namespace zipfiles::server {
 
 class BackupRestoreTest : public ::testing::Test {
  protected:
-  fs::path log = std::getenv("HOME") + std::string("/.zip/commit.log");
+  fs::path log = "/usr/local/zipfiles/.zip/commitlog";
 
   void SetUp() override {
     // 清理文件

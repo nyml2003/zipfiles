@@ -39,7 +39,7 @@ void backupFiles(
 
   // log文件地址
   // ? 待更改
-  fs::path src = std::getenv("HOME") + std::string("/.zip/commit.log");
+  fs::path src = "/usr/local/zipfiles/.zip/commitlog";
 
   // 读出后保存当前视图
   Json::Value cls = readCommitLog(src);
