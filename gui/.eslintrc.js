@@ -27,6 +27,8 @@ module.exports = {
   plugins: ['react', '@typescript-eslint'],
   rules: {
     '@typescript-eslint/no-non-null-assertion': 'off', // 允许使用非空操作符
+    // empty interface
+    '@typescript-eslint/no-empty-interface': 'off',
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'react/jsx-uses-react': 2,

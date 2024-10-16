@@ -1,11 +1,10 @@
+import { CommitLog } from './GetCommitList';
 
-export interface BackUpFile {
-  name: string;
-  type: string;
-  path: string;
-}
 export interface PostBackupRequest {
-  files: BackUpFile[];
+  files: string[]; // path
+  key: string;
+  lca: string; // lca is the lowest common ancestor of all files
+  cl: CommitLog;
 }
 
 export interface PostBackupResponse {}
