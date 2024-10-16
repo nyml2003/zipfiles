@@ -1,4 +1,3 @@
-#include "server/restore/restore.h"
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -13,6 +12,7 @@
 #include "server/crypto/crypto.h"
 #include "server/deflate/zip.h"
 #include "server/pack/unpack.h"
+#include "server/restore/restore.h"
 
 namespace zipfiles::server {
 
@@ -47,7 +47,8 @@ void restoreTo(
   }
 
   // 打开输入流
-  std::string filePath = cl["storagePath"].asString();
+  std::string filePath = cl["storagePath"].asString() + "/" +
+                         cl["uuid"].asString() + "/" + cl["uuid"].asString();
   std::ifstream inFile(filePath, std::ios::binary);
   if (!inFile) {
     throw std::runtime_error("Failed to open: " + filePath);

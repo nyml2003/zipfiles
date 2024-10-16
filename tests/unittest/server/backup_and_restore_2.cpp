@@ -108,7 +108,7 @@ TEST_F(BackupRestoreTest, BackupAndRestore) {
   cl["message"] = "Test backup";
   cl["createTime"] = 1234567890.0;
   cl["uuid"] = "test-uuid";
-  cl["storagePath"] = "/tmp/backup/test_backup.zip";
+  cl["storagePath"] = "/tmp/backup";
   cl["isEncrypt"] = true;
 
   std::string key = "test-key";
