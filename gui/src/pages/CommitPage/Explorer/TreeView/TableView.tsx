@@ -135,8 +135,8 @@ const columns: TableColumnsType<DataType> = [
 const TableView: React.FC = () => {
   const api = useApi();
   const [data, setData] = useState<DataType[]>([]);
-  const currentPath = useSelector((state: RootState) => state.file.currentPath);
-  const filter = useSelector((state: RootState) => state.file.filter);
+  const currentPath = useSelector((state: RootState) => state.createCommit.currentPath);
+  const filter = useSelector((state: RootState) => state.createCommit.filter);
   const fetchData = (path: string) => {
     api
       .request<GetAllFileDetailsRequest, GetAllFileDetailsResponse>(ApiEnum.GetAllFileDetails, {

@@ -1,9 +1,9 @@
 import React from 'react';
-import { Button, Form, Input, InputNumber, Mentions, Select, Space } from 'antd'
+import { Button, Form, Input, InputNumber, Mentions, Select, Space } from 'antd';
 import { FileType, Filter } from '@/types';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
-import { updateFilter, updateIsFiltering } from '@/stores/file/reducer';
+import { updateFilter, updateIsFiltering } from '@/stores/CreateCommitReducer';
 import { cleanObject } from '@/utils';
 
 const fileTypeOptions = [
@@ -18,7 +18,7 @@ const fileTypeOptions = [
 
 const FilterForm: React.FC = () => {
   const [form] = Form.useForm();
-  const filter = useSelector((state: RootState) => state.file.filter);
+  const filter = useSelector((state: RootState) => state.createCommit.filter);
   const dispatch = useDispatch();
 
   const onReset = () => {
@@ -28,7 +28,6 @@ const FilterForm: React.FC = () => {
   };
 
   const onFinish = (values: Filter) => {
-    console.log('Received values:', values);
     dispatch(updateFilter(values));
     dispatch(updateIsFiltering(false));
   };

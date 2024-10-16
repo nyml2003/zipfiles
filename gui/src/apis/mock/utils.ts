@@ -105,6 +105,9 @@ export function findFilesByPath(
   for (const file of files) {
     const newCurrentPath = calPath(currentPath, file);
     if (newCurrentPath === targetPath) {
+      if (file.type !== FileType.Directory) {
+        return [file];
+      }
       if (!file.children) {
         file.children = Array.from({ length: randomNumber(...MockFileNumber) }, () =>
           generateRandomFileDetail(newCurrentPath),

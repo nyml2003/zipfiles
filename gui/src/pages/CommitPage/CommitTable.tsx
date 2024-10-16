@@ -77,7 +77,6 @@ const CommitTable = ({ openExplorer }: CommitTableProps) => {
     api
       .request<GetCommitListRequest, GetCommitListResponse>(ApiEnum.GetCommitList, {})
       .then(res => {
-        console.log(res);
         setData(res.data);
       });
   };

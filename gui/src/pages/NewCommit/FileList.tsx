@@ -5,11 +5,12 @@ import {
   GetAllFileDetailsResponse,
 } from '@/apis/GetAllFileDetails';
 import useApi from '@/hooks/useApi';
+import { resetSelectedFile, updateExpandedSelectedFile } from '@/stores/CreateCommitReducer';
 import { RootState } from '@/stores/store';
 import { filterBy } from '@/utils';
 import { Button, Table } from 'antd';
 import React, { useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 const columns = [
   {
@@ -61,18 +62,23 @@ interface FileListProps {
 }
 
 const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
-  const selectedFile = useSelector((state: RootState) => state.file.selectedFile);
-  const filter = useSelector((state: RootState) => state.file.filter);
+  const selectedFile = useSelector((state: RootState) => state.createCommit.selectedFile);
+  const filter = useSelector((state: RootState) => state.createCommit.filter);
   const [data, setData] = React.useState<DataType[]>([]);
   const api = useApi();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     setData([]);
-    selectedFile.map(async (path) => {
+    selectedFile.map(async path => {
       const res = await fetchData(path);
-      setData((prev) => [...prev, ...res]);
+      setData(prev => [...prev, ...res]);
     });
   }, [selectedFile]);
+
+  useEffect(() => {
+    dispatch(updateExpandedSelectedFile(data.map(file => file.path)));
+  }, [data]);
 
   const handleAdd = () => {
     addExplorer();
@@ -92,6 +98,10 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
     return filterBy(res.files, filter);
   };
 
+  const handleClear = () => {
+    dispatch(resetSelectedFile());
+  };
+
   return (
     <>
       <Table<DataType> columns={columns} dataSource={data} size='small' rowKey={'name'} />
@@ -103,6 +113,9 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
           </Button>
           <Button type='primary' onClick={handleDelete}>
             删除
+          </Button>
+          <Button type='primary' onClick={handleClear}>
+            清空
           </Button>
         </div>
       </div>

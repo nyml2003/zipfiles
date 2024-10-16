@@ -12,14 +12,14 @@ import {
   handleRefresh,
   updateCurrentPath,
   updateIsFiltering,
-} from '@/stores/file/reducer';
+} from '@/stores/CreateCommitReducer';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
 import { BreadcrumbItemType } from 'antd/es/breadcrumb/Breadcrumb';
 
 const Explorer: React.FC = () => {
-  const isFiltering = useSelector((state: RootState) => state.file.isFiltering);
-  const currentPath = useSelector((state: RootState) => state.file.currentPath);
+  const isFiltering = useSelector((state: RootState) => state.createCommit.isFiltering);
+  const currentPath = useSelector((state: RootState) => state.createCommit.currentPath);
   const dispatch = useDispatch();
 
   return (
