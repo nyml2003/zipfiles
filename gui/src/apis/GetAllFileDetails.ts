@@ -1,7 +1,5 @@
 import { FileType } from '@/types';
 
-
-
 export interface GetAllFileDetailsRequest {
   path: string;
 
