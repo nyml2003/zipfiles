@@ -158,8 +158,6 @@ TEST_F(BackupRestoreTest, BackupAndRestore) {
       << file << "&" << restorePath / relativePath;
     ASSERT_EQ(originalDetail.mode, restoredDetail.mode)
       << file << "&" << restorePath / relativePath;
-    ASSERT_EQ(originalDetail.name, restoredDetail.name)
-      << file << "&" << restorePath / relativePath;
     ASSERT_EQ(originalDetail.dev, restoredDetail.dev)
       << file << "&" << restorePath / relativePath;
   }

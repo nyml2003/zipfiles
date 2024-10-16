@@ -82,7 +82,7 @@ FileDetail getFileDetail(const fs::path& file) {
     .owner = pwd ? pwd->pw_name : "",
     .group = grp ? grp->gr_name : "",
     .mode = file_stat.st_mode,
-    .name = file.filename().string(),
+    .absolutePath = file, 
     .dev = file_stat.st_dev
   };
 }

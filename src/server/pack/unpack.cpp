@@ -156,13 +156,13 @@ void FileUnpacker::fileDetailDeserialize(
   offset += groupSize;
 
   // 读取文件名
-  size_t nameSize = 0;
-  std::memcpy(&nameSize, header.data() + offset, sizeof(nameSize));
-  offset += sizeof(nameSize);
-  fd.name.resize(nameSize);
+  size_t absolutePathSize = 0;
+  std::memcpy(&absolutePathSize, header.data() + offset, sizeof(absolutePathSize));
+  offset += sizeof(absolutePathSize);
+  fd.absolutePath.resize(absolutePathSize);
 
-  std::memcpy(fd.name.data(), header.data() + offset, nameSize);
-  offset += nameSize;
+  std::memcpy(fd.absolutePath.data(), header.data() + offset,absolutePathSize);
+  offset += absolutePathSize;
 
   // 读取设备号
   std::memcpy(&fd.dev, header.data() + offset, sizeof(fd.dev));

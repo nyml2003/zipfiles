@@ -36,8 +36,8 @@ struct FileDetail {
   std::string group;
   // 权限
   mode_t mode{};
-  // 文件名
-  std::string name;
+  // 绝对路径
+  std::string absolutePath;
   // 设备号
   dev_t dev{};
 };

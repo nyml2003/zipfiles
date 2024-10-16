@@ -329,7 +329,7 @@ void writeDirectoryFile(
     temp["owner"] = fd.owner;
     temp["group"] = fd.group;
     temp["mode"] = fd.mode;
-    temp["name"] = fd.name;
+    temp["absolutePath"] = fd.absolutePath;
     temp["dev"] = fd.dev;
 
     root["data"].append(temp);
