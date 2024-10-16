@@ -22,7 +22,7 @@ namespace zipfiles::server {
 
 class BackupRestoreTest : public ::testing::Test {
  protected:
-  fs::path log = std::getenv("HOME") + std::string("/.zip/commit.log");
+  fs::path log = "/usr/local/zipfiles/.zip/commitlog";
 
   void SetUp() override {
     // 清理文件
@@ -108,7 +108,7 @@ TEST_F(BackupRestoreTest, BackupAndRestore) {
   cl["message"] = "Test backup";
   cl["createTime"] = 1234567890.0;
   cl["uuid"] = "test-uuid";
-  cl["storagePath"] = "/tmp/backup/test_backup.zip";
+  cl["storagePath"] = "/tmp/backup";
   cl["isEncrypt"] = true;
 
   std::string key = "test-key";

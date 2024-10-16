@@ -1,4 +1,3 @@
-#include "server/backup/backup.h"
 #include <cstdint>
 #include <exception>
 #include <filesystem>
@@ -11,6 +10,7 @@
 #include "json/value.h"
 #include "json/writer.h"
 #include "mp/dto.h"
+#include "server/backup/backup.h"
 #include "server/crypto/crypto.h"
 #include "server/deflate/zip.h"
 #include "server/pack/pack.h"
@@ -39,7 +39,7 @@ void backupFiles(
 
   // log文件地址
   // ? 待更改
-  fs::path src = std::getenv("HOME") + std::string("/.zip/commit.log");
+  fs::path src = "/usr/local/zipfiles/.zip/commitlog";
 
   // 读出后保存当前视图
   Json::Value cls = readCommitLog(src);
@@ -52,14 +52,15 @@ void backupFiles(
   }
 
   // 创建输出目录
-  std::string path = cl["storagePath"].asString();
-  fs::path dir = fs::path(path).parent_path();
+  std::string path = cl["storagePath"].asString() + "/" + cl["uuid"].asString();
+  fs::path dir = fs::path(path);
 
   if (!fs::exists(dir)) {
     fs::create_directories(dir);
   }
 
   // 打开输出流
+  path += "/" + cl["uuid"].asString();
   std::ofstream outputFile(path, std::ios::binary);
   if (!outputFile) {
     throw std::runtime_error("Failed to open: " + path);
@@ -172,7 +173,7 @@ void backupFiles(
 
   } catch (std::exception& e) {
     // 移除失败文件
-    fs::remove(path);
+    fs::remove_all(dir);
     outputFile.close();
 
     throw std::runtime_error(
@@ -183,11 +184,7 @@ void backupFiles(
 
   // 生成目录文件
   try {
-    // todo: 目录文件的dst还没有确定
-    writeDirectoryFile(
-      fs::path(cl["storagePath"].asString()).parent_path() / "directoryfile",
-      files
-    );
+    writeDirectoryFile(fs::path(dir) / "directoryfile", files);
   } catch (std::exception& e) {
     throw std::runtime_error(
       "Error occurred when trying to write directory file, its uuid is " +
@@ -201,7 +198,7 @@ void backupFiles(
     writeCommitLog(src, cls);
   } catch (const std::exception& e) {
     // 移除失败文件
-    fs::remove(path);
+    fs::remove_all(dir);
     outputFile.close();
 
     throw std::runtime_error(
