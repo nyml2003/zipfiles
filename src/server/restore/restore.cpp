@@ -8,7 +8,7 @@
 #include <vector>
 #include "json/reader.h"
 #include "json/value.h"
-#include "server/backup/backup.h"
+#include "server/configure/configure.h"
 #include "server/crypto/crypto.h"
 #include "server/deflate/zip.h"
 #include "server/pack/unpack.h"
@@ -33,11 +33,7 @@ void restoreTo(
   log4cpp::Category::getRoot().infoStream()
     << "Restore started, log uuid is " << uuid << ", to " << dst;
 
-  // log文件地址
-  // ? 待更改
-  fs::path src = "/usr/local/zipfiles/.zip/commitlog";
-
-  Json::Value cls = readCommitLog(src);
+  Json::Value cls = readCommitLog(COMMIT_LOG_PATH);
 
   Json::Value cl = getCommitLogById(cls, uuid);
 
@@ -240,6 +236,16 @@ Json::Value getCommitLogById(const Json::Value& cls, const std::string& uuid) {
   throw std::runtime_error(
     "Cannot find specific commit log by given uuid " + uuid
   );
+}
+
+/**
+ * @brief 给定uuid，读取指定的目录文件
+ *
+ */
+Json::Value readDirectoryFileById(const std::string& uuid) {
+  fs::path path = STORAGE_PATH / uuid / "directoryfile";
+
+  return readDirectoryFile(path);
 }
 
 /**

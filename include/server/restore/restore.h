@@ -30,6 +30,8 @@ Json::Value getCommitLogById(const Json::Value& cls, const std::string& uuid);
  * * directory
  *
  */
+Json::Value readDirectoryFileById(const std::string& uuid);
+
 Json::Value readDirectoryFile(const fs::path& src);
 
 }  // namespace zipfiles::server

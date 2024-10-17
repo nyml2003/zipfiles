@@ -8,6 +8,7 @@
 #include <iostream>
 #include "mp/dto.h"
 #include "server/backup/backup.h"
+#include "server/configure/configure.h"
 #include "server/pack/pack.h"
 #include "server/tools/fsapi.h"
 

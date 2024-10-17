@@ -22,7 +22,7 @@ namespace zipfiles::server {
 
 class BackupRestoreTest : public ::testing::Test {
  protected:
-  fs::path log = "/usr/local/zipfiles/.zip/commitlog";
+  fs::path log = "/usr/local/zipfiles/.zip";
 
   void SetUp() override {
     // 清理文件
@@ -31,7 +31,7 @@ class BackupRestoreTest : public ::testing::Test {
     fs::remove_all("/tmp/test_dir3");
     fs::remove_all("/tmp/backup");
     fs::remove_all("/tmp/restore");
-    fs::remove(log);
+    fs::remove_all(log);
 
     // 创建测试目录和文件
     fs::create_directories("/tmp/test_dir1");
@@ -83,12 +83,12 @@ class BackupRestoreTest : public ::testing::Test {
 
   void TearDown() override {
     // 删除测试目录和文件
-    fs::remove_all("/tmp/test_dir1");
-    fs::remove_all("/tmp/test_dir2");
-    fs::remove_all("/tmp/test_dir3");
-    fs::remove_all("/tmp/backup");
-    fs::remove_all("/tmp/restore");
-    fs::remove(log);
+    // fs::remove_all("/tmp/test_dir1");
+    // fs::remove_all("/tmp/test_dir2");
+    // fs::remove_all("/tmp/test_dir3");
+    // fs::remove_all("/tmp/backup");
+    // fs::remove_all("/tmp/restore");
+    // fs::remove_all(log);
   }
 };
 

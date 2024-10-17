@@ -11,6 +11,7 @@
 #include "json/writer.h"
 #include "mp/dto.h"
 #include "server/backup/backup.h"
+#include "server/configure/configure.h"
 #include "server/crypto/crypto.h"
 #include "server/deflate/zip.h"
 #include "server/pack/pack.h"
@@ -37,12 +38,8 @@ void backupFiles(
     << "Backup started, log messeag is \"" << cl["message"].asString()
     << "\" at " << cl["createTime"].asString();
 
-  // log文件地址
-  // ? 待更改
-  fs::path src = "/usr/local/zipfiles/.zip/commitlog";
-
   // 读出后保存当前视图
-  Json::Value cls = readCommitLog(src);
+  Json::Value cls = readCommitLog(COMMIT_LOG_PATH);
 
   // 检查是否提交过
   if (isCommitted(cls, cl)) {
@@ -195,7 +192,7 @@ void backupFiles(
   // 完成后添加到commitlog
   try {
     appendCommitLog(cls, cl);
-    writeCommitLog(src, cls);
+    writeCommitLog(COMMIT_LOG_PATH, cls);
   } catch (const std::exception& e) {
     // 移除失败文件
     fs::remove_all(dir);
