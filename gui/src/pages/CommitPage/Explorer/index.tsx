@@ -1,44 +1,68 @@
-import React from 'react';
-import {
-  ArrowLeftOutlined,
-  FilterFilled,
-  FilterOutlined,
-  HomeOutlined,
-  Loading3QuartersOutlined,
-} from '@ant-design/icons';
-import { Breadcrumb, Button } from 'antd';
-import FilterForm from './FilterForm';
-import TreeView from './TreeView';
-import {
-  handleRefresh,
-  updateCurrentPath,
-  updateIsFiltering,
-  updateSelectedFile,
-} from '@/stores/CreateCommitReducer';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/stores/store';
+import React, { useEffect } from 'react';
+// import {
+//   ArrowLeftOutlined,
+//   HomeOutlined,
+//   Loading3QuartersOutlined,
+// } from '@ant-design/icons';
+// import { Breadcrumb, Button, Splitter } from 'antd';
+// import { useDispatch, useSelector } from 'react-redux';
+// import { RootState } from '@/stores/store';
+// import { BreadcrumbItemType } from 'antd/es/breadcrumb/Breadcrumb';
+import TreeMenu from './TreeMenu';
+import TableView from './TableView';
+import { Splitter } from 'antd';
+import { CommitLog } from '@/apis/GetCommitList';
+import { NestedFileDetail } from '@/types';
+import useApi from '@/hooks/useApi';
+import { GetCommitDetailRequest, GetCommitDetailResponse } from '@/apis/GetCommitDetail';
+import { ApiEnum } from '@/apis';
+import { FileDetail } from '@/apis/GetAllFileDetails';
 
-const Explorer: React.FC = () => {
-  const view = useSelector((state: RootState) => state.createCommit.view);
-  const isFiltering = useSelector((state: RootState) => state.createCommit.isFiltering);
-  const currentPath = useSelector((state: RootState) => state.createCommit.currentPath);
-  const dispatch = useDispatch();
-
-  const handleSelect = (paths: string[]) => {
-    dispatch(updateSelectedFile(paths.sort()));
-  };
-
-  const renderContent = () => {
-    if (isFiltering) {
-      return <FilterForm />;
+function nestify(files: FileDetail[]): NestedFileDetail {
+  const newFiles = files.sort( (a, b) => a.path.localeCompare(b.path));
+  const root : NestedFileDetail = { children: [], ...newFiles[0] };
+  for (const file of newFiles) {
+    const pathParts = file.path.split('/');
+    let currentNode = root;
+    if (currentNode.children === null) {
+      continue;
     }
-    return <TreeView />;
-  };
+    for (let i = 1; i < pathParts.length; i++) {
+      const existingChild = currentNode.children!.find(child => child.path === pathParts[i]);
+      if (existingChild) {
+        currentNode = existingChild;
+      } else {
+        const newChild = { path: pathParts[i], children: [] };
+        currentNode.children!.push( 
+        currentNode = newChild;
+      }
+    }
+  }
+
+  return root;
+}
+
+const Explorer: React.FC = (uuid: string, commitLog: CommitLog) => {
+  // const isFiltering = useSelector((state: RootState) => state.createCommit.isFiltering);
+  // const currentPath = useSelector((state: RootState) => state.createCommit.currentPath);
+  // const dispatch = useDispatch();
+  const [currentFile, setCurrentFile] = React.useState<string>('');
+  const [currentPath, setCurrentPath] = React.useState<string>('');
+  const [files, setFiles] = React.useState<NestedFileDetail[] | null>(null);
+  const api = useApi();
+  useEffect(() => {
+    api
+      .request<GetCommitDetailRequest, GetCommitDetailResponse>(ApiEnum.GetCommitDetail, { uuid })
+      .then(res => {
+        setFiles(res.files);
+        setCurrentPath('/');
+      });
+  }, []);
 
   return (
     <div className='split-container-col grow-item'>
       <div className='flex rounded-xl items-center justify-between bg-gray-100'>
-        <div className='flex p-2 items-center'>
+        {/* <div className='flex p-2 items-center'>
           <Button
             type='text'
             icon={<ArrowLeftOutlined />}
@@ -59,17 +83,9 @@ const Explorer: React.FC = () => {
                 className: 'cursor-pointer px-2 py-1 rounded hover:bg-gray-200',
               });
               return acc;
-            }, [] as any)}
+            }, [] as BreadcrumbItemType[])}
           />
-        </div>
-        <div>
-          <Button
-            type='text'
-            icon={isFiltering ? <FilterFilled /> : <FilterOutlined />}
-            onClick={() => dispatch(updateIsFiltering(!isFiltering))}>
-            筛选
-          </Button>
-        </div>
+        </div> */}
       </div>
       <div
         className='
@@ -81,7 +97,18 @@ const Explorer: React.FC = () => {
         grow-item 
         split-container-row
         '>
-        {renderContent()}
+        <Splitter className='fade-in-down split-container-row grow-item'>
+          <Splitter.Panel
+            defaultSize='20%'
+            min='10%'
+            max='70%'
+            className='split-container-row grow-item'>
+            <TreeMenu />
+          </Splitter.Panel>
+          <Splitter.Panel className='split-container-row grow-item'>
+            <TableView />
+          </Splitter.Panel>
+        </Splitter>
       </div>
     </div>
   );

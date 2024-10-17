@@ -1,17 +1,12 @@
 import React, { useState, useEffect, Key } from 'react';
 import { Tree, TreeProps } from 'antd';
-import useApi from '@/hooks/useApi';
-import { GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
-import { ApiEnum } from '@/apis';
 import { DownOutlined } from '@ant-design/icons';
-import { FileType, LoadingState } from '@/types';
+import { FileType, LoadingState, NestedFileDetail } from '@/types';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
-import { updateCurrentFile, updateCurrentPath, updateSelectedFile } from '@/stores/CreateCommitReducer';
-import { cleanObject } from '@/utils';
 const { DirectoryTree } = Tree;
-import { GetFileDetailRequest, GetFileDetailResponse } from '@/apis/GetFileDetail';
+import { setCurrentFile, setCurrentPath } from '@/stores/CommitListReducer';
 
 interface DataNode {
   title: React.ReactNode;
@@ -20,58 +15,97 @@ interface DataNode {
   children?: DataNode[];
   expanded?: boolean;
 }
+function calPath(currentPath: string, file: NestedFileDetail) {
+  if (currentPath === '/' && file.name === '/') return '/';
+  if (currentPath === '/') {
+    return `/${file.name}`;
+  }
+  return `${currentPath}/${file.name}`;
+}
+// 递归查找函数
+export function findFilesByPath(
+  files: NestedFileDetail[],
+  targetPath: string,
+  currentPath: string,
+): NestedFileDetail[] | null {
+  for (const file of files) {
+    const newCurrentPath = calPath(currentPath, file);
+    if (newCurrentPath === targetPath) {
+      if (file.type !== FileType.Directory) {
+        return [file];
+      }
+      return file.children;
+    }
+    if (file.type === FileType.Directory) {
+      const result = findFilesByPath(file.children || [], targetPath, newCurrentPath);
+      if (result) {
+        return result;
+      }
+    }
+  }
+  return null;
+}
 
+function findFile(
+  files: NestedFileDetail[],
+  targetPath: string,
+  currentPath: string,
+): NestedFileDetail | null {
+  for (const file of files) {
+    const newCurrentPath = calPath(currentPath, file);
+    if (newCurrentPath === targetPath) {
+      return file;
+    }
+    if (file.type === FileType.Directory) {
+      const result = findFile(file.children || [], targetPath, newCurrentPath);
+      if (result) {
+        return result;
+      }
+    }
+  }
+  return null;
+}
 const TreeMenu = () => {
-  const api = useApi();
   const [treeData, setTreeData] = useState<DataNode[]>([]);
-  const [checkedKeys, setCheckedKeys] = useState<Key[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Done);
   const [lastClickTime, setLastClickTime] = useState<number>(0);
-  const currentPath = useSelector((state: RootState) => state.createCommit.currentPath);
-  const filter = useSelector((state: RootState) => state.createCommit.filter);
+  const currentPath = useSelector((state: RootState) => state.commitList.currentPath);
+  const files = useSelector((state: RootState) => state.commitList.files);
   const dispatch = useDispatch();
   useEffect(() => {
     // 清空已有数据
     setTreeData([]);
     // 清空展开的节点
     setExpandedKeys([]);
-    // 清空选中的节点
-    setCheckedKeys([]);
     // 加载新的数据
     handleGetFileList(currentPath);
   }, [currentPath]);
 
   const getRootFile = async (path: string) => {
-    const res = await api.request<GetFileDetailRequest, GetFileDetailResponse>(
-      ApiEnum.GetFileDetail,
-      {
-        path: path === '' ? '/' : path,
-      },
-    );
+    const res = findFile(files || [], path === '' ? '/' : path, '/');
     setTreeData([
       {
         title: '.',
         key: path,
-        isLeaf: res.type !== FileType.Directory,
+        isLeaf: res?.type !== FileType.Directory,
         expanded: true,
       },
     ]);
     setExpandedKeys([path]);
   };
 
-  const handleGetFileList = async (path: string, needLoading: boolean = true) => {
+  const handleGetFileList = async (path: string, needLoading = true) => {
     if (needLoading) setLoading(LoadingState.Loading);
     if (path === currentPath) {
       await getRootFile(currentPath);
     }
     try {
-      const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
-        path: path === '' ? '/' : path,
-        filter: cleanObject(filter),
-      });
-
-      const newTreeData = res.files.map(item => {
+      const res = findFilesByPath(files || [], path === '' ? '/' : path, '/');
+      if (!res) {
+        throw new Error('未找到文件');
+      }
+      const newTreeData = res.map(item => {
         const isDirectory = item.type === FileType.Directory;
         // title是path减去currentPath + item.name
         return {
@@ -81,15 +115,6 @@ const TreeMenu = () => {
         };
       });
       setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
-      // 如果当前选中的文件夹是checkedKeys中的一部分，就把新的文件夹也加入到checkedKeys中
-      if (checkedKeys.includes(path)) {
-        dispatch(
-          updateSelectedFile([
-            ...checkedKeys.map(key => key.toString()),
-            ...newTreeData.map(item => item.key.toString()),
-          ]),
-        );
-      }
     } catch (err) {
       console.log('获取文件列表失败: ', err);
     }
@@ -130,44 +155,32 @@ const TreeMenu = () => {
     await handleGetFileList(key as string, false);
   };
 
-  const handleCheck: TreeProps['onCheck'] = (checkedKeysValue, info) => {
-    setCheckedKeys(checkedKeysValue as Key[]);
-    dispatch(updateSelectedFile((checkedKeysValue as Key[]).map(key => key.toString())));
-  };
-
   const handleSelect: TreeProps['onSelect'] = (selectedKeys, info) => {
     const currentTime = new Date().getTime();
     if (currentTime - lastClickTime < 300) {
       if (!info.node.isLeaf) {
-        dispatch(updateCurrentPath(selectedKeys[0].toString()));
+        dispatch(setCurrentPath(selectedKeys[0].toString()));
       }
     } else {
-      dispatch(updateCurrentFile(selectedKeys[0].toString()));
+      dispatch(setCurrentFile(selectedKeys[0].toString()));
     }
     setLastClickTime(currentTime);
   };
 
   return (
-    <LoadingWrapper
-      loading={loading}
-      hasData={() => treeData.length > 0}
-      children={
-        <DirectoryTree
-          showLine
-          checkable
-          multiple
-          switcherIcon={<DownOutlined />}
-          loadData={onLoadData}
-          treeData={treeData}
-          checkedKeys={checkedKeys}
-          onCheck={handleCheck}
-          onSelect={handleSelect}
-          expandedKeys={expandedKeys}
-          onExpand={setExpandedKeys}
-          className='whitespace-nowrap bg-white grow-item'
-        />
-      }
-    />
+    <LoadingWrapper loading={loading} hasData={() => treeData.length > 0}>
+      <DirectoryTree
+        showLine
+        multiple
+        switcherIcon={<DownOutlined />}
+        loadData={onLoadData}
+        treeData={treeData}
+        onSelect={handleSelect}
+        expandedKeys={expandedKeys}
+        onExpand={setExpandedKeys}
+        className='whitespace-nowrap bg-white grow-item'
+      />
+    </LoadingWrapper>
   );
 };
 

@@ -6,16 +6,14 @@ import {
   HomeOutlined,
   Loading3QuartersOutlined,
 } from '@ant-design/icons';
-import { Breadcrumb, Button } from 'antd';
-import TreeView from './TreeView';
-import {
-  handleRefresh,
-  updateCurrentPath,
-  updateIsFiltering,
-} from '@/stores/CreateCommitReducer';
+import { Breadcrumb, Button, Splitter } from 'antd';
+import { handleRefresh, updateCurrentPath, updateIsFiltering } from '@/stores/CreateCommitReducer';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
 import { BreadcrumbItemType } from 'antd/es/breadcrumb/Breadcrumb';
+import TreeMenu from './TreeMenu';
+import TableView from './TableView';
+import FilterForm from './FilterForm';
 
 const Explorer: React.FC = () => {
   const isFiltering = useSelector((state: RootState) => state.createCommit.isFiltering);
@@ -68,7 +66,22 @@ const Explorer: React.FC = () => {
         grow-item 
         split-container-row
         '>
-        <TreeView />
+        {isFiltering ? (
+          <FilterForm />
+        ) : (
+          <Splitter className='fade-in-down split-container-row grow-item'>
+            <Splitter.Panel
+              defaultSize='20%'
+              min='10%'
+              max='70%'
+              className='split-container-row grow-item'>
+              <TreeMenu />
+            </Splitter.Panel>
+            <Splitter.Panel className='split-container-row grow-item'>
+              <TableView />
+            </Splitter.Panel>
+          </Splitter>
+        )}
       </div>
     </div>
   );

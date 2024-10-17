@@ -1,8 +1,11 @@
+/* eslint-disable prefer-const */
 import { FileType, Filter } from '@/types';
 import Mock from 'mockjs';
 import { File } from '../GetFileList';
 import { FileDetail } from '../GetFileDetail';
-import { filterBy } from '@/utils';
+import { filterBy, findLongestCommonPrefix } from '@/utils';
+import { CommitLog } from '../GetCommitList';
+import { v4 as uuidv4 } from 'uuid';
 const MockFileNumber: [number, number] = [100, 200];
 
 export function pickIndex<T>(choices: T[], _weights?: number[]): number {
@@ -63,6 +66,46 @@ export const cachedFileList: MockFileDetail[] = [
     path: '/',
   },
 ];
+
+// 随机从文件列表cachedFileList中选择若干个文件
+function pickFiles(): MockFileDetail[] {
+  const files: MockFileDetail[] = [];
+  const fileNumber = randomNumber(1, 10);
+  const flatFiles = cachedFileList.reduce((acc: MockFileDetail[], file: MockFileDetail) => {
+    acc.push(file);
+    if (file.children) {
+      acc.push(...file.children);
+    }
+    return acc;
+  }, []);
+  for (let i = 0; i < fileNumber; i++) {
+    const index = Math.floor(Math.random() * flatFiles.length);
+    files.push(flatFiles[index]);
+  }
+  return files;
+}
+export let backups: Map<string, FileDetail[]> = new Map();
+
+export let cachedCommitList: CommitLog[] = [];
+
+function generateCommitLog() {
+  const files = pickFiles();
+  const uuid = uuidv4();
+  backups.set(uuidv4(), files);
+  cachedCommitList.push({
+    uuid,
+    message: Mock.mock('@sentence'),
+    createTime: new Date(Mock.mock('@datetime')).getTime() / 1000,
+    lca: findLongestCommonPrefix(files.map(file => file.path)),
+    storagePath: '/usr/local/zipfiles',
+    author: Mock.mock('@name'),
+    isEncrypt: Mock.mock('@boolean'),
+    isDelete: false,
+  });
+}
+
+Array.from({ length: randomNumber(5, 10) }).forEach(() => generateCommitLog());
+
 export interface MockFile extends File {
   children: MockFile[] | null;
 }

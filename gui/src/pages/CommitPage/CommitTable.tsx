@@ -40,9 +40,9 @@ const CommitTable = ({ openExplorer }: CommitTableProps) => {
       ellipsis: true,
     },
     {
-      title: '默认路径',
-      dataIndex: 'defaultPath',
-      key: 'defaultPath',
+      title: '公共祖先',
+      dataIndex: 'lca',
+      key: 'lca',
       ellipsis: true,
     },
     {
@@ -92,7 +92,7 @@ const CommitTable = ({ openExplorer }: CommitTableProps) => {
       pagination={false}
       className='overflow-auto fade-in-down rounded-lg'
       size='small'
-      rowKey={'name'}
+      rowKey={'uuid'}
     />
   );
 };

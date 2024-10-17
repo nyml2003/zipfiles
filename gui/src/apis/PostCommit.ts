@@ -1,4 +1,4 @@
-export interface PostBackupRequest {
+export interface PostCommitRequest {
   // 在新标签页中选取
   files: string[]; // path
 
@@ -16,4 +16,4 @@ export interface PostBackupRequest {
   key?: string; // 当isEncrypt为true时，key必填
 }
 
-export interface PostBackupResponse {}
+export interface PostCommitResponse {}

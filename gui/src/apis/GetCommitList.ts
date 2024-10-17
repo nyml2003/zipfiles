@@ -3,7 +3,7 @@ export interface CommitLog {
   uuid: string;
   message: string;
   createTime: number;
-  lca: string; // lca is the lowest common ancestor of all files
+  lca: string;
   storagePath: string;
   author: string;
   isEncrypt: boolean;

@@ -1,7 +1,7 @@
 import { Filter } from '@/types';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface FileState {
+export interface CreateCommitState {
   currentFile: string;
   currentPath: string;
   selectedFile: string[];
@@ -10,7 +10,7 @@ export interface FileState {
   isFiltering: boolean;
 }
 
-const initialState: FileState = {
+const initialState: CreateCommitState = {
   currentFile: '',
   currentPath: '',
   selectedFile: [],

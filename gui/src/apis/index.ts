@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 export enum ApiEnum {
   UNKNOWN = 0,
   Log = 'log',
@@ -9,4 +10,5 @@ export enum ApiEnum {
   PostCommit = 102,
   GetAllFileDetails = 103,
   GetCommitList = 104,
+  GetCommitDetail = 105,
 }

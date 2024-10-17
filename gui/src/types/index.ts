@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 export interface RouteConfig {
   path: string;
   element: React.LazyExoticComponent<() => React.JSX.Element>;
@@ -53,6 +54,8 @@ export function FileTypeToString(type: FileType): string {
       return 'Socket';
     case FileType.Unknown:
       return 'Unknown';
+    default:
+      throw new Error(`Unknown FileType: ${type}`);
   }
 }
 
@@ -64,4 +67,17 @@ export interface Filter {
   };
   owner: string;
   group: string;
+}
+
+export interface NestedFileDetail {
+  name: string;
+  type: FileType;
+  createTime: number;
+  updateTime: number;
+  size: number;
+  owner: string;
+  group: string;
+  mode: number;
+  path: string;
+  children: NestedFileDetail[] | null;
 }

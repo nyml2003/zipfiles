@@ -1,13 +1,14 @@
-import { ApiEnum } from "@/apis";
+/* eslint-disable no-unused-vars */
+import { ApiEnum } from '@/apis';
 
 export interface Api {
   request<Request, Response>(apiEnum: ApiEnum, request: Request): Promise<Response>;
-  call(apiEnum: ApiEnum, request: any): void;
+  call(apiEnum: ApiEnum, request: unknown): void;
 }
 export interface ResponseWrapper {
   timestamp: number;
   apiEnum: ApiEnum;
-  data?: any;
+  data?: unknown;
   // resolve: 返回数据
   // reject: 返回错误信息
   // notify: 返回通知信息

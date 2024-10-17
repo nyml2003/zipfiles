@@ -1,33 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { message, Table } from 'antd';
+import React, { useEffect, useRef, useState } from 'react';
+import { Table } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { FileDetail } from '@/apis/GetFileDetail';
 import { ApiEnum } from '@/apis';
 import { FileType, FileTypeToString } from '@/types';
-import { CopyOutlined, FileFilled, FolderFilled } from '@ant-design/icons';
+import { FileFilled, FolderFilled } from '@ant-design/icons';
 import { GetAllFileDetailsRequest, GetAllFileDetailsResponse } from '@/apis/GetAllFileDetails';
-import CopyToClipboard from 'react-copy-to-clipboard';
 import useApi from '@/hooks/useApi';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
 import { filterBy } from '@/utils';
 
-interface DataType extends Partial<FileDetail> {}
-const Copy: React.FC<{ text: string; onCopy: () => void; isShow: boolean }> = ({
-  text,
-  onCopy,
-  isShow,
-}) => {
-  return isShow ? (
-    <CopyToClipboard text={text} onCopy={onCopy}>
-      <CopyOutlined
-        onClick={() => {
-          navigator.clipboard.writeText(text);
-        }}
-      />
-    </CopyToClipboard>
-  ) : null;
-};
+type DataType = Partial<FileDetail>;
 
 const columns: TableColumnsType<DataType> = [
   {
@@ -35,7 +19,7 @@ const columns: TableColumnsType<DataType> = [
     dataIndex: 'name',
 
     key: 'name',
-    render: (text, record) => {
+    render: text => {
       return <a>{text}</a>;
     },
     ellipsis: true,
@@ -45,7 +29,7 @@ const columns: TableColumnsType<DataType> = [
     dataIndex: 'type',
     ellipsis: true,
     key: 'type',
-    render: (text, record) => {
+    render: text => {
       if (text === FileType.Directory) {
         return <FolderFilled />;
       }
@@ -60,7 +44,7 @@ const columns: TableColumnsType<DataType> = [
     dataIndex: 'createTime',
     key: 'createTime',
     ellipsis: true,
-    render: (text, record) => {
+    render: text => {
       return text ? <span>{new Date(text * 1000).toLocaleString()}</span> : <span>加载中...</span>;
     },
   },
@@ -69,7 +53,7 @@ const columns: TableColumnsType<DataType> = [
     dataIndex: 'updateTime',
     key: 'updateTime',
     ellipsis: true,
-    render: (text, record) => {
+    render: text => {
       return text ? <span>{new Date(text * 1000).toLocaleString()}</span> : <span>加载中...</span>;
     },
   },
@@ -78,15 +62,10 @@ const columns: TableColumnsType<DataType> = [
     dataIndex: 'size',
     key: 'size',
     ellipsis: true,
-    render: (text, record) => {
+    render: text => {
       if (text === undefined) return <span>加载中...</span>;
       if (text === null) return <span>未知</span>;
-      return (
-        <span>
-          {text}
-          <Copy text={text.toString()} onCopy={() => message.success('复制成功')} isShow={text} />
-        </span>
-      );
+      return <span>{text}</span>;
     },
   },
   {
@@ -94,15 +73,8 @@ const columns: TableColumnsType<DataType> = [
     dataIndex: 'owner',
     key: 'owner',
     ellipsis: true,
-    render: (text, record) => {
-      return text ? (
-        <span>
-          {text}
-          <Copy text={text} onCopy={() => message.success('复制成功')} isShow={true} />
-        </span>
-      ) : (
-        <span>加载中...</span>
-      );
+    render: text => {
+      return text ? <span>{text}</span> : <span>加载中...</span>;
     },
   },
   {
@@ -110,15 +82,8 @@ const columns: TableColumnsType<DataType> = [
     dataIndex: 'group',
     key: 'group',
     ellipsis: true,
-    render: (text, record) => {
-      return text ? (
-        <span>
-          {text}
-          <Copy text={text} onCopy={() => message.success('复制成功')} isShow={true} />
-        </span>
-      ) : (
-        <span>加载中...</span>
-      );
+    render: text => {
+      return text ? <span>{text}</span> : <span>加载中...</span>;
     },
   },
   {
@@ -126,7 +91,7 @@ const columns: TableColumnsType<DataType> = [
     dataIndex: 'mode',
     key: 'mode',
     ellipsis: true,
-    render: (text, record) => {
+    render: text => {
       return text ? <span>{text}</span> : <span>加载中...</span>;
     },
   },
@@ -137,6 +102,7 @@ const TableView: React.FC = () => {
   const [data, setData] = useState<DataType[]>([]);
   const currentPath = useSelector((state: RootState) => state.createCommit.currentPath);
   const filter = useSelector((state: RootState) => state.createCommit.filter);
+  const currentFile = useSelector((state: RootState) => state.createCommit.currentFile);
   const fetchData = (path: string) => {
     api
       .request<GetAllFileDetailsRequest, GetAllFileDetailsResponse>(ApiEnum.GetAllFileDetails, {
@@ -151,14 +117,44 @@ const TableView: React.FC = () => {
     fetchData(currentPath);
   }, [currentPath]);
 
+  const tableRef = useRef(null);
+
+  const scrollToRow = (filename: string) => {
+    // 确保表格已经被渲染
+    if (tableRef && tableRef.current) {
+      const rows = (tableRef.current as HTMLDivElement).ownerDocument.querySelectorAll(
+        '.ant-table-row',
+      );
+      rows.forEach(row => {
+        const prefix = currentPath === '/' ? '' : currentPath;
+        const absoluteRowPath = `${prefix}/${row.getAttribute('data-row-key')}`;
+        if (absoluteRowPath === filename) {
+          // 滚动到对应行
+          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (currentFile === '') return;
+    scrollToRow(currentFile);
+  }, [currentFile]);
+
   return (
     <Table<DataType>
+      ref={tableRef}
       columns={columns}
       dataSource={data}
       pagination={false}
       className='overflow-auto fade-in-down'
       size='small'
       rowKey={'name'}
+      rowClassName={record => {
+        const prefix = currentPath === '/' ? '' : currentPath;
+        const absoluteRowPath = `${prefix}/${record.name}`;
+        return absoluteRowPath === currentFile ? 'bg-gray-200' : '';
+      }}
     />
   );
 };

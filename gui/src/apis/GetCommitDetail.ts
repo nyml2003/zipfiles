@@ -1,9 +1,9 @@
 import { FileDetail } from './GetAllFileDetails';
 
 export interface GetCommitDetailRequest {
-    uuid: string;
+  uuid: string;
 }
-    
+
 export interface GetCommitDetailResponse {
     files: FileDetail[];
 }

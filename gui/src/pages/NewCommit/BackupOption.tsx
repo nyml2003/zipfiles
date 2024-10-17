@@ -2,9 +2,11 @@ import { Button, Checkbox, Form, Input, message } from 'antd';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
-import { PostBackupRequest } from '@/apis/PostBackup';
 import { v4 as uuidv4 } from 'uuid';
 import { findLongestCommonPrefix } from '@/utils';
+import useApi from '@/hooks/useApi';
+import { ApiEnum } from '@/apis';
+import { PostCommitRequest, PostCommitResponse } from '@/apis/PostCommit';
 type BackupFormProps = Partial<{
   message: string;
   storagePath: string;
@@ -20,22 +22,28 @@ const initialState: BackupFormProps = {
 
 const BackupOption: React.FC = () => {
   const [form] = Form.useForm();
-  const expandedSelectedFile = useSelector((state: RootState) => state.createCommit.expandedSelectedFile);
+  const expandedSelectedFile = useSelector(
+    (state: RootState) => state.createCommit.expandedSelectedFile,
+  );
   const [messageApi, contextHolder] = message.useMessage();
+  const api = useApi();
   const onFinish = (values: Required<BackupFormProps>) => {
     if (!expandedSelectedFile.length) {
       messageApi.error('请选择文件');
       return;
     }
     const uuid = uuidv4();
-    const request: PostBackupRequest = {
+    const request: PostCommitRequest = {
       files: expandedSelectedFile,
       ...values,
       uuid,
       createTime: Date.now(),
       lca: findLongestCommonPrefix(expandedSelectedFile),
     };
-    console.log(request);
+    api.request<PostCommitRequest, PostCommitResponse>(ApiEnum.PostCommit, request).then(() => {
+      messageApi.success('备份成功');
+      console.log(request);
+    });
   };
   return (
     <div className='p-2'>
