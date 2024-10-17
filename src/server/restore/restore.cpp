@@ -1,3 +1,4 @@
+#include "server/restore/restore.h"
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -8,11 +9,10 @@
 #include <vector>
 #include "json/reader.h"
 #include "json/value.h"
-#include "server/backup/backup.h"
+#include "server/configure/configure.h"
 #include "server/crypto/crypto.h"
 #include "server/deflate/zip.h"
 #include "server/pack/unpack.h"
-#include "server/restore/restore.h"
 
 namespace zipfiles::server {
 
@@ -33,11 +33,7 @@ void restoreTo(
   log4cpp::Category::getRoot().infoStream()
     << "Restore started, log uuid is " << uuid << ", to " << dst;
 
-  // log文件地址
-  // ? 待更改
-  fs::path src = "/usr/local/zipfiles/.zip/commitlog";
-
-  Json::Value cls = readCommitLog(src);
+  Json::Value cls = readCommitLog(COMMIT_LOG_PATH);
 
   Json::Value cl = getCommitLogById(cls, uuid);
 
@@ -66,6 +62,8 @@ void restoreTo(
 
   // 实例化解包器
   FileUnpacker fileUnpacker(dst);
+
+  Unzip unzip;
 
   // 读取备份文件
   try {
@@ -123,14 +121,26 @@ void restoreTo(
       }
 
       // 对所有decryptedData解压缩
-      for (auto byte : decryptedData) {
-        auto [done, outputData] = unzip(byte);
+      unzip.reset_input(&decryptedData);
+      while (true) {
+        auto [done, lack, outputData] = unzip.run();
         if (done) {
           unzippedData.insert(
-            unzippedData.end(), outputData.begin(), outputData.end()
+            unzippedData.end(), outputData->begin(), outputData->end()
           );
+        } else if (lack) {
+          break;
         }
       }
+
+      // for (auto byte : decryptedData) {
+      //   auto [done, outputData] = unzip(byte);
+      //   if (done) {
+      //     unzippedData.insert(
+      //       unzippedData.end(), outputData.begin(), outputData.end()
+      //     );
+      //   }
+      // }
 
       // unpack不断循环直到解压数据被读取完
       fileUnpacker.unpackFilesByBlock(unzippedData, false);
@@ -240,6 +250,16 @@ Json::Value getCommitLogById(const Json::Value& cls, const std::string& uuid) {
   throw std::runtime_error(
     "Cannot find specific commit log by given uuid " + uuid
   );
+}
+
+/**
+ * @brief 给定uuid，读取指定的目录文件
+ *
+ */
+Json::Value readDirectoryFileById(const std::string& uuid) {
+  fs::path path = STORAGE_PATH / uuid / "directoryfile";
+
+  return readDirectoryFile(path);
 }
 
 /**

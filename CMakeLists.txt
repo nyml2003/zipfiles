@@ -172,7 +172,7 @@ foreach(TEST_FILE ${ZIPFILES_SERVER_UNIT_TEST_FILES})
     # 添加测试到 CTest
     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
 
-    set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 10)
+    set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 20)
 endforeach()
 
 

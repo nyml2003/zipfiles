@@ -1,5 +1,6 @@
 #include "server/deflate/huffman.h"
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstddef>
@@ -312,7 +313,7 @@ template <size_t size>
 }
 
 void Encoder::init() {
-  output_buffer.clear();
+  obuffer.clear();
   memset(&d_lc_tree, 0, sizeof(d_lc_tree));
   memset(&d_dist_tree, 0, sizeof(d_dist_tree));
 }
@@ -336,14 +337,14 @@ void Encoder::write_bits(uint32_t bits, int len, bool align) {
   while (len >= free_bit_len) {
     bit_buf |= (bits >> (len - free_bit_len)) & ((1 << free_bit_len) - 1);
     len -= free_bit_len;
-    output_buffer.push_back(bit_buf);
+    obuffer.push_back(bit_buf);
     bit_buf = 0;
     free_bit_len = 8;
   }
   bit_buf |= bits << (free_bit_len - len) & ((1 << free_bit_len) - 1);
   free_bit_len -= len;
   if (align && free_bit_len < 8) {
-    output_buffer.push_back(bit_buf);
+    obuffer.push_back(bit_buf);
     bit_buf = 0;
     free_bit_len = 8;
   }
@@ -514,27 +515,37 @@ void gen_decode_table(decode_table& table, std::array<uint8_t, size>& bit_len) {
   }
 }
 
-void try_move(
-  uint8_t& data,
-  uint16_t& buf,
-  int& valid_data_len,
-  int& valid_buf_len
-) {
-  if (valid_data_len) {
+void Decoder::reset_ibuf() {
+  ibuffer.resize(ibuffer.size() + 3);
+  ibuffer_start = ibuffer.begin();
+  ibuffer_end = ibuffer.end() - 3;
+  std::fill_n(ibuffer_end, 3, 0);
+  valid_data_len = 8;
+}
+
+bool Decoder::fill_buf() {
+  while (ibuffer_start < ibuffer_end && valid_buf_len < 16) {
     if (valid_buf_len <= 8) {  // left shift
-      buf |= static_cast<uint16_t>(data) << (8 - valid_buf_len);
-      data = 0;
+      bit_buf |= static_cast<uint16_t>(*ibuffer_start) << (8 - valid_buf_len);
+      *ibuffer_start = 0;
       valid_buf_len += valid_data_len;
       valid_data_len = 0;
     } else {  // right shift
       int moved_bit = std::min(16 - valid_buf_len, valid_data_len);
-      buf |= data >> (valid_buf_len - 8);
-      data <<= moved_bit;
+      bit_buf |= *ibuffer_start >> (valid_buf_len - 8);
+      *ibuffer_start <<= moved_bit;
       valid_buf_len += moved_bit;
       valid_data_len -= moved_bit;
     }
+
+    if (!valid_data_len) {
+      valid_data_len = 8;
+      ++ibuffer_start;
+    }
   }
-  assert(valid_buf_len == 16 || valid_data_len == 0);
+  assert(valid_buf_len == 16 || ibuffer_start == ibuffer_end);
+  assert(ibuffer_start <= ibuffer_end);
+  return valid_buf_len >= needed_bits;
 }
 
 inline void throw_bits(uint16_t& buf, int& valid_buf_len, int len) {
@@ -576,7 +587,9 @@ std::pair<uint16_t, uint8_t> look_decode_table(
 }
 
 void Decoder::init() {
-  bit_buf = valid_buf_len = valid_data_len = lc_size = dist_size = 0;
+  fill_buf();
+  throw_bits(bit_buf, valid_buf_len, (valid_buf_len + valid_data_len) % 8);
+  lc_size = dist_size = 0;
   needed_bits = 1;
   lc_alphabet.clear();
   dist_alphabet.clear();
@@ -624,9 +637,6 @@ bool Decoder::FSM_decode_lc() {
   throw_bits(bit_buf, valid_buf_len, len);
   needed_bits = 1;
   if (lc_code == 256) {
-    valid_buf_len = 0;
-    bit_buf = 0;
-    valid_data_len = 0;
     status = Status::INIT;
     return true;
   }
@@ -677,14 +687,12 @@ void Decoder::FSM_decode_dist_extra() {
   status = Status::DECODE_LC;
 }
 
-bool Decoder::decode(uint8_t data) {
-  bool res = false;
+bool Decoder::decode() {
   if (status == Status::INIT) {
     init();
   }
-  valid_data_len = 8;
-  while (valid_data_len + valid_buf_len >= needed_bits) {
-    try_move(data, bit_buf, valid_data_len, valid_buf_len);
+  while (/*valid_buf_len >= needed_bits*/ fill_buf()) {
+    // try_move(data, bit_buf, data_start, valid_buf_len);
     switch (status) {
       case Status::INIT:
         FSM_init();
@@ -696,7 +704,9 @@ bool Decoder::decode(uint8_t data) {
         FSM_build_dist_table();
         break;
       case Status::DECODE_LC:
-        res = FSM_decode_lc();
+        if (FSM_decode_lc()) {
+          return true;
+        }
         break;
       case Status::DECODE_LC_EXTRA:
         FSM_decode_lc_extra();
@@ -709,9 +719,9 @@ bool Decoder::decode(uint8_t data) {
         break;
     }
   }
-  try_move(data, bit_buf, valid_data_len, valid_buf_len);
-  assert(valid_data_len == 0);
-  return res;
+  // try_move(data, bit_buf, valid_data_len, valid_buf_len);
+  // assert(valid_data_len == 0);
+  return false;
 }
 
 }  // namespace zipfiles::server::huffman

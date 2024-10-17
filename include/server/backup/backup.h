@@ -9,9 +9,6 @@
 namespace fs = std::filesystem;
 
 namespace zipfiles::server {
-
-constexpr int PACK_BLOCK_SIZE = 1 << 19;
-
 /**
  * * backup
  *

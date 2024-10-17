@@ -47,7 +47,8 @@ class Encoder {
  private:
   std::vector<uint8_t>& lc_alphabet;     // length or character alphabet
   std::vector<uint16_t>& dist_alphabet;  // distance alpabet
-  std::vector<uint8_t>& output_buffer;   // compressed data buffer
+
+  std::vector<uint8_t>& obuffer;  // output buffer
 
   Tree<LC_TREE_SIZE>& d_lc_tree;      // dynamic length or character tree
   Tree<DIST_TREE_SIZE>& d_dist_tree;  // dynamic distance tree
@@ -66,7 +67,7 @@ class Encoder {
   )
     : lc_alphabet(literal_length_alphabet),
       dist_alphabet(distance_alphabet),
-      output_buffer(output_buffer),
+      obuffer(output_buffer),
       d_lc_tree(*new Tree<LC_TREE_SIZE>),
       d_dist_tree(*new Tree<DIST_TREE_SIZE>) {};
 
@@ -94,13 +95,17 @@ enum class Status {   // status machine status enum
 
 class Decoder {
  private:
+  std::vector<uint8_t>& ibuffer;  // input buffer
+
   std::vector<uint8_t>& lc_alphabet;     // length or character alphabet
   std::vector<uint16_t>& dist_alphabet;  // distance alpabet
 
-  Status status = Status::INIT;   // status code
-  uint16_t bit_buf = 0;           // store uncomplete bit code
-  int valid_buf_len = 0;          // free bit len in bit_buf
-  int valid_data_len = 0;         // valid bit len in data
+  Status status = Status::INIT;                  // status code
+  uint16_t bit_buf = 0;                          // store uncomplete bit code
+  int valid_buf_len = 0;                         // free bit len in bit_buf
+  std::vector<uint8_t>::iterator ibuffer_start;  // valid bit len in data
+  std::vector<uint8_t>::iterator ibuffer_end;    // valid bit len in data
+  int valid_data_len = 0;
   int needed_bits = 1;            // needed bits
   decode_table dyn_lc_table{};    // dynamic length and char decode table
   decode_table dyn_dist_table{};  // dynamic distance decode table
@@ -114,6 +119,8 @@ class Decoder {
   std::array<uint8_t, DIST_CODE_COUNT> dyn_dist_bit_len{};
   int dist_size = 0;  // completed size of dyn_dist_bit_len
 
+  bool fill_buf();
+
   void init();
   void FSM_init();
   void FSM_build_lc_table();
@@ -125,12 +132,16 @@ class Decoder {
 
  public:
   Decoder(
+    std::vector<uint8_t>& input_buffer,
     std::vector<uint8_t>& lc_alphabet,
     std::vector<uint16_t>& dist_alphabet
   )
-    : lc_alphabet(lc_alphabet), dist_alphabet(dist_alphabet) {};
+    : ibuffer(input_buffer),
+      lc_alphabet(lc_alphabet),
+      dist_alphabet(dist_alphabet) {};
 
-  bool decode(uint8_t data);
+  void reset_ibuf();
+  bool decode();
 };  // namespace decoder
 
 }  // namespace zipfiles::server::huffman

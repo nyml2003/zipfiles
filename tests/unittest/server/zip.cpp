@@ -36,12 +36,14 @@ bool test(const std::string& src_filename) {
   ofile.open(base_dir + dst_filename, oflag);
   const int ibuf_size = (1143 << 16) + 191981;
   std::vector<std::uint8_t> ibuffer(ibuf_size);
+  Zip zip_c;
   while (!ifile.eof()) {
     ifile.read(reinterpret_cast<char*>(ibuffer.data()), ibuf_size);
     ibuffer.resize(ifile.gcount());
     ZipStatus zip_ret = {false, false, nullptr};
+    zip_c.reset_input(&ibuffer, ifile.eof());
     while (!zip_ret.lack) {
-      zip_ret = zip(ibuffer, ifile.eof());
+      zip_ret = zip_c.run();
       if (zip_ret.flush) {
         ofile.write(
           reinterpret_cast<char*>(zip_ret.obuffer->data()),
@@ -56,14 +58,22 @@ bool test(const std::string& src_filename) {
   // unzip
   ifile.open(base_dir + dst_filename, iflag);
   ofile.open(base_dir + src_filename_ex, oflag);
-  char buf = 0;
-  while (ifile.get(buf), !ifile.eof()) {
-    auto [flush, obuffer] = unzip(buf);
-    if (flush) {
-      ofile.write(
-        reinterpret_cast<char*>(obuffer.data()),
-        static_cast<int>(obuffer.size())
-      );
+  ibuffer.resize(ibuf_size);
+  Unzip unzip_c;
+  while (!ifile.eof()) {
+    ifile.read(reinterpret_cast<char*>(ibuffer.data()), ibuf_size);
+    ibuffer.resize(ifile.gcount());
+    ZipStatus unzip_ret = {false, false, nullptr};
+    unzip_c.reset_input(&ibuffer);
+    while (!unzip_ret.lack) {
+      // unzip_ret = unzip(ibuffer);
+      unzip_ret = unzip_c.run();
+      if (unzip_ret.flush) {
+        ofile.write(
+          reinterpret_cast<char*>(unzip_ret.obuffer->data()),
+          static_cast<int>(unzip_ret.obuffer->size())
+        );
+      }
     }
   }
   ifile.close();
