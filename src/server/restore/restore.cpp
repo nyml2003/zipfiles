@@ -1,3 +1,4 @@
+#include "server/restore/restore.h"
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -12,7 +13,6 @@
 #include "server/crypto/crypto.h"
 #include "server/deflate/zip.h"
 #include "server/pack/unpack.h"
-#include "server/restore/restore.h"
 
 namespace zipfiles::server {
 
@@ -62,6 +62,8 @@ void restoreTo(
 
   // 实例化解包器
   FileUnpacker fileUnpacker(dst);
+
+  Unzip unzip;
 
   // 读取备份文件
   try {
@@ -119,14 +121,26 @@ void restoreTo(
       }
 
       // 对所有decryptedData解压缩
-      for (auto byte : decryptedData) {
-        auto [done, outputData] = unzip(byte);
+      unzip.reset_input(&decryptedData);
+      while (true) {
+        auto [done, lack, outputData] = unzip.run();
         if (done) {
           unzippedData.insert(
-            unzippedData.end(), outputData.begin(), outputData.end()
+            unzippedData.end(), outputData->begin(), outputData->end()
           );
+        } else if (lack) {
+          break;
         }
       }
+
+      // for (auto byte : decryptedData) {
+      //   auto [done, outputData] = unzip(byte);
+      //   if (done) {
+      //     unzippedData.insert(
+      //       unzippedData.end(), outputData.begin(), outputData.end()
+      //     );
+      //   }
+      // }
 
       // unpack不断循环直到解压数据被读取完
       fileUnpacker.unpackFilesByBlock(unzippedData, false);

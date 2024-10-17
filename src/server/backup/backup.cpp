@@ -1,3 +1,4 @@
+#include "server/backup/backup.h"
 #include <cstdint>
 #include <exception>
 #include <filesystem>
@@ -10,7 +11,6 @@
 #include "json/value.h"
 #include "json/writer.h"
 #include "mp/dto.h"
-#include "server/backup/backup.h"
 #include "server/configure/configure.h"
 #include "server/crypto/crypto.h"
 #include "server/deflate/zip.h"
@@ -83,6 +83,8 @@ void backupFiles(
 
   bool flush = false;
 
+  Zip zip;
+
   // 主循环
   try {
     while (true) {
@@ -94,12 +96,13 @@ void backupFiles(
 
       if (packFlush) {
         // 将pack的obuffer拷入zip
+        zip.reset_input(&packedData, flush);
         while (true) {
           // 如果当前flush为真，说明不会再有后继输出，则zip输出所有剩余数据
           // 否则还是只将数据拷贝入zip ibuffer而不输出
           // 将pack的obuffer的数据都加入zip的ibuffer
           // zipLack代表packedData是否还有数据可读，如果zipLack为真，说明已经读完当前packedData
-          auto [zipFlush, zipLack, outputData] = zip(packedData, flush);
+          auto [zipFlush, zipLack, outputData] = zip.run();
 
           if (zipFlush) {
             // 如果zip的ibuffer满，那么压缩，并输出到zippedData

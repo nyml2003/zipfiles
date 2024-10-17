@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cstdint>
 #include <vector>
 
@@ -7,75 +8,85 @@
 
 namespace zipfiles::server {
 
-struct ZipBuffer {
-  std::vector<uint8_t> ibuffer;         // input buffer
-  std::vector<uint8_t> obuffer;         // output buffer
-  std::vector<uint8_t> lc_alphabet;     // letter and length buffer
-  std::vector<uint16_t> dist_alphabet;  // distance buffer
-  ZipBuffer() {
-    ibuffer.reserve(ZIP_BLOCK_SIZE + 3);
-    obuffer.reserve(ZIP_BLOCK_SIZE + 3);
-    lc_alphabet.reserve(ZIP_BLOCK_SIZE + 3);
-    dist_alphabet.reserve(ZIP_BLOCK_SIZE + 3);
-  }
-};
+void Zip::reset_input(const std::vector<uint8_t>* input_ptr, bool eof) {
+  input = input_ptr;
+  flush = eof;
+  ibuf_start = input->begin();
+}
 
-ZipStatus zip(const std::vector<uint8_t>& input, bool flush) {
-  static thread_local ZipBuffer buffer;
-  static thread_local LZ77::Encoder lz77(
-    buffer.ibuffer, buffer.lc_alphabet, buffer.dist_alphabet
-  );
-  static thread_local huffman::Encoder encoder(
-    buffer.lc_alphabet, buffer.dist_alphabet, buffer.obuffer
-  );
-
-  static thread_local size_t last = 0;  // the start index of last input
-  auto append_ibuffer = [&](size_t len) {
-    buffer.ibuffer.insert(
-      buffer.ibuffer.end(),
-      input.begin() + static_cast<std::vector<uint8_t>::difference_type>(last),
-      input.begin() +
-        static_cast<std::vector<uint8_t>::difference_type>(last + len)
-    );
-    last += len;
+ZipStatus Zip::run() {
+  auto append_ibuffer = [&](int len) {
+    buffer.ibuffer.insert(buffer.ibuffer.end(), ibuf_start, ibuf_start + len);
+    ibuf_start += len;
+    assert(ibuf_start <= input->end());
   };
 
-  bool lack = (last == input.size());
+  bool lack = (ibuf_start == input->end());
 
   if (!lack) {
-    append_ibuffer(
-      std::min(ZIP_BLOCK_SIZE - buffer.ibuffer.size(), input.size() - last)
-    );
-    lack = (last == input.size());
-    last %= input.size();
+    append_ibuffer(std::min(
+      static_cast<int>(ZIP_BLOCK_SIZE - buffer.ibuffer.size()),
+      static_cast<int>(input->end() - ibuf_start)
+    ));
+    lack = (ibuf_start == input->end());
 
     // if data is enough or force flush, zip and flush
     if (buffer.ibuffer.size() == ZIP_BLOCK_SIZE || flush) {
       // zip
-      lz77.run();
-      encoder.encode();
+      lz77_ecodoer.run();
+      huffman_encoder.encode();
       buffer.ibuffer.clear();
       return {true, lack, &buffer.obuffer};
     }
   }
-  last = 0;
-  return {false, true, &buffer.obuffer};
+  return {false, true, nullptr};
+}
+
+void Unzip::reset_input(const std::vector<uint8_t>* input_ptr) {
+  input = input_ptr;
+  ibuf_start = input->begin();
+}
+
+ZipStatus Unzip::run() {
+  auto reset_ibuffer = [&]() {
+    buffer.ibuffer.clear();
+    int len = std::min(
+      static_cast<int>(ZIP_BLOCK_SIZE),
+      static_cast<int>(input->end() - ibuf_start)
+    );
+    buffer.ibuffer.insert(buffer.ibuffer.end(), ibuf_start, ibuf_start + len);
+    ibuf_start += len;
+    huffman_decoder.reset_ibuf();
+    assert(ibuf_start <= input->end());
+  };
+
+  if (ibuf_start == input->begin()) {
+    reset_ibuffer();
+  }
+
+  while (!huffman_decoder.decode()) {
+    if (ibuf_start == input->end()) {
+      return {false, true, nullptr};
+    }
+    reset_ibuffer();
+  }
+  lz77_decoder.run();
+  return {true, false, &buffer.obuffer};
+}
+
+ZipStatus unzip(const std::vector<uint8_t>& input) {
+  static std::vector<uint8_t> buffer(input);
+  return {false, true, &buffer};
+}
+
+ZipStatus zip(const std::vector<uint8_t>& input, bool flush) {
+  static std::vector<uint8_t> buffer(input);
+  return {flush, true, &buffer};
 }
 
 std::pair<bool, std::vector<uint8_t>&> unzip(uint8_t byte) {
-  static thread_local ZipBuffer buffer;
-  static thread_local LZ77::Decoder lz77(
-    buffer.lc_alphabet, buffer.dist_alphabet, buffer.obuffer
-  );
-  static thread_local huffman::Decoder decoder(
-    buffer.lc_alphabet, buffer.dist_alphabet
-  );
-
-  if (!decoder.decode(byte)) {
-    return {false, buffer.obuffer};
-  }
-  lz77.run();
-
-  return {true, buffer.obuffer};
+  static std::vector<uint8_t> ret{byte};
+  return {false, ret};
 }
+
 }  // namespace zipfiles::server
