@@ -5,31 +5,22 @@ export interface FileState {
   currentFile: string;
   currentPath: string;
   selectedFile: string[];
+  expandedSelectedFile: string[];
   filter: Partial<Filter>;
-  view: 'table' | 'tree';
   isFiltering: boolean;
-  backupConfig: {
-    compress: boolean;
-    encrypt: boolean;
-    password?: string;
-  };
 }
 
 const initialState: FileState = {
   currentFile: '',
   currentPath: '',
   selectedFile: [],
+  expandedSelectedFile: [],
   filter: {},
-  view: 'tree',
   isFiltering: false,
-  backupConfig: {
-    compress: true,
-    encrypt: false,
-  },
 };
 
-const fileSlice = createSlice({
-  name: 'file',
+const CreateCommitReducer = createSlice({
+  name: 'createCommit',
   initialState,
   reducers: {
     updateCurrentFile(state, action: PayloadAction<string>) {
@@ -53,14 +44,14 @@ const fileSlice = createSlice({
     resetFilter(state) {
       state.filter = initialState.filter;
     },
-    updateCurrentView(state, action: PayloadAction<'table' | 'tree'>) {
-      state.view = action.payload;
-    },
     updateIsFiltering(state, action: PayloadAction<boolean>) {
       state.isFiltering = action.payload;
     },
-    updateBackupConfig(state, action: PayloadAction<FileState['backupConfig']>) {
-      state.backupConfig = action.payload;
+    resetSelectedFile(state) {
+      state.selectedFile = [];
+    },
+    updateExpandedSelectedFile(state, action: PayloadAction<string[]>) {
+      state.expandedSelectedFile = action.payload;
     },
   },
 });
@@ -72,11 +63,9 @@ export const {
   handleRefresh,
   updateFilter,
   resetFilter,
-  updateCurrentView,
   updateIsFiltering,
-  updateBackupConfig,
-} = fileSlice.actions;
+  resetSelectedFile,
+  updateExpandedSelectedFile,
+} = CreateCommitReducer.actions;
 
-export const fileReducer = fileSlice.reducer;
-
-export default fileReducer;
+export default CreateCommitReducer.reducer;

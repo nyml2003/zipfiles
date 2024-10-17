@@ -1,12 +1,12 @@
 import { LoadingState } from '@/types';
 import LoadingSpinner from './LoadingSpinner';
 import NoMoreData from './NoMoreData';
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 interface LoadingWrapperProps {
   loading: LoadingState;
   hasData: () => boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 const LoadingWrapper = ({ loading, hasData, children }: LoadingWrapperProps) => {

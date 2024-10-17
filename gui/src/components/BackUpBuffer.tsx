@@ -3,7 +3,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 const BackUpBuffer = () => {
-  const selectedFile = useSelector((state: RootState) => state.file.selectedFile);
+  const selectedFile = useSelector((state: RootState) => state.createCommit.selectedFile);
   return (
     <div>
       <h1>BackUpBuffer</h1>

@@ -14,7 +14,7 @@ const MetaDataCard = () => {
   const [metadata, setMetadata] = useState<GetFileDetailResponse | null>(null);
   const api = useApi();
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Done);
-  const currentFile = useSelector((state: RootState) => state.file.currentFile);
+  const currentFile = useSelector((state: RootState) => state.createCommit.currentFile);
 
   // useEffect(() => {
   //   if (currentFile) {

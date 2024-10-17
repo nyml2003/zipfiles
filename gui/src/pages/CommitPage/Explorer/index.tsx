@@ -14,14 +14,14 @@ import {
   updateCurrentPath,
   updateIsFiltering,
   updateSelectedFile,
-} from '@/stores/file/reducer';
+} from '@/stores/CreateCommitReducer';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
 
 const Explorer: React.FC = () => {
-  const view = useSelector((state: RootState) => state.file.view);
-  const isFiltering = useSelector((state: RootState) => state.file.isFiltering);
-  const currentPath = useSelector((state: RootState) => state.file.currentPath);
+  const view = useSelector((state: RootState) => state.createCommit.view);
+  const isFiltering = useSelector((state: RootState) => state.createCommit.isFiltering);
+  const currentPath = useSelector((state: RootState) => state.createCommit.currentPath);
   const dispatch = useDispatch();
 
   const handleSelect = (paths: string[]) => {

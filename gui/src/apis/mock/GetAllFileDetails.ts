@@ -1,5 +1,5 @@
 import { GetAllFileDetailsRequest } from '../GetAllFileDetails';
-import { cachedFileList, findFilesByPath, generateRandomFileDetail, randomNumber } from './utils';
+import { cachedFileList, findFilesByPath } from './utils';
 
 export function mock(request: GetAllFileDetailsRequest) {
   const { path } = request;
@@ -7,5 +7,5 @@ export function mock(request: GetAllFileDetailsRequest) {
   if (!files) {
     return { files: [] };
   }
-  return { files: files};
+  return { files };
 }

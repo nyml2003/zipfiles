@@ -8,7 +8,7 @@ import { FileType, LoadingState } from '@/types';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
-import { updateCurrentFile, updateCurrentPath, updateSelectedFile } from '@/stores/file/reducer';
+import { updateCurrentFile, updateCurrentPath, updateSelectedFile } from '@/stores/CreateCommitReducer';
 import { cleanObject } from '@/utils';
 const { DirectoryTree } = Tree;
 import { GetFileDetailRequest, GetFileDetailResponse } from '@/apis/GetFileDetail';
@@ -28,8 +28,8 @@ const TreeMenu = () => {
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Done);
   const [lastClickTime, setLastClickTime] = useState<number>(0);
-  const currentPath = useSelector((state: RootState) => state.file.currentPath);
-  const filter = useSelector((state: RootState) => state.file.filter);
+  const currentPath = useSelector((state: RootState) => state.createCommit.currentPath);
+  const filter = useSelector((state: RootState) => state.createCommit.filter);
   const dispatch = useDispatch();
   useEffect(() => {
     // 清空已有数据
