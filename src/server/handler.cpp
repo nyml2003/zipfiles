@@ -6,91 +6,94 @@
 #include "mp/Response.h"
 #include "mp/common.h"
 #include "mp/error.h"
-#include "mp/filter.h"
+#include "server/tools/filter.h"
 #include "server/socket/socket.h"
 #include "server/tools/fsapi.h"
 
 namespace zipfiles::server {
 
 void doHandle(int client_fd) {
-  try {
-    // 主eventloop
-    // log4cpp::Category::getRoot().infoStream()
-    //   << "Thread " << std::this_thread::get_id()
-    //   << " is waiting for request from " << client_fd << "...";
+  std::cout << client_fd << std::endl;
+  // try {
+  //   // 主eventloop
+  //   // log4cpp::Category::getRoot().infoStream()
+  //   //   << "Thread " << std::this_thread::get_id()
+  //   //   << " is waiting for request from " << client_fd << "...";
 
-    ReqPtr request = Socket::receive(client_fd);
+  //   ReqPtr request = Socket::receive(client_fd);
 
-    log4cpp::Category::getRoot().infoStream()
-      << "Request received: " << request->toJson();
+  //   log4cpp::Category::getRoot().infoStream()
+  //     << "Request received: " << request->toJson();
 
-    ResPtr response = std::visit(
-      overload{
-        [](request::GetFileDetail& req) {
-          return makeResGetFileDetail(getFileDetail(req.path));
-        },
-        [](request::GetFileList& req) {
-          MetaDataFilter filter;
-          bool needFilter = false;
-          if (req.filter.has_value()) {
-            needFilter = true;
-            if (req.filter->type.has_value()) {
-              filter.filterByType(req.filter->type.value());
-            }
-            if (req.filter->minSize.has_value() &&
-                req.filter->maxSize.has_value()) {
-              filter.filterBySize(
-                req.filter->minSize.value(), req.filter->maxSize.value()
-              );
-            }
-            if (req.filter->minSize.has_value() &&
-                !req.filter->maxSize.has_value()) {
-              filter.filterBySize(req.filter->minSize.value(), INT64_MAX);
-            }
-            if (!req.filter->minSize.has_value() &&
-                req.filter->maxSize.has_value()) {
-              filter.filterBySize(0, req.filter->maxSize.value());
-            }
-            if (req.filter->owner.has_value()) {
-              filter.filterByOwner(req.filter->owner.value());
-            }
-            if (req.filter->group.has_value()) {
-              filter.filterByGroup(req.filter->group.value());
-            }
-          }
-          return makeResGetFileList(getFileList(req.path, needFilter, filter));
-        },
-        [](request::PostCommit&) { return makeResPostCommit({}); },
-        [](request::MockNeedTime& req) { return makeResMockNeedTime(req.id); },
-        [](request::GetAllFileDetails& req) {
-          return makeResGetAllFileDetails(getAllFileDetails(req.path));
-        },
-        [](auto&&) {
-          throw std::runtime_error("Unknown request type");
-          return nullptr;
-        },
-      },
-      request->kind
-    );
+  //   ResPtr response = std::visit(
+  //     overload{
+  //       [](request::GetFileDetail& req) {
+  //         return makeResGetFileDetail(getFileDetail(req.path));
+  //       },
+  //       [](request::GetFileList& req) {
+  //         MetaDataFilter filter;
+  //         bool needFilter = false;
+  //         if (req.filter.has_value()) {
+  //           needFilter = true;
+  //           if (req.filter->type.has_value()) {
+  //             filter.filterByType(req.filter->type.value());
+  //           }
+  //           if (req.filter->minSize.has_value() &&
+  //               req.filter->maxSize.has_value()) {
+  //             filter.filterBySize(
+  //               req.filter->minSize.value(), req.filter->maxSize.value()
+  //             );
+  //           }
+  //           if (req.filter->minSize.has_value() &&
+  //               !req.filter->maxSize.has_value()) {
+  //             filter.filterBySize(req.filter->minSize.value(), INT64_MAX);
+  //           }
+  //           if (!req.filter->minSize.has_value() &&
+  //               req.filter->maxSize.has_value()) {
+  //             filter.filterBySize(0, req.filter->maxSize.value());
+  //           }
+  //           if (req.filter->owner.has_value()) {
+  //             filter.filterByOwner(req.filter->owner.value());
+  //           }
+  //           if (req.filter->group.has_value()) {
+  //             filter.filterByGroup(req.filter->group.value());
+  //           }
+  //         }
+  //         return makeResGetFileList(getFileList(req.path, needFilter,
+  //         filter));
+  //       },
+  //       [](request::PostCommit&) { return makeResPostCommit({}); },
+  //       [](request::MockNeedTime& req) { return makeResMockNeedTime(req.id);
+  //       },
+  //       [](request::GetAllFileDetails& req) {
+  //         return makeResGetAllFileDetails(getAllFileDetails(req.path));
+  //       },
+  //       [](auto&&) {
+  //         throw std::runtime_error("Unknown request type");
+  //         return nullptr;
+  //       },
+  //     },
+  //     request->kind
+  //   );
 
-    // 设置response
-    response->status = StatusCode::OK;
-    response->timestamp = request->timestamp;
-    response->uuid = request->uuid;
-    log4cpp::Category::getRoot().infoStream()
-      << "Response sent: " << response->toJson();
-    Socket::send(client_fd, response);
+  //   // 设置response
+  //   response->status = StatusCode::OK;
+  //   response->timestamp = request->timestamp;
+  //   response->uuid = request->uuid;
+  //   log4cpp::Category::getRoot().infoStream()
+  //     << "Response sent: " << response->toJson();
+  //   Socket::send(client_fd, response);
 
-  } catch (const std::exception& e) {
-    // 如果是SocketTemporarilyUnavailable
-    if (const auto* e_ptr =
-          dynamic_cast<const SocketTemporarilyUnavailable*>(&e)) {
-      // log4cpp::Category::getRoot().infoStream() << e_ptr->what();
-      return;
-    }
-    log4cpp::Category::getRoot().errorStream()
-      << "Failed to handle request: " << e.what();
-  }
+  // } catch (const std::exception& e) {
+  //   // 如果是SocketTemporarilyUnavailable
+  //   if (const auto* e_ptr =
+  //         dynamic_cast<const SocketTemporarilyUnavailable*>(&e)) {
+  //     // log4cpp::Category::getRoot().infoStream() << e_ptr->what();
+  //     return;
+  //   }
+  //   log4cpp::Category::getRoot().errorStream()
+  //     << "Failed to handle request: " << e.what();
+  // }
 }  // namespace zipfiles::server
 /**
  * @brief 守护进程初始化函数

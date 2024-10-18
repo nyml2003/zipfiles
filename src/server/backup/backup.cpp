@@ -10,7 +10,6 @@
 #include <vector>
 #include "json/value.h"
 #include "json/writer.h"
-#include "mp/dto.h"
 #include "server/configure/configure.h"
 #include "server/crypto/crypto.h"
 #include "server/deflate/zip.h"
@@ -63,6 +62,9 @@ void backupFiles(
     throw std::runtime_error("Failed to open: " + path);
   }
 
+  // 获取全部文件的最近公共祖先
+  fs::path lca = getCommonAncestor(files);
+
   // 获取是否加密
   bool encrypt = cl["isEncrypt"].asBool();
 
@@ -92,7 +94,7 @@ void backupFiles(
       std::vector<uint8_t> encryptedData{};
 
       // 获取输出
-      auto [packFlush, packedData] = packFilesByBlock(files, flush);
+      auto [packFlush, packedData] = packFilesByBlock(files, flush, lca);
 
       if (packFlush) {
         // 将pack的obuffer拷入zip
@@ -184,7 +186,7 @@ void backupFiles(
 
   // 生成目录文件
   try {
-    writeDirectoryFile(fs::path(dir) / "directoryfile", files);
+    writeDirectoryFile(fs::path(dir) / "directoryfile", files, lca);
   } catch (std::exception& e) {
     throw std::runtime_error(
       "Error occurred when trying to write directory file, its uuid is " +
@@ -213,7 +215,6 @@ void backupFiles(
  *
  * @param paths 绝对路径数组
  *
- * ? 是否可以用字典树优化
  */
 
 fs::path getCommonAncestor(const std::vector<fs::path>& paths) {
@@ -305,7 +306,8 @@ void writeCommitLog(const fs::path& dst, const Json::Value& cls) {
  */
 void writeDirectoryFile(
   const fs::path& dst,
-  const std::vector<fs::path>& files
+  const std::vector<fs::path>& files,
+  const fs::path& lca
 ) {
   std::ofstream outFile(dst);
   if (!outFile) {
@@ -319,6 +321,9 @@ void writeDirectoryFile(
     FileDetail fd = getFileDetail(path);
     Json::Value temp;
 
+    fs::path filePath = fs::relative(path.parent_path(), lca);
+    filePath = filePath / path.filename();
+
     temp["type"] = static_cast<int>(fd.type);  // 将文件类型转换为整数
     temp["createTime"] = fd.createTime;
     temp["updateTime"] = fd.updateTime;
@@ -326,7 +331,7 @@ void writeDirectoryFile(
     temp["owner"] = fd.owner;
     temp["group"] = fd.group;
     temp["mode"] = fd.mode;
-    temp["absolutePath"] = fd.absolutePath;
+    temp["relativePath"] = filePath.string();
     temp["dev"] = fd.dev;
 
     root["data"].append(temp);

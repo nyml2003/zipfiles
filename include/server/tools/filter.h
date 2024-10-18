@@ -5,11 +5,11 @@
 #include <functional>
 #include <string>
 #include <vector>
-#include "mp/dto.h"
-
-namespace zipfiles {
+#include "server/tools/fsapi.h"
 
 namespace fs = std::filesystem;
+
+namespace zipfiles::server {
 
 class MetaDataFilter {
  public:
@@ -28,6 +28,6 @@ class MetaDataFilter {
   std::vector<FilterFunc> filters;
 };
 
-}  // namespace zipfiles
+}  // namespace zipfiles::server
 
 #endif  // ZIPFILES_METADATAFILTER_H

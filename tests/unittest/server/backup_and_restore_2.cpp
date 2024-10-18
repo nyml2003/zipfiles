@@ -13,7 +13,6 @@
 #include <string>
 #include <vector>
 #include "json/value.h"
-#include "mp/dto.h"
 #include "server/backup/backup.h"
 #include "server/restore/restore.h"
 #include "server/tools/fsapi.h"

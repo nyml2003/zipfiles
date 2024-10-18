@@ -1,3 +1,4 @@
+#include "server/pack/pack.h"
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -6,10 +7,7 @@
 #include <fstream>
 #include <ios>
 #include <iostream>
-#include "mp/dto.h"
-#include "server/backup/backup.h"
 #include "server/configure/configure.h"
-#include "server/pack/pack.h"
 #include "server/tools/fsapi.h"
 
 namespace zipfiles::server {
@@ -134,8 +132,11 @@ void createHeader(
  *
  * @param flush 是否强制输出缓冲区
  */
-std::pair<bool, std::vector<uint8_t>&>
-packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
+std::pair<bool, std::vector<uint8_t>&> packFilesByBlock(
+  const std::vector<fs::path>& files,
+  bool flush,
+  const fs::path& lca
+) {
   static thread_local std::vector<uint8_t> obuffer;  // 默认为1<<19
   static thread_local size_t currentFileIndex = 0;
   static thread_local std::ifstream inFile;
@@ -146,14 +147,9 @@ packFilesByBlock(const std::vector<fs::path>& files, bool flush) {
 
   obuffer.reserve(PACK_BLOCK_SIZE);
 
-  // 获取公共祖先
-  if (commonAncestor.empty() && !flush) {
-    commonAncestor = getCommonAncestor(files);
-  }
-
   for (; currentFileIndex < files.size() && !flush; ++currentFileIndex) {
     fs::path filePath =
-      fs::relative(files[currentFileIndex].parent_path(), commonAncestor);
+      fs::relative(files[currentFileIndex].parent_path(), lca);
     filePath = filePath / files[currentFileIndex].filename();
 
     // 获取文件信息

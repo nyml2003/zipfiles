@@ -1,6 +1,6 @@
-#include "mp/filter.h"
+#include "server/tools/filter.h"
 
-namespace zipfiles {
+namespace zipfiles::server {
 
 MetaDataFilter& MetaDataFilter::filterByType(const fs::file_type& type) {
   filters.emplace_back([&type](const FileDetail& fd) { return fd.type == type; }
@@ -52,4 +52,4 @@ bool MetaDataFilter::doFilter(const FileDetail& fd) const {
   });
 }
 
-}  // namespace zipfiles
+}  // namespace zipfiles::server

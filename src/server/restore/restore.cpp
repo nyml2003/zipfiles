@@ -133,15 +133,6 @@ void restoreTo(
         }
       }
 
-      // for (auto byte : decryptedData) {
-      //   auto [done, outputData] = unzip(byte);
-      //   if (done) {
-      //     unzippedData.insert(
-      //       unzippedData.end(), outputData.begin(), outputData.end()
-      //     );
-      //   }
-      // }
-
       // unpack不断循环直到解压数据被读取完
       fileUnpacker.unpackFilesByBlock(unzippedData, false);
 

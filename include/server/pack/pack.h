@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <vector>
-#include "mp/dto.h"
+#include "server/tools/fsapi.h"
 
 namespace zipfiles::server {
 /**
@@ -24,8 +24,11 @@ void createHeader(
   std::vector<uint8_t>& header
 );
 
-std::pair<bool, std::vector<uint8_t>&>
-packFilesByBlock(const std::vector<fs::path>& files, bool flush);
+std::pair<bool, std::vector<uint8_t>&> packFilesByBlock(
+  const std::vector<fs::path>& files,
+  bool flush,
+  const fs::path& lca
+);
 
 }  // namespace zipfiles::server
 

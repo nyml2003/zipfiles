@@ -5,23 +5,32 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <vector>
 
-namespace zipfiles {
 namespace fs = std::filesystem;
 
-struct Filter {
+namespace zipfiles {
+/**
+ * @brief Filter的DTO
+ *
+ */
+struct FilterDTO {
   std::optional<fs::file_type> type;
   std::optional<__off_t> minSize;
   std::optional<__off_t> maxSize;
+  std::optional<double> minCreateTime;
+  std::optional<double> maxCreateTime;
+  std::optional<double> minUpdateTime;
+  std::optional<double> maxUpdateTime;
   std::optional<std::string> owner;
   std::optional<std::string> group;
 };
 
 /**
- * @brief 选中文件后展示的文件信息
+ * @brief FileDetail的DTO
  *
  */
-struct FileDetail {
+struct FileDetailDTO {
   // 文件类型，定义见filesystem
   fs::file_type type{};
   // 创建时间
@@ -36,17 +45,19 @@ struct FileDetail {
   std::string group;
   // 权限
   mode_t mode{};
-  // 绝对路径
-  std::string absolutePath;
-  // 设备号
-  dev_t dev{};
+  // 路径
+  std::string path;
+  // 文件名
+  std::string name;
 };
 
 /**
- * @brief 记录commit的日志结构
+ * @brief CommitLog的DTO
  *
  */
-struct CommitLog {
+struct CommitLogDTO {
+  // 包含的文件数组
+  std::vector<fs::path> files;
   // id为Commit的唯一标识
   std::string uuid;
   // Commit消息
@@ -54,23 +65,14 @@ struct CommitLog {
   // 创建时间
   // 以秒为单位，有效位数是53位
   double createTime;
-  // 恢复的默认路径
-  std::string defaultPath;
   // 文件的存储路径
   std::string storagePath;
   // 作者
   std::string author;
   // 是否被加密
   bool isEncrypt;
-  // 是否被删除
-  bool isDelete;
-};
-
-struct File {
-  // 文件名
-  std::string name;
-  // 文件类型，定义见filesystem
-  fs::file_type type;
+  // 加密密钥
+  std::optional<std::string> key;
 };
 
 }  // namespace zipfiles
