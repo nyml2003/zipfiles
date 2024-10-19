@@ -14,7 +14,7 @@
 #include "server/crypto/crypto.h"
 #include "server/deflate/zip.h"
 #include "server/pack/pack.h"
-#include "server/restore/restore.h"
+#include "server/tools/committable.h"
 #include "server/tools/fsapi.h"
 
 namespace zipfiles::server {
@@ -38,10 +38,10 @@ void backupFiles(
     << "\" at " << cl["createTime"].asString();
 
   // 读出后保存当前视图
-  Json::Value cls = readCommitLog(COMMIT_TABLE_PATH);
+  Json::Value cls = CommitTable::readCommitLog(COMMIT_TABLE_PATH);
 
   // 检查是否提交过
-  if (isCommitted(cls, cl)) {
+  if (CommitTable::isCommitted(cls, cl)) {
     throw std::runtime_error(
       "Commit log is already committed, its uuid is " + cl["uuid"].asString()
     );
@@ -196,8 +196,8 @@ void backupFiles(
 
   // 完成后添加到commitlog
   try {
-    appendCommitLog(cls, cl);
-    writeCommitLog(COMMIT_TABLE_PATH, cls);
+    CommitTable::appendCommitLog(cls, cl);
+    CommitTable::writeCommitLog(COMMIT_TABLE_PATH, cls);
   } catch (const std::exception& e) {
     // 移除失败文件
     fs::remove_all(dir);
@@ -241,59 +241,6 @@ fs::path getCommonAncestor(const std::vector<fs::path>& paths) {
   }
 
   return commonAncestor;
-}
-
-/**
- * @brief 判断一个CommitLog是否已经被提交
- *
- * @param src 指定的CommitLog文件，以json的形式展示
- *
- * @param cl 指定的CommitLog对象
- *
- */
-bool isCommitted(const Json::Value& cls, const Json::Value& cl) {
-  if (!(cls.isMember("data") && cls["data"].isArray())) {
-    throw std::runtime_error("Illegal Json format");
-  }
-
-  return std::any_of(
-    cls["data"].begin(), cls["data"].end(),
-    [&cl](const Json::Value& log) {
-      return log.isMember("uuid") &&
-             log["uuid"].asString() == cl["uuid"].asString();
-    }
-  );
-}
-
-/**
- * @brief 给定已有的commitlog文件(json形式)，在末尾添加一个CommitLog
- *
- * @param dst 指定的log文件路径
- *
- * @param cl 指定的CommitLog对象
- *
- */
-void appendCommitLog(Json::Value& dst, const Json::Value& cl) {
-  if (dst.isMember("data") && dst["data"].isArray()) {
-    dst["data"].append(cl);
-  } else {
-    throw std::runtime_error("Illegal Json format");
-  }
-}
-
-/**
- * @brief 给定一个路径，将CommitLogs文件写入(json形式)
- *
- * @param dst 指定的log文件路径
- *
- * @param cls 指定的CommitLogs对象
- *
- */
-void writeCommitLog(const fs::path& dst, const Json::Value& cls) {
-  // 写回文件
-  std::ofstream logFileWrite(dst, std::ios::binary | std::ios::trunc);
-  logFileWrite << cls.toStyledString();
-  logFileWrite.close();
 }
 
 /**

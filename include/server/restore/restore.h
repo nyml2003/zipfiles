@@ -19,14 +19,6 @@ void restoreTo(
 );
 
 /**
- * * commit log
- *
- */
-Json::Value readCommitLog(const fs::path& src);
-
-Json::Value getCommitLogById(const Json::Value& cls, const std::string& uuid);
-
-/**
  * * directory
  *
  */

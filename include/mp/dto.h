@@ -52,10 +52,10 @@ struct FileDetailDTO {
 };
 
 /**
- * @brief CommitLog的DTO
+ * @brief Commit的DTO
  *
  */
-struct CommitLogDTO {
+struct CommitDTO {
   // 包含的文件数组
   std::vector<fs::path> files;
   // id为Commit的唯一标识
