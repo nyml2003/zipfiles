@@ -38,7 +38,7 @@ void backupFiles(
     << "\" at " << cl["createTime"].asString();
 
   // 读出后保存当前视图
-  Json::Value cls = readCommitLog(COMMIT_LOG_PATH);
+  Json::Value cls = readCommitLog(COMMIT_TABLE_PATH);
 
   // 检查是否提交过
   if (isCommitted(cls, cl)) {
@@ -197,7 +197,7 @@ void backupFiles(
   // 完成后添加到commitlog
   try {
     appendCommitLog(cls, cl);
-    writeCommitLog(COMMIT_LOG_PATH, cls);
+    writeCommitLog(COMMIT_TABLE_PATH, cls);
   } catch (const std::exception& e) {
     // 移除失败文件
     fs::remove_all(dir);

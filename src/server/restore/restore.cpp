@@ -33,7 +33,7 @@ void restoreTo(
   log4cpp::Category::getRoot().infoStream()
     << "Restore started, log uuid is " << uuid << ", to " << dst;
 
-  Json::Value cls = readCommitLog(COMMIT_LOG_PATH);
+  Json::Value cls = readCommitLog(COMMIT_TABLE_PATH);
 
   Json::Value cl = getCommitLogById(cls, uuid);
 
