@@ -34,9 +34,13 @@ void restoreTo(
   log4cpp::Category::getRoot().infoStream()
     << "Restore started, log uuid is " << uuid << ", to " << dst;
 
-  Json::Value cls = CommitTable::readCommitLog(COMMIT_TABLE_PATH);
+  Json::Value cr = CommitTable::getCommitRecordById(uuid);
 
-  Json::Value cl = CommitTable::getCommitLogById(cls, uuid);
+  if (cr["isDelete"].asBool()) {
+    throw std::runtime_error(
+      "Commit is deleted, its uuid is " + cr["uuid"].asString()
+    );
+  }
 
   // 检查目标路径是否存在，如果不存在则创建目录
   if (!fs::exists(dst)) {
@@ -44,15 +48,15 @@ void restoreTo(
   }
 
   // 打开输入流
-  std::string filePath = cl["storagePath"].asString() + "/" +
-                         cl["uuid"].asString() + "/" + cl["uuid"].asString();
+  std::string filePath = cr["storagePath"].asString() + "/" +
+                         cr["uuid"].asString() + "/" + cr["uuid"].asString();
   std::ifstream inFile(filePath, std::ios::binary);
   if (!inFile) {
     throw std::runtime_error("Failed to open: " + filePath);
   }
 
   // 如果有加密，则读取IV
-  bool decrypt = cl["isEncrypt"].asBool();
+  bool decrypt = cr["isEncrypt"].asBool();
   std::array<CryptoPP::byte, AES::BLOCKSIZE> iv{};
   if (decrypt) {
     inFile.read(reinterpret_cast<char*>(iv.data()), iv.size());

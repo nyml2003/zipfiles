@@ -68,7 +68,8 @@ bool FileUnpacker::unpackFilesByBlock(
           readFileDetail(ibuffer);
         } catch (std::exception& e) {
           throw std::runtime_error(
-            "Failed to read file detail: " + std::string(e.what())
+            "Failed to read file detail or create special file: " +
+            std::string(e.what())
           );
         }
         break;
@@ -157,11 +158,13 @@ void FileUnpacker::fileDetailDeserialize(
 
   // 读取文件名
   size_t absolutePathSize = 0;
-  std::memcpy(&absolutePathSize, header.data() + offset, sizeof(absolutePathSize));
+  std::memcpy(
+    &absolutePathSize, header.data() + offset, sizeof(absolutePathSize)
+  );
   offset += sizeof(absolutePathSize);
   fd.absolutePath.resize(absolutePathSize);
 
-  std::memcpy(fd.absolutePath.data(), header.data() + offset,absolutePathSize);
+  std::memcpy(fd.absolutePath.data(), header.data() + offset, absolutePathSize);
   offset += absolutePathSize;
 
   // 读取设备号

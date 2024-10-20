@@ -18,37 +18,34 @@
 #include "server/tools/fsapi.h"
 
 namespace zipfiles::server {
-
 /**
  * @brief 前端的直接调用接口，处理整个commit流程
  *
  * @param files 一个文件路径数组，要求是绝对路径
  *
- * @param cl 一个commitlog的json对象
+ * @param cr 一个CommitRecord的json对象
  *
  * @param key 加密密钥
  */
 void backupFiles(
   const std::vector<fs::path>& files,
-  const Json::Value& cl,
+  const Json::Value& cr,
   const std::string& key
 ) {
   log4cpp::Category::getRoot().infoStream()
-    << "Backup started, log messeag is \"" << cl["message"].asString()
-    << "\" at " << cl["createTime"].asString();
-
-  // 读出后保存当前视图
-  Json::Value cls = CommitTable::readCommitLog(COMMIT_TABLE_PATH);
+    << "Backup started, log messeag is \"" << cr["message"].asString()
+    << "\" at " << cr["createTime"].asString();
 
   // 检查是否提交过
-  if (CommitTable::isCommitted(cls, cl)) {
+  // 如果没有提交，那么会先在内存中添加本次commit
+  if (CommitTable::isCommitted(cr)) {
     throw std::runtime_error(
-      "Commit log is already committed, its uuid is " + cl["uuid"].asString()
+      "Commit log is already committed, its uuid is " + cr["uuid"].asString()
     );
   }
 
   // 创建输出目录
-  std::string path = cl["storagePath"].asString() + "/" + cl["uuid"].asString();
+  std::string path = cr["storagePath"].asString() + "/" + cr["uuid"].asString();
   fs::path dir = fs::path(path);
 
   if (!fs::exists(dir)) {
@@ -56,7 +53,7 @@ void backupFiles(
   }
 
   // 打开输出流
-  path += "/" + cl["uuid"].asString();
+  path += "/" + cr["uuid"].asString();
   std::ofstream outputFile(path, std::ios::binary);
   if (!outputFile) {
     throw std::runtime_error("Failed to open: " + path);
@@ -66,7 +63,7 @@ void backupFiles(
   fs::path lca = getCommonAncestor(files);
 
   // 获取是否加密
-  bool encrypt = cl["isEncrypt"].asBool();
+  bool encrypt = cr["isEncrypt"].asBool();
 
   // 实例化加密IV
   std::array<CryptoPP::byte, AES::BLOCKSIZE> iv{};
@@ -83,9 +80,11 @@ void backupFiles(
     outputFile.write(reinterpret_cast<const char*>(iv.data()), iv.size());
   }
 
-  bool flush = false;
-
+  // 实例化压缩类
   Zip zip;
+
+  // 初始化循环条件
+  bool flush = false;
 
   // 主循环
   try {
@@ -176,11 +175,13 @@ void backupFiles(
   } catch (std::exception& e) {
     // 移除失败文件
     fs::remove_all(dir);
+    // 移除commit
+    CommitTable::removeCommitRecord(cr["uuid"].asString());
     outputFile.close();
 
     throw std::runtime_error(
       "Error occurred when trying to pack files, its uuid is " +
-      cl["uuid"].asString() + ", because " + std::string(e.what())
+      cr["uuid"].asString() + ", because " + std::string(e.what())
     );
   }
 
@@ -188,24 +189,30 @@ void backupFiles(
   try {
     writeDirectoryFile(fs::path(dir) / "directoryfile", files, lca);
   } catch (std::exception& e) {
+    // 移除失败文件
+    fs::remove_all(dir);
+    // 移除commit
+    CommitTable::removeCommitRecord(cr["uuid"].asString());
+
     throw std::runtime_error(
       "Error occurred when trying to write directory file, its uuid is " +
-      cl["uuid"].asString() + ", because " + std::string(e.what())
+      cr["uuid"].asString() + ", because " + std::string(e.what())
     );
   }
 
-  // 完成后添加到commitlog
+  // 完成后添加到CommitTable
   try {
-    CommitTable::appendCommitLog(cls, cl);
-    CommitTable::writeCommitLog(COMMIT_TABLE_PATH, cls);
+    CommitTable::writeCommitTable(COMMIT_TABLE_PATH);
   } catch (const std::exception& e) {
     // 移除失败文件
     fs::remove_all(dir);
+    // 移除commit
+    CommitTable::removeCommitRecord(cr["uuid"].asString());
     outputFile.close();
 
     throw std::runtime_error(
       "Error occurred when trying to append commit log, its uuid is " +
-      cl["uuid"].asString() + ", because " + std::string(e.what())
+      cr["uuid"].asString() + ", because " + std::string(e.what())
     );
   }
 }
@@ -265,6 +272,10 @@ void writeDirectoryFile(
   root["data"] = Json::arrayValue;
 
   for (const auto& path : files) {
+    if (fs::is_socket(path)) {
+      continue;
+    }
+
     FileDetail fd = getFileDetail(path);
     Json::Value temp;
 

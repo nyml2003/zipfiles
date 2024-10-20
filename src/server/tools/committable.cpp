@@ -1,60 +1,12 @@
 #include "server/tools/committable.h"
+#include <mutex>
+#include <stdexcept>
 #include "json/reader.h"
 
 namespace zipfiles::server {
 
-/**
- * @brief 判断一个CommitLog是否已经被提交
- *
- * @param src 指定的CommitLog文件，以json的形式展示
- *
- * @param cl 指定的CommitLog对象
- *
- */
-bool CommitTable::isCommitted(const Json::Value& cls, const Json::Value& cl) {
-  if (!(cls.isMember("data") && cls["data"].isArray())) {
-    throw std::runtime_error("Illegal Json format");
-  }
-
-  return std::any_of(
-    cls["data"].begin(), cls["data"].end(),
-    [&cl](const Json::Value& log) {
-      return log.isMember("uuid") &&
-             log["uuid"].asString() == cl["uuid"].asString();
-    }
-  );
-}
-
-/**
- * @brief 给定已有的commitlog文件(json形式)，在末尾添加一个CommitLog
- *
- * @param dst 指定的log文件路径
- *
- * @param cl 指定的CommitLog对象
- *
- */
-void CommitTable::appendCommitLog(Json::Value& dst, const Json::Value& cl) {
-  if (dst.isMember("data") && dst["data"].isArray()) {
-    dst["data"].append(cl);
-  } else {
-    throw std::runtime_error("Illegal Json format");
-  }
-}
-
-/**
- * @brief 给定一个路径，将CommitLogs文件写入(json形式)
- *
- * @param dst 指定的log文件路径
- *
- * @param cls 指定的CommitLogs对象
- *
- */
-void CommitTable::writeCommitLog(const fs::path& dst, const Json::Value& cls) {
-  // 写回文件
-  std::ofstream logFileWrite(dst, std::ios::binary | std::ios::trunc);
-  logFileWrite << cls.toStyledString();
-  logFileWrite.close();
-}
+CommitTable::CommitTable() = default;
+CommitTable::~CommitTable() = default;
 
 /**
  * @brief 读取指定的CommitLog文件，返回一个Json::Value数组
@@ -64,7 +16,10 @@ void CommitTable::writeCommitLog(const fs::path& dst, const Json::Value& cls) {
  * @return 包含所有CommitLog的Json数组
  *
  */
-Json::Value CommitTable::readCommitLog(const fs::path& src) {
+void CommitTable::readCommitTable(const fs::path& src) {
+  // 获取锁
+  std::lock_guard<std::mutex> lock(getInstance().mutex);
+
   // 先创建相应的目录
   // src有可能是一个相对目录或者根目录，此时是没有parent_path的
   // 要求src是一个绝对路径
@@ -79,13 +34,11 @@ Json::Value CommitTable::readCommitLog(const fs::path& src) {
   // 再以输入流打开文件
   std::ifstream logFile(src);
   if (!logFile.is_open()) {
-    throw std::runtime_error("Unable to open log file");
+    throw std::runtime_error("Unable to open table file");
   }
 
-  // 把文件指针移到末尾
-  logFile.seekg(0, std::ios::end);
-
-  if (logFile.tellg() == 0) {
+  // 检查文件是否为空
+  if (logFile.peek() == std::ifstream::traits_type::eof()) {
     // 空文件错误
     logFile.close();
 
@@ -100,47 +53,172 @@ Json::Value CommitTable::readCommitLog(const fs::path& src) {
     // 重新打开文件
     logFile.open(src);
     if (!logFile.is_open()) {
-      throw std::runtime_error("Unable to open log file");
+      throw std::runtime_error("Unable to open table file");
     }
-  } else {
-    // 不是空，那么回移指针
-    logFile.seekg(0, std::ios::beg);
   }
 
-  Json::Value commitLogs;
   Json::CharReaderBuilder readerBuilder;
   std::string errs;
 
-  if (!Json::parseFromStream(readerBuilder, logFile, &commitLogs, &errs)) {
+  if (!Json::parseFromStream(
+        readerBuilder, logFile, &getInstance().commitTable, &errs
+      )) {
     // 若出错，说明文件是错误编码的
     throw std::runtime_error("Failed to parse JSON: " + errs);
   }
 
   logFile.close();
-
-  return commitLogs;
 }
 
 /**
- * @brief 给定uuid，返回指定的commitlog
+ * @brief 判断一个CommitRecord是否已经被提交
+ *
+ * @param cr 指定的CommitRecord对象
  *
  */
-Json::Value
-CommitTable::getCommitLogById(const Json::Value& cls, const std::string& uuid) {
-  if (!(cls.isMember("data") && cls["data"].isArray())) {
-    throw std::runtime_error("Illegal Json format");
+bool CommitTable::isCommitted(const Json::Value& cr) {
+  // 获取锁
+  std::lock_guard<std::mutex> lock(getInstance().mutex);
+
+  Json::Value& ct = getInstance().commitTable;
+
+  if (!(ct.isMember("data") && ct["data"].isArray())) {
+    throw std::runtime_error("Illegal JSON format");
   }
 
-  for (const auto& log : cls["data"]) {
+  for (const auto& record : ct["data"]) {
     // 检查每个元素是否包含"uuid"字段且和目标uuid匹配
-    if (log.isMember("uuid") && log["uuid"].asString() == uuid) {
-      return log;
+    if (record.isMember("uuid") && record["uuid"].asString() == cr["uuid"].asString()) {
+      return true;
     }
   }
 
-  // 找不到对应的commit log
+  // 如果没有commit，那么将当前的record先加入到CommitTable
+  appendCommitRecord(cr);
+
+  return false;
+}
+
+/**
+ * @brief 在CommitTable末尾添加一个CommitRecord
+ *
+ * @param cr 指定的CommitRecord对象
+ *
+ * ! append一定要在有锁的上下文中使用
+ */
+void CommitTable::appendCommitRecord(const Json::Value& cr) {
+  Json::Value& ct = getInstance().commitTable;
+
+  if (ct.isMember("data") && ct["data"].isArray()) {
+    ct["data"].append(cr);
+  } else {
+    throw std::runtime_error("Illegal JSON format");
+  }
+}
+
+/**
+ * @brief 给定一个路径，将CommitTable文件写入(json形式)
+ *
+ * @param dst 指定的table文件路径
+ *
+ */
+void CommitTable::writeCommitTable(const fs::path& dst) {
+  // 获取锁
+  std::lock_guard<std::mutex> lock(getInstance().mutex);
+
+  // 写回文件
+  std::ofstream logFileWrite(dst, std::ios::binary | std::ios::trunc);
+  logFileWrite << getInstance().commitTable.toStyledString();
+  logFileWrite.close();
+}
+
+/**
+ * @brief 给定uuid，删除指定的record(不写硬盘)
+ *
+ * @param uuid 给定的uuid
+ *
+ */
+void CommitTable::deleteCommitRecord(const std::string& uuid) {
+  // 获取锁
+  std::lock_guard<std::mutex> lock(getInstance().mutex);
+
+  Json::Value& ct = getInstance().commitTable;
+
+  if (!(ct.isMember("data") && ct["data"].isArray())) {
+    throw std::runtime_error("Illegal JSON format");
+  }
+
+  for (auto& record : ct["data"]) {
+    // 检查每个元素是否包含"uuid"字段且和目标uuid匹配
+    if (record.isMember("uuid") && record["uuid"].asString() == uuid) {
+      if (record.isMember("isDelete")) {
+        record["isDelete"] = true;
+        return;
+      }
+
+      throw std::runtime_error("Illegal Record format");
+    }
+  }
+
+  // 找不到对应的commit record
   throw std::runtime_error(
-    "Cannot find specific commit log by given uuid " + uuid
+    "Cannot delete specific commit record by given uuid " + uuid
+  );
+}
+
+/**
+ * @brief 给定uuid，删除指定的record(不写硬盘)
+ *
+ * @param uuid 给定的uuid
+ *
+ */
+void CommitTable::removeCommitRecord(const std::string& uuid) {
+  // 获取锁
+  std::lock_guard<std::mutex> lock(getInstance().mutex);
+
+  Json::Value& ct = getInstance().commitTable;
+
+  if (!(ct.isMember("data") && ct["data"].isArray())) {
+    throw std::runtime_error("Illegal JSON format");
+  }
+
+  Json::Value& array = ct["data"];
+
+  // 检查每个元素是否包含"uuid"字段且和目标uuid匹配
+  for (unsigned int i = 0; i < array.size(); ++i) {
+    if (array[i].isMember("uuid") && array[i]["uuid"].asString() == uuid) {
+      array.removeIndex(i, nullptr);
+      break;
+    }
+  }
+}
+
+/**
+ * @brief 给定uuid，返回指定的CommitRecord
+ *
+ * @param uuid 给定的uuid
+ *
+ */
+Json::Value CommitTable::getCommitRecordById(const std::string& uuid) {
+  // 获取锁
+  std::lock_guard<std::mutex> lock(getInstance().mutex);
+
+  Json::Value& ct = getInstance().commitTable;
+
+  if (!(ct.isMember("data") && ct["data"].isArray())) {
+    throw std::runtime_error("Illegal JSON format");
+  }
+
+  for (const auto& record : ct["data"]) {
+    // 检查每个元素是否包含"uuid"字段且和目标uuid匹配
+    if (record.isMember("uuid") && record["uuid"].asString() == uuid) {
+      return record;
+    }
+  }
+
+  // 找不到对应的commit record
+  throw std::runtime_error(
+    "Cannot find specific commit record by given uuid " + uuid
   );
 }
 

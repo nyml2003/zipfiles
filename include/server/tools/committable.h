@@ -44,24 +44,30 @@ class CommitTable {
     return instance;
   }
 
-  static bool isCommitted(const Json::Value& cls, const Json::Value& cl);
+  static void readCommitTable(const fs::path& src);
 
-  static void appendCommitLog(Json::Value& dst, const Json::Value& cl);
+  static bool isCommitted(const Json::Value& cr);
 
-  static void writeCommitLog(const fs::path& dst, const Json::Value& cls);
+  static void writeCommitTable(const fs::path& dst);
 
-  static void deleteCommitLog(Json::Value& cls, const std::string& uuid);
+  static void deleteCommitRecord(const std::string& uuid);
 
-  static Json::Value readCommitLog(const fs::path& src);
+  static void removeCommitRecord(const std::string& uuid);
 
-  static Json::Value
-  getCommitLogById(const Json::Value& cls, const std::string& uuid);
+  static Json::Value getCommitRecordById(const std::string& uuid);
+
+  CommitTable(const CommitTable& other) = delete;
+  CommitTable& operator=(const CommitTable& other) = delete;
+  CommitTable(CommitTable&& other) noexcept = delete;
+  CommitTable& operator=(CommitTable&& other) noexcept = delete;
 
  private:
   CommitTable();
   ~CommitTable();
   Json::Value commitTable;
   std::mutex mutex;
+
+  static void appendCommitRecord(const Json::Value& cr);
 };
 
 }  // namespace zipfiles::server
