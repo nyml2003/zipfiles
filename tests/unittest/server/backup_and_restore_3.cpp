@@ -13,6 +13,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include "json/value.h"
 #include "server/backup/backup.h"
 #include "server/configure/configure.h"
 #include "server/restore/restore.h"
@@ -129,15 +130,15 @@ class BackupRestoreTest : public ::testing::Test {
 
   void TearDown() override {
     // 删除测试目录和文件
-    // fs::remove_all("/tmp/test_dir1");
-    // fs::remove_all("/tmp/test_dir2");
-    // fs::remove_all("/tmp/test_dir3");
-    // fs::remove_all("/tmp/test_dir4");
-    // fs::remove_all("/tmp/test_dir5");
-    // fs::remove_all("/tmp/test_dir6");
-    // fs::remove_all("/tmp/backup");
-    // fs::remove_all("/tmp/restore");
-    // fs::remove_all(log);
+    fs::remove_all("/tmp/test_dir1");
+    fs::remove_all("/tmp/test_dir2");
+    fs::remove_all("/tmp/test_dir3");
+    fs::remove_all("/tmp/test_dir4");
+    fs::remove_all("/tmp/test_dir5");
+    fs::remove_all("/tmp/test_dir6");
+    fs::remove_all("/tmp/backup");
+    fs::remove_all("/tmp/restore");
+    fs::remove_all(log);
   }
 };
 
@@ -157,7 +158,7 @@ void restore(
   ASSERT_NO_THROW(restoreTo(dst, uuid, key));
 }
 
-TEST_F(BackupRestoreTest, ConcurrentBackupAndRestoreDifferentFiles) {
+TEST_F(BackupRestoreTest, ConcurrentBackupAndRestoreSameFiles) {
   // 备份文件
   std::vector<fs::path> files1 = {
     "/tmp/test_dir1/regular_file1.txt",
@@ -170,13 +171,14 @@ TEST_F(BackupRestoreTest, ConcurrentBackupAndRestoreDifferentFiles) {
     "/tmp/test_dir3/device_file1"};
 
   std::vector<fs::path> files2 = {
-    "/tmp/test_dir4/regular_file2.txt",
-    "/tmp/test_dir4/symlink_to_regular_file2",
-    "/tmp/test_dir4/hardlink_to_regular_file2",
-    "/tmp/test_dir4/large_file2.bin",
-    "/tmp/test_dir5/text_file2.txt",
-    "/tmp/test_dir6/fifo_file2",
-    "/tmp/test_dir6/device_file2"};
+    "/tmp/test_dir1/regular_file1.txt",
+    "/tmp/test_dir1/symlink_to_regular_file1",
+    "/tmp/test_dir1/hardlink_to_regular_file1",
+    "/tmp/test_dir1/large_file1.bin",
+    "/tmp/test_dir2/text_file1.txt",
+    "/tmp/test_dir3/fifo_file1",
+    "/tmp/test_dir3/socket_file",
+    "/tmp/test_dir3/device_file1"};
 
   CommitTableRecord cr1;
   cr1.message = "This is cr1";
@@ -219,9 +221,9 @@ TEST_F(BackupRestoreTest, ConcurrentBackupAndRestoreDifferentFiles) {
 
   for (int i = 0; i < 2; i++) {
     if (!i) {
-      restoreThreads.emplace_back(restore, restorePath, cr1.uuid, key);
+      restoreThreads.emplace_back(restore, restorePath / "r1", cr1.uuid, key);
     } else {
-      restoreThreads.emplace_back(restore, restorePath, cr2.uuid, key);
+      restoreThreads.emplace_back(restore, restorePath / "r2", cr2.uuid, key);
     }
   }
 
@@ -232,9 +234,10 @@ TEST_F(BackupRestoreTest, ConcurrentBackupAndRestoreDifferentFiles) {
 
   // 使用cmp指令验证文件内容
   for (const auto& file : files1) {
-    fs::path relativePath = fs::relative(file, "/tmp");
+    fs::path relativePath = fs::relative(file.parent_path(), "/tmp");
+    relativePath = relativePath / file.filename();
     std::string originalFile = file.string();
-    std::string restoredFile = (restorePath / relativePath).string();
+    std::string restoredFile = (restorePath / "r1" / relativePath).string();
 
     if (fs::is_fifo(file) || fs::is_block_file(file) || fs::is_character_file(file) || fs::is_socket(file)) {
       continue;
@@ -247,9 +250,10 @@ TEST_F(BackupRestoreTest, ConcurrentBackupAndRestoreDifferentFiles) {
   }
 
   for (const auto& file : files2) {
-    fs::path relativePath = fs::relative(file, "/tmp");
+    fs::path relativePath = fs::relative(file.parent_path(), "/tmp");
+    relativePath = relativePath / file.filename();
     std::string originalFile = file.string();
-    std::string restoredFile = (restorePath / relativePath).string();
+    std::string restoredFile = (restorePath / "r2" / relativePath).string();
 
     if (fs::is_fifo(file) || fs::is_block_file(file) || fs::is_character_file(file) || fs::is_socket(file)) {
       continue;
@@ -269,7 +273,8 @@ TEST_F(BackupRestoreTest, ConcurrentBackupAndRestoreDifferentFiles) {
     fs::path relativePath = fs::relative(file.parent_path(), "/tmp");
     relativePath = relativePath / file.filename();
     FileDetail originalDetail = getFileDetail(file);
-    FileDetail restoredDetail = getFileDetail(restorePath / relativePath);
+    FileDetail restoredDetail =
+      getFileDetail(restorePath / "r1" / relativePath);
     ASSERT_EQ(originalDetail.type, restoredDetail.type)
       << file << "&" << restorePath / relativePath;
     if (!fs::is_character_file(file) && !fs::is_block_file(file)) {
@@ -295,7 +300,8 @@ TEST_F(BackupRestoreTest, ConcurrentBackupAndRestoreDifferentFiles) {
     fs::path relativePath = fs::relative(file.parent_path(), "/tmp");
     relativePath = relativePath / file.filename();
     FileDetail originalDetail = getFileDetail(file);
-    FileDetail restoredDetail = getFileDetail(restorePath / relativePath);
+    FileDetail restoredDetail =
+      getFileDetail(restorePath / "r2" / relativePath);
     ASSERT_EQ(originalDetail.type, restoredDetail.type)
       << file << " & " << restorePath / relativePath;
     if (!fs::is_character_file(file) && !fs::is_block_file(file)) {
