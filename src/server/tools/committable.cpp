@@ -1,4 +1,5 @@
 #include "server/tools/committable.h"
+#include <exception>
 #include <mutex>
 #include <stdexcept>
 #include "json/reader.h"
@@ -44,7 +45,6 @@ void CommitTable::readCommitTable(const fs::path& src) {
 
     // 创建一个新的Json对象
     Json::Value root;
-    root["data"] = Json::arrayValue;
 
     std::ofstream logFileWrite(src);
     logFileWrite << root.toStyledString();
@@ -76,21 +76,14 @@ void CommitTable::readCommitTable(const fs::path& src) {
  * @param cr 指定的CommitRecord对象
  *
  */
-bool CommitTable::isCommitted(const Json::Value& cr) {
+bool CommitTable::isCommitted(const CommitTableRecord& cr) {
   // 获取锁
   std::lock_guard<std::mutex> lock(getInstance().mutex);
 
   Json::Value& ct = getInstance().commitTable;
 
-  if (!(ct.isMember("data") && ct["data"].isArray())) {
-    throw std::runtime_error("Illegal JSON format");
-  }
-
-  for (const auto& record : ct["data"]) {
-    // 检查每个元素是否包含"uuid"字段且和目标uuid匹配
-    if (record.isMember("uuid") && record["uuid"].asString() == cr["uuid"].asString()) {
-      return true;
-    }
+  if (ct.isMember(cr.uuid)) {
+    return true;
   }
 
   // 如果没有commit，那么将当前的record先加入到CommitTable
@@ -106,13 +99,11 @@ bool CommitTable::isCommitted(const Json::Value& cr) {
  *
  * ! append一定要在有锁的上下文中使用
  */
-void CommitTable::appendCommitRecord(const Json::Value& cr) {
+void CommitTable::appendCommitRecord(const CommitTableRecord& cr) {
   Json::Value& ct = getInstance().commitTable;
 
-  if (ct.isMember("data") && ct["data"].isArray()) {
-    ct["data"].append(cr);
-  } else {
-    throw std::runtime_error("Illegal JSON format");
+  if (!ct.isMember(cr.uuid)) {
+    ct[cr.uuid] = toJson(cr);
   }
 }
 
@@ -127,9 +118,9 @@ void CommitTable::writeCommitTable(const fs::path& dst) {
   std::lock_guard<std::mutex> lock(getInstance().mutex);
 
   // 写回文件
-  std::ofstream logFileWrite(dst, std::ios::binary | std::ios::trunc);
-  logFileWrite << getInstance().commitTable.toStyledString();
-  logFileWrite.close();
+  std::ofstream tableFileWrite(dst, std::ios::binary | std::ios::trunc);
+  tableFileWrite << getInstance().commitTable.toStyledString();
+  tableFileWrite.close();
 }
 
 /**
@@ -144,19 +135,16 @@ void CommitTable::deleteCommitRecord(const std::string& uuid) {
 
   Json::Value& ct = getInstance().commitTable;
 
-  if (!(ct.isMember("data") && ct["data"].isArray())) {
-    throw std::runtime_error("Illegal JSON format");
-  }
-
-  for (auto& record : ct["data"]) {
-    // 检查每个元素是否包含"uuid"字段且和目标uuid匹配
-    if (record.isMember("uuid") && record["uuid"].asString() == uuid) {
-      if (record.isMember("isDelete")) {
-        record["isDelete"] = true;
+  if (ct.isMember(uuid)) {
+    if (ct[uuid].isMember("isDelete")) {
+      try {
+        ct[uuid]["isDelete"] = true;
         return;
+      } catch (std::exception& e) {
+        throw std::runtime_error(
+          "Cannot set commit record by given uuid " + uuid
+        );
       }
-
-      throw std::runtime_error("Illegal Record format");
     }
   }
 
@@ -178,19 +166,21 @@ void CommitTable::removeCommitRecord(const std::string& uuid) {
 
   Json::Value& ct = getInstance().commitTable;
 
-  if (!(ct.isMember("data") && ct["data"].isArray())) {
-    throw std::runtime_error("Illegal JSON format");
-  }
-
-  Json::Value& array = ct["data"];
-
-  // 检查每个元素是否包含"uuid"字段且和目标uuid匹配
-  for (unsigned int i = 0; i < array.size(); ++i) {
-    if (array[i].isMember("uuid") && array[i]["uuid"].asString() == uuid) {
-      array.removeIndex(i, nullptr);
-      break;
+  if (ct.isMember(uuid)) {
+    try {
+      ct.removeMember(uuid);
+      return;
+    } catch (std::exception& e) {
+      throw std::runtime_error(
+        "Cannot set commit record by given uuid " + uuid
+      );
     }
   }
+
+  // 找不到对应的commit record
+  throw std::runtime_error(
+    "Cannot remove specific commit record by given uuid " + uuid
+  );
 }
 
 /**
@@ -199,27 +189,62 @@ void CommitTable::removeCommitRecord(const std::string& uuid) {
  * @param uuid 给定的uuid
  *
  */
-Json::Value CommitTable::getCommitRecordById(const std::string& uuid) {
+CommitTableRecord CommitTable::getCommitRecordById(const std::string& uuid) {
   // 获取锁
   std::lock_guard<std::mutex> lock(getInstance().mutex);
 
   Json::Value& ct = getInstance().commitTable;
 
-  if (!(ct.isMember("data") && ct["data"].isArray())) {
-    throw std::runtime_error("Illegal JSON format");
-  }
-
-  for (const auto& record : ct["data"]) {
-    // 检查每个元素是否包含"uuid"字段且和目标uuid匹配
-    if (record.isMember("uuid") && record["uuid"].asString() == uuid) {
-      return record;
-    }
+  if (ct.isMember(uuid)) {
+    return fromJson(ct[uuid]);
   }
 
   // 找不到对应的commit record
   throw std::runtime_error(
     "Cannot find specific commit record by given uuid " + uuid
   );
+}
+
+/**
+ * @brief 给定CommitRecord，返回其Json(去除uuid)
+ *
+ * @param cr 给定的CommitRecord
+ *
+ */
+Json::Value CommitTable::toJson(const CommitTableRecord& cr) {
+  Json::Value json;
+
+  json["message"] = cr.message;
+  json["createTime"] = cr.createTime;
+  json["storagePath"] = cr.storagePath;
+  json["author"] = cr.author;
+  json["isEncrypt"] = cr.isEncrypt;
+  json["isDelete"] = cr.isDelete;
+
+  return json;
+}
+
+/**
+ * @brief 给定Json，返回其CommitRecord(去除uuid)
+ *
+ * @param json 给定的Json
+ *
+ */
+CommitTableRecord CommitTable::fromJson(Json::Value& json) {
+  CommitTableRecord cr;
+
+  if (!json.isMember("message") || !json.isMember("createTime")||!json.isMember("storagePath") || !json.isMember("author") || !json.isMember("isEncrypt") || !json.isMember("isDelete")) {
+    throw std::runtime_error("Illegal JSON format");
+  }
+
+  cr.message = json["message"].asString();
+  cr.createTime = json["createTime"].asDouble();
+  cr.storagePath = json["storagePath"].asString();
+  cr.author = json["author"].asString();
+  cr.isEncrypt = json["isEncrypt"].asBool();
+  cr.isDelete = json["isDelete"].asBool();
+
+  return cr;
 }
 
 }  // namespace zipfiles::server

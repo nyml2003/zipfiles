@@ -108,21 +108,21 @@ TEST_F(BackupRestoreTest, BackupAndRestore) {
     "/tmp/test_dir1/symlink_to_regular_file",
     "/tmp/test_dir1/hardlink_to_regular_file"};
 
-  Json::Value cl;
-  cl["message"] = "Test backup";
-  cl["createTime"] = 1234567890.0;
-  cl["uuid"] = "test-uuid";
-  cl["storagePath"] = "/tmp/backup";
-  cl["isEncrypt"] = true;
+  CommitTableRecord cr;
+  cr.message = "Test backup";
+  cr.createTime = 1234567890.0;
+  cr.uuid = "test-uuid";
+  cr.storagePath = "/tmp/backup";
+  cr.isEncrypt = true;
 
   std::string key = "test-key";
 
   // 调用备份函数
-  ASSERT_NO_THROW(backupFiles(files, cl, key));
+  ASSERT_NO_THROW(backupFiles(files, cr, key));
 
   // 恢复文件
   fs::path restorePath = "/tmp/restore";
-  ASSERT_NO_THROW(restoreTo(restorePath, cl["uuid"].asString(), key));
+  ASSERT_NO_THROW(restoreTo(restorePath, cr.uuid, key));
 
   // 使用cmp指令验证文件内容
   for (const auto& file : files) {

@@ -29,23 +29,23 @@ namespace zipfiles::server {
  */
 void backupFiles(
   const std::vector<fs::path>& files,
-  const Json::Value& cr,
+  const CommitTableRecord& cr,
   const std::string& key
 ) {
   log4cpp::Category::getRoot().infoStream()
-    << "Backup started, log messeag is \"" << cr["message"].asString()
-    << "\" at " << cr["createTime"].asString();
+    << "Backup started, log messeag is \"" << cr.message << "\" at "
+    << cr.createTime;
 
   // 检查是否提交过
   // 如果没有提交，那么会先在内存中添加本次commit
   if (CommitTable::isCommitted(cr)) {
     throw std::runtime_error(
-      "Commit log is already committed, its uuid is " + cr["uuid"].asString()
+      "Commit log is already committed, its uuid is " + cr.uuid
     );
   }
 
   // 创建输出目录
-  std::string path = cr["storagePath"].asString() + "/" + cr["uuid"].asString();
+  std::string path = cr.storagePath + "/" + cr.uuid;
   fs::path dir = fs::path(path);
 
   if (!fs::exists(dir)) {
@@ -53,7 +53,7 @@ void backupFiles(
   }
 
   // 打开输出流
-  path += "/" + cr["uuid"].asString();
+  path += "/" + cr.uuid;
   std::ofstream outputFile(path, std::ios::binary);
   if (!outputFile) {
     throw std::runtime_error("Failed to open: " + path);
@@ -63,7 +63,7 @@ void backupFiles(
   fs::path lca = getCommonAncestor(files);
 
   // 获取是否加密
-  bool encrypt = cr["isEncrypt"].asBool();
+  bool encrypt = cr.isEncrypt;
 
   // 实例化加密IV
   std::array<CryptoPP::byte, AES::BLOCKSIZE> iv{};
@@ -176,12 +176,12 @@ void backupFiles(
     // 移除失败文件
     fs::remove_all(dir);
     // 移除commit
-    CommitTable::removeCommitRecord(cr["uuid"].asString());
+    CommitTable::removeCommitRecord(cr.uuid);
     outputFile.close();
 
     throw std::runtime_error(
-      "Error occurred when trying to pack files, its uuid is " +
-      cr["uuid"].asString() + ", because " + std::string(e.what())
+      "Error occurred when trying to pack files, its uuid is " + cr.uuid +
+      ", because " + std::string(e.what())
     );
   }
 
@@ -192,11 +192,11 @@ void backupFiles(
     // 移除失败文件
     fs::remove_all(dir);
     // 移除commit
-    CommitTable::removeCommitRecord(cr["uuid"].asString());
+    CommitTable::removeCommitRecord(cr.uuid);
 
     throw std::runtime_error(
       "Error occurred when trying to write directory file, its uuid is " +
-      cr["uuid"].asString() + ", because " + std::string(e.what())
+      cr.uuid + ", because " + std::string(e.what())
     );
   }
 
@@ -207,12 +207,12 @@ void backupFiles(
     // 移除失败文件
     fs::remove_all(dir);
     // 移除commit
-    CommitTable::removeCommitRecord(cr["uuid"].asString());
+    CommitTable::removeCommitRecord(cr.uuid);
     outputFile.close();
 
     throw std::runtime_error(
       "Error occurred when trying to append commit log, its uuid is " +
-      cr["uuid"].asString() + ", because " + std::string(e.what())
+      cr.uuid + ", because " + std::string(e.what())
     );
   }
 }

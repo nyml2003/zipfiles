@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <vector>
-#include "json/value.h"
+#include "server/tools/committable.h"
 
 namespace fs = std::filesystem;
 
@@ -15,7 +15,7 @@ namespace zipfiles::server {
  */
 void backupFiles(
   const std::vector<fs::path>& files,
-  const Json::Value& cl,
+  const CommitTableRecord& cr,
   const std::string& key
 );
 

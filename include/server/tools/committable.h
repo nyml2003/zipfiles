@@ -30,7 +30,7 @@ struct CommitTableRecord {
   // 是否被加密
   bool isEncrypt;
   // 是否被删除
-  bool isDelete;
+  bool isDelete = false;
 };
 
 /**
@@ -46,7 +46,7 @@ class CommitTable {
 
   static void readCommitTable(const fs::path& src);
 
-  static bool isCommitted(const Json::Value& cr);
+  static bool isCommitted(const CommitTableRecord& cr);
 
   static void writeCommitTable(const fs::path& dst);
 
@@ -54,7 +54,11 @@ class CommitTable {
 
   static void removeCommitRecord(const std::string& uuid);
 
-  static Json::Value getCommitRecordById(const std::string& uuid);
+  static CommitTableRecord getCommitRecordById(const std::string& uuid);
+
+  static Json::Value toJson(const CommitTableRecord& cr);
+
+  static CommitTableRecord fromJson(Json::Value& json);
 
   CommitTable(const CommitTable& other) = delete;
   CommitTable& operator=(const CommitTable& other) = delete;
@@ -67,7 +71,7 @@ class CommitTable {
   Json::Value commitTable;
   std::mutex mutex;
 
-  static void appendCommitRecord(const Json::Value& cr);
+  static void appendCommitRecord(const CommitTableRecord& cr);
 };
 
 }  // namespace zipfiles::server

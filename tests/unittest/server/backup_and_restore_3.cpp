@@ -144,7 +144,7 @@ class BackupRestoreTest : public ::testing::Test {
 
 void backup(
   const std::vector<fs::path>& files,
-  const Json::Value& cr,
+  const CommitTableRecord& cr,
   const std::string& key
 ) {
   ASSERT_NO_THROW(backupFiles(files, cr, key));
@@ -180,19 +180,21 @@ TEST_F(BackupRestoreTest, ConcurrentBackupAndRestoreSameFiles) {
     "/tmp/test_dir3/socket_file",
     "/tmp/test_dir3/device_file1"};
 
-  Json::Value cr1;
-  cr1["message"] = "This is cr1";
-  cr1["createTime"] = 1234567890.0;
-  cr1["uuid"] = "cr1";
-  cr1["storagePath"] = "/tmp/backup";
-  cr1["isEncrypt"] = true;
+  CommitTableRecord cr1;
+  cr1.message = "This is cr1";
+  cr1.createTime = 1234567890.0;
+  cr1.uuid = "cr1";
+  cr1.storagePath = "/tmp/backup";
+  cr1.isEncrypt = true;
+  cr1.isDelete = false;
 
-  Json::Value cr2;
-  cr2["message"] = "This is cr2";
-  cr2["createTime"] = 1234567890.0;
-  cr2["uuid"] = "cr2";
-  cr2["storagePath"] = "/tmp/backup";
-  cr2["isEncrypt"] = true;
+  CommitTableRecord cr2;
+  cr2.message = "This is cr2";
+  cr2.createTime = 1234567890.0;
+  cr2.uuid = "cr2";
+  cr2.storagePath = "/tmp/backup";
+  cr2.isEncrypt = true;
+  cr2.isDelete = false;
 
   std::string key = "test-key";
 
@@ -219,13 +221,9 @@ TEST_F(BackupRestoreTest, ConcurrentBackupAndRestoreSameFiles) {
 
   for (int i = 0; i < 2; i++) {
     if (!i) {
-      restoreThreads.emplace_back(
-        restore, restorePath / "r1", cr1["uuid"].asString(), key
-      );
+      restoreThreads.emplace_back(restore, restorePath / "r1", cr1.uuid, key);
     } else {
-      restoreThreads.emplace_back(
-        restore, restorePath / "r2", cr2["uuid"].asString(), key
-      );
+      restoreThreads.emplace_back(restore, restorePath / "r2", cr2.uuid, key);
     }
   }
 

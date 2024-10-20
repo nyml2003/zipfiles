@@ -33,14 +33,6 @@ struct FileDetail {
 };
 
 /**
- * @brief 给定目录和过滤器，返回经过过滤的目录下的所有文件
- *
- */
-// std::vector<File>
-// getFileList(const fs::path& directory, bool doFilter, MetaDataFilter&
-// filter);
-
-/**
  * @brief 给定路径，返回指定路径的FileDetail
  *
  */
@@ -51,5 +43,6 @@ FileDetail getFileDetail(const fs::path& file);
  *
  */
 std::vector<FileDetail> getAllFileDetails(const fs::path& directory);
+
 }  // namespace zipfiles::server
 #endif  // !ZIPFILES_FSAPI_H
