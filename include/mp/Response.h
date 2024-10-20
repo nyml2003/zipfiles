@@ -1,88 +1,68 @@
-// #ifndef ZIPFILES_MP_RESPONSE_H
-// #define ZIPFILES_MP_RESPONSE_H
-// #include <json/json.h>
-// #include <variant>
-// #include "mp/dto.h"
+#ifndef ZIPFILES_MP_RESPONSE_H
+#define ZIPFILES_MP_RESPONSE_H
+#include <json/json.h>
+#include <variant>
+#include "mp/apis/GetCommitDetail.h"
+#include "mp/apis/GetCommitList.h"
+#include "mp/apis/GetFileDetailList.h"
+#include "mp/apis/GetFileList.h"
+#include "mp/apis/PostCommit.h"
 
-// namespace zipfiles {
+namespace zipfiles {
 
-// enum class StatusCode {
-//   UNKNOWN = 0,
-//   OK = 1,
-//   ERROR = 2,
-// };
+enum class StatusCode {
+  UNKNOWN = 0,
+  OK = 1,
+  ERROR = 2,
+};
 
-// enum class ApiEnum {
-//   IGNORE = 1,
-//   ERROR = 0,
-//   MOCK_NEED_TIME = 99,
-//   GET_FILE_DETAIL = 100,
-//   GET_FILE_LIST = 101,
-//   POST_COMMIT = 102,
-//   GET_ALL_FILE_DETAILS = 103,
-// };
+enum class ApiEnum {
+  IGNORE = 1,
+  ERROR = 0,
+  MOCK_NEED_TIME = 99,
+  GET_FILE_LIST = 100,
+  GET_FILEDETAIL_LIST = 101,
+  POST_COMMIT = 102,
+  GET_COMMIT_DETAIL = 103,
+  GET_COMMIT_LIST = 104,
+};
 
-// size_t toSizeT(ApiEnum apiEnum);
+size_t toSizeT(ApiEnum apiEnum);
 
-// std::ostream& operator<<(std::ostream& os, const StatusCode& status);
+std::ostream& operator<<(std::ostream& os, const StatusCode& status);
 
-// namespace response {
+namespace response {
+struct MockNeedTime {
+  int id;
+};
 
-// struct GetFileDetail {
-//   FileDetail metadata;
-// };
+}  // namespace response
 
-// struct GetFileList {
-//   std::vector<File> files;
-// };
-// struct MockNeedTime {
-//   int id;
-// };
+struct Res;
 
-// struct PostCommit {};
+using ResKind = std::variant<
+  response::MockNeedTime,
+  response::GetFileList,
+  response::GetFileDetailList,
+  response::PostCommit,
+  response::GetCommitDetail,
+  response::GetCommitList>;
 
-// struct GetAllFileDetails {
-//   std::vector<FileDetail> files;
-// };
+using ResPtr = std::shared_ptr<Res>;
 
-// }  // namespace response
+struct Res {
+  explicit Res(ResKind kind);
+  ResKind kind;
+  double timestamp{};
+  std::string uuid;
+  StatusCode status{};
+  Json::Value toJson();
+  static ResPtr fromJson(const Json::Value& json);
+};
 
-// struct Res;
+ResPtr makeResMockNeedTime(int id);
+ResPtr makeResMockNeedTime(Json::Value payload);
 
-// using ResKind = std::variant<
-//   response::GetFileDetail,
-//   response::GetFileList,
-//   response::MockNeedTime,
-//   response::PostCommit,
-//   response::GetAllFileDetails>;
+}  // namespace zipfiles
 
-// using ResPtr = std::shared_ptr<Res>;
-
-// struct Res {
-//   explicit Res(ResKind kind);
-//   ResKind kind;
-//   double timestamp{};
-//   std::string uuid;
-//   StatusCode status{};
-//   Json::Value toJson();
-//   static ResPtr fromJson(const Json::Value& json);
-// };
-
-// ResPtr makeResGetFileDetail(FileDetail metadata);
-// ResPtr makeResGetFileDetail(Json::Value payload);
-
-// ResPtr makeResGetFileList(std::vector<File> files);
-// ResPtr makeResGetFileList(Json::Value payload);
-
-// ResPtr makeResMockNeedTime(int id);
-// ResPtr makeResMockNeedTime(Json::Value payload);
-
-// ResPtr makeResPostCommit();
-// ResPtr makeResPostCommit(Json::Value payload);
-
-// ResPtr makeResGetAllFileDetails(std::vector<FileDetail> metadata);
-// ResPtr makeResGetAllFileDetails(Json::Value payload);
-
-// }  // namespace zipfiles
-
-// #endif
+#endif
