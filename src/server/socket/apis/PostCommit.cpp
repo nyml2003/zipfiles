@@ -5,7 +5,7 @@
 #include "server/backup/backup.h"
 #include "server/tools/committable.h"
 
-// namespace zipfiles::server::api {
+namespace zipfiles::server::api {
 
 template <>
 response::PostCommit handle<request::PostCommit, response::PostCommit>(
@@ -27,4 +27,4 @@ response::PostCommit handle<request::PostCommit, response::PostCommit>(
   return {};
 }
 
-// }  // namespace zipfiles::server::api
+}  // namespace zipfiles::server::api
