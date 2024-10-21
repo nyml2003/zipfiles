@@ -118,7 +118,7 @@ ResPtr Res::fromJson(const Json::Value& json) {
       for (const auto& file : json["payload"]["files"]) {
         commits.push_back(response::getCommitList::CommitLog{
           file["uuid"].asString(), file["message"].asString(),
-          file["createTime"].asDouble(), file["defaultPath"].asString(),
+          file["createTime"].asDouble(),
           file["storagePath"].asString(), file["author"].asString(),
           file["isEncrypt"].asBool(), file["isDelete"].asBool()
         });
