@@ -27,8 +27,6 @@ struct CommitLog {
   // 创建时间
   // 以秒为单位，有效位数是53位
   double createTime;
-  // 恢复的默认路径
-  std::string defaultPath;
   // 文件的存储路径
   std::string storagePath;
   // 作者
