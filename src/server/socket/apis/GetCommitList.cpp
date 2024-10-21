@@ -32,7 +32,7 @@ response::GetCommitList handle<
     });
   }
 
-  return response;
-}
+//   return response;
+// }
 
-}  // namespace zipfiles::server::api
+// }  // namespace zipfiles::server::api

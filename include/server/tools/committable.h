@@ -46,6 +46,8 @@ class CommitTable {
 
   static void readCommitTable(const fs::path& src);
 
+  static Json::Value readCommitTableView(const fs::path& src);
+
   static bool isCommitted(const CommitTableRecord& cr);
 
   static void writeCommitTable(const fs::path& dst);
@@ -55,6 +57,8 @@ class CommitTable {
   static void removeCommitRecord(const std::string& uuid);
 
   static CommitTableRecord getCommitRecordById(const std::string& uuid);
+
+  static CommitTableRecord getCommitRecordViewById(const std::string& uuid);
 
   static Json::Value toJson(const CommitTableRecord& cr);
 

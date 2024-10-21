@@ -3,6 +3,7 @@
 #include <mutex>
 #include <stdexcept>
 #include "json/reader.h"
+#include "server/configure/configure.h"
 
 namespace zipfiles::server {
 
@@ -68,6 +69,60 @@ void CommitTable::readCommitTable(const fs::path& src) {
   }
 
   logFile.close();
+}
+
+/**
+ * @brief 返回一个CommitTable的视图
+ *
+ */
+Json::Value CommitTable::readCommitTableView(const fs::path& src) {
+  // 先创建相应的目录
+  // src有可能是一个相对目录或者根目录，此时是没有parent_path的
+  // 要求src是一个绝对路径
+  if (src.has_parent_path()) {
+    fs::create_directories(src.parent_path());
+  }
+
+  // 先打开文件输出流，因为可能目标不存在，那么此时会创造一个新文件
+  std::ofstream logFileNew(src, std::ios::app);
+  logFileNew.close();
+
+  // 再以输入流打开文件
+  std::ifstream logFile(src);
+  if (!logFile.is_open()) {
+    throw std::runtime_error("Unable to open table file");
+  }
+
+  // 检查文件是否为空
+  if (logFile.peek() == std::ifstream::traits_type::eof()) {
+    // 空文件错误
+    logFile.close();
+
+    // 创建一个新的Json对象
+    Json::Value root;
+
+    std::ofstream logFileWrite(src);
+    logFileWrite << root.toStyledString();
+    logFileWrite.close();
+
+    // 重新打开文件
+    logFile.open(src);
+    if (!logFile.is_open()) {
+      throw std::runtime_error("Unable to open table file");
+    }
+  }
+
+  Json::Value json;
+  Json::CharReaderBuilder readerBuilder;
+  std::string errs;
+
+  if (!Json::parseFromStream(readerBuilder, logFile, &json, &errs)) {
+    // 若出错，说明文件是错误编码的
+    throw std::runtime_error("Failed to parse JSON: " + errs);
+  }
+
+  logFile.close();
+  return json;
 }
 
 /**
@@ -202,6 +257,34 @@ CommitTableRecord CommitTable::getCommitRecordById(const std::string& uuid) {
   // 找不到对应的commit record
   throw std::runtime_error(
     "Cannot find specific commit record by given uuid " + uuid
+  );
+}
+
+/**
+ * @brief 给定uuid，从硬盘中读取某个CommitRecord
+ *
+ */
+CommitTableRecord CommitTable::getCommitRecordViewById(const std::string& uuid
+) {
+  Json::Value ct = readCommitTableView(COMMIT_TABLE_PATH);
+
+  if (ct.isMember(uuid)) {
+    CommitTableRecord cr;
+    Json::Value json = ct[uuid];
+
+    cr.uuid = uuid;
+    cr.message = json["message"].asString();
+    cr.createTime = json["createTime"].asDouble();
+    cr.storagePath = json["storagePath"].asString();
+    cr.author = json["author"].asString();
+    cr.isEncrypt = json["isEncrypt"].asBool();
+    cr.isDelete = json["isDelete"].asBool();
+
+    return cr;
+  }
+
+  throw std::runtime_error(
+    "Cannot find commit record view by given uuid " + uuid
   );
 }
 

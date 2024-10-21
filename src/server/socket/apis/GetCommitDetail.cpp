@@ -5,7 +5,7 @@
 #include "json/value.h"
 #include "server/configure/configure.h"
 
-namespace zipfiles::server::api {
+// namespace zipfiles::server::api {
 
 template <>
 response::GetCommitDetail handle(const request::GetCommitDetail& request) {
@@ -36,4 +36,4 @@ response::GetCommitDetail handle(const request::GetCommitDetail& request) {
   return response;
 }
 
-}  // namespace zipfiles::server::api
+// }  // namespace zipfiles::server::api
