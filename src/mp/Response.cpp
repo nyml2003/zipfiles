@@ -1,10 +1,10 @@
+#include "mp/Response.h"
 #include <unistd.h>
 #include <filesystem>
 #include <log4cpp/Category.hh>
 #include <utility>
 #include <vector>
 #include "json/value.h"
-#include "mp/Response.h"
 #include "mp/common.h"
 
 namespace zipfiles {
@@ -118,9 +118,9 @@ ResPtr Res::fromJson(const Json::Value& json) {
       for (const auto& file : json["payload"]["files"]) {
         commits.push_back(response::getCommitList::CommitLog{
           file["uuid"].asString(), file["message"].asString(),
-          file["createTime"].asDouble(),
-          file["storagePath"].asString(), file["author"].asString(),
-          file["isEncrypt"].asBool(), file["isDelete"].asBool()
+          file["createTime"].asDouble(), file["storagePath"].asString(),
+          file["author"].asString(), file["isEncrypt"].asBool(),
+          file["isDelete"].asBool()
         });
       }
       res = std::make_shared<Res>(response::GetCommitList{commits});
