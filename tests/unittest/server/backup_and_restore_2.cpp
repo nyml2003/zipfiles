@@ -215,6 +215,14 @@ TEST_F(BackupRestoreTest, ConcurrentBackupAndRestoreDifferentFiles) {
   // 恢复文件
   fs::path restorePath = "/tmp/restore";
 
+  Json::Value root = CommitTable::readCommitTableView(COMMIT_TABLE_PATH);
+
+  std::cout << root.toStyledString() << std::endl;
+
+  Json::Value dir = readDirectoryFileById("cr1");
+
+  std::cout << dir.toStyledString() << std::endl;
+
   std::vector<std::thread> restoreThreads;
 
   for (int i = 0; i < 2; i++) {

@@ -193,6 +193,7 @@ void backupFiles(
     fs::remove_all(dir);
     // 移除commit
     CommitTable::removeCommitRecord(cr.uuid);
+    outputFile.close();
 
     throw std::runtime_error(
       "Error occurred when trying to write directory file, its uuid is " +
@@ -255,7 +256,9 @@ fs::path getCommonAncestor(const std::vector<fs::path>& paths) {
  *
  * @param dst 指定的目录文件路径
  *
- * @param root 用以创建目录文件路径
+ * @param files 文件的绝对路径数组
+ *
+ * @param lca 这些文件的最近公共父路径
  *
  */
 void writeDirectoryFile(

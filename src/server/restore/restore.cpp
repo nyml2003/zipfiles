@@ -163,7 +163,9 @@ void restoreTo(
  *
  */
 Json::Value readDirectoryFileById(const std::string& uuid) {
-  fs::path path = STORAGE_PATH / uuid / "directoryfile";
+  CommitTableRecord cr = CommitTable::getCommitRecordViewById(uuid);
+
+  fs::path path = cr.storagePath + "/" + uuid + "/directoryfile";
 
   return readDirectoryFile(path);
 }
