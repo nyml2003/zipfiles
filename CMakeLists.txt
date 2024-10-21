@@ -111,26 +111,26 @@ target_link_libraries(
 
 # 客户端打包
 
-# add_executable(
-#     client
-#     ${ZIPFILES_MP_SOURCE_FILES}
-#     ${ZIPFILES_CLIENT_SOURCE_FILES}
-#     ${ZIPFILES_CLINET_ENTRY}
-# )
+add_executable(
+    client
+    ${ZIPFILES_MP_SOURCE_FILES}
+    ${ZIPFILES_CLIENT_SOURCE_FILES}
+    ${ZIPFILES_CLINET_ENTRY}
+)
 
-# set_target_properties(client PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZIPFILES_OUTPUT_DIR})
+set_target_properties(client PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZIPFILES_OUTPUT_DIR})
 
-# target_link_libraries(
-#     client
-#     ${GTK_LIBRARIES}
-#     ${WEBKIT_LIBRARIES}
-#     ${JSONCPP_LIBRARIES}
-#     ${LOG4CPP_LIBRARIES}
-# )
-# target_compile_options(client PRIVATE ${GTK_CFLAGS_OTHER} ${WEBKIT_CFLAGS_OTHER})
+target_link_libraries(
+    client
+    ${GTK_LIBRARIES}
+    ${WEBKIT_LIBRARIES}
+    ${JSONCPP_LIBRARIES}
+    ${LOG4CPP_LIBRARIES}
+)
+target_compile_options(client PRIVATE ${GTK_CFLAGS_OTHER} ${WEBKIT_CFLAGS_OTHER})
 
-# install(DIRECTORY ${ZIPFILES_DIST_DIR} DESTINATION ${ZIPFILES_OUTPUT_DIR})
-# install(FILES ${ZIPFILES_CLIENT_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR})
+install(DIRECTORY ${ZIPFILES_DIST_DIR} DESTINATION ${ZIPFILES_OUTPUT_DIR})
+install(FILES ${ZIPFILES_CLIENT_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR})
 
 ############################################
 #### 项目测试

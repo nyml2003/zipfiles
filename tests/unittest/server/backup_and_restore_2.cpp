@@ -215,6 +215,8 @@ TEST_F(BackupRestoreTest, ConcurrentBackupAndRestoreDifferentFiles) {
   // 恢复文件
   fs::path restorePath = "/tmp/restore";
 
+  std::cout << "backup done" << std::endl;
+
   std::vector<std::thread> restoreThreads;
 
   for (int i = 0; i < 2; i++) {

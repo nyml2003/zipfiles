@@ -1,13 +1,20 @@
-#include "server/pack/pack.h"
+#include <fcntl.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <ios>
 #include <iostream>
+#include <stdexcept>
 #include "server/configure/configure.h"
+#include "server/pack/pack.h"
 #include "server/tools/fsapi.h"
 
 namespace zipfiles::server {
@@ -15,15 +22,15 @@ namespace zipfiles::server {
 /**
  * @brief 将FileDetail实例序列化并插入header
  *
- * @param fd FileDetail实例
+ * @param fileDetail FileDetail实例
  *
  * @param header header
  *
- * @param structSize fd的大小
+ * @param structSize fileDetail的大小
  *
  */
 void fileDetailSerialize(
-  const FileDetail& fd,
+  const FileDetail& fileDetail,
   std::vector<uint8_t>& header,
   size_t structSize
 ) {
@@ -40,52 +47,64 @@ void fileDetailSerialize(
 
   // 写入结构体内容
   // 写入文件类型
-  std::memcpy(header.data() + offset, &fd.type, sizeof(fd.type));
-  offset += sizeof(fd.type);
+  std::memcpy(
+    header.data() + offset, &fileDetail.type, sizeof(fileDetail.type)
+  );
+  offset += sizeof(fileDetail.type);
 
   // 写入创建时间
-  std::memcpy(header.data() + offset, &fd.createTime, sizeof(fd.createTime));
-  offset += sizeof(fd.createTime);
+  std::memcpy(
+    header.data() + offset, &fileDetail.createTime,
+    sizeof(fileDetail.createTime)
+  );
+  offset += sizeof(fileDetail.createTime);
 
   // 写入修改时间
-  std::memcpy(header.data() + offset, &fd.updateTime, sizeof(fd.updateTime));
-  offset += sizeof(fd.updateTime);
+  std::memcpy(
+    header.data() + offset, &fileDetail.updateTime,
+    sizeof(fileDetail.updateTime)
+  );
+  offset += sizeof(fileDetail.updateTime);
 
   // 写入文件大小
-  std::memcpy(header.data() + offset, &fd.size, sizeof(fd.size));
-  offset += sizeof(fd.size);
+  std::memcpy(
+    header.data() + offset, &fileDetail.size, sizeof(fileDetail.size)
+  );
+  offset += sizeof(fileDetail.size);
 
   // 写入文件权限
-  std::memcpy(header.data() + offset, &fd.mode, sizeof(fd.mode));
-  offset += sizeof(fd.mode);
+  std::memcpy(
+    header.data() + offset, &fileDetail.mode, sizeof(fileDetail.mode)
+  );
+  offset += sizeof(fileDetail.mode);
 
   // 写入拥有者
-  size_t ownerSize = fd.owner.size();
+  size_t ownerSize = fileDetail.owner.size();
   std::memcpy(header.data() + offset, &ownerSize, sizeof(ownerSize));
   offset += sizeof(ownerSize);
-  std::memcpy(header.data() + offset, fd.owner.c_str(), ownerSize);
+  std::memcpy(header.data() + offset, fileDetail.owner.c_str(), ownerSize);
   offset += ownerSize;
 
   // 写入用户组
-  size_t groupSize = fd.group.size();
+  size_t groupSize = fileDetail.group.size();
   std::memcpy(header.data() + offset, &groupSize, sizeof(groupSize));
   offset += sizeof(groupSize);
-  std::memcpy(header.data() + offset, fd.group.c_str(), groupSize);
+  std::memcpy(header.data() + offset, fileDetail.group.c_str(), groupSize);
   offset += groupSize;
 
   // 写入文件名
-  size_t absolutePathSize = fd.absolutePath.size();
+  size_t absolutePathSize = fileDetail.absolutePath.size();
   std::memcpy(
     header.data() + offset, &absolutePathSize, sizeof(absolutePathSize)
   );
   offset += sizeof(absolutePathSize);
   std::memcpy(
-    header.data() + offset, fd.absolutePath.c_str(), absolutePathSize
+    header.data() + offset, fileDetail.absolutePath.c_str(), absolutePathSize
   );
   offset += absolutePathSize;
 
   // 写入设备号
-  std::memcpy(header.data() + offset, &fd.dev, sizeof(fd.dev));
+  std::memcpy(header.data() + offset, &fileDetail.dev, sizeof(fileDetail.dev));
 }
 
 /**
@@ -98,14 +117,15 @@ void fileDetailSerialize(
  */
 void createHeader(
   const fs::path& filePath,
-  const FileDetail& fd,
+  const FileDetail& fileDetail,
   std::vector<uint8_t>& header
 ) {
   size_t relativePathSize = filePath.string().size();
-  size_t structSize = sizeof(fd.type) + sizeof(fd.createTime) +
-                      sizeof(fd.updateTime) + sizeof(fd.size) +
-                      sizeof(fd.mode) + sizeof(size_t) * 3 + fd.owner.size() +
-                      fd.group.size() + fd.absolutePath.size() + sizeof(fd.dev);
+  size_t structSize = sizeof(fileDetail.type) + sizeof(fileDetail.createTime) +
+                      sizeof(fileDetail.updateTime) + sizeof(fileDetail.size) +
+                      sizeof(fileDetail.mode) + sizeof(size_t) * 3 +
+                      fileDetail.owner.size() + fileDetail.group.size() +
+                      fileDetail.absolutePath.size() + sizeof(fileDetail.dev);
   size_t totalSize = sizeof(size_t) * 2 + relativePathSize + structSize;
 
   header.reserve(totalSize);
@@ -121,7 +141,7 @@ void createHeader(
   header.insert(header.end(), filePathStr.begin(), filePathStr.end());
 
   // 写入FileDetail
-  fileDetailSerialize(fd, header, structSize);
+  fileDetailSerialize(fileDetail, header, structSize);
 }
 
 /**
@@ -139,9 +159,9 @@ std::pair<bool, std::vector<uint8_t>&> packFilesByBlock(
 ) {
   static thread_local std::vector<uint8_t> obuffer;  // 默认为1<<19
   static thread_local size_t currentFileIndex = 0;
-  static thread_local std::ifstream inFile;
+  static thread_local int inFile = -1;
   static thread_local std::string commonAncestor;
-  static thread_local size_t obufferSize = 0;
+  static thread_local size_t obuffer_offset = 0;
   static thread_local std::vector<uint8_t> header_buffer;
   static thread_local size_t header_offset = 0;
 
@@ -153,110 +173,158 @@ std::pair<bool, std::vector<uint8_t>&> packFilesByBlock(
     filePath = filePath / files[currentFileIndex].filename();
 
     // 获取文件信息
-    FileDetail fd = getFileDetail(files[currentFileIndex]);
+    FileDetail fileDetail = getFileDetail(files[currentFileIndex]);
 
-    if (fd.type == fs::file_type::socket) {
+    if (fileDetail.type == fs::file_type::socket) {
       // 不备份socket
       continue;
     }
 
-    bool isRegular = (fd.type == fs::file_type::regular);
+    bool isRegular = (fileDetail.type == fs::file_type::regular);
 
-    // 打开文件
-    if (!inFile.is_open() && isRegular) {
-      inFile.open(files[currentFileIndex], std::ios::binary);
-      if (!inFile) {
-        throw std::runtime_error("Failed to open: " + filePath.string());
-      }
-    }
+    try {
+      // 第一次打开普通文件
+      if (inFile == -1 && isRegular) {
+        inFile = open(files[currentFileIndex].c_str(), O_RDONLY);  // NOLINT
+        if (!inFile) {
+          throw std::runtime_error(
+            "Failed to open: " + files[currentFileIndex].string()
+          );
+        }
 
-    // 创造header
-    if (inFile.tellg() == 0 || !isRegular) {
-      if (header_buffer.empty()) {
-        createHeader(filePath, fd, header_buffer);
-        if (fd.type == fs::file_type::symlink) {
-          // 对于软链接，直接再插入其指向的链接作为数据
-          std::string target = fs::read_symlink(files[currentFileIndex]);
-          header_buffer.insert(
-            header_buffer.end(), target.begin(), target.end()
+        flock fl = {
+          F_RDLCK,   // 设置锁类型为读锁
+          SEEK_SET,  // 设置锁的起始位置为文件开头
+          0,         // 锁的起始位置偏移量
+          0,         // 锁的长度，0 表示到文件末尾
+          getpid()};
+
+        // 使用 fcntl 尝试在文件上加读锁
+        // F_SETLKW 会阻塞直到锁可用
+        if (fcntl(inFile, F_SETLKW, &fl) == -1) {  // NOLINT
+          // 若失败，则关闭fd
+          close(inFile);
+          throw std::runtime_error(
+            "Failed to acquire lock: " + files[currentFileIndex].string()
           );
         }
       }
 
-      // 计算要往obuffer拷贝多少数据
-      size_t to_copy =
-        std::min(obuffer.capacity() - obufferSize, header_buffer.size());
+      // 创造header
+      if (lseek(inFile, 0, SEEK_CUR) == 0 || !isRegular) {
+        if (header_buffer.empty()) {
+          createHeader(filePath, fileDetail, header_buffer);
+          if (fileDetail.type == fs::file_type::symlink) {
+            // 对于软链接，直接再插入其指向的链接作为数据
+            std::string target = fs::read_symlink(files[currentFileIndex]);
+            header_buffer.insert(
+              header_buffer.end(), target.begin(), target.end()
+            );
+          }
+        }
 
-      obuffer.insert(
-        obuffer.end(),
-        header_buffer.begin() + static_cast<std::ptrdiff_t>(header_offset),
-        header_buffer.begin() +
-          static_cast<std::ptrdiff_t>(header_offset + to_copy)
-      );
+        // 计算要往obuffer拷贝多少数据
+        size_t to_copy =
+          std::min(obuffer.capacity() - obuffer_offset, header_buffer.size());
 
-      header_offset += to_copy;
-      obufferSize += to_copy;
+        obuffer.insert(
+          obuffer.end(),
+          header_buffer.begin() + static_cast<std::ptrdiff_t>(header_offset),
+          header_buffer.begin() +
+            static_cast<std::ptrdiff_t>(header_offset + to_copy)
+        );
 
-      // 如果header_buffer已经全部拷贝完，则清空
-      if (header_offset >= header_buffer.size()) {
-        header_buffer.clear();
-        header_offset = 0;
-      }
-    }
+        header_offset += to_copy;
+        obuffer_offset += to_copy;
 
-    if (!isRegular) {
-      // 文件不是普通文件或者链接
-      // 可能是软链接，设备文件、FIFO、Socket、目录
-      // 不要从这些文件用fstream读取数据
-      continue;
-    }
-
-    // 读取文件数据并写入缓冲区
-    while (true) {
-      // 计算obuffer还能读入多少数据
-      size_t remainingSpace = obuffer.capacity() - obufferSize;
-
-      // 先扩大obuffer
-      obuffer.resize(obuffer.capacity());
-
-      // 尽量填满obuffer
-      inFile.read(
-        reinterpret_cast<char*>(obuffer.data() + obufferSize),
-        static_cast<std::streamsize>(remainingSpace)
-      );
-
-      // 计算实际的读入数
-      auto bytesRead = static_cast<size_t>(inFile.gcount());
-      obufferSize += bytesRead;
-
-      // 调整为实际的读入数
-      obuffer.resize(obufferSize);
-
-      // 如果缓冲区满，则返回
-      if (obufferSize >= obuffer.capacity()) {
-        obufferSize = 0;  // 清空标记
-        return {true, obuffer};
+        // 如果header_buffer已经全部拷贝完，则清空
+        if (header_offset >= header_buffer.size()) {
+          header_buffer.clear();
+          header_offset = 0;
+        }
       }
 
-      // 如果文件读取完毕，并且obuffer还有空余，退出循环
-      if (bytesRead < remainingSpace) {
-        inFile.close();
-        // 关闭inFile，此时会回到for循环，打开下一个文件的输入流
-        break;
+      if (!isRegular) {
+        // 文件不是普通文件或者链接
+        // 可能是软链接，设备文件、FIFO、Socket、目录
+        // 不要从这些文件用fstream读取数据
+        continue;
       }
+
+      // 读取文件数据并写入缓冲区
+      while (true) {
+        // 计算obuffer还能读入多少数据
+        size_t remainingSpace = obuffer.capacity() - obuffer_offset;
+
+        // 先扩大obuffer
+        obuffer.resize(obuffer.capacity());
+
+        // 尽量填满obuffer，并计算实际的读入数
+        ssize_t bytesRead =
+          read(inFile, obuffer.data() + obuffer_offset, remainingSpace);
+        obuffer_offset += bytesRead;
+
+        // 调整为实际的读入数
+        obuffer.resize(obuffer_offset);
+
+        // 如果缓冲区满，则返回
+        if (obuffer_offset >= obuffer.capacity()) {
+          obuffer_offset = 0;  // 清空标记
+          return {true, obuffer};
+        }
+
+        // 如果文件读取完毕，并且obuffer还有空余，退出循环
+        if (bytesRead < static_cast<ssize_t>(remainingSpace)) {
+          // 释放锁
+          flock fl = {
+            F_UNLCK,   // 设置锁类型为读锁
+            SEEK_SET,  // 设置锁的起始位置为文件开头
+            0,         // 锁的起始位置偏移量
+            0,         // 锁的长度，0 表示到文件末尾
+            getpid()};
+
+          // 设置锁类型为解锁
+          if (fcntl(inFile, F_SETLKW, &fl) == -1) {  // NOLINT
+            // NOLINT
+            throw std::runtime_error(
+              "Failed to release lock: " + files[currentFileIndex].string()
+            );
+          }
+
+          close(inFile);
+          inFile = -1;
+
+          // 关闭inFile，此时会回到for循环，打开下一个文件的输入流
+          break;
+        }
+      }
+    } catch (std::exception& e) {
+      // 释放锁
+      flock fl{};
+      fl.l_type = F_UNLCK;                       // 设置锁类型为解锁
+      if (fcntl(inFile, F_SETLKW, &fl) == -1) {  // NOLINT
+        throw std::runtime_error(
+          "Failed to release lock: " + files[currentFileIndex].string()
+        );
+      }
+      close(inFile);
+      inFile = -1;
+
+      throw std::runtime_error(e.what());
     }
-  }
+  }  // for
 
   // 没有文件可读
   // 如果flush为true，输出剩余的缓冲区内容
-  if (flush && obufferSize > 0) {
-    obuffer.resize(obufferSize);
-    obufferSize = 0;  // 清空缓冲区
+  if (flush && obuffer_offset > 0) {
+    obuffer.resize(obuffer_offset);
+    obuffer_offset = 0;  // 清空缓冲区
     return {true, obuffer};
   }
 
   // 重置状态，等待下次复用
   currentFileIndex = 0;
+  inFile = -1;
   commonAncestor.clear();
 
   // 没有文件可读，flush也为false，那么返回false

@@ -13,14 +13,14 @@ namespace zipfiles::server {
  *
  */
 void fileDetailSerialize(
-  const FileDetail& fd,
+  const FileDetail& fileDetail,
   std::vector<uint8_t>& header,
   size_t structSize
 );
 
 void createHeader(
   const fs::path& filePath,
-  const FileDetail& fd,
+  const FileDetail& fileDetail,
   std::vector<uint8_t>& header
 );
 
