@@ -52,6 +52,8 @@ void backupFiles(
     fs::create_directories(dir);
   }
 
+  std::cout << "output dir is " << dir << std::endl;
+
   // 打开输出流
   path += "/" + cr.uuid;
   std::ofstream outputFile(path, std::ios::binary);
@@ -263,10 +265,10 @@ void writeDirectoryFile(
   const std::vector<fs::path>& files,
   const fs::path& lca
 ) {
-  std::ofstream outFile(dst);
-  if (!outFile) {
-    throw std::runtime_error("Failed to open file: " + dst.string());
+  if (fs::exists(dst)) {
+    throw std::runtime_error("file: " + dst.string() + " already exists");
   }
+  std::ofstream outFile(dst);
 
   Json::Value root;
   root["data"] = Json::arrayValue;
