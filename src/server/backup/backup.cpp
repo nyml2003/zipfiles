@@ -52,8 +52,6 @@ void backupFiles(
     fs::create_directories(dir);
   }
 
-  std::cout << "output dir is " << dir << std::endl;
-
   // 打开输出流
   path += "/" + cr.uuid;
   std::ofstream outputFile(path, std::ios::binary);
