@@ -1,9 +1,5 @@
 import { FileType } from '@/types';
-export interface GetFileDetailRequest {
-  path: string;
-}
-
-export interface FileDetail {
+interface FileDetail {
   name: string;
   type: FileType;
   createTime: number;
@@ -14,5 +10,9 @@ export interface FileDetail {
   mode: number;
   path: string;
 }
+export interface GetFileDetailRequest {
+  path: string;
+}
 
-export interface GetFileDetailResponse extends FileDetail {}
+export interface GetFileDetailResponse extends FileDetail { }
+

@@ -1,12 +1,9 @@
 import { ApiEnum } from '@/apis';
-import {
-  FileDetail,
-  GetAllFileDetailsRequest,
-  GetAllFileDetailsResponse,
-} from '@/apis/GetAllFileDetails';
+import { GetFileDetailListRequest, GetFileDetailListResponse } from '@/apis/GetFileDetailList';
 import useApi from '@/hooks/useApi';
 import { resetSelectedFile, updateExpandedSelectedFile } from '@/stores/CreateCommitReducer';
 import { RootState } from '@/stores/store';
+import { FileType } from '@/types';
 import { filterBy } from '@/utils';
 import { Button, Table } from 'antd';
 import React, { useEffect } from 'react';
@@ -54,7 +51,17 @@ const columns = [
     key: 'mode',
   },
 ];
-
+interface FileDetail {
+  name: string;
+  type: FileType;
+  createTime: number;
+  updateTime: number;
+  size: number;
+  owner: string;
+  group: string;
+  mode: number;
+  path: string;
+}
 type DataType = FileDetail;
 
 interface FileListProps {
@@ -65,8 +72,9 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
   const selectedFile = useSelector((state: RootState) => state.createCommit.selectedFile);
   const filter = useSelector((state: RootState) => state.createCommit.filter);
   const [data, setData] = React.useState<DataType[]>([]);
-  const api = useApi();
   const dispatch = useDispatch();
+
+  const api = useApi();
 
   useEffect(() => {
     setData([]);
@@ -89,8 +97,8 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
   };
 
   const fetchData = async (path: string) => {
-    const res = await api.request<GetAllFileDetailsRequest, GetAllFileDetailsResponse>(
-      ApiEnum.GetAllFileDetails,
+    const res = await api.request<GetFileDetailListRequest, GetFileDetailListResponse>(
+      ApiEnum.GetFileDetailList,
       {
         path: path === '' ? '/' : path,
       },

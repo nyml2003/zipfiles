@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Table } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { FileDetail } from '@/apis/GetFileDetail';
+import { FileDetail } from '@/apis/GetFileDetailList';
 import { ApiEnum } from '@/apis';
 import { FileType, FileTypeToString } from '@/types';
 import { FileFilled, FolderFilled } from '@ant-design/icons';

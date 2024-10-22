@@ -18,7 +18,7 @@ bool isFunctionValid(JSCValue* value) {
    * 4. timestamp是一个数字
    * 5. apiEnum是一个数字
    * 6. uuid是一个字符串
-   * 7. params是一个对象
+   * 7. params是一个字符串
    */
   if (value == nullptr) {
     log4cpp::Category::getRoot().errorStream() << __func__ << ": value is null";
@@ -48,7 +48,7 @@ bool isFunctionValid(JSCValue* value) {
     return false;
   }
   JSCValue* params = jsc_value_object_get_property(value, "params");
-  if (jsc_value_is_object(params) == 0) {
+  if (jsc_value_is_string(params) == 0) {
     log4cpp::Category::getRoot().errorStream()
       << __func__ << ": params is not an object";
     return false;
@@ -279,81 +279,19 @@ void handleFunction(
     handleError("Failed in getting apiEnum, error: " + std::string(e.what()));
     return;
   }
-  ReqPtr request = nullptr;
-
+  Json::Reader reader;
+  Json::Value params;
   try {
-    switch (api) {
-      case ApiEnum::GET_FILE_LIST: {
-        std::string path = jsc_value_to_string(jsc_value_object_get_property(
-          jsc_value_object_get_property(value, "params"), "path"
-        ));
-        if (jsc_value_object_has_property(
-              jsc_value_object_get_property(value, "params"), "filter"
-            ) == 0) {
-          request = makeReqGetFileList(path);
-          break;
-        }
-        Filter filter;
-        JSCValue* filterValue = jsc_value_object_get_property(
-          jsc_value_object_get_property(value, "params"), "filter"
-        );
-        if (jsc_value_object_has_property(filterValue, "type") != 0) {
-          filter.type = static_cast<fs::file_type>(jsc_value_to_int32(
-            jsc_value_object_get_property(filterValue, "type")
-          ));
-        }
-        if (jsc_value_object_has_property(filterValue, "size") != 0) {
-          JSCValue* sizeValue =
-            jsc_value_object_get_property(filterValue, "size");
-          if (jsc_value_object_has_property(sizeValue, "min") != 0) {
-            filter.minSize =
-              jsc_value_to_int32(jsc_value_object_get_property(sizeValue, "min")
-              );
-          }
-          if (jsc_value_object_has_property(sizeValue, "max") != 0) {
-            filter.maxSize =
-              jsc_value_to_int32(jsc_value_object_get_property(sizeValue, "max")
-              );
-          }
-        }
-        if (jsc_value_object_has_property(filterValue, "owner") != 0) {
-          filter.owner = jsc_value_to_string(
-            jsc_value_object_get_property(filterValue, "owner")
-          );
-        }
-        if (jsc_value_object_has_property(filterValue, "group") != 0) {
-          filter.group = jsc_value_to_string(
-            jsc_value_object_get_property(filterValue, "group")
-          );
-        }
-        request = makeReqGetFileList(path, filter);
-        break;
-      }
-      case ApiEnum::GET_FILE_DETAIL: {
-        std::string path = jsc_value_to_string(jsc_value_object_get_property(
-          jsc_value_object_get_property(value, "params"), "path"
-        ));
-        request = makeReqGetFileDetail(path);
-        break;
-      }
-      case ApiEnum::GET_ALL_FILE_DETAILS: {
-        std::string path = jsc_value_to_string(jsc_value_object_get_property(
-          jsc_value_object_get_property(value, "params"), "path"
-        ));
-        request = makeReqGetAllFileDetails(path);
-        break;
-      }
-      default:
-        handleError("Invalid apiEnum");
-    }
-    if (request == nullptr) {
-      handleError("Failed to create request: make a null request");
-      return;
-    }
+    reader.parse(
+      jsc_value_to_string(jsc_value_object_get_property(value, "params")),
+      params
+    );
   } catch (const std::exception& e) {
-    handleError("Failed to create request: " + std::string(e.what()));
+    handleError("Failed in parsing params, error: " + std::string(e.what()));
     return;
   }
+  ReqPtr request = Req::fromJson(params);
+
   try {
     request->timestamp =
       jsc_value_to_double(jsc_value_object_get_property(value, "timestamp"));

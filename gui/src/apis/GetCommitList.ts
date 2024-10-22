@@ -1,9 +1,8 @@
 
-export interface CommitLog {
+interface CommitLog {
   uuid: string;
   message: string;
   createTime: number;
-  lca: string;
   storagePath: string;
   author: string;
   isEncrypt: boolean;
@@ -13,5 +12,5 @@ export interface CommitLog {
 export interface GetCommitListRequest {}
 
 export interface GetCommitListResponse {
-  data: CommitLog[];
+  commits: CommitLog[];
 }

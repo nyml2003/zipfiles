@@ -1,5 +1,5 @@
 import { setGlobalCallback } from '../useGlobalMessageHandler';
-import { Api, RequestWrapper, useApiType } from './types';
+import { Api, RequestWrapper } from './types';
 import { ApiEnum } from '@/apis';
 import { v4 as uuidv4 } from 'uuid';
 import useDilute from '@/hooks/useDilute';
@@ -8,7 +8,7 @@ const { dilute } = useDilute();
 
 let apiInstance: Api | null = null;
 
-const useApi: useApiType = () => {
+const useApi = () => {
   if (apiInstance) {
     return apiInstance;
   }

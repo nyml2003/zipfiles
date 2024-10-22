@@ -16,6 +16,6 @@ import { cachedCommitList } from './utils';
 
 export function mock(): GetCommitListResponse {
   return {
-    data: cachedCommitList,
+    commits: cachedCommitList,
   };
 }

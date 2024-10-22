@@ -1,12 +1,49 @@
 /* eslint-disable prefer-const */
-import { FileType, Filter } from '@/types';
+import { FileType } from '@/types';
 import Mock from 'mockjs';
-import { File } from '../GetFileList';
-import { FileDetail } from '../GetFileDetail';
-import { filterBy, findLongestCommonPrefix } from '@/utils';
-import { CommitLog } from '../GetCommitList';
+import { filterBy } from '@/utils';
 import { v4 as uuidv4 } from 'uuid';
 const MockFileNumber: [number, number] = [100, 200];
+
+interface File {
+  name: string;
+  type: FileType;
+}
+
+interface FileDetail {
+  name: string;
+  type: FileType;
+  createTime: number;
+  updateTime: number;
+  size: number;
+  owner: string;
+  group: string;
+  mode: number;
+  path: string;
+}
+
+interface CommitLog {
+  uuid: string;
+  message: string;
+  createTime: number;
+  storagePath: string;
+  author: string;
+  isEncrypt: boolean;
+  isDelete: boolean;
+}
+
+type Filter = Partial<{
+  type: FileType;
+  name: string;
+  minSize: number;
+  maxSize: number;
+  minCreateTime: number;
+  maxCreateTime: number;
+  minUpdateTime: number;
+  maxUpdateTime: number;
+  owner: string;
+  group: string;
+}>;
 
 export function pickIndex<T>(choices: T[], _weights?: number[]): number {
   if (!_weights) {
@@ -96,7 +133,6 @@ function generateCommitLog() {
     uuid,
     message: Mock.mock('@sentence'),
     createTime: new Date(Mock.mock('@datetime')).getTime() / 1000,
-    lca: findLongestCommonPrefix(files.map(file => file.path)),
     storagePath: '/usr/local/zipfiles',
     author: Mock.mock('@name'),
     isEncrypt: Mock.mock('@boolean'),

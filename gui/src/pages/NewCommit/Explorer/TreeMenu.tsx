@@ -13,9 +13,8 @@ import {
   updateCurrentPath,
   updateSelectedFile,
 } from '@/stores/CreateCommitReducer';
-import { cleanObject } from '@/utils';
-const { DirectoryTree } = Tree;
 import { GetFileDetailRequest, GetFileDetailResponse } from '@/apis/GetFileDetail';
+const { DirectoryTree } = Tree;
 
 interface DataNode {
   title: React.ReactNode;
@@ -33,7 +32,6 @@ const TreeMenu = () => {
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Done);
   const [lastClickTime, setLastClickTime] = useState<number>(0);
   const currentPath = useSelector((state: RootState) => state.createCommit.currentPath);
-  const filter = useSelector((state: RootState) => state.createCommit.filter);
   const dispatch = useDispatch();
   useEffect(() => {
     // 清空已有数据
@@ -72,7 +70,6 @@ const TreeMenu = () => {
     try {
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
         path: path === '' ? '/' : path,
-        filter: cleanObject(filter),
       });
 
       const newTreeData = res.files.map(item => {

@@ -6,7 +6,6 @@ export function mock(request: PostCommitRequest): PostCommitResponse {
     uuid: request.uuid,
     message: request.message,
     createTime: request.createTime,
-    lca: request.lca,
     storagePath: '/usr/local/zipfiles',
     isEncrypt: request.isEncrypt,
     isDelete: false,

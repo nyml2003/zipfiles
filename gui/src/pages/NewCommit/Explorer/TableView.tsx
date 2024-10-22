@@ -1,16 +1,25 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Table } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { FileDetail } from '@/apis/GetFileDetail';
 import { ApiEnum } from '@/apis';
 import { FileType, FileTypeToString } from '@/types';
 import { FileFilled, FolderFilled } from '@ant-design/icons';
-import { GetAllFileDetailsRequest, GetAllFileDetailsResponse } from '@/apis/GetAllFileDetails';
+import { GetFileDetailListRequest, GetFileDetailListResponse } from '@/apis/GetFileDetailList';
 import useApi from '@/hooks/useApi';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
 import { filterBy } from '@/utils';
-
+interface FileDetail {
+  name: string;
+  type: FileType;
+  createTime: number;
+  updateTime: number;
+  size: number;
+  owner: string;
+  group: string;
+  mode: number;
+  path: string;
+}
 type DataType = Partial<FileDetail>;
 
 const columns: TableColumnsType<DataType> = [
@@ -105,10 +114,10 @@ const TableView: React.FC = () => {
   const currentFile = useSelector((state: RootState) => state.createCommit.currentFile);
   const fetchData = (path: string) => {
     api
-      .request<GetAllFileDetailsRequest, GetAllFileDetailsResponse>(ApiEnum.GetAllFileDetails, {
+      .request<GetFileDetailListRequest, GetFileDetailListResponse>(ApiEnum.GetFileDetailList, {
         path: path === '' ? '/' : path,
       })
-      .then((res: GetAllFileDetailsResponse) => {
+      .then((res: GetFileDetailListResponse) => {
         setData(filterBy(res.files, filter));
       });
   };

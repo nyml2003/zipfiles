@@ -1,4 +1,4 @@
-import { FileDetail } from '@/apis/GetFileDetail';
+import { FileDetail } from '@/apis/GetFileDetailList';
 import { GetFileListRequest } from '@/apis/GetFileList';
 import { FileType } from '@/types';
 

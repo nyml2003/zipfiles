@@ -18,46 +18,45 @@ import { GetCommitDetailRequest, GetCommitDetailResponse } from '@/apis/GetCommi
 import { ApiEnum } from '@/apis';
 import { FileDetail } from '@/apis/GetAllFileDetails';
 
-function nestify(files: FileDetail[]): NestedFileDetail {
-  const newFiles = files.sort( (a, b) => a.path.localeCompare(b.path));
-  const root : NestedFileDetail = { children: [], ...newFiles[0] };
-  for (const file of newFiles) {
-    const pathParts = file.path.split('/');
-    let currentNode = root;
-    if (currentNode.children === null) {
-      continue;
-    }
-    for (let i = 1; i < pathParts.length; i++) {
-      const existingChild = currentNode.children!.find(child => child.path === pathParts[i]);
-      if (existingChild) {
-        currentNode = existingChild;
-      } else {
-        const newChild = { path: pathParts[i], children: [] };
-        currentNode.children!.push( 
-        currentNode = newChild;
-      }
-    }
-  }
+// function nestify(files: FileDetail[]): NestedFileDetail {
+//   const newFiles = files.sort( (a, b) => a.path.localeCompare(b.path));
+//   const root : NestedFileDetail = { children: [], ...newFiles[0] };
+//   for (const file of newFiles) {
+//     const pathParts = file.path.split('/');
+//     let currentNode = root;
+//     if (currentNode.children === null) {
+//       continue;
+//     }
+//     for (let i = 1; i < pathParts.length; i++) {
+//       const existingChild = currentNode.children!.find(child => child.path === pathParts[i]);
+//       if (existingChild) {
+//         currentNode = existingChild;
+//       } else {
+//         const newChild = { path: pathParts[i], children: [] };
+//         currentNode = newChild;
+//       }
+//     }
+//   }
 
-  return root;
-}
+//   return root;
+// }
 
 const Explorer: React.FC = (uuid: string, commitLog: CommitLog) => {
   // const isFiltering = useSelector((state: RootState) => state.createCommit.isFiltering);
   // const currentPath = useSelector((state: RootState) => state.createCommit.currentPath);
   // const dispatch = useDispatch();
-  const [currentFile, setCurrentFile] = React.useState<string>('');
-  const [currentPath, setCurrentPath] = React.useState<string>('');
-  const [files, setFiles] = React.useState<NestedFileDetail[] | null>(null);
-  const api = useApi();
-  useEffect(() => {
-    api
-      .request<GetCommitDetailRequest, GetCommitDetailResponse>(ApiEnum.GetCommitDetail, { uuid })
-      .then(res => {
-        setFiles(res.files);
-        setCurrentPath('/');
-      });
-  }, []);
+  // const [currentFile, setCurrentFile] = React.useState<string>('');
+  // const [currentPath, setCurrentPath] = React.useState<string>('');
+  // const [files, setFiles] = React.useState<NestedFileDetail[] | null>(null);
+  // const api = useApi();
+  // useEffect(() => {
+  //   api
+  //     .request<GetCommitDetailRequest, GetCommitDetailResponse>(ApiEnum.GetCommitDetail, { uuid })
+  //     .then(res => {
+  //       setFiles(res.files);
+  //       setCurrentPath('/');
+  //     });
+  // }, []);
 
   return (
     <div className='split-container-col grow-item'>
