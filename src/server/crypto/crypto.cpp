@@ -1,5 +1,4 @@
 
-#include "server/crypto/crypto.h"
 #include <crypto++/filters.h>
 #include <algorithm>
 #include <cassert>
@@ -7,23 +6,32 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "server/crypto/crypto.h"
+
+using CryptoPP::CBC_Mode;
+using CryptoPP::HashFilter;
+using CryptoPP::HexEncoder;
+using CryptoPP::SHA256;
+using CryptoPP::StreamTransformationFilter;
+using CryptoPP::StringSource;
 
 namespace zipfiles::server {
 
 constexpr int CRYPTO_BLOCK_SIZE = 1 << 20;
 
-AESEncryptor::AESEncryptor(const std::string& key) : key(generateKey(key)) {}
+Cryptor::Cryptor(const std::string& key) : key(generateKey(key)) {}
 
-std::string AESEncryptor::generateKey(const std::string& rawKey) {
+std::string Cryptor::generateKey(const std::string& rawKey) {
   SHA256 hash;
   std::string digest;
   StringSource ss(
     rawKey, true, new HashFilter(hash, new HexEncoder(new StringSink(digest)))
   );
+
   return digest.substr(0, 32);  // 32 字节作为密钥
 }
 
-CryptStatus AESEncryptor::encryptFile(
+CryptStatus Cryptor::encryptFile(
   const std::vector<uint8_t>& inputData,
   const std::array<CryptoPP::byte, AES::BLOCKSIZE>& iv,
   bool flush
@@ -78,7 +86,7 @@ CryptStatus AESEncryptor::encryptFile(
   return {false, lack, &outputData};
 }
 
-CryptStatus AESEncryptor::decryptFile(
+CryptStatus Cryptor::decryptFile(
   const std::vector<uint8_t>& inputData,
   const std::array<CryptoPP::byte, AES::BLOCKSIZE>& iv,
   bool flush
@@ -131,6 +139,33 @@ CryptStatus AESEncryptor::decryptFile(
   }
   start = 0;
   return {false, lack, &outputData};
+}
+
+std::string Cryptor::encodeKey(const std::string& key) {
+  std::string firstHash;
+  std::string secondHash;
+
+  try {
+    // 第一次SHA256
+    SHA256 hash;
+    StringSource ss1(
+      key, true, new HashFilter(hash, new HexEncoder(new StringSink(firstHash)))
+    );
+
+    // 第二次SHA256
+    StringSource ss2(
+      firstHash, true,
+      new HashFilter(hash, new HexEncoder(new StringSink(secondHash)))
+    );
+  } catch (const CryptoPP::Exception& e) {
+    throw std::runtime_error("Failed to encode key, " + std::string(e.what()));
+  }
+
+  return secondHash;
+}
+
+bool Cryptor::checkKey(const std::string& encodedKey, const std::string& key) {
+  return encodedKey == encodeKey(key);
 }
 
 }  // namespace zipfiles::server

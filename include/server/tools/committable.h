@@ -31,6 +31,10 @@ struct CommitTableRecord {
   bool isEncrypt;
   // 是否被删除
   bool isDelete = false;
+  // CRC-64
+  int64_t crc;
+  // 加密存储的密钥
+  std::string encodedKey;
 };
 
 /**

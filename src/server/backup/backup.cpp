@@ -70,11 +70,11 @@ void backupFiles(
   std::array<CryptoPP::byte, AES::BLOCKSIZE> iv{};
 
   // 实例化加密类
-  AESEncryptor encryptor(key);
+  Cryptor encryptor(key);
 
   if (encrypt) {
     // 如果需要加密
-    AutoSeededRandomPool prng;
+    CryptoPP::AutoSeededRandomPool prng;
     prng.GenerateBlock(iv.data(), iv.size());
 
     // 把IV写入文件开头，这部分不需要压缩和加密

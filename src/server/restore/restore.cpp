@@ -1,4 +1,3 @@
-#include "server/restore/restore.h"
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -13,6 +12,7 @@
 #include "server/crypto/crypto.h"
 #include "server/deflate/zip.h"
 #include "server/pack/unpack.h"
+#include "server/restore/restore.h"
 #include "server/tools/committable.h"
 
 namespace zipfiles::server {
@@ -60,7 +60,7 @@ void restoreTo(
   }
 
   // 实例化解码器
-  AESEncryptor decryptor(key);
+  Cryptor decryptor(key);
 
   // 实例化解包器
   FileUnpacker fileUnpacker(dst);

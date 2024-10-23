@@ -1,9 +1,9 @@
-#include "server/tools/committable.h"
 #include <exception>
 #include <mutex>
 #include <stdexcept>
 #include "json/reader.h"
 #include "server/configure/configure.h"
+#include "server/tools/committable.h"
 
 namespace zipfiles::server {
 
@@ -303,6 +303,8 @@ Json::Value CommitTable::toJson(const CommitTableRecord& cr) {
   json["author"] = cr.author;
   json["isEncrypt"] = cr.isEncrypt;
   json["isDelete"] = cr.isDelete;
+  json["crc"] = cr.crc;
+  json["encodedKey"] = cr.encodedKey;
 
   return json;
 }
@@ -326,6 +328,8 @@ CommitTableRecord CommitTable::fromJson(Json::Value& json) {
   cr.author = json["author"].asString();
   cr.isEncrypt = json["isEncrypt"].asBool();
   cr.isDelete = json["isDelete"].asBool();
+  cr.crc = json["crc"].asInt64();
+  cr.encodedKey = json["encodedKey"].asString();
 
   return cr;
 }

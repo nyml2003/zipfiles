@@ -310,6 +310,11 @@ std::pair<bool, std::vector<uint8_t>&> packFilesByBlock(
       close(inFile);
       inFile = -1;
 
+      // 重置状态，等待下次复用
+      currentFileIndex = 0;
+      inFile = -1;
+      commonAncestor.clear();
+
       throw std::runtime_error(e.what());
     }
   }  // for

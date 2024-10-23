@@ -12,20 +12,12 @@
 #include <string>
 #include <vector>
 
-namespace zipfiles::server {
-
 using CryptoPP::AES;
-using CryptoPP::ArraySink;
 using CryptoPP::ArraySource;
-using CryptoPP::AutoSeededRandomPool;
-using CryptoPP::CBC_Mode;
-using CryptoPP::HashFilter;
-using CryptoPP::HexEncoder;
-using CryptoPP::SHA256;
-using CryptoPP::StreamTransformationFilter;
 using CryptoPP::StringSink;
-using CryptoPP::StringSource;
 using CryptoPP::VectorSink;
+
+namespace zipfiles::server {
 
 struct CryptStatus {
   bool flush;
@@ -33,9 +25,9 @@ struct CryptStatus {
   std::vector<uint8_t>* obuffer;
 };
 
-class AESEncryptor {
+class Cryptor {
  public:
-  explicit AESEncryptor(const std::string& key);
+  explicit Cryptor(const std::string& key);
 
   CryptStatus encryptFile(
     const std::vector<uint8_t>& inputData,
@@ -48,6 +40,10 @@ class AESEncryptor {
     const std::array<CryptoPP::byte, AES::BLOCKSIZE>& iv,
     bool flush
   );
+
+  static std::string encodeKey(const std::string& key);
+
+  static bool checkKey(const std::string& encodedKey, const std::string& key);
 
  private:
   std::string key;
