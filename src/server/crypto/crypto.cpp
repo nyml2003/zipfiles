@@ -47,11 +47,11 @@ CryptStatus AESEncryptor::encryptFile(
 
   if (!lack) {
     append_buf(
-      std::min(CRYPTO_BLOCK_SIZE - ibuffer.size(), inputData.size() - start)
+      std::min(CRYPTO_BLOCK_SIZE - 1 - ibuffer.size(), inputData.size() - start)
     );
     lack = (start == inputData.size());
     start %= inputData.size();
-    if (ibuffer.size() == CRYPTO_BLOCK_SIZE || flush) {
+    if (ibuffer.size() == CRYPTO_BLOCK_SIZE - 1 || flush) {
       try {
         CBC_Mode<AES>::Encryption encryption(
           reinterpret_cast<CryptoPP::byte*>(key.data()), key.size(), iv.data()
@@ -61,9 +61,7 @@ CryptStatus AESEncryptor::encryptFile(
           ibuffer.data(), ibuffer.size(), true,
           new StreamTransformationFilter(
             encryption, new VectorSink(outputData),
-            (ibuffer.size() != CRYPTO_BLOCK_SIZE && flush)
-              ? StreamTransformationFilter::PKCS_PADDING
-              : StreamTransformationFilter::NO_PADDING
+            StreamTransformationFilter::PKCS_PADDING
           )
         );
         assert(outputData.size() == CRYPTO_BLOCK_SIZE || flush);
@@ -118,9 +116,7 @@ CryptStatus AESEncryptor::decryptFile(
           ibuffer.data(), ibuffer.size(), true,
           new StreamTransformationFilter(
             decryption, new VectorSink(outputData),
-            (ibuffer.size() != CRYPTO_BLOCK_SIZE && flush)
-              ? StreamTransformationFilter::PKCS_PADDING
-              : StreamTransformationFilter::NO_PADDING
+            StreamTransformationFilter::PKCS_PADDING
           )
         );
         assert(outputData.size() == CRYPTO_BLOCK_SIZE || flush);
