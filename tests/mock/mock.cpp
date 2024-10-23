@@ -41,7 +41,7 @@ void sendRequest(int sock, int totalRequests) {
     }
 
     usedCounters.insert(currentCounter);
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));  // 延迟20毫秒
+    // std::this_thread::sleep_for(std::chrono::milliseconds(20));  // 延迟20毫秒
     requestCount++;
   }
 
@@ -113,7 +113,7 @@ int main() {
       return -1;
     }
 
-    int totalRequests = 10;  // 设置发送请求的总数
+    int totalRequests = 100;  // 设置发送请求的总数
     std::thread requestThread(sendRequest, sock, totalRequests);
     std::thread responseThread(receiveResponse, sock);
 

@@ -1,8 +1,8 @@
-#include "server/acceptor.h"
 #include <fcntl.h>
 #include <sys/epoll.h>
 #include <unistd.h>
 #include "log4cpp/Category.hh"
+#include "server/acceptor.h"
 #include "server/handler.h"
 #include "server/socket/socket.h"
 #include "server/tools/threadpool.h"
@@ -80,8 +80,7 @@ void doAccept() {
         // log4cpp::Category::getRoot().infoStream()
         //   << "Now processing event from " << events[i].data.fd
         //   << " as handle event.";
-
-        // todo: 线程池
+        
         int client_fd = events[i].data.fd;
         tp.enqueue([&client_fd] { doHandle(client_fd); });
       }

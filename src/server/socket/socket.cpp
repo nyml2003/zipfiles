@@ -1,4 +1,3 @@
-#include "server/socket/socket.h"
 #include <arpa/inet.h>
 #include <sys/epoll.h>
 #include <mutex>
@@ -12,6 +11,7 @@
 #include "mp/Response.h"
 #include "mp/mp.h"
 #include "server/error.h"
+#include "server/socket/socket.h"
 
 namespace zipfiles::server {
 Socket::Socket()
@@ -36,9 +36,7 @@ Socket::Socket()
   address.sin_port = htons(mp::PORT);
   addrlen = sizeof(address);
 
-  if (bind(
-        server_fd, reinterpret_cast<struct sockaddr*>(&address), sizeof(address)
-      ) < 0) {
+  if (bind(server_fd, reinterpret_cast<struct sockaddr*>(&address), sizeof(address)) < 0) {
     perror("bind failed");
     close(server_fd);
     exit(EXIT_FAILURE);
@@ -153,6 +151,7 @@ ReqPtr Socket::receive(int client_fd) {
         getInstance().connectionCount.fetch_sub(1);
       }
     }
+    
     throw std::runtime_error("Failed to receive request, now disconnect");
   }
 
@@ -164,6 +163,9 @@ ReqPtr Socket::receive(int client_fd) {
   if (Json::parseFromStream(reader, stream, &jsonData, &errs)) {
     return Req::fromJson(jsonData);
   }
+  log4cpp::Category::getRoot().infoStream()
+    << "Getting Json parse error: " + errs;
+
   throw std::runtime_error("Failed to parse request");
 }
 

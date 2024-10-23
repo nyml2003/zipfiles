@@ -30,12 +30,14 @@ namespace zipfiles::server {
  */
 void backupFiles(
   const std::vector<fs::path>& files,
-  const CommitTableRecord& cr,
+  CommitTableRecord& cr,
   const std::string& key
 ) {
   log4cpp::Category::getRoot().infoStream()
     << "Backup started, log messeag is \"" << cr.message << "\" at "
     << cr.createTime;
+
+  cr.encodedKey = Cryptor::encodeKey(key);
 
   // 检查是否提交过
   // 如果没有提交，那么会先在内存中添加本次commit
@@ -66,11 +68,11 @@ void backupFiles(
   // 获取是否加密
   bool encrypt = cr.isEncrypt;
 
-  // 实例化加密IV
-  std::array<CryptoPP::byte, AES::BLOCKSIZE> iv{};
-
   // 实例化加密类
   Cryptor encryptor(key);
+
+  // 实例化加密IV
+  std::array<CryptoPP::byte, AES::BLOCKSIZE> iv{};
 
   if (encrypt) {
     // 如果需要加密
@@ -91,7 +93,7 @@ void backupFiles(
   try {
     while (true) {
       std::vector<uint8_t> zippedData{};
-      std::vector<uint8_t> encryptedData{};
+      std::vector<uint8_t> processedData{};
 
       // 获取输出
       auto [packFlush, packedData] = packFilesByBlock(files, flush, lca);
@@ -133,8 +135,8 @@ void backupFiles(
             encryptor.encryptFile(zippedData, iv, flush);
 
           if (encryptFlush) {
-            encryptedData.insert(
-              encryptedData.end(), outputData->begin(), outputData->end()
+            processedData.insert(
+              processedData.end(), outputData->begin(), outputData->end()
             );
 
             outputData->clear();
@@ -145,18 +147,14 @@ void backupFiles(
           }
         }
 
-        // 写入输出流
-        if (encrypt) {
-          outputFile.write(
-            reinterpret_cast<const char*>(encryptedData.data()),
-            static_cast<std::streamsize>(encryptedData.size())
-          );
-        } else {
-          outputFile.write(
-            reinterpret_cast<const char*>(zippedData.data()),
-            static_cast<std::streamsize>(zippedData.size())
-          );
+        if (!encrypt) {
+          processedData = std::move(zippedData);
         }
+
+        outputFile.write(
+          reinterpret_cast<const char*>(processedData.data()),
+          static_cast<std::streamsize>(processedData.size())
+        );
       }
 
       // 如果所有文件都读取完毕，设置 flush 为 true

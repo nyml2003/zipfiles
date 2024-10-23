@@ -40,6 +40,10 @@ void restoreTo(
     throw std::runtime_error("Commit is deleted, its uuid is " + uuid);
   }
 
+  if (!Cryptor::checkKey(cr.encodedKey, key)) {
+    throw std::runtime_error("Wrong key, its uuid is " + uuid);
+  }
+
   // 检查目标路径是否存在，如果不存在则创建目录
   if (!fs::exists(dst)) {
     fs::create_directories(dst);
@@ -52,6 +56,9 @@ void restoreTo(
     throw std::runtime_error("Failed to open: " + filePath);
   }
 
+  // 实例化解码器
+  Cryptor decryptor(key);
+
   // 如果有加密，则读取IV
   bool decrypt = cr.isEncrypt;
   std::array<CryptoPP::byte, AES::BLOCKSIZE> iv{};
@@ -59,13 +66,11 @@ void restoreTo(
     inFile.read(reinterpret_cast<char*>(iv.data()), iv.size());
   }
 
-  // 实例化解码器
-  Cryptor decryptor(key);
+  // 实例化解压器
+  Unzip unzip;
 
   // 实例化解包器
   FileUnpacker fileUnpacker(dst);
-
-  Unzip unzip;
 
   // 读取备份文件
   try {

@@ -146,7 +146,9 @@ void backup(
   const CommitTableRecord& cr,
   const std::string& key
 ) {
-  ASSERT_NO_THROW(backupFiles(files, cr, key));
+  CommitTableRecord crt = cr;
+
+  ASSERT_NO_THROW(backupFiles(files, crt, key));
 }
 
 void restore(

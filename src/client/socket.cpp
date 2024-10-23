@@ -14,18 +14,24 @@ void Socket::initializeSocket() {
   sock = ::socket(AF_INET, SOCK_STREAM, 0);
   if (sock < 0) {
     log4cpp::Category::getRoot().errorStream() << "Socket creation error";
+
     throw std::runtime_error("Socket creation error");
   }
+
   log4cpp::Category::getRoot().infoStream() << "Socket created";
+
   serv_addr.sin_family = AF_INET;
   serv_addr.sin_port = htons(mp::PORT);
+
   log4cpp::Category::getRoot().infoStream() << "Port set to " << mp::PORT;
   log4cpp::Category::getRoot().infoStream() << "Resolving address...";
 
   if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
     log4cpp::Category::getRoot().errorStream()
       << "Invalid address/ Address not supported";
+
     close(sock);
+    
     throw std::runtime_error("Invalid address/ Address not supported");
   }
 }
@@ -81,13 +87,16 @@ void Socket::reconnect() {
 
 void Socket::send(const ReqPtr& req) {
   static Json::StreamWriterBuilder writer;
+
   std::string data = Json::writeString(writer, req->toJson());
+
   ssize_t bytesSent = ::send(sock, data.c_str(), data.size(), 0);
 
   if (bytesSent == -1) {
     if (errno == EPIPE) {  // 检测到 "Broken pipe" 错误
       log4cpp::Category::getRoot().errorStream()
         << "Failed to send request: Broken pipe. Attempting to reconnect...";
+
       close(sock);
       try {
         reconnect();  // 尝试重新连接

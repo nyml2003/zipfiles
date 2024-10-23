@@ -3,6 +3,7 @@
 
 #include <netinet/in.h>
 #include <atomic>
+#include <mutex>
 #include "mp/Request.h"
 #include "mp/Response.h"
 
@@ -41,6 +42,7 @@ class Socket {
   struct sockaddr_in address;
   int addrlen;
   std::atomic<int> connectionCount;
+  std::mutex read_mutex;
 };
 }  // namespace zipfiles::server
 #endif  // !ZIPFILE_SERVER_SOCKET_SOCKET_H

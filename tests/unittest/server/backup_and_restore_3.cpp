@@ -144,7 +144,7 @@ class BackupRestoreTest : public ::testing::Test {
 
 void backup(
   const std::vector<fs::path>& files,
-  const CommitTableRecord& cr,
+  CommitTableRecord& cr,
   const std::string& key
 ) {
   ASSERT_NO_THROW(backupFiles(files, cr, key));

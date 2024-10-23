@@ -332,7 +332,6 @@ void handleRemoteResponse(const ReqPtr& request) {
         handleError("Failed to receive response: " + std::string(e.what()));
         return nullptr;
       }
-
       return response;
     },
     request

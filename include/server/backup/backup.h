@@ -15,7 +15,7 @@ namespace zipfiles::server {
  */
 void backupFiles(
   const std::vector<fs::path>& files,
-  const CommitTableRecord& cr,
+  CommitTableRecord& cr,
   const std::string& key
 );
 
