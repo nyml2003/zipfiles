@@ -33,7 +33,6 @@ class Socket {
   Socket(Socket&& other) noexcept = delete;
   Socket& operator=(Socket&& other) noexcept = delete;
   [[nodiscard]] static int getServerFd();
-  [[nodiscard]] static int getConnectionCount();
 
  private:
   Socket();
@@ -41,8 +40,6 @@ class Socket {
   int server_fd;
   struct sockaddr_in address;
   int addrlen;
-  std::atomic<int> connectionCount;
-  std::mutex read_mutex;
 };
 }  // namespace zipfiles::server
 #endif  // !ZIPFILE_SERVER_SOCKET_SOCKET_H

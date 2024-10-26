@@ -1,11 +1,10 @@
+#include "server/acceptor.h"
 #include <fcntl.h>
 #include <sys/epoll.h>
 #include <unistd.h>
 #include "log4cpp/Category.hh"
-#include "server/acceptor.h"
-#include "server/handler.h"
+#include "server/selector.h"
 #include "server/socket/socket.h"
-#include "server/tools/threadpool.h"
 
 namespace zipfiles::server {
 
@@ -36,8 +35,11 @@ void doAccept() {
     close(epollFd);
   }
 
+  // 事件数组
   std::array<struct epoll_event, MAX_EPOLL_EVENTS> events{};
-  ThreadPool tp(MAX_THREADS);
+
+  // selector实例
+  Selector selector;
 
   while (true) {
     // 调用epoll_wait
@@ -60,7 +62,9 @@ void doAccept() {
           << "Now processing event from " << events[i].data.fd
           << "(server_fd) as accept event.";
 
-        if (Socket::getConnectionCount() > MAX_CONNECTIONS) {
+        int count = selector.getConnectionCount();
+
+        if (count > MAX_CONNECTIONS) {
           // todo: connection数量过多的处理
           // ? 不处理，前端直接不展示数据了
           log4cpp::Category::getRoot().warnStream()
@@ -71,18 +75,20 @@ void doAccept() {
 
         Socket::acceptConnection(epollFd);
 
+        selector.addConnectionCount();
+
         // 当前正在运行的连接数
         log4cpp::Category::getRoot().infoStream()
-          << "Connection count: " << Socket::getConnectionCount();
-
+          << "Connection count: " << count + 1;
       } else {
         // 不是server_fd，那么就是client_fd
         // log4cpp::Category::getRoot().infoStream()
         //   << "Now processing event from " << events[i].data.fd
         //   << " as handle event.";
-        
+
+        // 让selector分发任务
         int client_fd = events[i].data.fd;
-        tp.enqueue([&client_fd] { doHandle(client_fd); });
+        selector.doSelect(client_fd);
       }
     }
   }

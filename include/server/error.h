@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <string>
 namespace zipfiles::server {
+
 class SocketTemporarilyUnavailable : public std::runtime_error {
  public:
   explicit SocketTemporarilyUnavailable(const std::string& what)

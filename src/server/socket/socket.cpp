@@ -1,3 +1,4 @@
+#include "server/socket/socket.h"
 #include <arpa/inet.h>
 #include <sys/epoll.h>
 #include <mutex>
@@ -11,11 +12,9 @@
 #include "mp/Response.h"
 #include "mp/mp.h"
 #include "server/error.h"
-#include "server/socket/socket.h"
 
 namespace zipfiles::server {
-Socket::Socket()
-  : server_fd(socket(AF_INET, SOCK_STREAM, 0)), address{}, connectionCount(0) {
+Socket::Socket() : server_fd(socket(AF_INET, SOCK_STREAM, 0)), address{} {
   if (server_fd == -1) {
     perror("socket failed");
     exit(EXIT_FAILURE);
@@ -98,11 +97,10 @@ void Socket::acceptConnection(int epoll_fd) {
   } else {
     log4cpp::Category::getRoot().infoStream()
       << "Add client_fd " << client_fd << " to epoll_fd " << epoll_fd;
-
-    getInstance().connectionCount.fetch_add(1);
   }
 }
 
+// ! Deprecated
 ReqPtr Socket::receive(int client_fd) {
   std::array<char, mp::MAX_MESSAGE_SIZE> buffer = {0};
 
@@ -112,21 +110,6 @@ ReqPtr Socket::receive(int client_fd) {
     // 断开连接
     close(client_fd);
 
-    // 减少connectionCount
-    static std::mutex mtx;
-    static std::unordered_set<int> closedConnections;
-    {
-      std::lock_guard<std::mutex> lock(mtx);
-      if (closedConnections.find(client_fd) == closedConnections.end()) {
-        closedConnections.insert(client_fd);
-        getInstance().connectionCount.fetch_sub(1);
-      }
-    }
-
-    log4cpp::Category::getRoot().infoStream()
-      << "Client disconnect, which has client_fd " << client_fd
-      << ", and now connection count is " << Socket::getConnectionCount();
-
     throw std::runtime_error("Client disconnected");
   }
 
@@ -134,24 +117,13 @@ ReqPtr Socket::receive(int client_fd) {
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
       std::stringstream ss;
       ss << client_fd;
-      ss << " has no more data, now disconnect and connection count is ";
-      ss << Socket::getConnectionCount();
+      ss << " has no more data, now disconnect";
       // 没有更多数据可读
       throw SocketTemporarilyUnavailable(ss.str());
     }
 
     close(client_fd);
-    // 减少connectionCount
-    static std::mutex mtx;
-    static std::unordered_set<int> closedConnections;
-    {
-      std::lock_guard<std::mutex> lock(mtx);
-      if (closedConnections.find(client_fd) == closedConnections.end()) {
-        closedConnections.insert(client_fd);
-        getInstance().connectionCount.fetch_sub(1);
-      }
-    }
-    
+
     throw std::runtime_error("Failed to receive request, now disconnect");
   }
 
@@ -174,10 +146,6 @@ void Socket::send(int client_fd, const ResPtr& res) {
 
   std::string data = Json::writeString(writer, res->toJson());
   ::send(client_fd, data.c_str(), data.size(), 0);
-}
-
-int Socket::getConnectionCount() {
-  return getInstance().connectionCount.load();
 }
 
 }  // namespace zipfiles::server
