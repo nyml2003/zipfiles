@@ -1,25 +1,20 @@
+#include "server/handler.h"
 #include <unistd.h>
 #include <csignal>
 #include <log4cpp/Category.hh>
 #include "mp/Request.h"
 #include "mp/Response.h"
+#include "mp/apis/GetCommitDetail.h"
 #include "mp/common.h"
 #include "server/error.h"
-#include "server/handler.h"
 #include "server/socket/api.h"
 #include "server/socket/socket.h"
 
 namespace zipfiles::server {
 
-void doHandle(int client_fd) {
-  std::cout << client_fd << std::endl;
+void doHandle(int client_fd, const ReqPtr& request) {
   try {
     // 主eventloop
-    // log4cpp::Category::getRoot().infoStream()
-    //   << "Thread " << std::this_thread::get_id()
-    //   << " is waiting for request from " << client_fd << "...";
-
-    ReqPtr request = Socket::receive(client_fd);
 
     log4cpp::Category::getRoot().infoStream()
       << "Request received: " << request->toJson();
@@ -55,8 +50,7 @@ void doHandle(int client_fd) {
         },
         [](request::MockNeedTime& req) {
           return std::make_shared<Res>(response::MockNeedTime{req.id});
-        }
-      },
+        }},
       request->kind
     );
 
@@ -70,8 +64,7 @@ void doHandle(int client_fd) {
 
   } catch (const std::exception& e) {
     // 如果是SocketTemporarilyUnavailable
-    if (const auto* e_ptr =
-          dynamic_cast<const SocketTemporarilyUnavailable*>(&e)) {
+    if (const auto* e_ptr = dynamic_cast<const SocketTemporarilyUnavailable*>(&e)) {
       // log4cpp::Category::getRoot().infoStream() << e_ptr->what();
       return;
     }
@@ -82,7 +75,7 @@ void doHandle(int client_fd) {
 /**
  * @brief 守护进程初始化函数
  * ? 待使用
- * 
+ *
  */
 void daemonize() {
   pid_t pid = fork();

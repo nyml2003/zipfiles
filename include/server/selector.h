@@ -31,11 +31,15 @@ class Selector {
  private:
   std::vector<uint8_t> read_buffer;
   std::vector<uint8_t> write_buffer;
-  size_t read_buffer_ptr{};
   ThreadPool tp;
   std::atomic<int> connectionCount{};
 
-  void parseJsonFromData(std::vector<uint8_t> data);
+  bool parsing{};
+  int braceCount{};
+  int bracketCount{};
+
+  void resetWriteBuffer(std::vector<uint8_t>& write_buffer);
+  bool isValidJson(const uint8_t& byte);
 };
 
 }  // namespace zipfiles::server
