@@ -55,29 +55,6 @@ export function FileTypeToString(type: FileType): string {
     case FileType.Unknown:
       return 'Unknown';
     default:
-      throw new Error(`Unknown FileType: ${type}`);
+      return 'Undefined';
   }
-}
-
-export interface Filter {
-  type: FileType;
-  size: {
-    min: number;
-    max: number;
-  };
-  owner: string;
-  group: string;
-}
-
-export interface NestedFileDetail {
-  name: string;
-  type: FileType;
-  createTime: number;
-  updateTime: number;
-  size: number;
-  owner: string;
-  group: string;
-  mode: number;
-  path: string;
-  children: NestedFileDetail[] | null;
 }

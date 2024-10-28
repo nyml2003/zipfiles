@@ -18,7 +18,7 @@ export interface ResponseWrapper {
 
 export interface RequestWrapper<Request> {
   apiEnum: ApiEnum;
-  params: Request;
+  params: string;
   timestamp: number;
   uuid: string;
 }

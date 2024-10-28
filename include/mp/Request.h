@@ -6,6 +6,7 @@
 #include "json/value.h"
 #include "mp/apis/GetCommitDetail.h"
 #include "mp/apis/GetCommitList.h"
+#include "mp/apis/GetFileDetail.h"
 #include "mp/apis/GetFileDetailList.h"
 #include "mp/apis/GetFileList.h"
 #include "mp/apis/PostCommit.h"
@@ -24,6 +25,7 @@ using ReqKind = std::variant<
   request::GetCommitDetail,
   request::GetCommitList,
   request::GetFileList,
+  request::GetFileDetail,
   request::GetFileDetailList,
   request::PostCommit,
   request::MockNeedTime>;

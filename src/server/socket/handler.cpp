@@ -1,3 +1,4 @@
+#include "server/handler.h"
 #include <unistd.h>
 #include <csignal>
 #include <log4cpp/Category.hh>
@@ -5,7 +6,6 @@
 #include "mp/Response.h"
 #include "mp/common.h"
 #include "server/error.h"
-#include "server/handler.h"
 #include "server/socket/api.h"
 #include "server/socket/socket.h"
 
@@ -55,7 +55,12 @@ void doHandle(int client_fd) {
         },
         [](request::MockNeedTime& req) {
           return std::make_shared<Res>(response::MockNeedTime{req.id});
-        }
+        },
+        [](request::GetFileDetail& req) {
+          return std::make_shared<Res>(
+            api::handle<request::GetFileDetail, response::GetFileDetail>(req)
+          );
+        },
       },
       request->kind
     );
@@ -68,7 +73,8 @@ void doHandle(int client_fd) {
       << "Response sent: " << response->toJson();
     Socket::send(client_fd, response);
 
-  } catch (const std::exception& e) {
+  }  // namespace zipfiles::server
+  catch (const std::exception& e) {
     // 如果是SocketTemporarilyUnavailable
     if (const auto* e_ptr =
           dynamic_cast<const SocketTemporarilyUnavailable*>(&e)) {

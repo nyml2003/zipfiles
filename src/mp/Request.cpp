@@ -1,7 +1,7 @@
+#include "mp/Request.h"
 #include <optional>
 #include <utility>
 #include "log4cpp/Category.hh"
-#include "mp/Request.h"
 #include "mp/Response.h"
 #include "mp/common.h"
 
@@ -26,7 +26,7 @@ Json::Value Req::toJson() {
         json["payload"]["path"] = req.path;
       },
       [&json](request::GetFileDetailList& req) {
-        json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_LIST);
+        json["apiEnum"] = toSizeT(ApiEnum::GET_FILEDETAIL_LIST);
         json["payload"]["path"] = req.path;
         if (!req.filter.has_value()) {
           return;
@@ -85,6 +85,11 @@ Json::Value Req::toJson() {
         json["apiEnum"] = toSizeT(ApiEnum::MOCK_NEED_TIME);
         json["payload"]["id"] = req.id;
       },
+      [&json](request::GetFileDetail& req) {
+        json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_DETAIL);
+        json["payload"]["path"] = req.path;
+        json["payload"]["name"] = req.name;
+      },
       [](auto&&) { throw std::runtime_error("Unknown request type"); },
     },
     kind
@@ -93,22 +98,27 @@ Json::Value Req::toJson() {
 }
 
 ReqPtr Req::fromJson(const Json::Value& json) {
-  ReqPtr req;
+  ReqPtr req = nullptr;
   auto api = static_cast<ApiEnum>(json["apiEnum"].asInt());
+  log4cpp::Category::getRoot().infoStream()
+    << "Making a request from json: " << json << toSizeT(api);
   switch (api) {
-    case ApiEnum::GET_COMMIT_DETAIL:
+    case ApiEnum::GET_COMMIT_DETAIL: {
       req = std::make_shared<Req>(
         request::GetCommitDetail{json["payload"]["uuid"].asString()}
       );
       break;
-    case ApiEnum::GET_COMMIT_LIST:
+    }
+    case ApiEnum::GET_COMMIT_LIST: {
       req = std::make_shared<Req>(request::GetCommitList{});
       break;
-    case ApiEnum::GET_FILE_LIST:
+    }
+    case ApiEnum::GET_FILE_LIST: {
       req = std::make_shared<Req>(
         request::GetFileList{json["payload"]["path"].asString()}
       );
       break;
+    }
     case ApiEnum::GET_FILEDETAIL_LIST: {
       auto path = json["payload"]["path"].asString();
       request::getFileDetailList::Filter filter;
@@ -144,6 +154,8 @@ ReqPtr Req::fromJson(const Json::Value& json) {
         filter.group = filterJson["group"].asString();
       }
       req = std::make_shared<Req>(request::GetFileDetailList{path, filter});
+      log4cpp::Category::getRoot().infoStream()
+        << "Made a file detail list request from json: " << req->toJson();
       break;
     }
     case ApiEnum::POST_COMMIT: {
@@ -161,16 +173,25 @@ ReqPtr Req::fromJson(const Json::Value& json) {
       });
       break;
     }
-    case ApiEnum::MOCK_NEED_TIME:
+    case ApiEnum::GET_FILE_DETAIL: {
+      req = std::make_shared<Req>(request::GetFileDetail{
+        json["payload"]["path"].asString(), json["payload"]["name"].asString()
+      });
+      break;
+    } break;
+    case ApiEnum::MOCK_NEED_TIME: {
       req = std::make_shared<Req>(
         request::MockNeedTime{json["payload"]["id"].asInt()}
       );
       break;
+    }
     default:
       break;
   }
   req->timestamp = json["timestamp"].asDouble();
   req->uuid = json["uuid"].asString();
+  log4cpp::Category::getRoot().infoStream()
+    << "Made a request from json: " << req->toJson();
   return req;
 }
 

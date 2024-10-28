@@ -3,10 +3,11 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
 import { v4 as uuidv4 } from 'uuid';
-import { findLongestCommonPrefix } from '@/utils';
 import useApi from '@/hooks/useApi';
 import { ApiEnum } from '@/apis';
 import { PostCommitRequest, PostCommitResponse } from '@/apis/PostCommit';
+import { GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
+import { FileType } from '@/types';
 type BackupFormProps = Partial<{
   message: string;
   storagePath: string;
@@ -20,30 +21,94 @@ const initialState: BackupFormProps = {
   author: 'root',
 };
 
+interface File {
+  name: string;
+  type: FileType;
+}
+
 const BackupOption: React.FC = () => {
   const [form] = Form.useForm();
-  const expandedSelectedFile = useSelector(
-    (state: RootState) => state.createCommit.expandedSelectedFile,
+  const files = useSelector((state: RootState) => state.createCommit.selectedFile.files);
+  const directories = useSelector(
+    (state: RootState) => state.createCommit.selectedFile.directories,
   );
   const [messageApi, contextHolder] = message.useMessage();
   const api = useApi();
-  const onFinish = (values: Required<BackupFormProps>) => {
-    if (!expandedSelectedFile.length) {
+
+  // useEffect(() => {
+  //   setFileData(files.map(file => file.path + '/' + file.name));
+  // }, [files]);
+
+  // useEffect(() => {
+  //   directories.forEach(async path => {
+  //     const files = await fetchAllFiles(path);
+  //     setDirectoryData(prev => prev.concat(files));
+  //   });
+  // }, [directories]);
+
+  const fetchFileList = async (path: string) => {
+    const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
+      path,
+    });
+    return res.files;
+  };
+
+  /**
+   * @brief 返回指定路径下的所有文件
+   * @description 先获取指定路径下的一级文件，如果该文件是文件，直接加入集合，否则调用fetchAllFiles后，concat在后面
+   * @param path
+   * @returns String[] 所有文件的path+name形成的path的集合
+   */
+  const fetchAllFiles = async (path: string): Promise<string[]> => {
+    const files = await fetchFileList(path);
+    const allFiles: string[] = [];
+    const promises: Promise<void>[] = [];
+
+    files.forEach((file: File) => {
+      if (file.type === FileType.Directory) {
+        promises.push(
+          fetchAllFiles(path + '/' + file.name).then(subFiles => {
+            allFiles.push(...subFiles);
+          }),
+        );
+      }
+      allFiles.push(path + '/' + file.name);
+    });
+
+    await Promise.all(promises);
+    return allFiles;
+  };
+
+  const onFinish = async (values: Required<BackupFormProps>) => {
+    if ((!files || files.length === 0) && (!directories || directories.length === 0)) {
       messageApi.error('请选择文件');
       return;
     }
     const uuid = uuidv4();
-    const request: PostCommitRequest = {
-      files: expandedSelectedFile,
-      ...values,
-      uuid,
-      createTime: Date.now(),
-      lca: findLongestCommonPrefix(expandedSelectedFile),
-    };
-    api.request<PostCommitRequest, PostCommitResponse>(ApiEnum.PostCommit, request).then(() => {
+    const fileData = files.map(file => file.path + '/' + file.name);
+    let dirData: string[] = [];
+
+    try {
+      // 使用 Promise.all 处理所有的异步操作
+      const dirPromises = directories.map(async path => {
+        const files = await fetchAllFiles(path);
+        return files;
+      });
+      const dirResults = await Promise.all(dirPromises);
+      dirData = dirResults.flat(); // 将所有目录的结果合并到 dirData
+
+      const backupFiles = [...fileData, ...dirData];
+      const request: PostCommitRequest = {
+        files: backupFiles,
+        ...values,
+        uuid,
+        createTime: Date.now(),
+      };
+      await api.request<PostCommitRequest, PostCommitResponse>(ApiEnum.PostCommit, request);
       messageApi.success('备份成功');
-      console.log(request);
-    });
+    } catch (error) {
+      messageApi.error('备份过程中发生错误');
+    }
   };
   return (
     <div className='p-2'>

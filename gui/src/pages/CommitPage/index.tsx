@@ -1,25 +1,27 @@
-import React from 'react';
+import React, { Children } from 'react';
 import CommitTable from './CommitTable';
 import { Tabs, TabsProps } from 'antd';
 import Explorer from './Explorer';
+import ExplorerProvider, { createProvider } from './store/context';
 
-const ExplorerPane = (key?: string) => ({
+const ExplorerPane = (uuid: string, key?: string) => ({
   label: '浏览文件',
   key: key || '2',
-  children: <Explorer />,
+  // children: <ExplorerProvider initialState={{commitId: uuid}}><Explorer/></ExplorerProvider>,
+  children: createProvider(<Explorer/>, {commitId: uuid}),
   className: 'grow-item',
 });
 
 const CommitPage: React.FC = () => {
   const [activeKey, setActiveKey] = React.useState('1');
-  const openExplorer = () => {
+  const openExplorer = (uuid: string) => {
     setPanes((prev: TabsProps['items']) => {
       if (!prev) {
-        return [InitialPane, ExplorerPane()];
+        return [InitialPane, ExplorerPane(uuid)];
       }
       const newKey = String(Number(prev[prev.length - 1].key) + 1);
       setActiveKey(newKey);
-      return [...prev, ExplorerPane(newKey)];
+      return [...prev, ExplorerPane(uuid, newKey)];
     });
   };
   const InitialPane = {

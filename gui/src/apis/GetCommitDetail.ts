@@ -10,7 +10,6 @@ interface FileDetail {
   mode: number;
   path: string;
   name: string;
-
 }
 
 export interface GetCommitDetailRequest {

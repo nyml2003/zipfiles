@@ -4,6 +4,7 @@
 #include <variant>
 #include "mp/apis/GetCommitDetail.h"
 #include "mp/apis/GetCommitList.h"
+#include "mp/apis/GetFileDetail.h"
 #include "mp/apis/GetFileDetailList.h"
 #include "mp/apis/GetFileList.h"
 #include "mp/apis/PostCommit.h"
@@ -25,6 +26,7 @@ enum class ApiEnum {
   POST_COMMIT = 102,
   GET_COMMIT_DETAIL = 103,
   GET_COMMIT_LIST = 104,
+  GET_FILE_DETAIL = 105,
 };
 
 size_t toSizeT(ApiEnum apiEnum);
@@ -46,7 +48,8 @@ using ResKind = std::variant<
   response::GetFileDetailList,
   response::PostCommit,
   response::GetCommitDetail,
-  response::GetCommitList>;
+  response::GetCommitList,
+  response::GetFileDetail>;
 
 using ResPtr = std::shared_ptr<Res>;
 

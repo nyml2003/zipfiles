@@ -290,20 +290,19 @@ void handleFunction(
     handleError("Failed in parsing params, error: " + std::string(e.what()));
     return;
   }
-  ReqPtr request = Req::fromJson(params);
+  log4cpp::Category::getRoot().infoStream()
+    << "Received function call: " << params;
+  Json::Value reqJson;
+  reqJson["apiEnum"] = static_cast<int>(api);
+  reqJson["payload"] = params;
+  reqJson["timestamp"] =
+    jsc_value_to_double(jsc_value_object_get_property(value, "timestamp"));
+  reqJson["uuid"] =
+    jsc_value_to_string(jsc_value_object_get_property(value, "uuid"));
 
-  try {
-    request->timestamp =
-      jsc_value_to_double(jsc_value_object_get_property(value, "timestamp"));
-    request->uuid =
-      jsc_value_to_string(jsc_value_object_get_property(value, "uuid"));
-  } catch (const std::exception& e) {
-    handleError(
-      "Failed in getting timestamp or uuid, error: " + std::string(e.what())
-    );
-    return;
-  }
-
+  ReqPtr request = Req::fromJson(reqJson);
+  log4cpp::Category::getRoot().infoStream()
+    << "Sending request: " << request->toJson();
   try {
     handleRemoteResponse(request);
   } catch (const std::exception& e) {

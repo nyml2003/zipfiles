@@ -4,7 +4,7 @@ import router from './router/router';
 import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { useGlobalMessageHandler } from './hooks/useGlobalMessageHandler';
-import  useLog  from './hooks/useLog';
+import useLog from './hooks/useLog';
 import { ReduxProvider } from './stores/provider';
 // 定义路由配置
 

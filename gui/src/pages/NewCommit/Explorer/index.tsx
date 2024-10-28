@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   ArrowLeftOutlined,
+  ClearOutlined,
   FilterFilled,
   FilterOutlined,
   HomeOutlined,
@@ -14,6 +15,9 @@ import { BreadcrumbItemType } from 'antd/es/breadcrumb/Breadcrumb';
 import TreeMenu from './TreeMenu';
 import TableView from './TableView';
 import FilterForm from './FilterForm';
+import { GetFileListRequest, GetFileListResponse } from '../../../apis/GetFileList';
+import { ApiEnum } from '@/apis';
+import useApi from '@/hooks/useApi';
 
 const Explorer: React.FC = () => {
   const isFiltering = useSelector((state: RootState) => state.createCommit.isFiltering);
@@ -32,9 +36,13 @@ const Explorer: React.FC = () => {
             }></Button>
           <Button
             type='text'
-            onClick={() => dispatch(handleRefresh())}
+            onClick={() => { console.log('刷新'); }}
             icon={<Loading3QuartersOutlined />}
             disabled={isFiltering}></Button>
+          <Button
+            type='text'
+            onClick={() => dispatch(handleRefresh())}
+            icon={<ClearOutlined />}></Button>
           <Breadcrumb
             items={currentPath.split('/').reduce((acc, item, index, arr) => {
               const path = arr.slice(0, index + 1).join('/');

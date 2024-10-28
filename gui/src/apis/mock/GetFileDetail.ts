@@ -1,13 +1,14 @@
+import { omit } from 'lodash';
 import { GetFileDetailRequest, GetFileDetailResponse } from '../GetFileDetail';
-import { cachedFileList, findFile } from './utils';
+import { findFile } from './utils';
 
 // 全局变量来缓存嵌套的目录结构
 
 export function mock(request: GetFileDetailRequest): GetFileDetailResponse {
-  const { path } = request;
-  const file = findFile(cachedFileList, path, '/');
+  const { path, name } = request;
+  const file = omit(findFile(path, name), 'children');
   if (!file) {
-    throw new Error('no such file');
+    throw new Error('no such file' + path);
   }
   return file;
 }

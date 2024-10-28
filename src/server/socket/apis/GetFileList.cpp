@@ -8,7 +8,7 @@ template <>
 response::GetFileList handle<request::GetFileList, response::GetFileList>(
   const request::GetFileList& request
 ) {
-  const fs::path& path = request.path;
+  const fs::path& path = request.path == "" ? "/" : request.path;
 
   if (!fs::exists(path)) {
     throw std::runtime_error("File does not exist");

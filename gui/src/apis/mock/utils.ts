@@ -1,9 +1,11 @@
 /* eslint-disable prefer-const */
 import { FileType } from '@/types';
+import { cleanObject } from '@/utils';
 import Mock from 'mockjs';
-import { filterBy } from '@/utils';
 import { v4 as uuidv4 } from 'uuid';
-const MockFileNumber: [number, number] = [100, 200];
+import { GetFileDetailListRequest } from '../GetFileDetailList';
+import { omit } from 'lodash';
+const MockFileNumber: [number, number] = [10, 20];
 
 interface File {
   name: string;
@@ -20,6 +22,12 @@ interface FileDetail {
   group: string;
   mode: number;
   path: string;
+}
+
+interface RootFileDetail {
+  name: string;
+  type: FileType.Directory;
+  children: MockFileDetail[];
 }
 
 interface CommitLog {
@@ -70,7 +78,26 @@ export function pickIndex<T>(choices: T[], _weights?: number[]): number {
   };
   return binarySearch(x);
 }
-
+export const filterBy = <T extends FileDetail>(
+  files: T[],
+  filter: Partial<GetFileDetailListRequest['filter']>,
+): T[] => {
+  const cleanedFilter: Filter = cleanObject(filter);
+  if (!cleanedFilter || Object.keys(cleanedFilter).length === 0) return files;
+  return files.filter(file => {
+    // if (file.type === FileType.Directory) return true;
+    if (cleanedFilter.type && file.type !== cleanedFilter.type) return false;
+    if (cleanedFilter.minSize && file.size < cleanedFilter.minSize) return false;
+    if (cleanedFilter.maxSize && file.size > cleanedFilter.maxSize) return false;
+    if (cleanedFilter.minCreateTime && file.createTime < cleanedFilter.minCreateTime) return false;
+    if (cleanedFilter.maxCreateTime && file.createTime > cleanedFilter.maxCreateTime) return false;
+    if (cleanedFilter.minUpdateTime && file.updateTime < cleanedFilter.minUpdateTime) return false;
+    if (cleanedFilter.maxUpdateTime && file.updateTime > cleanedFilter.maxUpdateTime) return false;
+    if (cleanedFilter.owner && !file.owner.includes(cleanedFilter.owner)) return false;
+    if (cleanedFilter.group && !file.group.includes(cleanedFilter.group)) return false;
+    return true;
+  });
+};
 export function pickFileType(): FileType {
   const fileTypes = [
     FileType.None,
@@ -87,34 +114,60 @@ export function pickFileType(): FileType {
   const weights = [1, 1, 3, 5, 1, 1, 1, 1, 1, 1];
   return pickIndex<FileType>(fileTypes, weights);
 }
-export const cachedFileList: MockFileDetail[] = [
-  {
-    name: '/',
-    type: FileType.Directory,
-    children: Array.from({ length: randomNumber(...MockFileNumber) }).map(() =>
-      generateRandomFileDetail('/'),
-    ),
-    createTime: new Date().getTime() / 1000,
-    updateTime: new Date().getTime() / 1000,
-    size: 0,
-    owner: 'root',
-    group: 'root',
-    mode: 777,
-    path: '/',
-  },
-];
+export const cachedFileRoot: RootFileDetail = {
+  name: '',
+  type: FileType.Directory,
+  children: Array.from({ length: randomNumber(...MockFileNumber) }).map(() =>
+    generateRandomFileDetail(''),
+  ),
+};
+
+cachedFileRoot.children.push({
+  name: 'usr',
+  type: FileType.Directory,
+  children: Array.from({ length: randomNumber(...MockFileNumber) }).map(() =>
+    generateRandomFileDetail('usr'),
+  ),
+  createTime: new Date(Mock.mock('@datetime')).getTime() / 1000,
+  updateTime: new Date(Mock.mock('@datetime')).getTime() / 1000,
+  size: 0,
+  owner: Mock.mock('@name'),
+  group: Mock.mock('@name'),
+  mode: Mock.mock('@integer(0, 777)'),
+  path: '',
+});
+
+function generateWholeFileTree(root: MockFileDetail[], depth: number) {
+  if (depth === 0) return;
+  root.forEach(file => {
+    if (file.type === FileType.Directory) {
+      file.children = Array.from({ length: randomNumber(...MockFileNumber) }).map(() =>
+        generateRandomFileDetail(file.path + '/' + file.name),
+      );
+      if (depth === 1) {
+        file.children = file.children.filter(file => file.type !== FileType.Directory);
+      }
+      generateWholeFileTree(file.children, depth - 1);
+    }
+  });
+}
+
+generateWholeFileTree(cachedFileRoot.children, 3);
 
 // 随机从文件列表cachedFileList中选择若干个文件
 function pickFiles(): MockFileDetail[] {
   const files: MockFileDetail[] = [];
   const fileNumber = randomNumber(1, 10);
-  const flatFiles = cachedFileList.reduce((acc: MockFileDetail[], file: MockFileDetail) => {
-    acc.push(file);
-    if (file.children) {
-      acc.push(...file.children);
-    }
-    return acc;
-  }, []);
+  const flatFiles = cachedFileRoot.children.reduce(
+    (acc: MockFileDetail[], file: MockFileDetail) => {
+      acc.push(file);
+      if (file.children) {
+        acc.push(...file.children);
+      }
+      return acc;
+    },
+    [],
+  );
   for (let i = 0; i < fileNumber; i++) {
     const index = Math.floor(Math.random() * flatFiles.length);
     files.push(flatFiles[index]);
@@ -128,7 +181,10 @@ export let cachedCommitList: CommitLog[] = [];
 function generateCommitLog() {
   const files = pickFiles();
   const uuid = uuidv4();
-  backups.set(uuidv4(), files);
+  backups.set(
+    uuid,
+    files.map(file => omit(file, 'children')),
+  );
   cachedCommitList.push({
     uuid,
     message: Mock.mock('@sentence'),
@@ -150,7 +206,7 @@ export interface MockFileDetail extends FileDetail {
   children: MockFileDetail[] | null;
 }
 
-export function generateRandomFileDetail(path = '/'): MockFileDetail {
+export function generateRandomFileDetail(path: string): MockFileDetail {
   const type = pickFileType(); // 随机选择文件类型
   const name = Mock.mock('@word(3, 10)');
   return {
@@ -164,68 +220,46 @@ export function generateRandomFileDetail(path = '/'): MockFileDetail {
     owner: Mock.mock('@name'),
     group: Mock.mock('@name'),
     mode: Mock.mock('@integer(0, 777)'),
-    path: path === '/' ? `/${name}` : `${path}/${name}`,
+    path,
   };
 }
-function calPath(currentPath: string, file: MockFileDetail) {
-  if (currentPath === '/' && file.name === '/') return '/';
-  if (currentPath === '/') {
-    return `/${file.name}`;
-  }
-  return `${currentPath}/${file.name}`;
-}
+// function calPath(currentPath: string, file: MockFileDetail) {
+//   if (currentPath === '/' && file.name === '/') return '/';
+//   if (currentPath === '/') {
+//     return `/${file.name}`;
+//   }
+//   return `${currentPath}/${file.name}`;
+// }
 // 递归查找函数
 export function findFilesByPath(
-  files: MockFileDetail[],
   targetPath: string,
-  currentPath: string,
   filter?: Partial<Filter>,
 ): MockFileDetail[] | null {
-  for (const file of files) {
-    const newCurrentPath = calPath(currentPath, file);
-    if (newCurrentPath === targetPath) {
-      if (file.type !== FileType.Directory) {
-        return [file];
-      }
-      if (!file.children) {
-        file.children = Array.from({ length: randomNumber(...MockFileNumber) }, () =>
-          generateRandomFileDetail(newCurrentPath),
-        );
-      }
-      const result = file.children;
-      if (filter && Object.keys(filter).length) {
-        return filterBy(result, filter);
-      }
-      return result;
-    }
-    if (file.type === FileType.Directory) {
-      const result = findFilesByPath(file.children || [], targetPath, newCurrentPath, filter);
-      if (result) {
-        return result;
-      }
-    }
+  if (targetPath === '') {
+    return filterBy(cachedFileRoot.children, filter);
   }
-  return null;
+  const parts = targetPath.split('/').slice(1);
+  let current: MockFileDetail = cachedFileRoot.children.find(
+    file => file.name === parts[0],
+  ) as MockFileDetail;
+  for (let i = 1; i < parts.length; i++) {
+    if (!current.children) {
+      throw new Error('File not found' + targetPath);
+    }
+    current = current.children.find(file => file.name === parts[i]) as MockFileDetail;
+  }
+  // if (!current.children && current.type === FileType.Directory) {
+  //   current.children = Array.from({ length: randomNumber(...MockFileNumber) }, () =>
+  //     generateRandomFileDetail(current.path + '/' + current.name),
+  //   );
+  // }
+  return filterBy(current.children || [], filter);
 }
 
-export function findFile(
-  files: MockFileDetail[],
-  targetPath: string,
-  currentPath: string,
-): MockFileDetail | null {
-  for (const file of files) {
-    const newCurrentPath = calPath(currentPath, file);
-    if (newCurrentPath === targetPath) {
-      return file;
-    }
-    if (file.type === FileType.Directory) {
-      const result = findFile(file.children || [], targetPath, newCurrentPath);
-      if (result) {
-        return result;
-      }
-    }
-  }
-  return null;
+export function findFile(targetPath: string, targetName: string): MockFileDetail | null {
+  const files = findFilesByPath(targetPath);
+  if (!files) return null;
+  return files.find(file => file.name === targetName) || null;
 }
 
 export function randomNumber(min: number, max: number) {

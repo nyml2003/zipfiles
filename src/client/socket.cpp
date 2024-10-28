@@ -82,8 +82,8 @@ void Socket::reconnect() {
 void Socket::send(const ReqPtr& req) {
   static Json::StreamWriterBuilder writer;
   std::string data = Json::writeString(writer, req->toJson());
+  log4cpp::Category::getRoot().infoStream() << "Sending request: " << data;
   ssize_t bytesSent = ::send(sock, data.c_str(), data.size(), 0);
-
   if (bytesSent == -1) {
     if (errno == EPIPE) {  // 检测到 "Broken pipe" 错误
       log4cpp::Category::getRoot().errorStream()
