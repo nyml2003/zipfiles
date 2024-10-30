@@ -47,10 +47,18 @@ void restoreTo(
 
   // 打开输入流
   std::string filePath = cr.storagePath + "/" + uuid + "/" + uuid;
+
+  // 校验CRC
+  if (!CRC::check(filePath)) {
+    throw std::runtime_error("CRC check failed, its uuid is " + uuid);
+  }
+
   std::ifstream inFile(filePath, std::ios::binary);
   if (!inFile) {
     throw std::runtime_error("Failed to open: " + filePath);
   }
+
+  inFile.seekg(CRC32::DIGESTSIZE);
 
   // 如果有加密，则读取IV
   bool decrypt = cr.isEncrypt;
@@ -60,7 +68,7 @@ void restoreTo(
   }
 
   // 实例化解码器
-  AESEncryptor decryptor(key);
+  Cryptor decryptor(key);
 
   // 实例化解包器
   FileUnpacker fileUnpacker(dst);
