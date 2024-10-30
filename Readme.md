@@ -47,32 +47,34 @@ make
 
 ### 项目模块
 
-- [ ] 数据备份模块(data-backup)
-  - [ ] 选定备份路径(base)
-  - [ ] 选定备份文件/目录(add path)
-  - [ ] 合并成commit(transaction)
-  - [ ] 备份文件(backup files)
-- [ ] 数据还原模块(data-restore)
-  - [ ] 选定还原路径(target)
-  - [ ] 选定要还原的commit
-  - [ ] 还原(restore)
-- [ ] 数据处理模块(data-processing)
+- [x] 数据备份模块(data-backup)
+  - [x] 选定备份路径(base)
+  - [x] 选定备份文件/目录(add path)
+  - [x] 合并成commit(transaction)
+  - [x] 生成CRC校验码
+  - [x] 备份文件(backup files)
+- [x] 数据还原模块(data-restore)
+  - [x] 选定还原路径(target)
+  - [x] 选定要还原的commit
+  - [x] 校验是否正确
+  - [x] 还原(restore)
+- [x] 数据处理模块(data-processing)
   - [x] 数据打包(pack)
   - [x] 数据解包(unpack)
-  - [ ] 数据压缩(compress)
-  - [ ] 数据解压(decompress)
-  - [ ] 数据加密(encrypt)
-  - [ ] 数据解密(decrypt)
-- [ ] UI
+  - [x] 数据压缩(compress)
+  - [x] 数据解压(decompress)
+  - [x] 数据加密(encrypt)
+  - [x] 数据解密(decrypt)
+- [x] UI
   - [ ] shell
-  - [ ] webkitGTK
+  - [ ] GUI
 - [ ] 设置模块(configure)
   - [ ] 定时备份(scheduled)
   - [ ] 实时备份(real-time)
   - [ ] 自定义备份(custom backup)
     - [ ] 自定义配置文件
-- [ ] 工具模块(tools)
-  - [ ] Linux API
+- [x] 工具模块(tools)
+  - [x] Linux API
   - [x] 读取目录/文件
     - [x] 文件类型支持(type support)
     - [x] 元数据支持(metadata)
