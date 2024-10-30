@@ -33,7 +33,11 @@ void sendRequest(int sock, int totalRequests) {
     std::cout << "Request: " << request << std::endl;
 
     Json::StreamWriterBuilder writer;
+
     std::string requestData = Json::writeString(writer, request);
+    uint32_t size = requestData.size();
+    requestData =
+      std::string(reinterpret_cast<char*>(&size), sizeof(size)) + requestData;
 
     if (send(sock, requestData.c_str(), requestData.size(), 0) < 0) {
       std::cerr << "Send failed" << std::endl;
@@ -41,7 +45,8 @@ void sendRequest(int sock, int totalRequests) {
     }
 
     usedCounters.insert(currentCounter);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(20));  // 延迟20毫秒
+    // std::this_thread::sleep_for(std::chrono::milliseconds(20));  //
+    // 延迟20毫秒
     requestCount++;
   }
 
@@ -104,10 +109,7 @@ int main() {
       return -1;
     }
 
-    if (connect(
-          sock, reinterpret_cast<struct sockaddr*>(&serv_addr),
-          sizeof(serv_addr)
-        ) < 0) {
+    if (connect(sock, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
       std::cerr << "Connection Failed" << std::endl;
       close(sock);
       return -1;

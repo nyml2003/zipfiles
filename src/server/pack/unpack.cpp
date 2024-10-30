@@ -33,7 +33,7 @@ bool FileUnpacker::unpackFilesByBlock(
     }
 
     switch (state) {
-      case State::READ_PATH_SIZE:
+      case UnpackStatus::READ_PATH_SIZE:
         try {
           readPathSize(ibuffer);
         } catch (std::exception& e) {
@@ -43,7 +43,7 @@ bool FileUnpacker::unpackFilesByBlock(
         }
         break;
 
-      case State::READ_PATH:
+      case UnpackStatus::READ_PATH:
         try {
           readPath(ibuffer);
         } catch (std::exception& e) {
@@ -53,7 +53,7 @@ bool FileUnpacker::unpackFilesByBlock(
         }
         break;
 
-      case State::READ_FILEDETAIL_SIZE:
+      case UnpackStatus::READ_FILEDETAIL_SIZE:
         try {
           readFileDetailSize(ibuffer);
         } catch (std::exception& e) {
@@ -63,7 +63,7 @@ bool FileUnpacker::unpackFilesByBlock(
         }
         break;
 
-      case State::READ_FILEDETAIL:
+      case UnpackStatus::READ_FILEDETAIL:
         try {
           readFileDetail(ibuffer);
         } catch (std::exception& e) {
@@ -74,7 +74,7 @@ bool FileUnpacker::unpackFilesByBlock(
         }
         break;
 
-      case State::READ_DATA:
+      case UnpackStatus::READ_DATA:
         try {
           readData(ibuffer);
         } catch (std::exception& e) {
@@ -85,7 +85,7 @@ bool FileUnpacker::unpackFilesByBlock(
 
         break;
 
-      case State::FLUSH:
+      case UnpackStatus::FLUSH:
         try {
           flushBuffer();
         } catch (std::exception& e) {
@@ -98,11 +98,11 @@ bool FileUnpacker::unpackFilesByBlock(
         return false;
     }
 
-    if (flush && state != State::FLUSH) {
-      state = State::FLUSH;
+    if (flush && state != UnpackStatus::FLUSH) {
+      state = UnpackStatus::FLUSH;
     }
 
-    if (state == State::FLUSH) {
+    if (state == UnpackStatus::FLUSH) {
       break;
     }
   }
@@ -232,7 +232,7 @@ void FileUnpacker::readPathSize(std::vector<uint8_t>& ibuffer) {
     path_size = *reinterpret_cast<size_t*>(header_buffer.data());
     // 清空并转入下一状态
     header_buffer.clear();
-    state = State::READ_PATH;
+    state = UnpackStatus::READ_PATH;
   }
 }
 
@@ -255,7 +255,7 @@ void FileUnpacker::readPath(std::vector<uint8_t>& ibuffer) {
     file_path = std::string(header_buffer.begin(), header_buffer.end());
     // 清空并转入下一状态
     header_buffer.clear();
-    state = State::READ_FILEDETAIL_SIZE;
+    state = UnpackStatus::READ_FILEDETAIL_SIZE;
   }
 }
 
@@ -279,7 +279,7 @@ void FileUnpacker::readFileDetailSize(std::vector<uint8_t>& ibuffer) {
     fileDetail_size = *reinterpret_cast<size_t*>(header_buffer.data());
     // 清空并转入下一状态
     header_buffer.clear();
-    state = State::READ_FILEDETAIL;
+    state = UnpackStatus::READ_FILEDETAIL;
   }
 }
 
@@ -340,7 +340,7 @@ void FileUnpacker::readFileDetail(std::vector<uint8_t>& ibuffer) {
 
     // 清空并转入下一状态
     header_buffer.clear();
-    state = State::READ_DATA;
+    state = UnpackStatus::READ_DATA;
   }
 }
 
@@ -442,7 +442,7 @@ void FileUnpacker::readData(std::vector<uint8_t>& ibuffer) {
     }
 
     // 下一状态
-    state = State::READ_PATH_SIZE;
+    state = UnpackStatus::READ_PATH_SIZE;
   } else {
     // 没有完成，则也清空ibuffer
     buffer_pos = 0;

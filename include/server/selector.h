@@ -14,6 +14,8 @@ namespace zipfiles::server {
  */
 constexpr int MAX_THREADS = 8;
 
+enum class SelectorStatus { READ_DATA_SIZE, READ_DATA };
+
 class Selector {
  public:
   Selector() : tp(MAX_THREADS), connectionCount(0){};
@@ -29,17 +31,17 @@ class Selector {
   Selector& operator=(Selector&&) = delete;
 
  private:
+  std::vector<uint8_t> header_buffer;
   std::vector<uint8_t> read_buffer;
   std::vector<uint8_t> write_buffer;
+  uint32_t data_size{};
+  SelectorStatus state{};
   ThreadPool tp;
   std::atomic<int> connectionCount{};
 
-  bool parsing{};
-  int braceCount{};
-  int bracketCount{};
-
-  void resetWriteBuffer(std::vector<uint8_t>& write_buffer);
-  bool isValidJson(const uint8_t& byte);
+  void readDataSize(uint8_t byte);
+  bool readData(uint8_t byte);
+  void parseJsonFromBuffer(int client_fd);
 };
 
 }  // namespace zipfiles::server

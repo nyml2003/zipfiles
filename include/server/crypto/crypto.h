@@ -12,12 +12,14 @@
 #include <string>
 #include <vector>
 
+namespace zipfiles::server {
+
 using CryptoPP::AES;
 using CryptoPP::ArraySource;
 using CryptoPP::StringSink;
 using CryptoPP::VectorSink;
 
-namespace zipfiles::server {
+constexpr int CRYPTO_BLOCK_SIZE = 1 << 20;
 
 struct CryptStatus {
   bool flush;

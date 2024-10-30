@@ -2,18 +2,22 @@
 #include <fcntl.h>
 #include <sys/epoll.h>
 #include <unistd.h>
+#include <cstdlib>
+#include <exception>
 #include "log4cpp/Category.hh"
 #include "server/selector.h"
 #include "server/socket/socket.h"
 
 namespace zipfiles::server {
 
+/**
+ * @brief 启动acceptor
+ *
+ */
 void doAccept() {
-  fd_set readfds;
-
   // 初始化server_fd
   int server_fd = Socket::getServerFd();
-
+  fd_set readfds;
   FD_ZERO(&readfds);
   FD_SET(server_fd, &readfds);
 
@@ -43,37 +47,38 @@ void doAccept() {
 
   while (true) {
     // 调用epoll_wait
-    // log4cpp::Category::getRoot().infoStream() << "Waiting for events...";
     int numEvents = epoll_wait(epollFd, events.data(), events.size(), -1);
 
+    // epoll错误
     if (numEvents == -1) {
-      log4cpp::Category::getRoot().errorStream()
-        << "Failed to wait for events ";
-      break;
+      log4cpp::Category::getRoot().errorStream() << "Failed to wait for events";
+      exit(EXIT_FAILURE);
     }
 
-    // log4cpp::Category::getRoot().infoStream()
-    //   << "Number of events: " << numEvents;  // 增加：输出事件数量
-
-    // 检查是否是server Fd
+    // 检查是否是server_fd
     for (int i = 0; i < numEvents; ++i) {
       if (events[i].data.fd == server_fd) {
         log4cpp::Category::getRoot().infoStream()
           << "Now processing event from " << events[i].data.fd
-          << "(server_fd) as accept event.";
+          << "(server_fd) as accept event";
 
         int count = selector.getConnectionCount();
 
         if (count > MAX_CONNECTIONS) {
-          // todo: connection数量过多的处理
-          // ? 不处理，前端直接不展示数据了
           log4cpp::Category::getRoot().warnStream()
             << "Max connections reached, cannot accept new connection";  // 增加：输出连接数达到上限的警告
 
           continue;
         }
 
-        Socket::acceptConnection(epollFd);
+        try {
+          Socket::acceptConnection(epollFd);
+        } catch (std::exception& e) {
+          log4cpp::Category::getRoot().errorStream()
+            << "Failed to accept connection, because " << e.what();
+
+          continue;
+        }
 
         selector.addConnectionCount();
 
@@ -81,14 +86,14 @@ void doAccept() {
         log4cpp::Category::getRoot().infoStream()
           << "Connection count: " << count + 1;
       } else {
-        // 不是server_fd，那么就是client_fd
-        // log4cpp::Category::getRoot().infoStream()
-        //   << "Now processing event from " << events[i].data.fd
-        //   << " as handle event.";
-
         // 让selector分发任务
-        int client_fd = events[i].data.fd;
-        selector.doSelect(client_fd);
+        try {
+          int client_fd = events[i].data.fd;
+          selector.doSelect(client_fd);
+        } catch (std::exception& e) {
+          log4cpp::Category::getRoot().errorStream()
+            << "Failed to dispatch task, because " << e.what();
+        }
       }
     }
   }

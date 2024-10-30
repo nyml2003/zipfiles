@@ -1,76 +1,47 @@
 #include "server/selector.h"
 #include <cstdint>
+#include <exception>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 #include <tuple>
 #include <vector>
-#include "log4cpp/Category.hh"
 #include "mp/Request.h"
 #include "mp/apis/GetCommitDetail.h"
-#include "mp/mp.h"
 #include "server/handler.h"
+#include "server/socket/socket.h"
 
 namespace zipfiles::server {
 
 void Selector::doSelect(int client_fd) {
-  read_buffer.resize(mp::MAX_MESSAGE_SIZE);  // 预留空间
-
-  ssize_t bytesRead = read(client_fd, read_buffer.data(), mp::MAX_MESSAGE_SIZE);
-
-  if (bytesRead > 0) {
-    read_buffer.resize(bytesRead);  // 调整缓冲区大小以适应实际读取的数据
-  }
-
-  // 连接是否关闭
-  if (bytesRead == 0) {
-    // 断开连接
-    close(client_fd);
-
-    // 减少连接数
+  try {
+    Socket::receive(client_fd, read_buffer);
+  } catch (std::exception& e) {
     subConnectionCount();
 
-    throw std::runtime_error("Client disconnected");
-  }
-
-  // socket是否产生了错误
-  if (bytesRead < 0) {
-    if (errno == EAGAIN || errno == EWOULDBLOCK) {
-      std::stringstream ss;
-      ss << client_fd;
-      ss << " has no more data, now disconnect";
-      // 没有更多数据可读
-      throw std::runtime_error(ss.str());
-    }
-
-    close(client_fd);
-
-    subConnectionCount();
-
-    throw std::runtime_error("Failed to receive request, now disconnect");
+    throw std::runtime_error(
+      "Failed to receive data from: " + std::to_string(client_fd) +
+      ", becasue " + e.what()
+    );
   }
 
   // read_buffer仍然有内容
   for (const uint8_t byte : read_buffer) {
-    write_buffer.push_back(byte);
+    // log4cpp::Category::getRoot().infoStream()
+    //   << "Read char: " << static_cast<char>(byte);
 
-    if (isValidJson(byte)) {
-      Json::Reader reader;
-      Json::Value jsonData;
-      std::string jsonString(write_buffer.begin(), write_buffer.end());
-
-      if (reader.parse(jsonString, jsonData)) {
-        ReqPtr request = Req::fromJson(jsonData);
-
-        tp.enqueue([client_fd, request]() { doHandle(client_fd, request); });
-      } else {
-        resetWriteBuffer(write_buffer);
-        throw std::runtime_error(
-          &"Illegal json format when reading: "[client_fd]
-        );
-      }
-
-      resetWriteBuffer(write_buffer);
-      //   tp.enqueue();
+    switch (state) {
+      case SelectorStatus::READ_DATA_SIZE:
+        readDataSize(byte);
+        break;
+      case SelectorStatus::READ_DATA:
+        if (readData(byte)) {
+          parseJsonFromBuffer(client_fd);
+          state = SelectorStatus::READ_DATA_SIZE;
+        }
+        break;
+      default:
+        throw std::runtime_error("Unknown state");
     }
   }
 
@@ -94,29 +65,44 @@ void Selector::subConnectionCount() {
   connectionCount--;
 }
 
-void Selector::resetWriteBuffer(std::vector<uint8_t>& write_buffer) {
-  write_buffer.clear();
-  parsing = false;
-  braceCount = 0;
-  bracketCount = 0;
+inline void Selector::readDataSize(uint8_t byte) {
+  header_buffer.push_back(byte);
+
+  if (header_buffer.size() == 4) {
+    data_size = *reinterpret_cast<uint32_t*>(header_buffer.data());
+
+    if (data_size == 0) {
+      throw std::runtime_error("Illegal data_size, it is zero");
+    }
+
+    header_buffer.clear();
+    state = SelectorStatus::READ_DATA;
+  } else if (header_buffer.size() > 4) {
+    throw std::runtime_error("Illegal header buffer size");
+  }
 }
 
-bool Selector::isValidJson(const uint8_t& byte) {
-  char ch = static_cast<char>(byte);
+inline bool Selector::readData(uint8_t byte) {
+  write_buffer.push_back(byte);
 
-  if (ch == '{') {
-    braceCount++;
-    parsing = true;
-  } else if (ch == '}') {
-    braceCount--;
-  } else if (ch == '[') {
-    bracketCount++;
-    parsing = true;
-  } else if (ch == ']') {
-    bracketCount--;
+  return data_size == write_buffer.size();
+}
+
+void Selector::parseJsonFromBuffer(int client_fd) {
+  Json::Reader reader;
+  Json::Value jsonData;
+  std::string jsonString(write_buffer.begin(), write_buffer.end());
+
+  if (reader.parse(jsonString, jsonData)) {
+    ReqPtr request = Req::fromJson(jsonData);
+
+    tp.enqueue([client_fd, request]() { doHandle(client_fd, request); });
+  } else {
+    write_buffer.clear();
+    throw std::runtime_error(&"Illegal json format when reading: "[client_fd]);
   }
 
-  return parsing && braceCount == 0 && bracketCount == 0;
+  write_buffer.clear();
 }
 
 }  // namespace zipfiles::server

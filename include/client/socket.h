@@ -6,6 +6,8 @@
 
 namespace zipfiles::client {
 
+enum class ReceiveStatus { READ_DATA_SIZE, READ_DATA };
+
 /**
  * @brief 客户端套接字
  * @details 用于发送请求和接收响应
@@ -16,7 +18,7 @@ class Socket {
     static Socket instance;
     return instance;
   }
-  [[nodiscard]] ResPtr receive() const;
+  [[nodiscard]] ResPtr receive();
   void send(const ReqPtr& req);
   void reconnect();
   void connectWithRetries();
@@ -29,8 +31,17 @@ class Socket {
  private:
   Socket();
   ~Socket();
-  int sock;
+  int server_fd;
   struct sockaddr_in serv_addr;
+  std::vector<uint8_t> header_buffer;
+  std::vector<uint8_t> read_buffer;
+  std::vector<uint8_t> write_buffer;
+  uint32_t data_size{};
+  ReceiveStatus state;
+
+  void readDataSize(uint8_t byte);
+  bool readData(uint8_t byte);
+  void parseJsonFromBuffer();
 };
 }  // namespace zipfiles::client
 #endif  // !ZIPFILE_CLIENT_SOCKET_H

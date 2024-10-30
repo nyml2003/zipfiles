@@ -12,7 +12,7 @@ namespace zipfiles::server {
 
 constexpr int UNPACK_BLOCK_SIZE = 1 << 21;
 
-enum class State {
+enum class UnpackStatus {
   READ_PATH_SIZE,
   READ_PATH,
   READ_FILEDETAIL_SIZE,
@@ -35,7 +35,7 @@ class FileUnpacker {
 
  private:
   fs::path dst;
-  State state{};
+  UnpackStatus state{};
   size_t path_size{};
   size_t fileDetail_size{};
   size_t data_size{};
@@ -49,16 +49,25 @@ class FileUnpacker {
 
   static void
   fileDetailDeserialize(FileDetail& fd, const std::vector<uint8_t>& header);
+
   void openOutputFileStream();
+
   void createSymlink(const std::string& target);
+
   void createDeviceFile();
+
   void createFIFO();
 
   void readPathSize(std::vector<uint8_t>& ibuffer);
+
   void readPath(std::vector<uint8_t>& ibuffer);
+
   void readFileDetailSize(std::vector<uint8_t>& ibuffer);
+
   void readFileDetail(std::vector<uint8_t>& ibuffer);
+
   void readData(std::vector<uint8_t>& ibuffer);
+
   void flushBuffer();
 };
 

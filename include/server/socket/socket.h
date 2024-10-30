@@ -3,8 +3,8 @@
 
 #include <netinet/in.h>
 #include <atomic>
+#include <cstdint>
 #include <mutex>
-#include "mp/Request.h"
 #include "mp/Response.h"
 
 /**
@@ -24,15 +24,19 @@ class Socket {
     static Socket instance;
     return instance;
   }
-  [[nodiscard]] static ReqPtr receive(int client_fd);
+
+  static void receive(int client_fd, std::vector<uint8_t>& read_buffer);
+
   static void send(int client_fd, const ResPtr& res);
 
   static void acceptConnection(int epoll_fd);
+
+  [[nodiscard]] static int getServerFd();
+
   Socket(const Socket& other) = delete;
   Socket& operator=(const Socket& other) = delete;
   Socket(Socket&& other) noexcept = delete;
   Socket& operator=(Socket&& other) noexcept = delete;
-  [[nodiscard]] static int getServerFd();
 
  private:
   Socket();

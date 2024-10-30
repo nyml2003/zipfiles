@@ -1,18 +1,23 @@
 #include "client/socket.h"
-#include <arpa/inet.h>
-#include <thread>
+
 #include "client/view.h"
 #include "log4cpp/Category.hh"
 #include "mp/Request.h"
 #include "mp/Response.h"
 #include "mp/mp.h"
 
+#include <arpa/inet.h>
+#include <cstddef>
+#include <cstdint>
+#include <thread>
+#include <vector>
+
 namespace zipfiles::client {
 
 void Socket::initializeSocket() {
   log4cpp::Category::getRoot().infoStream() << "Initializing socket...";
-  sock = ::socket(AF_INET, SOCK_STREAM, 0);
-  if (sock < 0) {
+  server_fd = ::socket(AF_INET, SOCK_STREAM, 0);
+  if (server_fd < 0) {
     log4cpp::Category::getRoot().errorStream() << "Socket creation error";
 
     throw std::runtime_error("Socket creation error");
@@ -30,18 +35,18 @@ void Socket::initializeSocket() {
     log4cpp::Category::getRoot().errorStream()
       << "Invalid address/ Address not supported";
 
-    close(sock);
-    
+    close(server_fd);
+
     throw std::runtime_error("Invalid address/ Address not supported");
   }
 }
 
-Socket::Socket() : sock(-1), serv_addr{} {
+Socket::Socket() : server_fd(-1), serv_addr{} {
   try {
     initializeSocket();
     connectWithRetries();
   } catch (const std::exception& e) {
-    close(sock);
+    close(server_fd);
     throw e;
   }
 }
@@ -50,10 +55,7 @@ void Socket::connectWithRetries() {
   const int max_retries = 5;
   int retries = 0;
   while (retries < max_retries) {
-    if (connect(
-          sock, reinterpret_cast<struct sockaddr*>(&serv_addr),
-          sizeof(serv_addr)
-        ) < 0) {
+    if (connect(server_fd, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
       log4cpp::Category::getRoot().errorStream() << "Connection failed";
       retries++;
       log4cpp::Category::getRoot().errorStream()
@@ -66,21 +68,21 @@ void Socket::connectWithRetries() {
 
   log4cpp::Category::getRoot().errorStream()
     << "Failed to connect to the server after " << max_retries << " attempts.";
-  close(sock);
+  close(server_fd);
   throw std::runtime_error("Failed to connect to the server");
 }
 
 Socket::~Socket() {
-  close(sock);
+  close(server_fd);
 }
 
 void Socket::reconnect() {
-  close(sock);
+  close(server_fd);
   try {
     initializeSocket();
     connectWithRetries();
   } catch (...) {
-    close(sock);
+    close(server_fd);
     throw;
   }
 }
@@ -89,18 +91,22 @@ void Socket::send(const ReqPtr& req) {
   static Json::StreamWriterBuilder writer;
 
   std::string data = Json::writeString(writer, req->toJson());
+  uint32_t dataSize = data.size();
+  data =
+    std::string(reinterpret_cast<char*>(&dataSize), sizeof(dataSize)) + data;
 
-  ssize_t bytesSent = ::send(sock, data.c_str(), data.size(), 0);
+  ssize_t bytesSent = ::send(server_fd, data.c_str(), data.size(), 0);
 
   if (bytesSent == -1) {
     if (errno == EPIPE) {  // 检测到 "Broken pipe" 错误
       log4cpp::Category::getRoot().errorStream()
         << "Failed to send request: Broken pipe. Attempting to reconnect...";
 
-      close(sock);
+      close(server_fd);
       try {
         reconnect();  // 尝试重新连接
-        bytesSent = ::send(sock, data.c_str(), data.size(), 0);  // 重新发送请求
+        bytesSent =
+          ::send(server_fd, data.c_str(), data.size(), 0);  // 重新发送请求
         if (bytesSent == -1) {
           throw std::runtime_error("Failed to send request after reconnecting");
         }
@@ -115,20 +121,105 @@ void Socket::send(const ReqPtr& req) {
   }
 }
 
-ResPtr Socket::receive() const {
-  std::array<char, mp::MAX_MESSAGE_SIZE> buffer = {0};
-  ssize_t valread = read(sock, buffer.data(), mp::MAX_MESSAGE_SIZE);
+ResPtr Socket::receive() {
+  read_buffer.resize(mp::MAX_MESSAGE_SIZE);  // 预留空间
 
-  if (valread > 0) {
-    static Json::CharReaderBuilder reader;
-    Json::Value jsonData;
-    std::string errs;
-    std::istringstream stream(buffer.data());
-    if (Json::parseFromStream(reader, stream, &jsonData, &errs)) {
-      return Res::fromJson(jsonData);
+  ssize_t bytesRead = read(server_fd, read_buffer.data(), mp::MAX_MESSAGE_SIZE);
+
+  if (bytesRead > 0) {
+    read_buffer.resize(bytesRead);  // 调整缓冲区大小以适应实际读取的数据
+  }
+
+  // 连接是否关闭
+  if (bytesRead == 0) {
+    // 断开连接
+    close(server_fd);
+
+    throw std::runtime_error(
+      "Server " + std::to_string(server_fd) + " disconnect"
+    );
+  }
+
+  // socket是否产生了错误
+  if (bytesRead < 0) {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      close(server_fd);
+
+      // 没有更多数据可读
+      throw std::runtime_error(
+        "Server " + std::to_string(server_fd) + "is broken, disconnect now"
+      );
+    }
+
+    close(server_fd);
+    // 未知错误
+    throw std::runtime_error(
+      "Server " + std::to_string(server_fd) +
+      " is broken for unknown reason, disconnect now"
+    );
+  }
+
+  // read_buffer仍然有内容
+  for (const uint8_t byte : read_buffer) {
+    switch (state) {
+      case ReceiveStatus::READ_DATA_SIZE:
+        readDataSize(byte);
+        break;
+      case ReceiveStatus::READ_DATA:
+        if (readData(byte)) {
+          parseJsonFromBuffer();
+          state = ReceiveStatus::READ_DATA_SIZE;
+        }
+        break;
+      default:
+        throw std::runtime_error("Unknown state");
     }
   }
-  throw std::runtime_error("Failed to receive response");
+
+  read_buffer.clear();
+
+  // todo: 返回解析出的response
+  return nullptr;
+}
+
+inline void Socket::readDataSize(uint8_t byte) {
+  header_buffer.push_back(byte);
+
+  if (header_buffer.size() == 4) {
+    data_size = *reinterpret_cast<uint32_t*>(header_buffer.data());
+
+    if (data_size == 0) {
+      throw std::runtime_error("Illegal data_size, it is zero");
+    }
+
+    header_buffer.clear();
+    state = ReceiveStatus::READ_DATA;
+  } else if (header_buffer.size() > 4) {
+    throw std::runtime_error("Illegal header buffer size");
+  }
+}
+
+inline bool Socket::readData(uint8_t byte) {
+  write_buffer.push_back(byte);
+
+  return data_size == write_buffer.size();
+}
+
+void Socket::parseJsonFromBuffer() {
+  Json::Reader reader;
+  Json::Value jsonData;
+  std::string jsonString(write_buffer.begin(), write_buffer.end());
+
+  if (reader.parse(jsonString, jsonData)) {
+    ResPtr res = Res::fromJson(jsonData);
+
+    // todo: 处理解析出的response
+  } else {
+    write_buffer.clear();
+    throw std::runtime_error("Illegal json format");
+  }
+
+  write_buffer.clear();
 }
 
 }  // namespace zipfiles::client
