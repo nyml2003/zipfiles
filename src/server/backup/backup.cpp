@@ -7,8 +7,10 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+
 #include "json/value.h"
 #include "json/writer.h"
+
 #include "server/backup/backup.h"
 #include "server/configure/configure.h"
 #include "server/crypto/crypto.h"
@@ -65,6 +67,15 @@ void backupFiles(
 
   // 获取是否加密
   bool encrypt = cr.isEncrypt;
+
+  // 实例化CRC类和CRC校验码
+  CRC crc;
+  std::vector<uint8_t> checksum(CRC32::DIGESTSIZE, 0);
+
+  outputFile.write(
+    reinterpret_cast<const char*>(checksum.data()),
+    static_cast<std::streamsize>(checksum.size())
+  );
 
   // 实例化加密IV
   std::array<CryptoPP::byte, AES::BLOCKSIZE> iv{};
@@ -145,18 +156,18 @@ void backupFiles(
           }
         }
 
-        // 写入输出流
-        if (encrypt) {
-          outputFile.write(
-            reinterpret_cast<const char*>(encryptedData.data()),
-            static_cast<std::streamsize>(encryptedData.size())
-          );
-        } else {
-          outputFile.write(
-            reinterpret_cast<const char*>(zippedData.data()),
-            static_cast<std::streamsize>(zippedData.size())
-          );
+        if (!encrypt) {
+          processedData = std::move(zippedData);
         }
+
+        // 更新CRC
+        crc.update(processedData);
+
+        // 写入文件
+        outputFile.write(
+          reinterpret_cast<const char*>(processedData.data()),
+          static_cast<std::streamsize>(processedData.size())
+        );
       }
 
       // 如果所有文件都读取完毕，设置 flush 为 true
@@ -172,6 +183,14 @@ void backupFiles(
         break;
       }
     }
+
+    // 获取CRC校验码并写入文件
+    checksum = crc.getChecksum();
+    outputFile.seekp(0);
+    outputFile.write(
+      reinterpret_cast<const char*>(checksum.data()),
+      static_cast<std::streamsize>(checksum.size())
+    );
 
   } catch (std::exception& e) {
     // 移除失败文件
