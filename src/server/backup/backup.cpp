@@ -81,12 +81,14 @@ void backupFiles(
   std::array<CryptoPP::byte, AES::BLOCKSIZE> iv{};
 
   // 实例化加密类
-  AESEncryptor encryptor(key);
+  Cryptor encryptor(key);
 
   if (encrypt) {
     // 如果需要加密
     AutoSeededRandomPool prng;
     prng.GenerateBlock(iv.data(), iv.size());
+
+    crc.update(std::vector<uint8_t>(iv.data(), iv.data() + iv.size()));
 
     // 把IV写入文件开头，这部分不需要压缩和加密
     outputFile.write(reinterpret_cast<const char*>(iv.data()), iv.size());
@@ -102,7 +104,7 @@ void backupFiles(
   try {
     while (true) {
       std::vector<uint8_t> zippedData{};
-      std::vector<uint8_t> encryptedData{};
+      std::vector<uint8_t> processedData{};
 
       // 获取输出
       auto [packFlush, packedData] = packFilesByBlock(files, flush, lca);
@@ -144,8 +146,8 @@ void backupFiles(
             encryptor.encryptFile(zippedData, iv, flush);
 
           if (encryptFlush) {
-            encryptedData.insert(
-              encryptedData.end(), outputData->begin(), outputData->end()
+            processedData.insert(
+              processedData.end(), outputData->begin(), outputData->end()
             );
 
             outputData->clear();

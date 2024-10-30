@@ -38,7 +38,7 @@ bool test(const std::string& src_filename) {
   log.open(base_dir + "log", oflag);
   const int ibuf_size = (1143 << 16) + 191981;
   std::vector<std::uint8_t> ibuffer(ibuf_size);
-  AESEncryptor encryptor("123456");
+  Cryptor encryptor("123456");
   std::array<CryptoPP::byte, AES::BLOCKSIZE> iv{};
 
   AutoSeededRandomPool prng;

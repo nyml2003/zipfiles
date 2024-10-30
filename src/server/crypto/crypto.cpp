@@ -1,20 +1,29 @@
-
 #include "server/crypto/crypto.h"
+
 #include <crypto++/filters.h>
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
+
+using CryptoPP::CBC_Mode;
+using CryptoPP::HashFilter;
+using CryptoPP::HexEncoder;
+using CryptoPP::SHA256;
+using CryptoPP::StreamTransformationFilter;
+using CryptoPP::StringSource;
 
 namespace zipfiles::server {
 
 constexpr int CRYPTO_BLOCK_SIZE = 1 << 20;
 
-AESEncryptor::AESEncryptor(const std::string& key) : key(generateKey(key)) {}
+Cryptor::Cryptor(const std::string& key) : key(generateKey(key)) {}
 
-std::string AESEncryptor::generateKey(const std::string& rawKey) {
+std::string Cryptor::generateKey(const std::string& rawKey) {
   SHA256 hash;
   std::string digest;
   StringSource ss(
@@ -23,7 +32,7 @@ std::string AESEncryptor::generateKey(const std::string& rawKey) {
   return digest.substr(0, 32);  // 32 字节作为密钥
 }
 
-CryptStatus AESEncryptor::encryptFile(
+CryptStatus Cryptor::encryptFile(
   const std::vector<uint8_t>& inputData,
   const std::array<CryptoPP::byte, AES::BLOCKSIZE>& iv,
   bool flush
@@ -78,7 +87,7 @@ CryptStatus AESEncryptor::encryptFile(
   return {false, lack, &outputData};
 }
 
-CryptStatus AESEncryptor::decryptFile(
+CryptStatus Cryptor::decryptFile(
   const std::vector<uint8_t>& inputData,
   const std::array<CryptoPP::byte, AES::BLOCKSIZE>& iv,
   bool flush
@@ -133,4 +142,42 @@ CryptStatus AESEncryptor::decryptFile(
   return {false, lack, &outputData};
 }
 
+void CRC::update(const std::vector<uint8_t>& data) {
+  crc.Update(data.data(), data.size());
+}
+
+std::vector<uint8_t> CRC::getChecksum() {
+  std::vector<uint8_t> checksum(CRC32::DIGESTSIZE);
+  crc.Final(checksum.data());
+  return checksum;
+}
+
+bool CRC::check(const std::string& filename) {
+  std::ifstream file(filename, std::ios::binary);
+  if (!file.is_open()) {
+    throw std::runtime_error("Failed to open file " + filename);
+  }
+
+  std::vector<uint8_t> checksum0(CRC32::DIGESTSIZE);
+  file.read(
+    reinterpret_cast<char*>(checksum0.data()),
+    static_cast<std::streamsize>(checksum0.size())
+  );
+
+  CRC32 crc;
+
+  std::vector<uint8_t> buffer(CRYPTO_BLOCK_SIZE);
+  while (!file.eof()) {
+    file.read(
+      reinterpret_cast<char*>(buffer.data()),
+      static_cast<std::streamsize>(buffer.size())
+    );
+    crc.Update(buffer.data(), file.gcount());
+  }
+
+  std::vector<uint8_t> checksum(CRC32::DIGESTSIZE);
+  crc.Final(checksum.data());
+
+  return checksum == checksum0;
+}
 }  // namespace zipfiles::server
