@@ -4,12 +4,15 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <cstdint>
 #include <iostream>
 #include <mutex>
 #include <set>
 #include <string>
 #include <thread>
 #include "mp/Request.h"
+#include "mp/mp.h"
+#include "server/selector.h"
 
 const int SERVER_PORT = 8080;
 std::string SERVER_IP = "127.0.0.1";
@@ -19,6 +22,34 @@ std::atomic<int> counter(0);
 std::set<int> usedCounters;
 std::condition_variable cv;
 bool allRequestsCompleted = false;
+
+zipfiles::server::SelectorStatus state;
+std::vector<uint8_t> header_buffer;
+std::vector<uint8_t> write_buffer;
+uint32_t data_size;
+
+void readDataSize(uint8_t byte) {
+  header_buffer.push_back(byte);
+
+  if (header_buffer.size() == 4) {
+    data_size = *reinterpret_cast<uint32_t*>(header_buffer.data());
+
+    if (data_size == 0) {
+      throw std::runtime_error("Illegal data_size, it is zero");
+    }
+
+    header_buffer.clear();
+    state = zipfiles::server::SelectorStatus::READ_DATA;
+  } else if (header_buffer.size() > 4) {
+    throw std::runtime_error("Illegal header buffer size");
+  }
+}
+
+bool readData(uint8_t byte) {
+  write_buffer.push_back(byte);
+
+  return data_size == write_buffer.size();
+}
 
 void sendRequest(int sock, int totalRequests) {
   int requestCount = 0;
@@ -59,33 +90,82 @@ void sendRequest(int sock, int totalRequests) {
 
 void receiveResponse(int sock) {
   while (true) {
-    std::array<char, 1024> buffer = {0};
-    ssize_t valread = read(sock, buffer.data(), 1024);
-    if (valread < 0) {
-      std::cerr << "Read failed" << std::endl;
-      break;
-    } else {
-      std::lock_guard<std::mutex> lock(mtx);
-      Json::CharReaderBuilder reader;
-      Json::Value response;
-      std::string errors;
-      std::istringstream is(std::string(buffer.data(), valread));
-      Json::parseFromStream(reader, is, &response, &errors);
+    std::vector<uint8_t> read_buffer;
+    read_buffer.resize(zipfiles::mp::MAX_MESSAGE_SIZE);
 
-      int receivedCounter = response["payload"]["id"].asInt();
-      std::cout << "Received response with counter: " << response << std::endl;
-      auto it = usedCounters.find(receivedCounter);
-      if (it != usedCounters.end()) {
-        usedCounters.erase(it);
-      } else {
-        std::cout << "Used counters: ";
-        for (const auto& counter : usedCounters) {
-          std::cout << counter << " ";
-        }
-        std::cout << std::endl;
-        throw std::runtime_error("Counter not found");
+    ssize_t bytesRead =
+      read(sock, read_buffer.data(), zipfiles::mp::MAX_MESSAGE_SIZE);
+
+    if (bytesRead > 0) {
+      read_buffer.resize(bytesRead);  // 调整缓冲区大小以适应实际读取的数据
+    }
+
+    // 连接是否关闭
+    if (bytesRead == 0) {
+      // 断开连接
+      close(sock);
+
+      throw std::runtime_error(
+        "Client " + std::to_string(sock) + " disconnect"
+      );
+    }
+
+    // socket是否产生了错误
+    if (bytesRead < 0) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        close(sock);
+
+        // 没有更多数据可读
+        throw std::runtime_error(
+          "Client " + std::to_string(sock) + "is broken, disconnect now"
+        );
+      }
+
+      close(sock);
+      // 未知错误
+      throw std::runtime_error(
+        "Client " + std::to_string(sock) +
+        " is broken for unknown reason, disconnect now"
+      );
+    }
+
+    for (const uint8_t byte : read_buffer) {
+      switch (state) {
+        case zipfiles::server::SelectorStatus::READ_DATA_SIZE:
+          readDataSize(byte);
+          break;
+        case zipfiles::server::SelectorStatus::READ_DATA:
+          if (readData(byte)) {
+            Json::Reader reader;
+            Json::Value response;
+            std::string jsonString(write_buffer.begin(), write_buffer.end());
+
+            reader.parse(jsonString, response);
+
+            int receivedCounter = response["payload"]["id"].asInt();
+            std::cout << "Received response with counter: " << response
+                      << std::endl;
+            auto it = usedCounters.find(receivedCounter);
+            if (it != usedCounters.end()) {
+              usedCounters.erase(it);
+            } else {
+              std::cout << "Used counters: ";
+              for (const auto& counter : usedCounters) {
+                std::cout << counter << " ";
+              }
+              std::cout << std::endl;
+              throw std::runtime_error("Counter not found");
+            }
+
+            state = zipfiles::server::SelectorStatus::READ_DATA_SIZE;
+          }
+          break;
+        default:
+          throw std::runtime_error("Unknown state");
       }
     }
+
+    read_buffer.clear();
   }
 }
 
@@ -115,7 +195,7 @@ int main() {
       return -1;
     }
 
-    int totalRequests = 100;  // 设置发送请求的总数
+    int totalRequests = 10000;  // 设置发送请求的总数
     std::thread requestThread(sendRequest, sock, totalRequests);
     std::thread responseThread(receiveResponse, sock);
 
