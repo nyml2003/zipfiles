@@ -42,7 +42,7 @@ module.exports = {
     'no-multi-spaces': 1, // 禁止使用多个空格
     radix: 1, // 强制在parseInt()使用基数参数
     // 'no-unused-vars': 'warn',
-    'no-unused-vars': 'error', // 禁止出现未使用过的变量
+    'no-unused-vars': 'off',
     "@typescript-eslint/no-unused-vars": ["off"],
     /**
      * 变量声明

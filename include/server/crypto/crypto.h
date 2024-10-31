@@ -3,6 +3,7 @@
 
 #include <crypto++/filters.h>
 #include <cryptopp/aes.h>
+#include <cryptopp/crc.h>
 #include <cryptopp/files.h>
 #include <cryptopp/hex.h>
 #include <cryptopp/modes.h>
@@ -16,6 +17,13 @@ namespace zipfiles::server {
 
 using CryptoPP::AES;
 using CryptoPP::ArraySource;
+using CryptoPP::AutoSeededRandomPool;
+using CryptoPP::CBC_Mode;
+using CryptoPP::CRC32;
+using CryptoPP::HashFilter;
+using CryptoPP::HexEncoder;
+using CryptoPP::SHA256;
+using CryptoPP::StreamTransformationFilter;
 using CryptoPP::StringSink;
 using CryptoPP::VectorSink;
 
@@ -50,6 +58,16 @@ class Cryptor {
  private:
   std::string key;
   static std::string generateKey(const std::string& rawKey);
+};
+
+class CRC {
+ public:
+  void update(const std::vector<uint8_t>& data);
+  std::vector<uint8_t> getChecksum();
+  static bool check(const std::string& filename);
+
+ private:
+  CRC32 crc;
 };
 
 }  // namespace zipfiles::server

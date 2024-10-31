@@ -3,15 +3,23 @@ import { Button, Table } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { ApiEnum } from '@/apis';
 import useApi from '@/hooks/useApi';
-import { CommitLog, GetCommitListRequest, GetCommitListResponse } from '@/apis/GetCommitList';
-
+import { GetCommitListRequest, GetCommitListResponse } from '@/apis/GetCommitList';
+interface CommitLog {
+  uuid: string;
+  message: string;
+  createTime: number;
+  storagePath: string;
+  author: string;
+  isEncrypt: boolean;
+  isDelete: boolean;
+}
 type DataType = Partial<CommitLog>;
 
-interface CommitTableProps {
-  openExplorer: () => void;
+interface ExplorerProps {
+  openExplorer: (uuid: string) => void;
 }
 
-const CommitTable = ({ openExplorer }: CommitTableProps) => {
+const CommitTable : React.FC<ExplorerProps> = ({ openExplorer }) => {
   const api = useApi();
   const [data, setData] = useState<DataType[]>([]);
   const columns: TableColumnsType<DataType> = [
@@ -69,7 +77,13 @@ const CommitTable = ({ openExplorer }: CommitTableProps) => {
       title: '操作',
       dataIndex: 'operation',
       key: 'operation',
-      render: () => <Button onClick={() => openExplorer()}>浏览</Button>,
+      render: (_, record) => <Button onClick={
+        () => {
+          if (!record.uuid) return;
+          openExplorer(record.uuid);
+        }
+
+      }>查看</Button>,
       ellipsis: true,
     },
   ];
@@ -77,7 +91,7 @@ const CommitTable = ({ openExplorer }: CommitTableProps) => {
     api
       .request<GetCommitListRequest, GetCommitListResponse>(ApiEnum.GetCommitList, {})
       .then(res => {
-        setData(res.data);
+        setData(res.commits);
       });
   };
 

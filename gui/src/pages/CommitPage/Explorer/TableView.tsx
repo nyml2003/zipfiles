@@ -1,23 +1,26 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useContext } from 'react';
 import { Table } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { FileDetail } from '@/apis/GetFileDetailList';
-import { ApiEnum } from '@/apis';
 import { FileType, FileTypeToString } from '@/types';
 import { FileFilled, FolderFilled } from '@ant-design/icons';
-import { GetAllFileDetailsRequest, GetAllFileDetailsResponse } from '@/apis/GetAllFileDetails';
-import useApi from '@/hooks/useApi';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/stores/store';
-import { filterBy } from '@/utils';
-
+import { Context } from '../store/context';
+import { findFile } from '@/utils';
+interface FileDetail {
+  name: string;
+  type: FileType;
+  createTime: number;
+  updateTime: number;
+  size: number;
+  owner: string;
+  group: string;
+  mode: number;
+  path: string;
+}
 type DataType = Partial<FileDetail>;
-
 const columns: TableColumnsType<DataType> = [
   {
     title: '文件名',
     dataIndex: 'name',
-
     key: 'name',
     render: text => {
       return <a>{text}</a>;
@@ -45,7 +48,7 @@ const columns: TableColumnsType<DataType> = [
     key: 'createTime',
     ellipsis: true,
     render: text => {
-      return text ? <span>{new Date(text * 1000).toLocaleString()}</span> : <span>加载中...</span>;
+      return text ? <span>{new Date(text * 1000).toLocaleString()}</span> : <span></span>;
     },
   },
   {
@@ -54,7 +57,7 @@ const columns: TableColumnsType<DataType> = [
     key: 'updateTime',
     ellipsis: true,
     render: text => {
-      return text ? <span>{new Date(text * 1000).toLocaleString()}</span> : <span>加载中...</span>;
+      return text ? <span>{new Date(text * 1000).toLocaleString()}</span> : <span></span>;
     },
   },
   {
@@ -63,7 +66,7 @@ const columns: TableColumnsType<DataType> = [
     key: 'size',
     ellipsis: true,
     render: text => {
-      if (text === undefined) return <span>加载中...</span>;
+      if (text === undefined) return <span></span>;
       if (text === null) return <span>未知</span>;
       return <span>{text}</span>;
     },
@@ -74,7 +77,7 @@ const columns: TableColumnsType<DataType> = [
     key: 'owner',
     ellipsis: true,
     render: text => {
-      return text ? <span>{text}</span> : <span>加载中...</span>;
+      return text ? <span>{text}</span> : <span></span>;
     },
   },
   {
@@ -83,7 +86,7 @@ const columns: TableColumnsType<DataType> = [
     key: 'group',
     ellipsis: true,
     render: text => {
-      return text ? <span>{text}</span> : <span>加载中...</span>;
+      return text ? <span>{text}</span> : <span></span>;
     },
   },
   {
@@ -92,43 +95,24 @@ const columns: TableColumnsType<DataType> = [
     key: 'mode',
     ellipsis: true,
     render: text => {
-      return text ? <span>{text}</span> : <span>加载中...</span>;
+      return text ? <span>{text}</span> : <span></span>;
     },
   },
 ];
-
 const TableView: React.FC = () => {
-  const api = useApi();
-  const [data, setData] = useState<DataType[]>([]);
-  const currentPath = useSelector((state: RootState) => state.createCommit.currentPath);
-  const filter = useSelector((state: RootState) => state.createCommit.filter);
-  const currentFile = useSelector((state: RootState) => state.createCommit.currentFile);
-  const fetchData = (path: string) => {
-    api
-      .request<GetAllFileDetailsRequest, GetAllFileDetailsResponse>(ApiEnum.GetAllFileDetails, {
-        path: path === '' ? '/' : path,
-      })
-      .then((res: GetAllFileDetailsResponse) => {
-        setData(filterBy(res.files, filter));
-      });
-  };
-
-  useEffect(() => {
-    fetchData(currentPath);
-  }, [currentPath]);
-
+  const { state } = useContext(Context);
+  const [currentFiles, setCurrentFiles] = useState<DataType[]>([]);
   const tableRef = useRef(null);
 
   const scrollToRow = (filename: string) => {
-    // 确保表格已经被渲染
+    // 确保表格已经被渲染          
     if (tableRef && tableRef.current) {
       const rows = (tableRef.current as HTMLDivElement).ownerDocument.querySelectorAll(
         '.ant-table-row',
       );
       rows.forEach(row => {
-        const prefix = currentPath === '/' ? '' : currentPath;
-        const absoluteRowPath = `${prefix}/${row.getAttribute('data-row-key')}`;
-        if (absoluteRowPath === filename) {
+        const absoluteRowPath = `${state.path}/${row.getAttribute('data-row-key')}`;
+        if (filename.startsWith(absoluteRowPath)) {
           // 滚动到对应行
           row.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
@@ -137,23 +121,26 @@ const TableView: React.FC = () => {
   };
 
   useEffect(() => {
-    if (currentFile === '') return;
-    scrollToRow(currentFile);
-  }, [currentFile]);
+    if (state.file === '') return;
+    scrollToRow(state.file);
+  }, [state.file]);
+
+  useEffect(() => {
+    setCurrentFiles(findFile(state.files, state.path));
+  }, [state.files, state.path]);
 
   return (
     <Table<DataType>
       ref={tableRef}
       columns={columns}
-      dataSource={data}
+      dataSource={currentFiles}
       pagination={false}
       className='overflow-auto fade-in-down'
       size='small'
       rowKey={'name'}
       rowClassName={record => {
-        const prefix = currentPath === '/' ? '' : currentPath;
-        const absoluteRowPath = `${prefix}/${record.name}`;
-        return absoluteRowPath === currentFile ? 'bg-gray-200' : '';
+        const absoluteRowPath = `${state.path}/${record.name}`;
+        return state.file.startsWith(absoluteRowPath) ? 'bg-gray-200' : '';
       }}
     />
   );

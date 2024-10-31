@@ -1,11 +1,22 @@
 import React from 'react';
-import { Button, Form, Input, InputNumber, Mentions, Select, Space } from 'antd';
-import { FileType, Filter } from '@/types';
+import { Button, DatePicker, Form, Input, InputNumber, Mentions, Select, Space } from 'antd';
+import { FileType } from '@/types';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
 import { updateFilter, updateIsFiltering } from '@/stores/CreateCommitReducer';
-import { cleanObject } from '@/utils';
-
+import dayjs from 'dayjs';
+type Filter = Partial<{
+  type: FileType;
+  name: string;
+  minSize: number;
+  maxSize: number;
+  minCreateTime: number;
+  maxCreateTime: number;
+  minUpdateTime: number;
+  maxUpdateTime: number;
+  owner: string;
+  group: string;
+}>;
 const fileTypeOptions = [
   { label: '文件', value: FileType.Regular },
   { label: '文件夹', value: FileType.Directory },
@@ -19,6 +30,25 @@ const fileTypeOptions = [
 const FilterForm: React.FC = () => {
   const [form] = Form.useForm();
   const filter = useSelector((state: RootState) => state.createCommit.filter);
+  const formFilter = {
+    type: filter.type,
+    minSize: filter.minSize,
+    maxSize: filter.maxSize,
+    minCreateTime: filter.minCreateTime
+      ? dayjs(filter.minCreateTime * 1000)
+      : undefined,
+    maxCreateTime: filter.maxCreateTime
+      ? dayjs(filter.maxCreateTime * 1000)
+      : undefined,
+    minUpdateTime: filter.minUpdateTime
+      ? dayjs(filter.minUpdateTime * 1000)
+      : undefined,
+    maxUpdateTime: filter.maxUpdateTime
+      ? dayjs(filter.maxUpdateTime * 1000)
+      : undefined,
+    owner: filter.owner,
+    group: filter.group,
+  };
   const dispatch = useDispatch();
 
   const onReset = () => {
@@ -28,26 +58,18 @@ const FilterForm: React.FC = () => {
   };
 
   const onFinish = (values: Filter) => {
-    dispatch(updateFilter(values));
+    const filter: Filter = {};
+    filter.group = values.group || undefined;
+    filter.maxSize = values.maxSize || undefined;
+    filter.minSize = values.minSize || undefined;
+    filter.owner = values.owner || undefined;
+    filter.type = values.type || undefined;
+    filter.maxCreateTime = values.maxCreateTime ? values.maxCreateTime.valueOf() / 1000 : undefined;
+    filter.minCreateTime = values.minCreateTime ? values.minCreateTime.valueOf() / 1000 : undefined;
+    filter.maxUpdateTime = values.maxUpdateTime ? values.maxUpdateTime.valueOf() / 1000 : undefined;
+    filter.minUpdateTime = values.minUpdateTime ? values.minUpdateTime.valueOf() / 1000 : undefined;
+    dispatch(updateFilter(filter));
     dispatch(updateIsFiltering(false));
-  };
-
-  const handleSumbit = async () => {
-    const values = await form.validateFields();
-    const noNilValues = cleanObject(values);
-    if (noNilValues.size) {
-      const { min, max } = noNilValues.size;
-      if (min !== undefined && max !== undefined && min > max) {
-        form.setFields([
-          {
-            name: ['size', 'min'],
-            errors: ['最小值不能大于最大值'],
-          },
-        ]);
-        return;
-      }
-    }
-    form.submit();
   };
 
   return (
@@ -59,7 +81,7 @@ const FilterForm: React.FC = () => {
         variant='outlined'
         scrollToFirstError
         form={form}
-        initialValues={filter}
+        initialValues={formFilter}
         onFinish={onFinish}>
         <Form.Item
           label='文件类型'
@@ -69,7 +91,26 @@ const FilterForm: React.FC = () => {
         </Form.Item>
         <Form.Item label='大小'>
           <Space.Compact>
-            <Form.Item name={['size', 'min']} noStyle rules={[{ type: 'number' }]}>
+            <Form.Item
+              name={['minSize']}
+              noStyle
+              rules={[
+                {
+                  type: 'number',
+                  validator: (rule, value) => {
+                    if (value === undefined) {
+                      return Promise.resolve();
+                    }
+                    if (
+                      form.getFieldValue(['maxSize']) !== undefined &&
+                      value > form.getFieldValue(['maxSize'])
+                    ) {
+                      return Promise.reject('最小值不能大于最大值');
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}>
               <InputNumber style={{ width: '40%' }} placeholder='最小值' min={0} />
             </Form.Item>
             <Input
@@ -80,8 +121,156 @@ const FilterForm: React.FC = () => {
               placeholder='~'
               disabled
             />
-            <Form.Item name={['size', 'max']} noStyle rules={[{ type: 'number' }]}>
+            <Form.Item
+              name={['maxSize']}
+              noStyle
+              rules={[
+                {
+                  type: 'number',
+                  validator: (rule, value) => {
+                    if (value === undefined) {
+                      return Promise.resolve();
+                    }
+                    if (
+                      form.getFieldValue(['minSize']) !== undefined &&
+                      value < form.getFieldValue(['minSize'])
+                    ) {
+                      return Promise.reject('最大值不能小于最小值');
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}>
               <InputNumber style={{ width: '40%' }} placeholder='最大值' min={0} />
+            </Form.Item>
+          </Space.Compact>
+        </Form.Item>
+        <Form.Item label='创建时间'>
+          <Space.Compact>
+            <Form.Item
+              noStyle
+              name='minCreateTime'
+              rules={[
+                {
+                  type: 'number',
+                  validator: (rule, value) => {
+                    if (value === undefined) {
+                      return Promise.resolve();
+                    }
+                    if (
+                      form.getFieldValue(['maxCreateTime']) !== undefined &&
+                      value > form.getFieldValue(['maxCreateTime'])
+                    ) {
+                      return Promise.reject('时间区间不合法');
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}>
+              <DatePicker
+                showTime
+                style={{ width: '40%' }}
+                placeholder='最小值'
+              />
+            </Form.Item>
+            <Input
+              style={{
+                width: '20%',
+                textAlign: 'center',
+              }}
+              placeholder='~'
+              disabled
+            />
+            <Form.Item
+              name='maxCreateTime'
+              noStyle
+              rules={[
+                {
+                  type: 'number',
+                  validator: (rule, value) => {
+                    if (value === undefined) {
+                      return Promise.resolve();
+                    }
+                    if (
+                      form.getFieldValue(['minCreateTime']) !== undefined &&
+                      value < form.getFieldValue(['minCreateTime'])
+                    ) {
+                      return Promise.reject('时间区间不合法');
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}>
+              <DatePicker
+                showTime
+                style={{ width: '40%' }}
+                placeholder='最大值'
+              />
+            </Form.Item>
+          </Space.Compact>
+        </Form.Item>
+
+        <Form.Item label='更新时间'>
+          <Space.Compact>
+            <Form.Item
+              noStyle
+              name='minUpdateTime'
+              rules={[
+                {
+                  type: 'number',
+                  validator: (rule, value) => {
+                    if (value === undefined) {
+                      return Promise.resolve();
+                    }
+                    if (
+                      form.getFieldValue(['maxUpdateTime']) !== undefined &&
+                      value > form.getFieldValue(['maxUpdateTime'])
+                    ) {
+                      return Promise.reject('时间区间不合法');
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}>
+              <DatePicker
+                showTime
+                style={{ width: '40%' }}
+                placeholder='最小值'
+              />
+            </Form.Item>
+            <Input
+              style={{
+                width: '20%',
+                textAlign: 'center',
+              }}
+              placeholder='~'
+              disabled
+            />
+            <Form.Item
+              name='maxUpdateTime'
+              noStyle
+              rules={[
+                {
+                  type: 'number',
+                  validator: (rule, value) => {
+                    if (value === undefined) {
+                      return Promise.resolve();
+                    }
+                    if (
+                      form.getFieldValue(['minUpdateTime']) !== undefined &&
+                      value < form.getFieldValue(['minUpdateTime'])
+                    ) {
+                      return Promise.reject('时间区间不合法');
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}>
+              <DatePicker
+                showTime
+                style={{ width: '40%' }}
+                placeholder='最大值'
+              />
             </Form.Item>
           </Space.Compact>
         </Form.Item>
@@ -102,7 +291,7 @@ const FilterForm: React.FC = () => {
 
         <Form.Item wrapperCol={{ offset: 4, span: 14 }}>
           <Space>
-            <Button type='primary' onClick={handleSumbit}>
+            <Button type='primary' htmlType='submit'>
               Submit
             </Button>
             <Button htmlType='button' onClick={onReset}>

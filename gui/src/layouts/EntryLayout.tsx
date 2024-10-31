@@ -1,46 +1,44 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { HomeOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
+import type { TourStepProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
-import { Layout, Menu, theme } from 'antd';
+import { Layout, Menu, theme, Tour } from 'antd';
 import { Outlet, useNavigate } from 'react-router-dom';
 import FootContent from './FootContent';
 
 const { Content, Sider } = Layout;
 
-const headerItems: MenuProps['items'] = [
-  {
-    key: 'index',
-    label: '首页',
-    icon: React.createElement(HomeOutlined),
-  },
-  {
-    key: 'new_commit',
-    label: '新建提交',
-    icon: React.createElement(UploadOutlined),
-  },
-  {
-    key: 'commit_history',
-    label: '提交历史',
-    icon: React.createElement(UploadOutlined),
-  },
-  {
-    key: 'setting',
-    label: '设置',
-    icon: React.createElement(UploadOutlined),
-  },
-  {
-    key: 'test',
-    label: '测试',
-    icon: React.createElement(SettingOutlined),
-  },
-];
-
 const App: React.FC = () => {
   const navigate = useNavigate();
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
+  const [open, setOpen] = useState(false);
+  const openTour = () => setOpen(true);
+  const headerItems = [
+    {
+      key: 'index',
+      label: <div ref={el => (headerItemsRef.current[0] = el?.parentElement?.parentElement!)}>首页</div>,
+      icon: React.createElement(HomeOutlined),
+    },
+    {
+      key: 'new_commit',
+      label: <div ref={el => (headerItemsRef.current[1] = el)}>新建提交</div>,
+      icon: React.createElement(UploadOutlined),
+    },
+    {
+      key: 'commit_history',
+      label: <div ref={el => (headerItemsRef.current[2] = el)}>提交历史</div>,
+      icon: React.createElement(UploadOutlined),
+    },
+    {
+      key: 'setting',
+      label: <div ref={el => (headerItemsRef.current[3] = el)}>设置</div>,
+      icon: React.createElement(UploadOutlined),
+    },
+    {
+      key: 'test',
+      label: '测试',
+      icon: React.createElement(SettingOutlined),
+    },
+  ];
 
   const handleClick = (info: MenuInfo) => {
     if (info.key === 'github') {
@@ -50,28 +48,60 @@ const App: React.FC = () => {
     navigate(info.key);
   };
 
+  const headerItemsRef = useRef(
+    Array.from({ length: headerItems.length }).map(() => null as HTMLDivElement | null),
+  );
+
+  const steps: TourStepProps[] = [
+    {
+      title: '欢迎使用',
+      description: '这是您的应用首页。',
+      placement: 'right',
+      target: headerItemsRef.current[0]!,
+    },
+    {
+      title: '新建提交',
+      description: '点击这里可以快速创建新的提交，方便您的工作流程。',
+      placement: 'right',
+      target: headerItemsRef.current[1]!,
+    },
+    {
+      title: '提交历史',
+      description: '在这里查看您所有的提交历史，便于管理和追踪。',
+      placement: 'right',
+      target: headerItemsRef.current[2]!,
+    },
+    {
+      title: '设置',
+      description: '在设置中，您可以自定义应用的各种选项。',
+      placement: 'right',
+      target: headerItemsRef.current[3]!,
+    },
+  ];
+
   return (
-    <Layout hasSider className='select-none flex flex-row h-screen'>
-      <Sider breakpoint='lg' className=' bg-white'>
-        <Menu
-          //mode='inline'
-          defaultSelectedKeys={['1']}
-          defaultOpenKeys={['sub1']}
-          items={headerItems}
-          onClick={handleClick}
-          className='bg-white'
-          style={{
-            borderInlineEnd: 'none',
-          }}
-        />
-      </Sider>
-      <Layout className='grow-item split-container-col'>
-        <Content className='grow-item'>
-          <Outlet />
-        </Content>
-        <FootContent />
+    <>
+      <Layout hasSider className='select-none flex flex-row h-screen'>
+        <Sider breakpoint='lg' className=' bg-white'>
+          <Menu
+            defaultSelectedKeys={['1']}
+            defaultOpenKeys={['sub1']}
+            onClick={handleClick}
+            items={headerItems}
+            className='bg-white'
+            style={{
+              borderInlineEnd: 'none',
+            }}></Menu>
+        </Sider>
+        <Layout className='grow-item split-container-col'>
+          <Content className='grow-item'>
+            <Outlet context={{ openTour }} />
+          </Content>
+          <FootContent />
+        </Layout>
       </Layout>
-    </Layout>
+      <Tour open={open} onClose={() => setOpen(false)} steps={steps} />
+    </>
   );
 };
 

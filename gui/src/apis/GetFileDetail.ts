@@ -12,6 +12,7 @@ interface FileDetail {
 }
 export interface GetFileDetailRequest {
   path: string;
+  name: string;
 }
 
 export interface GetFileDetailResponse extends FileDetail { }

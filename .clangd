@@ -6,9 +6,12 @@ InlayHints:
   DeducedTypes: Yes
   TypeNameLimit: 24
 
+If:
+  PathMatch: ".*"
+  PathExclude: "/usr/.*"
+
 Diagnostics:
   UnusedIncludes: Strict
-  Suppress: [/usr/include]
   ClangTidy:
     Add:
     [

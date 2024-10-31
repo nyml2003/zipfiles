@@ -88,6 +88,18 @@ Json::Value Res::toJson() {
       [&json](response::PostCommit&) {
         json["apiEnum"] = toSizeT(ApiEnum::POST_COMMIT);
       },
+      [&json](response::GetFileDetail& res) {
+        json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_DETAIL);
+        json["payload"]["type"] = static_cast<int>(res.type);
+        json["payload"]["createTime"] = res.createTime;
+        json["payload"]["updateTime"] = res.updateTime;
+        json["payload"]["size"] = res.size;
+        json["payload"]["owner"] = res.owner;
+        json["payload"]["group"] = res.group;
+        json["payload"]["mode"] = res.mode;
+        json["payload"]["path"] = res.path;
+        json["payload"]["name"] = res.name;
+      },
       [](auto&&) { throw std::runtime_error("Unknown response type"); }
     },
     kind
@@ -137,14 +149,28 @@ ResPtr Res::fromJson(const Json::Value& json) {
       res = std::make_shared<Res>(response::GetFileList{files});
       break;
     }
-    case ApiEnum::POST_COMMIT:
+    case ApiEnum::POST_COMMIT: {
       res = std::make_shared<Res>(response::PostCommit{});
       break;
-    case ApiEnum::MOCK_NEED_TIME:
+    }
+    case ApiEnum::MOCK_NEED_TIME: {
       res = std::make_shared<Res>(
         response::MockNeedTime{json["payload"]["id"].asInt()}
       );
       break;
+    }
+    case ApiEnum::GET_FILE_DETAIL: {
+      res = std::make_shared<Res>(response::GetFileDetail{
+        static_cast<fs::file_type>(json["payload"]["type"].asInt()),
+        json["payload"]["createTime"].asDouble(),
+        json["payload"]["updateTime"].asDouble(),
+        json["payload"]["size"].asInt(), json["payload"]["owner"].asString(),
+        json["payload"]["group"].asString(),
+        static_cast<mode_t>(json["payload"]["mode"].asInt()),
+        json["payload"]["path"].asString(), json["payload"]["name"].asString()
+      });
+      break;
+    }
     default:
       throw std::runtime_error("Invalid response kind");
       break;

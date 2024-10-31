@@ -11,9 +11,7 @@ import { RootState } from '@/stores/store';
 import {
   updateCurrentFile,
   updateCurrentPath,
-  updateSelectedFile,
 } from '@/stores/CreateCommitReducer';
-import { GetFileDetailRequest, GetFileDetailResponse } from '@/apis/GetFileDetail';
 const { DirectoryTree } = Tree;
 
 interface DataNode {
@@ -27,7 +25,6 @@ interface DataNode {
 const TreeMenu = () => {
   const api = useApi();
   const [treeData, setTreeData] = useState<DataNode[]>([]);
-  const [checkedKeys, setCheckedKeys] = useState<Key[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Done);
   const [lastClickTime, setLastClickTime] = useState<number>(0);
@@ -39,42 +36,35 @@ const TreeMenu = () => {
     // 清空展开的节点
     setExpandedKeys([]);
     // 清空选中的节点
-    setCheckedKeys([]);
+    // setCheckedKeys([]);
     // 加载新的数据
     handleGetFileList(currentPath);
   }, [currentPath]);
 
-  const getRootFile = async (path: string) => {
-    const res = await api.request<GetFileDetailRequest, GetFileDetailResponse>(
-      ApiEnum.GetFileDetail,
-      {
-        path: path === '' ? '/' : path,
-      },
-    );
-    setTreeData([
-      {
-        title: '.',
-        key: path,
-        isLeaf: res.type !== FileType.Directory,
-        expanded: true,
-      },
-    ]);
-    setExpandedKeys([path]);
-  };
+  // const getRootFile = async (path: string) => {
+  //   setTreeData([
+  //     {
+  //       title: '.',
+  //       key: path,
+  //       isLeaf: false,
+  //       expanded: true,
+  //     },
+  //   ]);
+  //   setExpandedKeys([path]);
+  // };
 
   const handleGetFileList = async (path: string, needLoading = true) => {
     if (needLoading) setLoading(LoadingState.Loading);
-    if (path === currentPath) {
-      await getRootFile(currentPath);
-    }
+    // if (path === currentPath) {
+    //   await getRootFile(currentPath);
+    // }
     try {
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
-        path: path === '' ? '/' : path,
+        path,
       });
 
       const newTreeData = res.files.map(item => {
         const isDirectory = item.type === FileType.Directory;
-        // title是path减去currentPath + item.name
         return {
           title: item.name,
           key: `${path}/${item.name}`,
@@ -82,15 +72,6 @@ const TreeMenu = () => {
         };
       });
       setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
-      // 如果当前选中的文件夹是checkedKeys中的一部分，就把新的文件夹也加入到checkedKeys中
-      if (checkedKeys.includes(path)) {
-        dispatch(
-          updateSelectedFile([
-            ...checkedKeys.map(key => key.toString()),
-            ...newTreeData.map(item => item.key.toString()),
-          ]),
-        );
-      }
     } catch (err) {
       console.log('获取文件列表失败: ', err);
     }
@@ -131,11 +112,6 @@ const TreeMenu = () => {
     await handleGetFileList(key as string, false);
   };
 
-  const handleCheck: TreeProps['onCheck'] = checkedKeysValue => {
-    setCheckedKeys(checkedKeysValue as Key[]);
-    dispatch(updateSelectedFile((checkedKeysValue as Key[]).map(key => key.toString())));
-  };
-
   const handleSelect: TreeProps['onSelect'] = (selectedKeys, info) => {
     const currentTime = new Date().getTime();
     if (currentTime - lastClickTime < 300) {
@@ -152,13 +128,10 @@ const TreeMenu = () => {
     <LoadingWrapper loading={loading} hasData={() => treeData.length > 0}>
       <DirectoryTree
         showLine
-        checkable
         multiple
         switcherIcon={<DownOutlined />}
         loadData={onLoadData}
         treeData={treeData}
-        checkedKeys={checkedKeys}
-        onCheck={handleCheck}
         onSelect={handleSelect}
         expandedKeys={expandedKeys}
         onExpand={setExpandedKeys}

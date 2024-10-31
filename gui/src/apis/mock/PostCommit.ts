@@ -1,6 +1,6 @@
 import { PostCommitRequest, PostCommitResponse } from '../PostCommit';
-import { cachedCommitList } from './utils';
-
+import { backups, cachedCommitList } from './utils';
+import { mock as GetFileDetail } from './GetFileDetail';
 export function mock(request: PostCommitRequest): PostCommitResponse {
   cachedCommitList.push({
     uuid: request.uuid,
@@ -11,6 +11,12 @@ export function mock(request: PostCommitRequest): PostCommitResponse {
     isDelete: false,
     author: request.author,
   });
-  console.log(cachedCommitList);
-  return {};
+  backups.set(
+    request.uuid,
+    request.files.map(path => {
+      const [name, ...rest] = path.split('/').reverse();
+      return GetFileDetail({ path: rest.reverse().join('/'), name });
+    }),
+  );
+  return cachedCommitList;
 }

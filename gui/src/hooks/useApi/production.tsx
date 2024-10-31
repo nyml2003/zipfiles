@@ -2,9 +2,6 @@ import { setGlobalCallback } from '../useGlobalMessageHandler';
 import { Api, RequestWrapper } from './types';
 import { ApiEnum } from '@/apis';
 import { v4 as uuidv4 } from 'uuid';
-import useDilute from '@/hooks/useDilute';
-
-const { dilute } = useDilute();
 
 let apiInstance: Api | null = null;
 
@@ -19,7 +16,7 @@ const useApi = () => {
   ): Promise<Response> => {
     const timestamp = Date.now();
     const uuid = uuidv4();
-    const message: RequestWrapper<Request> = { apiEnum, params: request, timestamp, uuid };
+    const message: RequestWrapper<Request> = { apiEnum, params: JSON.stringify(request), timestamp, uuid };
     if (!window.webkit?.messageHandlers) {
       console.error('No webkit message handlers');
       return Promise.reject('No webkit message handlers');
@@ -28,7 +25,7 @@ const useApi = () => {
       console.error('No such api: ', apiEnum);
       return Promise.reject('No such api: ' + apiEnum);
     }
-    dilute(() => window.webkit.messageHandlers.function.postMessage(message));
+    window.webkit.messageHandlers.function.postMessage(message);
 
     return new Promise((resolve, reject) => {
       setGlobalCallback({

@@ -1,5 +1,3 @@
-import { FileDetail } from '@/apis/GetFileDetailList';
-import { GetFileListRequest } from '@/apis/GetFileList';
 import { FileType } from '@/types';
 
 export function selectEnvironment<T>(production: T, development: T) {
@@ -19,6 +17,7 @@ export function isDevelopment() {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function cleanObject(obj: any) {
+  if (obj === null || obj === undefined) return obj;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return Object.entries(obj).reduce((acc: any, [key, value]) => {
     if (value && typeof value === 'object') {
@@ -31,27 +30,27 @@ export function cleanObject(obj: any) {
   }, {});
 }
 
-export const filterBy = <T extends FileDetail>(
-  files: T[],
-  filter: Partial<GetFileListRequest['filter']>,
-): T[] => {
-  const cleanedFilter = cleanObject(filter);
-  if (!cleanedFilter || Object.keys(cleanedFilter).length === 0) return files;
+// export const filterBy = <T extends FileDetail>(
+//   files: T[],
+//   filter: Partial<GetFileListRequest['filter']>,
+// ): T[] => {
+//   const cleanedFilter = cleanObject(filter);
+//   if (!cleanedFilter || Object.keys(cleanedFilter).length === 0) return files;
 
-  return files.filter(file => {
-    if (file.type === FileType.Directory) return true;
-    if (cleanedFilter.type && file.type !== cleanedFilter.type) return false;
-    if (cleanedFilter.size) {
-      if (cleanedFilter.size.min && file.size < cleanedFilter.size.min) return false;
-      if (cleanedFilter.size.max && file.size > cleanedFilter.size.max) return false;
-    }
-    if (cleanedFilter.owner && !file.owner.includes(cleanedFilter.owner)) return false;
-    if (cleanedFilter.group && !file.group.includes(cleanedFilter.group)) return false;
-    return true;
-  });
-};
+//   return files.filter(file => {
+//     if (file.type === FileType.Directory) return true;
+//     if (cleanedFilter.type && file.type !== cleanedFilter.type) return false;
+//     if (cleanedFilter.size) {
+//       if (cleanedFilter.size.min && file.size < cleanedFilter.size.min) return false;
+//       if (cleanedFilter.size.max && file.size > cleanedFilter.size.max) return false;
+//     }
+//     if (cleanedFilter.owner && !file.owner.includes(cleanedFilter.owner)) return false;
+//     if (cleanedFilter.group && !file.group.includes(cleanedFilter.group)) return false;
+//     return true;
+//   });
+// };
 
-export function findLongestCommonPrefix(paths: string[]): string {
+function findLongestCommonPrefix(paths: string[]) {
   if (paths.length === 0) return '';
   if (paths.length === 1) return paths[0];
 
@@ -62,7 +61,7 @@ export function findLongestCommonPrefix(paths: string[]): string {
   const minLength = Math.min(...splitPaths.map(p => p.length));
 
   // 初始化最长公共前缀数组
-  const commonPrefix = [];
+  const commonPrefix: string[] = [];
 
   // 遍历每个路径元素
   for (let i = 0; i < minLength; i++) {
@@ -75,10 +74,70 @@ export function findLongestCommonPrefix(paths: string[]): string {
       break;
     }
   }
-  if (commonPrefix.length === 1 && commonPrefix[0] === '') return '/';
-
+  const lca = commonPrefix.join('/');
   // 将数组转换回字符串，并用斜杠连接
-  return commonPrefix.join('/');
+  return lca;
+}
+type Dir<DataType extends { path: string }> = {
+  path: string;
+  children: (Dir<DataType> | DataType)[];
+  name: string;
+};
+export function buildTree<DataType extends { path: string }>(files: DataType[]) {
+  const lca = findLongestCommonPrefix(files.map(file => file.path));
+  const root: Dir<DataType> = { path: lca, children: [], name: '' };
+  files.forEach(file => {
+    const relativePath = file.path.slice(lca.length);
+    const parts = relativePath.split('/').slice(1);
+    let current = root;
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      let child: Dir<DataType> | undefined = current.children.find(
+        c => Object.hasOwnProperty.call(c, 'children') && (c as Dir<DataType>).name === part,
+      ) as Dir<DataType>;
+      if (!child) {
+        child = { path: current.path + '/' + part, children: [], name: part };
+        current.children.push(child);
+      }
+      current = child;
+    }
+    current.children.push(file);
+  });
+  console.log('buildTree', files, root);
+  return root;
+}
+
+export function findFile<DataType extends { path: string; name: string }>(
+  files: Dir<DataType>,
+  targetPath: string,
+): DataType[] {
+  console.log(files, targetPath);
+  const parts = targetPath.slice(files.path.length).split('/').slice(1);
+  let current: Dir<DataType> = files;
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    const child = current.children.find(
+      c => (c as Dir<DataType>).name === part && Object.hasOwnProperty.call(c, 'children'),
+    ) as Dir<DataType>;
+    if (!child) return [];
+    current = child;
+  }
+  const names = [];
+  const result : DataType[] = [];
+  for (const file of current.children) {
+    // 这是真实文件
+    if (!Object.hasOwnProperty.call(file, 'children')) {
+      names.push(file.name);
+      result.push(file as DataType);
+    }
+  }
+  for (const file of current.children) {
+    // 这是目录
+    if (Object.hasOwnProperty.call(file, 'children') && !names.includes(file.name)) {
+      result.push({ path: file.path, name: file.name, type: FileType.Directory } as unknown as DataType);
+    }
+  }
+  return result;
 }
 
 export type Required<T> = T extends unknown

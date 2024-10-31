@@ -1,4 +1,5 @@
 #include "server/handler.h"
+#include "server/handler.h"
 #include <unistd.h>
 #include <csignal>
 #include <log4cpp/Category.hh>
@@ -62,7 +63,8 @@ void doHandle(int client_fd, const ReqPtr& request) {
       << "Response sent: " << response->toJson();
     Socket::send(client_fd, response);
 
-  } catch (const std::exception& e) {
+  }  // namespace zipfiles::server
+  catch (const std::exception& e) {
     // 如果是SocketTemporarilyUnavailable
     if (const auto* e_ptr = dynamic_cast<const SocketTemporarilyUnavailable*>(&e)) {
       // log4cpp::Category::getRoot().infoStream() << e_ptr->what();

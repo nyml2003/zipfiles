@@ -40,7 +40,6 @@ export const handler = (event: MessageEvent) => {
       callback.request.apiEnum === apiEnum &&
       callback.request.uuid === uuid,
   );
-
   // console.log('event.type: ', event.type);
   // console.log('event.timestamp: ', response.timestamp);
   // console.log('event.apiEnum: ', response.apiEnum);
@@ -53,14 +52,15 @@ export const handler = (event: MessageEvent) => {
   }
 };
 const MAX_REQUEST_TIMEOUT = 500;
-const MAX_REQUEST_RETRY = 3;
+const MAX_REQUEST_RETRY = 10;
 export const useGlobalMessageHandler = () => {
   useEffect(() => {
     window.addEventListener('message', handler);
     const intervalId = setInterval(() => {
       const now = Date.now();
+      console.log('check timeout', callbacks);
       callbacks = callbacks.filter(callback => {
-        if (callback.request.timestamp + MAX_REQUEST_TIMEOUT < now) {
+        if (callback.request.timestamp + MAX_REQUEST_TIMEOUT * callback.retries < now) {
           const { request } = callback;
           callback.request.timestamp = now;
           if (
@@ -71,6 +71,7 @@ export const useGlobalMessageHandler = () => {
             window.webkit.messageHandlers.handleMessage.postMessage(request);
           }
           callback.retries += 1;
+          console.log('retry', callback.retries, 'times for', request);
           if (callback.retries > MAX_REQUEST_RETRY) {
             notification.error({
               message: '请求超时',

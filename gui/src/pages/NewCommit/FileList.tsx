@@ -1,11 +1,10 @@
 import { ApiEnum } from '@/apis';
-import { GetFileDetailListRequest, GetFileDetailListResponse } from '@/apis/GetFileDetailList';
+import { GetFileDetailRequest, GetFileDetailResponse } from '@/apis/GetFileDetail';
 import useApi from '@/hooks/useApi';
-import { resetSelectedFile, updateExpandedSelectedFile } from '@/stores/CreateCommitReducer';
+import { updateSelectedDirectory, updateSelectedFile } from '@/stores/CreateCommitReducer';
 import { RootState } from '@/stores/store';
 import { FileType } from '@/types';
-import { filterBy } from '@/utils';
-import { Button, Table } from 'antd';
+import { Button, List, Table } from 'antd';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -51,6 +50,7 @@ const columns = [
     key: 'mode',
   },
 ];
+
 interface FileDetail {
   name: string;
   type: FileType;
@@ -62,31 +62,31 @@ interface FileDetail {
   mode: number;
   path: string;
 }
-type DataType = FileDetail;
 
 interface FileListProps {
   addExplorer: () => void;
 }
 
 const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
-  const selectedFile = useSelector((state: RootState) => state.createCommit.selectedFile);
-  const filter = useSelector((state: RootState) => state.createCommit.filter);
-  const [data, setData] = React.useState<DataType[]>([]);
+  const files = useSelector((state: RootState) => state.createCommit.selectedFile.files);
+  const directiories = useSelector(
+    (state: RootState) => state.createCommit.selectedFile.directories,
+  );
+  const [fileData, setFileData] = React.useState<FileDetail[]>([]);
   const dispatch = useDispatch();
 
   const api = useApi();
 
   useEffect(() => {
-    setData([]);
-    selectedFile.map(async path => {
-      const res = await fetchData(path);
-      setData(prev => [...prev, ...res]);
+    Promise.all(
+      files.map(async (file: { name: string; path: string }) => {
+        const res = await fetchFileDetail(file.path, file.name);
+        return res;
+      }),
+    ).then(res => {
+      setFileData(res);
     });
-  }, [selectedFile]);
-
-  useEffect(() => {
-    dispatch(updateExpandedSelectedFile(data.map(file => file.path)));
-  }, [data]);
+  }, [files]);
 
   const handleAdd = () => {
     addExplorer();
@@ -96,25 +96,52 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
     console.log('删除');
   };
 
-  const fetchData = async (path: string) => {
-    const res = await api.request<GetFileDetailListRequest, GetFileDetailListResponse>(
-      ApiEnum.GetFileDetailList,
+  const fetchFileDetail = async (path: string, name: string) => {
+    const res = await api.request<GetFileDetailRequest, GetFileDetailResponse>(
+      ApiEnum.GetFileDetail,
       {
-        path: path === '' ? '/' : path,
+        path,
+        name,
       },
     );
-    return filterBy(res.files, filter);
+    return res;
   };
 
   const handleClear = () => {
-    dispatch(resetSelectedFile());
+    dispatch(updateSelectedFile([]));
+    dispatch(updateSelectedDirectory([]));
+  };
+
+  const handleFileClear = () => {
+    setFileData([]);
   };
 
   return (
-    <>
-      <Table<DataType> columns={columns} dataSource={data} size='small' rowKey={'name'} />
-      <div className='m-4 flex flex-row justify-between items-center'>
-        <div className='text-center'>总大小：{data.reduce((acc, cur) => acc + cur.size, 0)}</div>
+    <div className='grow-item'>
+      <div className='bg-blue-100 rounded-md'>
+        <div className='flex flex-row justify-between items-center '>
+          <h2 className='text-xl font-bold px-2 py-1 m-2'>文件列表</h2>
+          <Button type='primary' onClick={handleFileClear} className='m-2' disabled={fileData.length === 0}>
+            清空
+          </Button>
+        </div>
+        <Table<FileDetail>
+          columns={columns}
+          dataSource={fileData}
+          size='small'
+          rowKey={'name'}
+          className='p-2'
+        />
+      </div>
+      <h2 className='text-xl font-bold px-2 py-1 m-2'>路径列表</h2>
+      <List<string>
+        dataSource={directiories}
+        size='small'
+        renderItem={item =>
+          item === '' ? <List.Item> / </List.Item> : <List.Item> {item} </List.Item>
+        }
+      />
+      <div className='m-4 flex flex-row justify-end items-center'>
         <div className='space-x-2'>
           <Button type='primary' onClick={handleAdd}>
             添加
@@ -127,7 +154,7 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
           </Button>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
