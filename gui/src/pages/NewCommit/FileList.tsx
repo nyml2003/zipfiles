@@ -112,10 +112,27 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
     dispatch(updateSelectedDirectory([]));
   };
 
+  const handleFileClear = () => {
+    setFileData([]);
+  };
+
   return (
     <div className='grow-item'>
-      <h2 className='text-xl font-bold px-2 py-1 m-2'>文件列表</h2>
-      <Table<FileDetail> columns={columns} dataSource={fileData} size='small' rowKey={'name'} />
+      <div className='bg-blue-100 rounded-md'>
+        <div className='flex flex-row justify-between items-center '>
+          <h2 className='text-xl font-bold px-2 py-1 m-2'>文件列表</h2>
+          <Button type='primary' onClick={handleFileClear} className='m-2' disabled={fileData.length === 0}>
+            清空
+          </Button>
+        </div>
+        <Table<FileDetail>
+          columns={columns}
+          dataSource={fileData}
+          size='small'
+          rowKey={'name'}
+          className='p-2'
+        />
+      </div>
       <h2 className='text-xl font-bold px-2 py-1 m-2'>路径列表</h2>
       <List<string>
         dataSource={directiories}
