@@ -144,10 +144,11 @@ class BackupRestoreTest : public ::testing::Test {
 
 void backup(
   const std::vector<fs::path>& files,
-  CommitTableRecord& cr,
+  const CommitTableRecord& cr,
   const std::string& key
 ) {
-  ASSERT_NO_THROW(backupFiles(files, cr, key));
+  CommitTableRecord crt = cr;
+  ASSERT_NO_THROW(backupFiles(files, crt, key));
 }
 
 void restore(
@@ -168,7 +169,8 @@ TEST_F(BackupRestoreTest, ConcurrentBackupAndRestoreSameFiles) {
     "/tmp/test_dir2/text_file1.txt",
     "/tmp/test_dir3/fifo_file1",
     "/tmp/test_dir3/socket_file",
-    "/tmp/test_dir3/device_file1"};
+    "/tmp/test_dir3/device_file1"
+  };
 
   std::vector<fs::path> files2 = {
     "/tmp/test_dir1/regular_file1.txt",
@@ -178,7 +180,8 @@ TEST_F(BackupRestoreTest, ConcurrentBackupAndRestoreSameFiles) {
     "/tmp/test_dir2/text_file1.txt",
     "/tmp/test_dir3/fifo_file1",
     "/tmp/test_dir3/socket_file",
-    "/tmp/test_dir3/device_file1"};
+    "/tmp/test_dir3/device_file1"
+  };
 
   CommitTableRecord cr1;
   cr1.message = "This is cr1";
@@ -239,7 +242,8 @@ TEST_F(BackupRestoreTest, ConcurrentBackupAndRestoreSameFiles) {
     std::string originalFile = file.string();
     std::string restoredFile = (restorePath / "r1" / relativePath).string();
 
-    if (fs::is_fifo(file) || fs::is_block_file(file) || fs::is_character_file(file) || fs::is_socket(file)) {
+    if (fs::is_fifo(file) || fs::is_block_file(file) ||
+        fs::is_character_file(file) || fs::is_socket(file)) {
       continue;
     }
 
@@ -255,7 +259,8 @@ TEST_F(BackupRestoreTest, ConcurrentBackupAndRestoreSameFiles) {
     std::string originalFile = file.string();
     std::string restoredFile = (restorePath / "r2" / relativePath).string();
 
-    if (fs::is_fifo(file) || fs::is_block_file(file) || fs::is_character_file(file) || fs::is_socket(file)) {
+    if (fs::is_fifo(file) || fs::is_block_file(file) ||
+        fs::is_character_file(file) || fs::is_socket(file)) {
       continue;
     }
 

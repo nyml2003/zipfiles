@@ -1,13 +1,14 @@
 #include "server/handler.h"
-#include "server/handler.h"
 #include <unistd.h>
 #include <csignal>
 #include <log4cpp/Category.hh>
 #include "mp/Request.h"
 #include "mp/Response.h"
 #include "mp/apis/GetCommitDetail.h"
+#include "mp/apis/GetFileDetail.h"
 #include "mp/common.h"
 #include "server/error.h"
+#include "server/handler.h"
 #include "server/socket/api.h"
 #include "server/socket/socket.h"
 
@@ -51,7 +52,13 @@ void doHandle(int client_fd, const ReqPtr& request) {
         },
         [](request::MockNeedTime& req) {
           return std::make_shared<Res>(response::MockNeedTime{req.id});
-        }},
+        },
+        [](request::GetFileDetail& req) {
+          return std::make_shared<Res>(
+            api::handle<request::GetFileDetail, response::GetFileDetail>(req)
+          );
+        }
+      },
       request->kind
     );
 
@@ -66,7 +73,8 @@ void doHandle(int client_fd, const ReqPtr& request) {
   }  // namespace zipfiles::server
   catch (const std::exception& e) {
     // 如果是SocketTemporarilyUnavailable
-    if (const auto* e_ptr = dynamic_cast<const SocketTemporarilyUnavailable*>(&e)) {
+    if (const auto* e_ptr =
+          dynamic_cast<const SocketTemporarilyUnavailable*>(&e)) {
       // log4cpp::Category::getRoot().infoStream() << e_ptr->what();
       return;
     }
