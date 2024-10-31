@@ -276,7 +276,7 @@ fs::path getCommonAncestor(const std::vector<fs::path>& paths) {
 }
 
 /**
- * @brief 给定一个路径，生成一个描述Commit内容的目录树文件(json形式)
+ * @brief 给定一个路径，生成一个描述Commit内容的目录树文件(Json形式)
  *
  * @param dst 指定的目录文件路径
  *

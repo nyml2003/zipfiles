@@ -12,6 +12,10 @@
 #include "mp/mp.h"
 
 namespace zipfiles::server {
+/**
+ * @brief server socket初始化
+ *
+ */
 Socket::Socket() : server_fd(socket(AF_INET, SOCK_STREAM, 0)), address{} {
   if (server_fd == -1) {
     log4cpp::Category::getRoot().errorStream()
@@ -58,10 +62,22 @@ Socket::~Socket() {
   close(server_fd);
 }
 
+/**
+ * @brief 获取当前的server fd
+ *
+ * @return int server fd
+ *
+ */
 int Socket::getServerFd() {
   return getInstance().server_fd;
 }
 
+/**
+ * @brief 接受server fd的连接请求，把连接交给epoll实例管理
+ *
+ * @param epoll_fd epoll实例
+ *
+ */
 void Socket::acceptConnection(int epoll_fd) {
   sockaddr_in client_addr{};
   socklen_t client_len = sizeof(client_addr);
@@ -105,6 +121,14 @@ void Socket::acceptConnection(int epoll_fd) {
     << "Add client_fd " << client_fd << " to epoll_fd " << epoll_fd;
 }
 
+/**
+ * @brief 读取socket buffer的数据，最大大小为MAX_MESSAGE_SIZE
+ *
+ * @param client_fd client
+ *
+ * @param read_buffer 将数据读取到read_buffer
+ *
+ */
 void Socket::receive(int client_fd, std::vector<uint8_t>& read_buffer) {
   read_buffer.resize(mp::MAX_MESSAGE_SIZE);  // 预留空间
 
@@ -144,6 +168,14 @@ void Socket::receive(int client_fd, std::vector<uint8_t>& read_buffer) {
   }
 }
 
+/**
+ * @brief 向指定的client发送response
+ *
+ * @param client_fd client
+ *
+ * @param res reponse
+ *
+ */
 void Socket::send(int client_fd, const ResPtr& res) {
   static Json::StreamWriterBuilder writer;
 

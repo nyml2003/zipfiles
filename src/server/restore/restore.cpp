@@ -170,7 +170,11 @@ void restoreTo(
 }
 
 /**
- * @brief 给定uuid，读取指定的目录文件
+ * @brief 给定uuid，读取相应的目录树文件，并解释成Json
+ *
+ * @param uuid
+ *
+ * @return Json::Value
  *
  */
 Json::Value readDirectoryFileById(const std::string& uuid) {
@@ -182,7 +186,11 @@ Json::Value readDirectoryFileById(const std::string& uuid) {
 }
 
 /**
- * @brief 读取指定的目录文件，还原成目录树(json形式)
+ * @brief 读取指定的目录文件，还原成目录树(Json形式)
+ *
+ * @param src 指定目录
+ *
+ * @return Json::Value
  *
  */
 Json::Value readDirectoryFile(const fs::path& src) {
