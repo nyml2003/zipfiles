@@ -1,4 +1,5 @@
 #include "server/tools/committable.h"
+
 #include <exception>
 #include <mutex>
 #include <stdexcept>

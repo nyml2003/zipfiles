@@ -7,3 +7,4 @@ lib/*.so
 /bin
 tests/unittest/data
 .vscode/launch.json
+test_files/*

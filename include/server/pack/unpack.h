@@ -10,7 +10,7 @@
 
 namespace zipfiles::server {
 
-constexpr int UNPACK_BLOCK_SIZE = 1 << 21;
+constexpr int UNPACK_BLOCK_SIZE = 1 << 20;
 
 enum class UnpackStatus {
   READ_PATH_SIZE,

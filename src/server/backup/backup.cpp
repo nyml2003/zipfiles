@@ -248,10 +248,13 @@ void backupFiles(
  * @param paths 绝对路径数组
  *
  */
-
 fs::path getCommonAncestor(const std::vector<fs::path>& paths) {
   if (paths.empty()) {
     throw std::runtime_error("Paths array is empty");
+  }
+
+  if (paths.size() == 1) {
+    return paths[0].filename();
   }
 
   // 初始化公共祖先为第一个路径

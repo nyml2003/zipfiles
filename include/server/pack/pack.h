@@ -8,6 +8,9 @@
 #include "server/tools/fsapi.h"
 
 namespace zipfiles::server {
+// PACK块大小
+constexpr int PACK_BLOCK_SIZE = 1 << 20;
+
 /**
  * * pack
  *
