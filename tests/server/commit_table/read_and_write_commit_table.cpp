@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <exception>
 #include <filesystem>
 #include <iostream>
 #include "server/configure/configure.h"
@@ -9,7 +8,7 @@ namespace fs = std::filesystem;
 
 namespace zipfiles::server {
 
-class DeleteAndRemoveCommitRecord : public ::testing::Test {
+class ReadAndWriteCommitTable : public ::testing::Test {
  protected:
   void SetUp() override {
     // 清理文件
@@ -26,7 +25,7 @@ class DeleteAndRemoveCommitRecord : public ::testing::Test {
   }
 };
 
-TEST_F(DeleteAndRemoveCommitRecord, DeleteAndRemoveCommitRecord) {  // NOLINT
+TEST_F(ReadAndWriteCommitTable, ReadAndWriteCommitTable) {  // NOLINT
   Json::Value root;
 
   // 此时硬盘上应该有一个空commit_table
@@ -48,29 +47,28 @@ TEST_F(DeleteAndRemoveCommitRecord, DeleteAndRemoveCommitRecord) {  // NOLINT
   std::cout << "Append record in memory: "
             << CommitTable::toJson(cr).toStyledString() << std::endl;
 
-  std::cout << "Now set it to deleted" << std::endl;
-
-  // delete这个commit
-  ASSERT_NO_THROW(CommitTable::deleteCommitRecord("test_uuid"));  // NOLINT
-
-  // 输出delete后的commit
-  std::cout << "Commit after delete: "
-            << CommitTable::toJson(CommitTable::getCommitRecordById("test_uuid")
-               )
-                 .toStyledString();
-
-  ASSERT_TRUE(CommitTable::getCommitRecordById("test_uuid").isDelete);
-
-  std::cout << "Now remove this commit" << std::endl;
-
-  // remove这个commit
-  ASSERT_NO_THROW(CommitTable::removeCommitRecord("test_uuid"));  // NOLINT
-
-  ASSERT_THROW(  // NOLINT
-    CommitTable::getCommitRecordById("test_uuid"), std::exception
+  // 再次读取
+  ASSERT_NO_THROW(  // NOLINT
+    root = CommitTable::readCommitTableView(COMMIT_TABLE_PATH)
   );
 
-  std::cout << "Success" << std::endl;
+  std::cout << "commit_table after append: " << root.toStyledString()
+            << std::endl;
+
+  ASSERT_TRUE(root.empty());
+
+  // 写硬盘
+  ASSERT_NO_THROW(CommitTable::writeCommitTable(COMMIT_TABLE_PATH));  // NOLINT
+
+  // 再次读取
+  ASSERT_NO_THROW(  // NOLINT
+    root = CommitTable::readCommitTableView(COMMIT_TABLE_PATH)
+  );
+
+  std::cout << "commit_table after write: " << root.toStyledString()
+            << std::endl;
+
+  ASSERT_FALSE(root.empty());
 }
 
 }  // namespace zipfiles::server

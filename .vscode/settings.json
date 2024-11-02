@@ -93,7 +93,6 @@
     },
     "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
     "editor.formatOnSave": true,
-    "C_Cpp.intelliSenseEngine": "disabled",
     "clangd.path": "/usr/bin/clangd",
     "clangd.checkUpdates": true,
     "clangd.arguments": [

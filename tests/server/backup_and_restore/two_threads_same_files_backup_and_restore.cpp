@@ -50,7 +50,7 @@ void backup(
   const std::vector<fs::path>& files,
   const CommitTableRecord& cr,
   const std::string& key
-) {
+) { 
   CommitTableRecord crt = cr;
 
   ASSERT_NO_THROW(backupFiles(files, crt, key));  // NOLINT

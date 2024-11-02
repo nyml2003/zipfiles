@@ -3,6 +3,7 @@
 #include <netinet/in.h>
 #include "mp/Request.h"
 #include "mp/Response.h"
+#include "mp/apis/GetCommitDetail.h"
 
 namespace zipfiles::client {
 /**
@@ -24,6 +25,7 @@ class Socket {
     return instance;
   }
   void receive();
+  void receive(std::vector<ResPtr>& responses);
   void send(const ReqPtr& req);
   void reconnect();
   void connectWithRetries();
