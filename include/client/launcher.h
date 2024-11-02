@@ -8,7 +8,9 @@
 namespace zipfiles::client {
 /**
  * @brief 文件路径长度
+ *
  * @details 用于获取可执行文件路径, 一般不会超过1024
+ * 
  */
 constexpr size_t EXE_PATH_SIZE = 1024;
 /**
@@ -30,7 +32,9 @@ constexpr const char* DIST_FILE = "/dist/index.html";
 extern WebKitWebView* webView;
 /**
  * @brief 消息处理器
+ *
  * @details 消息名称和回调函数
+ * 
  */
 struct Handler {
   std::string name;
@@ -39,24 +43,34 @@ struct Handler {
 
 /**
  * @brief 加载前端页面
+ *
  * @details 从可执行文件路径中获取前端打包文件路径并加载
+ * 
  */
 void loadDistUri();
 /**
  * @brief 绑定JS消息处理器
+ *
  * @details 绑定JS消息处理器到WebView
+ *
  * @param manager
+ * 
  */
 void bindJS(WebKitUserContentManager* manager);
 /**
  * @brief 创建窗体
+ *
  * @details 创建一个窗体并添加WebView
+ *
  * @return GtkWidget* 窗体指针
+ * 
  */
 GtkWidget* createWindow();
 /**
  * @brief 启动器
+ *
  * @details 启动前端页面
+ * 
  */
 class Launcher {
  public:

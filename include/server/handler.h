@@ -6,8 +6,6 @@ namespace zipfiles::server {
 
 void doHandle(int client_fd, const ReqPtr& request);
 
-void daemonize();
-
 }  // namespace zipfiles::server
 
 #endif

@@ -14,7 +14,10 @@
 #include <vector>
 
 namespace zipfiles::client {
-
+/**
+ * @brief 初始化socket
+ *
+ */
 void Socket::initializeSocket() {
   log4cpp::Category::getRoot().infoStream() << "Initializing socket...";
   server_fd = ::socket(AF_INET, SOCK_STREAM, 0);
@@ -42,6 +45,10 @@ void Socket::initializeSocket() {
   }
 }
 
+/**
+ * @brief 创建一个client socket对象，并且尝试连接server
+ *
+ */
 Socket::Socket() : server_fd(-1), serv_addr{} {
   try {
     initializeSocket();
@@ -52,6 +59,10 @@ Socket::Socket() : server_fd(-1), serv_addr{} {
   }
 }
 
+/**
+ * @brief 尝试连接server，具有重试机制
+ *
+ */
 void Socket::connectWithRetries() {
   const int max_retries = 5;
   int retries = 0;
@@ -80,6 +91,10 @@ Socket::~Socket() {
   close(server_fd);
 }
 
+/**
+ * @brief 尝试重新连接server
+ *
+ */
 void Socket::reconnect() {
   close(server_fd);
   try {
@@ -91,6 +106,12 @@ void Socket::reconnect() {
   }
 }
 
+/**
+ * @brief 向server发送序列化后的请求
+ *
+ * @param req 请求对象
+ *
+ */
 void Socket::send(const ReqPtr& req) {
   static Json::StreamWriterBuilder writer;
 
@@ -125,7 +146,13 @@ void Socket::send(const ReqPtr& req) {
   }
 }
 
-void Socket::receive() {
+/**
+ * @brief 从server接收并解析response
+ *
+ * @return ResPtr 解析出的response
+ *
+ */
+ResPtr Socket::receive() {
   read_buffer.resize(mp::MAX_MESSAGE_SIZE);  // 预留空间
 
   ssize_t bytesRead = read(server_fd, read_buffer.data(), mp::MAX_MESSAGE_SIZE);
@@ -183,6 +210,12 @@ void Socket::receive() {
   read_buffer.clear();
 }
 
+/**
+ * @brief 尝试从读取的数据中读取出Json长度
+ *
+ * @param byte 读取的数据的一个字节
+ *
+ */
 inline void Socket::readDataSize(uint8_t byte) {
   header_buffer.push_back(byte);
 
@@ -200,12 +233,22 @@ inline void Socket::readDataSize(uint8_t byte) {
   }
 }
 
+/**
+ * @brief 尝试从读取的数据中读取出数据内容
+ *
+ * @param byte 读取的数据的一个字节
+ *
+ */
 inline bool Socket::readData(uint8_t byte) {
   write_buffer.push_back(byte);
 
   return data_size == write_buffer.size();
 }
 
+/**
+ * @brief 尝试从读取出的数据内容中解析出一个Json
+ *
+ */
 Json::Value Socket::parseJsonFromBuffer() {
   Json::Reader reader;
   Json::Value jsonData;

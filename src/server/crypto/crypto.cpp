@@ -225,16 +225,38 @@ bool Cryptor::checkKey(const std::string& encodedKey, const std::string& key) {
   return encodedKey == encodeKey(key);
 }
 
+/**
+ * @brief 根据传入的数据块更新crc
+ *
+ * @param data 传入的数据块
+ *
+ */
 void CRC::update(const std::vector<uint8_t>& data) {
   crc.Update(data.data(), data.size());
 }
 
+/**
+ * @brief 依据已经生成crc生成最终checksum
+ *
+ * @return std::vector<uint8_t> 生成的checksum
+ *
+ */
 std::vector<uint8_t> CRC::getChecksum() {
   std::vector<uint8_t> checksum(CRC32::DIGESTSIZE);
   crc.Final(checksum.data());
   return checksum;
 }
 
+/**
+ * @brief 校验压缩文件包中的头部CRC32验证码是否合法
+ *
+ * @param filename 文件路径
+ *
+ * @return true
+ *
+ * @return false
+ *
+ */
 bool CRC::check(const std::string& filename) {
   std::ifstream file(filename, std::ios::binary);
   if (!file.is_open()) {

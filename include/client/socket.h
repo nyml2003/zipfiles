@@ -5,12 +5,17 @@
 #include "mp/Response.h"
 
 namespace zipfiles::client {
-
+/**
+ * @brief 解析状态(前端socket兼顾解析响应的功能)
+ *
+ */
 enum class ReceiveStatus { READ_DATA_SIZE, READ_DATA };
 
 /**
  * @brief 客户端套接字
+ *
  * @details 用于发送请求和接收响应
+ *
  */
 class Socket {
  public:
@@ -37,7 +42,7 @@ class Socket {
   std::vector<uint8_t> read_buffer;
   std::vector<uint8_t> write_buffer;
   uint32_t data_size{};
-  ReceiveStatus state;
+  ReceiveStatus state{};
 
   void readDataSize(uint8_t byte);
   bool readData(uint8_t byte);

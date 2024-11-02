@@ -248,10 +248,13 @@ void backupFiles(
  * @param paths 绝对路径数组
  *
  */
-
 fs::path getCommonAncestor(const std::vector<fs::path>& paths) {
   if (paths.empty()) {
     throw std::runtime_error("Paths array is empty");
+  }
+
+  if (paths.size() == 1) {
+    return paths[0].filename();
   }
 
   // 初始化公共祖先为第一个路径
@@ -276,7 +279,7 @@ fs::path getCommonAncestor(const std::vector<fs::path>& paths) {
 }
 
 /**
- * @brief 给定一个路径，生成一个描述Commit内容的目录树文件(json形式)
+ * @brief 给定一个路径，生成一个描述Commit内容的目录树文件(Json形式)
  *
  * @param dst 指定的目录文件路径
  *

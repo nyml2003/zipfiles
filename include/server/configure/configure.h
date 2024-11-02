@@ -6,9 +6,6 @@
 namespace fs = std::filesystem;
 
 namespace zipfiles::server {
-// PACK块大小
-constexpr int PACK_BLOCK_SIZE = 1 << 19;
-
 // log文件地址
 const fs::path COMMIT_TABLE_PATH = "/usr/local/zipfiles/.zip/commit_table";
 

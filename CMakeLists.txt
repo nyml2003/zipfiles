@@ -46,7 +46,7 @@ include_directories(${ZIPFILES_HEADER_DIR})
 
 # 全局
 set(ZIPFILES_TEST_DIR ${CMAKE_SOURCE_DIR}/tests) # 测试目录
-set(ZIPFILES_UNIT_TEST_DIR ${ZIPFILES_TEST_DIR}/unittest) # 单元测试目录
+set(ZIPFILES_UNIT_TEST_DIR ${ZIPFILES_TEST_DIR}) # 单元测试目录
 set(ZIPFILES_DIST_DIR ${CMAKE_SOURCE_DIR}/gui/dist)
 set(ZIPFILES_CONFIG_DIR ${CMAKE_SOURCE_DIR}/config)
 set(ZIPFILES_OUTPUT_DIR ${CMAKE_SOURCE_DIR}/bin)
@@ -152,9 +152,6 @@ target_link_libraries(
     ${LOG4CPP_LIBRARIES}
 )
 
-
-
-
 find_package(GTest REQUIRED)
 # 单元测试
 enable_testing()
@@ -174,8 +171,6 @@ foreach(TEST_FILE ${ZIPFILES_SERVER_UNIT_TEST_FILES})
 
     set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 20)
 endforeach()
-
-
 
 ############################################
 #### 工具

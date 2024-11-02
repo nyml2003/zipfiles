@@ -21,7 +21,18 @@
 #include <vector>
 
 namespace zipfiles::server {
-
+/**
+ * @brief 按解压后的文件流恢复备份的文件结构
+ *
+ * @param ibuffer 输入的文件流块
+ *
+ * @param flush 是否强制输出
+ *
+ * @return true
+ *
+ * @return false
+ *
+ */
 bool FileUnpacker::unpackFilesByBlock(
   std::vector<uint8_t>& ibuffer,
   bool flush
@@ -111,6 +122,14 @@ bool FileUnpacker::unpackFilesByBlock(
   return false;
 }
 
+/**
+ * @brief FileDetail的反序列化器
+ *
+ * @param fd FileDetail实例
+ *
+ * @param header 读取到的文件header
+ *
+ */
 void FileUnpacker::fileDetailDeserialize(
   FileDetail& fd,
   const std::vector<uint8_t>& header
@@ -171,6 +190,10 @@ void FileUnpacker::fileDetailDeserialize(
   std::memcpy(&fd.dev, header.data() + offset, sizeof(fd.dev));
 }
 
+/**
+ * @brief 解析出普通文件后，打开相应的输出流并恢复文件
+ *
+ */
 void FileUnpacker::openOutputFileStream() {
   // 打开相应的输出流
   if (!output_file.is_open()) {
@@ -184,6 +207,12 @@ void FileUnpacker::openOutputFileStream() {
   }
 }
 
+/**
+ * @brief 解析出软链接后，恢复软链接
+ *
+ * @param target 软链接指向的对象(绝对路径)
+ *
+ */
 void FileUnpacker::createSymlink(const std::string& target) {
   fs::path path = (dst / file_path);
   // 删除原来的软链接
@@ -191,6 +220,11 @@ void FileUnpacker::createSymlink(const std::string& target) {
   fs::create_symlink(target, path);
 }
 
+/**
+ * @brief
+ * 解析出设备文件后，恢复设备文件(因为设备号不能重复，所以这里的设备号取决于原设备文件是否还存在)
+ *
+ */
 void FileUnpacker::createDeviceFile() {
   // 无论是块设备还是字符设备，都可以处理
   fs::path path = (dst / file_path);
@@ -202,6 +236,10 @@ void FileUnpacker::createDeviceFile() {
   }
 }
 
+/**
+ * @brief 解析出管道文件后，恢复管道文件
+ *
+ */
 void FileUnpacker::createFIFO() {
   fs::path path = (dst / file_path);
   fs::create_directories(path.parent_path());
@@ -212,6 +250,12 @@ void FileUnpacker::createFIFO() {
   }
 }
 
+/**
+ * @brief 试图从缓冲区中读取路径大小
+ *
+ * @param ibuffer 输入缓冲区
+ *
+ */
 void FileUnpacker::readPathSize(std::vector<uint8_t>& ibuffer) {
   if (header_buffer.size() < sizeof(size_t)) {
     // 若header_buffer没有读够预期的内容
@@ -236,6 +280,12 @@ void FileUnpacker::readPathSize(std::vector<uint8_t>& ibuffer) {
   }
 }
 
+/**
+ * @brief 试图从缓冲区中读取路径
+ *
+ * @param ibuffer 输入缓冲区
+ *
+ */
 void FileUnpacker::readPath(std::vector<uint8_t>& ibuffer) {
   if (header_buffer.size() < path_size) {
     // 若header_buffer没有读够预期的内容
@@ -259,6 +309,12 @@ void FileUnpacker::readPath(std::vector<uint8_t>& ibuffer) {
   }
 }
 
+/**
+ * @brief 试图从缓冲区中读取FileDetail大小
+ *
+ * @param ibuffer 输入缓冲区
+ *
+ */
 void FileUnpacker::readFileDetailSize(std::vector<uint8_t>& ibuffer) {
   if (header_buffer.size() < sizeof(size_t)) {
     // 若header_buffer没有读够预期的内容
@@ -283,6 +339,12 @@ void FileUnpacker::readFileDetailSize(std::vector<uint8_t>& ibuffer) {
   }
 }
 
+/**
+ * @brief 试图从缓冲区中读取FileDetail
+ *
+ * @param ibuffer 输入缓冲区
+ *
+ */
 void FileUnpacker::readFileDetail(std::vector<uint8_t>& ibuffer) {
   if (header_buffer.size() < fileDetail_size) {
     // 若header_buffer没有读够预期的内容
@@ -344,6 +406,12 @@ void FileUnpacker::readFileDetail(std::vector<uint8_t>& ibuffer) {
   }
 }
 
+/**
+ * @brief 试图从缓冲区中读取普通文件的数据，并且最终恢复其FileDetail
+ *
+ * @param ibuffer 输入缓冲区
+ *
+ */
 void FileUnpacker::readData(std::vector<uint8_t>& ibuffer) {
   while (data_size > 0) {
     // 有可能obuffer满，但ibuffer的数据还没读完，或文件数据还不完整
@@ -450,6 +518,10 @@ void FileUnpacker::readData(std::vector<uint8_t>& ibuffer) {
   }
 }
 
+/**
+ * @brief 强制输出缓冲区
+ *
+ */
 void FileUnpacker::flushBuffer() {
   if (output_file.is_open()) {
     output_file.write(

@@ -1,3 +1,4 @@
+#include "server/pack/pack.h"
 #include <fcntl.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -14,11 +15,9 @@
 #include <iostream>
 #include <stdexcept>
 #include "server/configure/configure.h"
-#include "server/pack/pack.h"
 #include "server/tools/fsapi.h"
 
 namespace zipfiles::server {
-
 /**
  * @brief 将FileDetail实例序列化并插入header
  *
@@ -151,6 +150,7 @@ void createHeader(
  * @param files 一个文件路径数组
  *
  * @param flush 是否强制输出缓冲区
+ *
  */
 std::pair<bool, std::vector<uint8_t>&> packFilesByBlock(
   const std::vector<fs::path>& files,

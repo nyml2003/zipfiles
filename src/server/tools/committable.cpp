@@ -1,9 +1,10 @@
+#include "server/tools/committable.h"
+
 #include <exception>
 #include <mutex>
 #include <stdexcept>
 #include "json/reader.h"
 #include "server/configure/configure.h"
-#include "server/tools/committable.h"
 
 namespace zipfiles::server {
 
@@ -11,11 +12,9 @@ CommitTable::CommitTable() = default;
 CommitTable::~CommitTable() = default;
 
 /**
- * @brief 读取指定的CommitLog文件，返回一个Json::Value数组
+ * @brief 读取指定的CommitTable文件，加载到内存(如果不存在会创造一个新的)
  *
  * @param src 指定的log文件绝对路径
- *
- * @return 包含所有CommitLog的Json数组
  *
  */
 void CommitTable::readCommitTable(const fs::path& src) {
@@ -74,6 +73,10 @@ void CommitTable::readCommitTable(const fs::path& src) {
 /**
  * @brief 返回一个CommitTable的视图
  *
+ * @param src commit table的路径
+ *
+ * @return Json::Value commit table
+ *
  */
 Json::Value CommitTable::readCommitTableView(const fs::path& src) {
   // 先创建相应的目录
@@ -126,7 +129,7 @@ Json::Value CommitTable::readCommitTableView(const fs::path& src) {
 }
 
 /**
- * @brief 判断一个CommitRecord是否已经被提交
+ * @brief 判断一个CommitRecord在内存中是否已经被提交
  *
  * @param cr 指定的CommitRecord对象
  *
@@ -153,6 +156,7 @@ bool CommitTable::isCommitted(const CommitTableRecord& cr) {
  * @param cr 指定的CommitRecord对象
  *
  * ! append一定要在有锁的上下文中使用
+ *
  */
 void CommitTable::appendCommitRecord(const CommitTableRecord& cr) {
   Json::Value& ct = getInstance().commitTable;
@@ -163,7 +167,7 @@ void CommitTable::appendCommitRecord(const CommitTableRecord& cr) {
 }
 
 /**
- * @brief 给定一个路径，将CommitTable文件写入(json形式)
+ * @brief 给定一个路径，将CommitTable文件写入(Json形式)
  *
  * @param dst 指定的table文件路径
  *
@@ -239,9 +243,11 @@ void CommitTable::removeCommitRecord(const std::string& uuid) {
 }
 
 /**
- * @brief 给定uuid，返回指定的CommitRecord
+ * @brief 给定uuid，返回内存中commit table里指定的CommitRecord
  *
  * @param uuid 给定的uuid
+ *
+ * @return CommitTableRecord
  *
  */
 CommitTableRecord CommitTable::getCommitRecordById(const std::string& uuid) {
@@ -262,6 +268,10 @@ CommitTableRecord CommitTable::getCommitRecordById(const std::string& uuid) {
 
 /**
  * @brief 给定uuid，从硬盘中读取某个CommitRecord
+ *
+ * @param uuid
+ *
+ * @return CommitTableRecord
  *
  */
 CommitTableRecord CommitTable::getCommitRecordViewById(const std::string& uuid
@@ -293,6 +303,8 @@ CommitTableRecord CommitTable::getCommitRecordViewById(const std::string& uuid
  *
  * @param cr 给定的CommitRecord
  *
+ * @return Json::Value
+ *
  */
 Json::Value CommitTable::toJson(const CommitTableRecord& cr) {
   Json::Value json;
@@ -312,6 +324,8 @@ Json::Value CommitTable::toJson(const CommitTableRecord& cr) {
  * @brief 给定Json，返回其CommitRecord(去除uuid)
  *
  * @param json 给定的Json
+ *
+ * @return CommitTableRecord
  *
  */
 CommitTableRecord CommitTable::fromJson(Json::Value& json) {

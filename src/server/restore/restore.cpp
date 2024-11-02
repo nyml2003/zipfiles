@@ -1,4 +1,5 @@
 #include "server/restore/restore.h"
+
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -7,9 +8,9 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+
 #include "json/reader.h"
 #include "json/value.h"
-#include "server/configure/configure.h"
 #include "server/crypto/crypto.h"
 #include "server/deflate/zip.h"
 #include "server/pack/unpack.h"
@@ -80,7 +81,7 @@ void restoreTo(
 
   // 读取备份文件
   try {
-    std::vector<uint8_t> buffer(PACK_BLOCK_SIZE);
+    std::vector<uint8_t> buffer(UNPACK_BLOCK_SIZE);
     std::vector<uint8_t> decryptedData{};
     std::vector<uint8_t> unzippedData{};
 
@@ -149,7 +150,7 @@ void restoreTo(
       // unpack不断循环直到解压数据被读取完
       fileUnpacker.unpackFilesByBlock(unzippedData, false);
 
-      buffer.resize(PACK_BLOCK_SIZE);  // 重置缓冲区大小
+      buffer.resize(UNPACK_BLOCK_SIZE);  // 重置缓冲区大小
       unzippedData.clear();
       decryptedData.clear();
 
@@ -170,7 +171,11 @@ void restoreTo(
 }
 
 /**
- * @brief 给定uuid，读取指定的目录文件
+ * @brief 给定uuid，读取相应的目录树文件，并解释成Json
+ *
+ * @param uuid
+ *
+ * @return Json::Value
  *
  */
 Json::Value readDirectoryFileById(const std::string& uuid) {
@@ -182,7 +187,11 @@ Json::Value readDirectoryFileById(const std::string& uuid) {
 }
 
 /**
- * @brief 读取指定的目录文件，还原成目录树(json形式)
+ * @brief 读取指定的目录文件，还原成目录树(Json形式)
+ *
+ * @param src 指定目录
+ *
+ * @return Json::Value
  *
  */
 Json::Value readDirectoryFile(const fs::path& src) {

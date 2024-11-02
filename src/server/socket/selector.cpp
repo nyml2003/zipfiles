@@ -12,7 +12,12 @@
 #include "server/socket/socket.h"
 
 namespace zipfiles::server {
-
+/**
+ * @brief selector实现，其每次从socket读取socket buffer中的所有数据，并进行解析
+ *
+ * @param client_fd client
+ *
+ */
 void Selector::doSelect(int client_fd) {
   try {
     Socket::receive(client_fd, read_buffer);
@@ -53,18 +58,38 @@ void Selector::doSelect(int client_fd) {
   //   std::swap(read_buffer, write_buffer);
 }
 
+/**
+ * @brief 获取当前的连接数
+ *
+ * @return int 当前的连接数
+ *
+ */
 int Selector::getConnectionCount() {
   return connectionCount.load();
 }
 
+/**
+ * @brief 当前连接数加一
+ *
+ */
 void Selector::addConnectionCount() {
   connectionCount++;
 }
 
+/**
+ * @brief 当前连接数减一
+ *
+ */
 void Selector::subConnectionCount() {
   connectionCount--;
 }
 
+/**
+ * @brief 试图从读取的数据中解析出数据大小
+ *
+ * @param byte 读取的数据的一个byte
+ *
+ */
 inline void Selector::readDataSize(uint8_t byte) {
   header_buffer.push_back(byte);
 
@@ -82,12 +107,24 @@ inline void Selector::readDataSize(uint8_t byte) {
   }
 }
 
+/**
+ * @brief 试图从读取的数据中读取出数据内容
+ *
+ * @param byte 读取的数据的一个byte
+ *
+ */
 inline bool Selector::readData(uint8_t byte) {
   write_buffer.push_back(byte);
 
   return data_size == write_buffer.size();
 }
 
+/**
+ * @brief 从读取的数据内容中解析出buffer，并分发任务到线程池
+ *
+ * @param client_fd selector正在处理的client
+ *
+ */
 void Selector::parseJsonFromBuffer(int client_fd) {
   Json::Reader reader;
   Json::Value jsonData;
