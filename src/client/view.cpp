@@ -1,9 +1,10 @@
+#include "client/view.h"
+
 #include <future>
 #include <log4cpp/Category.hh>
 #include <thread>
 #include "client/launcher.h"
 #include "client/socket.h"
-#include "client/view.h"
 #include "jsc/jsc.h"
 #include "json/value.h"
 #include "mp/Request.h"

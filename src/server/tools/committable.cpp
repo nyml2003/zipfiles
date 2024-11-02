@@ -331,7 +331,9 @@ Json::Value CommitTable::toJson(const CommitTableRecord& cr) {
 CommitTableRecord CommitTable::fromJson(Json::Value& json) {
   CommitTableRecord cr;
 
-  if (!json.isMember("message") || !json.isMember("createTime")||!json.isMember("storagePath") || !json.isMember("author") || !json.isMember("isEncrypt") || !json.isMember("isDelete")) {
+  if (!json.isMember("message") || !json.isMember("createTime") ||
+      !json.isMember("storagePath") || !json.isMember("author") ||
+      !json.isMember("isEncrypt") || !json.isMember("isDelete")) {
     throw std::runtime_error("Illegal JSON format");
   }
 

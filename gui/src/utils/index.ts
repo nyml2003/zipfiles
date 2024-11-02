@@ -84,8 +84,8 @@ type Dir<DataType extends { path: string }> = {
   name: string;
 };
 export function buildTree<DataType extends { path: string }>(files: DataType[]) {
-  const lca = findLongestCommonPrefix(files.map(file => file.path));
-  const root: Dir<DataType> = { path: lca, children: [], name: '' };
+  // const lca = findLongestCommonPrefix(files.map(file => file.path));
+  const root: Dir<DataType> = { path: '.', children: [], name: '' };
   files.forEach(file => {
     const relativePath = file.path.slice(lca.length);
     const parts = relativePath.split('/').slice(1);
@@ -103,7 +103,6 @@ export function buildTree<DataType extends { path: string }>(files: DataType[]) 
     }
     current.children.push(file);
   });
-  console.log('buildTree', files, root);
   return root;
 }
 
@@ -111,7 +110,6 @@ export function findFile<DataType extends { path: string; name: string }>(
   files: Dir<DataType>,
   targetPath: string,
 ): DataType[] {
-  console.log(files, targetPath);
   const parts = targetPath.slice(files.path.length).split('/').slice(1);
   let current: Dir<DataType> = files;
   for (let i = 0; i < parts.length; i++) {

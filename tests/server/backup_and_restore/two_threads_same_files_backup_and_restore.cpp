@@ -13,6 +13,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+
 #include "../tests/server/tools.h"
 #include "server/backup/backup.h"
 #include "server/configure/configure.h"
@@ -154,7 +155,8 @@ TEST_F(  // NOLINT
     std::string originalFile = file.string();
     std::string restoredFile = (restorePath / relativePath).string();
 
-    if (fs::is_fifo(file) || fs::is_block_file(file) || fs::is_character_file(file) || fs::is_socket(file)) {
+    if (fs::is_fifo(file) || fs::is_block_file(file) ||
+        fs::is_character_file(file) || fs::is_socket(file)) {
       continue;
     }
 
@@ -170,7 +172,8 @@ TEST_F(  // NOLINT
     std::string originalFile = file.string();
     std::string restoredFile = (restorePath / relativePath).string();
 
-    if (fs::is_fifo(file) || fs::is_block_file(file) || fs::is_character_file(file) || fs::is_socket(file)) {
+    if (fs::is_fifo(file) || fs::is_block_file(file) ||
+        fs::is_character_file(file) || fs::is_socket(file)) {
       continue;
     }
 

@@ -42,7 +42,8 @@ FileDetail getFileDetail(const fs::path& file) {
     .group = grp ? grp->gr_name : "",
     .mode = file_stat.st_mode,
     .absolutePath = file,
-    .dev = file_stat.st_dev};
+    .dev = file_stat.st_dev
+  };
 }
 
 /**

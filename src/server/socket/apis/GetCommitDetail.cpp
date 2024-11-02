@@ -22,6 +22,11 @@ response::GetCommitDetail handle(const request::GetCommitDetail& request) {
   Json::Value directoryFile = readDirectoryFileById(uuid);
 
   for (const auto& file : directoryFile["data"]) {
+    fs::path path = file["relativePath"].asString();
+    // 拆分成parent_path和filename
+    std::string parentPath = path.parent_path().string();
+    std::string name = path.filename().string();
+
     response.files.push_back(
       {.type = static_cast<fs::file_type>(file["type"].asInt()),
        .createTime = file["createTime"].asDouble(),
@@ -30,8 +35,8 @@ response::GetCommitDetail handle(const request::GetCommitDetail& request) {
        .owner = file["owner"].asString(),
        .group = file["group"].asString(),
        .mode = static_cast<mode_t>(file["mode"].asInt()),
-       .path = file["relativePath"].asString(),
-       .name = fs::path(file["relativePath"].asString()).filename().string()}
+       .path = parentPath,
+       .name = name}
     );
   }
   return response;

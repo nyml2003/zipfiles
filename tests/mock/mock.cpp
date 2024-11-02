@@ -10,6 +10,7 @@
 #include <set>
 #include <string>
 #include <thread>
+
 #include "mp/Request.h"
 #include "mp/mp.h"
 #include "server/selector.h"
@@ -189,7 +190,10 @@ int main() {
       return -1;
     }
 
-    if (connect(sock, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
+    if (connect(
+          sock, reinterpret_cast<struct sockaddr*>(&serv_addr),
+          sizeof(serv_addr)
+        ) < 0) {
       std::cerr << "Connection Failed" << std::endl;
       close(sock);
       return -1;

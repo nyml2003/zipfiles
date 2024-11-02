@@ -67,7 +67,8 @@ void doHandle(int client_fd, const ReqPtr& request) {
           return std::make_shared<Res>(
             api::handle<request::GetFileDetail, response::GetFileDetail>(req)
           );
-        }},
+        }
+      },
       request->kind
     );
 
@@ -82,7 +83,8 @@ void doHandle(int client_fd, const ReqPtr& request) {
   }  // namespace zipfiles::server
   catch (const std::exception& e) {
     // 如果是SocketTemporarilyUnavailable
-    if (const auto* e_ptr = dynamic_cast<const SocketTemporarilyUnavailable*>(&e)) {
+    if (const auto* e_ptr =
+          dynamic_cast<const SocketTemporarilyUnavailable*>(&e)) {
       // log4cpp::Category::getRoot().infoStream() << e_ptr->what();
       return;
     }

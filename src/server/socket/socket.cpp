@@ -40,7 +40,9 @@ Socket::Socket() : server_fd(socket(AF_INET, SOCK_STREAM, 0)), address{} {
   addrlen = sizeof(address);
 
   // 绑定socket
-  if (bind(server_fd, reinterpret_cast<struct sockaddr*>(&address), sizeof(address)) < 0) {
+  if (bind(
+        server_fd, reinterpret_cast<struct sockaddr*>(&address), sizeof(address)
+      ) < 0) {
     log4cpp::Category::getRoot().errorStream()
       << "Failed to bind server socket";
     close(server_fd);
