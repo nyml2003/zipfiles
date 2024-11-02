@@ -2,7 +2,7 @@
 import { ApiEnum } from '@/apis';
 
 export interface Api {
-  request<Request, Response>(apiEnum: ApiEnum, request: Request): Promise<Response>;
+  request<Req, Res>(apiEnum: ApiEnum, request: Req): Promise<Res>;
   call(apiEnum: ApiEnum, request: unknown): void;
 }
 export interface ResponseWrapper {

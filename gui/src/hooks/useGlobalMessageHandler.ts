@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ApiEnum } from '@/apis';
 import { notification } from 'antd';
 import { useEffect } from 'react';
@@ -12,16 +13,16 @@ export interface ResponseWrapper {
   message: string;
 }
 
-export interface CallBack<T> {
-  request: RequestWrapper<T>;
-  resolve: (data: T) => void;
+export interface CallBack {
+  request: RequestWrapper<any>;
+  resolve: (data: any) => void;
   reject: (message: string) => void;
   retries: number;
 }
 
-let callbacks: CallBack<any>[] = [];
+const callbacks: CallBack[] = [];
 
-export const setGlobalCallback = (callback: CallBack<any>) => {
+export const setGlobalCallback = (callback: CallBack) => {
   callbacks.push(callback);
 };
 
@@ -46,7 +47,7 @@ export const handler = (event: MessageEvent) => {
   // console.log('callbacks: ', JSON.stringify(callbacks));
   const [callback] = callbacks.splice(callbackIndex, 1);
   if (type === 'resolve') {
-    callback.resolve(data);
+    callback.resolve(data || {});
   } else if (type === 'reject') {
     callback.reject(message);
   }
@@ -56,35 +57,34 @@ const MAX_REQUEST_RETRY = 10;
 export const useGlobalMessageHandler = () => {
   useEffect(() => {
     window.addEventListener('message', handler);
-    const intervalId = setInterval(() => {
-      const now = Date.now();
-      console.log('check timeout', callbacks);
-      callbacks = callbacks.filter(callback => {
-        if (callback.request.timestamp + MAX_REQUEST_TIMEOUT * callback.retries < now) {
-          const { request } = callback;
-          callback.request.timestamp = now;
-          if (
-            window.webkit &&
-            window.webkit.messageHandlers &&
-            window.webkit.messageHandlers.handleMessage
-          ) {
-            window.webkit.messageHandlers.handleMessage.postMessage(request);
-          }
-          callback.retries += 1;
-          console.log('retry', callback.retries, 'times for', request);
-          if (callback.retries > MAX_REQUEST_RETRY) {
-            notification.error({
-              message: '请求超时',
-            });
-            return false; // 移除超时的回调
-          }
-        }
-        return true; // 保留未超时的回调
-      });
-    }, MAX_REQUEST_TIMEOUT);
+    // const intervalId = setInterval(() => {
+    //   const now = Date.now();
+    //   callbacks = callbacks.filter(callback => {
+    //     if (callback.request.timestamp + MAX_REQUEST_TIMEOUT * callback.retries < now) {
+    //       const { request } = callback;
+    //       callback.request.timestamp = now;
+    //       if (
+    //         window.webkit &&
+    //         window.webkit.messageHandlers &&
+    //         window.webkit.messageHandlers.handleMessage
+    //       ) {
+    //         window.webkit.messageHandlers.handleMessage.postMessage(request);
+    //       }
+    //       callback.retries += 1;
+    //       console.log('retry', callback.retries, 'times for', request);
+    //       if (callback.retries > MAX_REQUEST_RETRY) {
+    //         notification.error({
+    //           message: '请求超时',
+    //         });
+    //         return false; // 移除超时的回调
+    //       }
+    //     }
+    //     return true; // 保留未超时的回调
+    //   });
+    // }, MAX_REQUEST_TIMEOUT);
     return () => {
       window.removeEventListener('message', handler);
-      clearInterval(intervalId);
+      // clearInterval(intervalId);
     };
   }, []);
 };

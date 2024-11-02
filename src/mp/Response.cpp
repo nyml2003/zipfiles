@@ -1,10 +1,11 @@
-#include "mp/Response.h"
 #include <unistd.h>
 #include <filesystem>
 #include <log4cpp/Category.hh>
 #include <utility>
 #include <vector>
 #include "json/value.h"
+#include "mp/Response.h"
+#include "mp/apis/GetFileDetailList.h"
 #include "mp/common.h"
 
 namespace zipfiles {
@@ -56,19 +57,19 @@ Json::Value Res::toJson() {
       },
       [&json](response::GetCommitList& res) {
         json["apiEnum"] = toSizeT(ApiEnum::GET_COMMIT_LIST);
-        Json::Value files(Json::arrayValue);
-        for (const auto& file : res.commits) {
-          Json::Value fileJson;
-          fileJson["uuid"] = file.uuid;
-          fileJson["message"] = file.message;
-          fileJson["createTime"] = file.createTime;
-          fileJson["storagePath"] = file.storagePath;
-          fileJson["author"] = file.author;
-          fileJson["isEncrypt"] = file.isEncrypt;
-          fileJson["isDelete"] = file.isDelete;
-          files.append(fileJson);
+        Json::Value commits(Json::arrayValue);
+        for (const auto& commit : res.commits) {
+          Json::Value commitJson;
+          commitJson["uuid"] = commit.uuid;
+          commitJson["message"] = commit.message;
+          commitJson["createTime"] = commit.createTime;
+          commitJson["storagePath"] = commit.storagePath;
+          commitJson["author"] = commit.author;
+          commitJson["isEncrypt"] = commit.isEncrypt;
+          commitJson["isDelete"] = commit.isDelete;
+          commits.append(commitJson);
         }
-        json["payload"]["files"] = files;
+        json["payload"]["commits"] = commits;
       },
       [&json](response::GetFileList& res) {
         json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_LIST);
@@ -100,6 +101,25 @@ Json::Value Res::toJson() {
         json["payload"]["path"] = res.path;
         json["payload"]["name"] = res.name;
       },
+      [&json](response::GetFileDetailList& res) {
+        json["apiEnum"] = toSizeT(ApiEnum::GET_FILEDETAIL_LIST);
+        Json::Value files(Json::arrayValue);
+        for (const auto& file : res.files) {
+          Json::Value fileJson;
+          fileJson["type"] = static_cast<int>(file.type);
+          fileJson["createTime"] = file.createTime;
+          fileJson["updateTime"] = file.updateTime;
+          fileJson["size"] = file.size;
+          fileJson["owner"] = file.owner;
+          fileJson["group"] = file.group;
+          fileJson["mode"] = file.mode;
+          fileJson["path"] = file.path;
+          fileJson["name"] = file.name;
+          files.append(fileJson);
+        }
+        json["payload"]["files"] = files;
+      },
+
       [](auto&&) { throw std::runtime_error("Unknown response type"); }
     },
     kind

@@ -2,6 +2,8 @@
 #include <log4cpp/Category.hh>
 #include <log4cpp/PropertyConfigurator.hh>
 #include "server/acceptor.h"
+#include "server/configure/configure.h"
+#include "server/tools/committable.h"
 
 int main() {
   // 启动logger
@@ -21,6 +23,9 @@ int main() {
   }
 
   // 启动acceptor
+  zipfiles::server::CommitTable::readCommitTable(
+    zipfiles::server::COMMIT_TABLE_PATH
+  );
   zipfiles::server::doAccept();
 
   return 0;

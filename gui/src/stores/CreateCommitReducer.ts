@@ -70,9 +70,6 @@ const CreateCommitReducer = createSlice({
     updateIsFiltering(state, action: PayloadAction<boolean>) {
       state.isFiltering = action.payload;
     },
-    updateSelectedFile(state, action: PayloadAction<File[]>) {
-      state.selectedFile.files = action.payload;
-    },
     addSelectedFile(state, action: PayloadAction<File>) {
       if (
         !state.selectedFile.files.find(
@@ -82,44 +79,38 @@ const CreateCommitReducer = createSlice({
         state.selectedFile.files.push(action.payload);
       }
     },
-    checkSelectedFile(state, action: PayloadAction<File>) {
-      const index = state.selectedFile.files.findIndex(
-        file => file.path === action.payload.path && file.name === action.payload.name,
+    removeSelectedFile(state, action: PayloadAction<File>) {
+      state.selectedFile.files = state.selectedFile.files.filter(
+        file => file.path !== action.payload.path || file.name !== action.payload.name,
       );
-      if (index !== -1) {
-        state.selectedFile.files.splice(index, 1);
-      } else {
-        state.selectedFile.files.push(action.payload);
-      }
-    },
-    checkSelectedDirectory(state, action: PayloadAction<string>) {
-      if (action.payload === '') {
-        if (state.selectedFile.directories.includes('')) {
-          state.selectedFile.directories = [];
-        } else {
-          state.selectedFile.directories = [''];
-        }
-        state.selectedFile.files = [];
-        return;
-      }
-      if (state.selectedFile.directories.includes(action.payload)) {
-        state.selectedFile.directories = state.selectedFile.directories.filter(
-          directory => directory !== action.payload,
-        );
-      } else {
-        state.selectedFile.directories.push(action.payload);
-        state.selectedFile.files = state.selectedFile.files.filter(
-          file => !(file.path === action.payload),
-        );
-      }
     },
     addSelectedDirectory(state, action: PayloadAction<string>) {
-      if (!state.selectedFile.directories.includes(action.payload)) {
-        state.selectedFile.directories.push(action.payload);
+      const newDirectories = [];
+      const newFiles = [];
+      for (const directory of state.selectedFile.directories) {
+        if (!directory.startsWith(action.payload)) {
+          newDirectories.push(directory);
+        }
       }
+      for (const file of state.selectedFile.files) {
+        if (!file.path.startsWith(action.payload)) {
+          newFiles.push(file);
+        }
+      }
+      newDirectories.push(action.payload);
+      state.selectedFile.files = newFiles;
+      state.selectedFile.directories = newDirectories;
     },
-    updateSelectedDirectory(state, action: PayloadAction<string[]>) {
-      state.selectedFile.directories = action.payload;
+    removeSelectedDirectory(state, action: PayloadAction<string>) {
+      state.selectedFile.directories = state.selectedFile.directories.filter(
+        directory => directory !== action.payload,
+      );
+    },
+    clearSelectedFiles(state) {
+      state.selectedFile.files = [];
+    },
+    clearSelectedDirectories(state) {
+      state.selectedFile.directories = [];
     },
     updateBackupFiles(state, action: PayloadAction<string[]>) {
       state.backupFiles = action.payload;
@@ -129,17 +120,18 @@ const CreateCommitReducer = createSlice({
 
 export const {
   updateCurrentFile,
-  updateSelectedFile,
   updateCurrentPath,
   handleRefresh,
   updateFilter,
   resetFilter,
   updateIsFiltering,
-  updateSelectedDirectory,
   addSelectedFile,
-  checkSelectedFile,
-  checkSelectedDirectory,
+  removeSelectedFile,
+  updateBackupFiles,
+  removeSelectedDirectory,
   addSelectedDirectory,
+  clearSelectedFiles,
+  clearSelectedDirectories,
 } = CreateCommitReducer.actions;
 
 export default CreateCommitReducer.reducer;

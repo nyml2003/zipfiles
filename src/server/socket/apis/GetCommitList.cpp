@@ -4,6 +4,7 @@
 #include <server/socket/api.h>
 #include <vector>
 #include "json/value.h"
+#include "log4cpp/Category.hh"
 #include "server/configure/configure.h"
 
 namespace zipfiles::server::api {
@@ -11,11 +12,13 @@ template <>
 response::GetCommitList handle<
   request::GetCommitList,
   response::GetCommitList>(const request::GetCommitList& /* unused */) {
+  log4cpp::Category::getRoot().infoStream() << "start GetCommitList";
   // 读取COMMIT_TABLE_PATH的内容到Json::Value, 用std::ifstream
-  std::ifstream commitTableFile(COMMIT_TABLE_PATH);
-  Json::Value commitTable;
-  commitTableFile >> commitTable;
-  commitTableFile.close();
+  // std::ifstream commitTableFile(COMMIT_TABLE_PATH);
+  // Json::Value commitTable;
+  // commitTableFile >> commitTable;
+  // commitTableFile.close();
+  Json::Value commitTable = CommitTable::readCommitTableView(COMMIT_TABLE_PATH);
 
   response::GetCommitList response;
 

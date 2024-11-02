@@ -1,7 +1,7 @@
-#include "mp/Request.h"
 #include <optional>
 #include <utility>
 #include "log4cpp/Category.hh"
+#include "mp/Request.h"
 #include "mp/Response.h"
 #include "mp/common.h"
 
@@ -123,6 +123,7 @@ ReqPtr Req::fromJson(const Json::Value& json) {
       auto path = json["payload"]["path"].asString();
       request::getFileDetailList::Filter filter;
       if (json["payload"]["filter"].isNull()) {
+        req = std::make_shared<Req>(request::GetFileDetailList{path});
         break;
       }
       const auto& filterJson = json["payload"]["filter"];
@@ -154,8 +155,6 @@ ReqPtr Req::fromJson(const Json::Value& json) {
         filter.group = filterJson["group"].asString();
       }
       req = std::make_shared<Req>(request::GetFileDetailList{path, filter});
-      log4cpp::Category::getRoot().infoStream()
-        << "Made a file detail list request from json: " << req->toJson();
       break;
     }
     case ApiEnum::POST_COMMIT: {
@@ -188,10 +187,9 @@ ReqPtr Req::fromJson(const Json::Value& json) {
     default:
       break;
   }
+
   req->timestamp = json["timestamp"].asDouble();
   req->uuid = json["uuid"].asString();
-  log4cpp::Category::getRoot().infoStream()
-    << "Made a request from json: " << req->toJson();
   return req;
 }
 

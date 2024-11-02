@@ -1,4 +1,3 @@
-#include "server/handler.h"
 #include <unistd.h>
 #include <csignal>
 #include <log4cpp/Category.hh>
@@ -29,10 +28,11 @@ void doHandle(int client_fd, const ReqPtr& request) {
           );
         },
         [](request::GetFileDetailList& req) {
-          return std::make_shared<Res>(
-            api::handle<
-              request::GetFileDetailList, response::GetFileDetailList>(req)
-          );
+          const response::GetFileDetailList res = api::handle<
+            request::GetFileDetailList, response::GetFileDetailList>(req);
+          log4cpp::Category::getRoot().infoStream()
+            << "Response: " << res.files.size();
+          return std::make_shared<Res>(res);
         },
         [](request::PostCommit& req) {
           return std::make_shared<Res>(
@@ -46,6 +46,7 @@ void doHandle(int client_fd, const ReqPtr& request) {
           );
         },
         [](request::GetCommitList& req) {
+          log4cpp::Category::getRoot().infoStream() << "GetCommitList";
           return std::make_shared<Res>(
             api::handle<request::GetCommitList, response::GetCommitList>(req)
           );

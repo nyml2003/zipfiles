@@ -3,22 +3,23 @@
 #include <server/socket/api.h>
 #include <fstream>
 #include "json/value.h"
-#include "server/configure/configure.h"
+#include "server/restore/restore.h"
 
 namespace zipfiles::server::api {
 
 template <>
 response::GetCommitDetail handle(const request::GetCommitDetail& request) {
   const std::string& uuid = request.uuid;
-  const fs::path& path = STORAGE_PATH / uuid / "directoryfile";
-  std::ifstream inFile(path);
-  if (!inFile) {
-    throw std::runtime_error("Failed to open file: " + path.string());
-  }
+  //
+  // std::ifstream inFile(path);
+  // if (!inFile) {
+  //   throw std::runtime_error("Failed to open file: " + path.string());
+  // }
   response::GetCommitDetail response;
-  Json::Value directoryFile;
-  inFile >> directoryFile;
-  inFile.close();
+  // Json::Value directoryFile;
+  // inFile >> directoryFile;
+  // inFile.close();
+  Json::Value directoryFile = readDirectoryFileById(uuid);
 
   for (const auto& file : directoryFile["data"]) {
     response.files.push_back(

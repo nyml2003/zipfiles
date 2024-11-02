@@ -63,7 +63,7 @@ void handleFunction(
   gpointer user_data
 );
 
-void handleRemoteResponse(const ReqPtr& request);
+void handleRemoteResponse(Json::Value response);
 
 // void handleLocalResponse(const ReqPtr& request);
 

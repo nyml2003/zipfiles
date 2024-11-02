@@ -18,7 +18,7 @@ class Socket {
     static Socket instance;
     return instance;
   }
-  [[nodiscard]] ResPtr receive();
+  void receive();
   void send(const ReqPtr& req);
   void reconnect();
   void connectWithRetries();
@@ -41,7 +41,7 @@ class Socket {
 
   void readDataSize(uint8_t byte);
   bool readData(uint8_t byte);
-  void parseJsonFromBuffer();
+  Json::Value parseJsonFromBuffer();
 };
 }  // namespace zipfiles::client
 #endif  // !ZIPFILE_CLIENT_SOCKET_H

@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <thread>
 #include <vector>
 
@@ -55,7 +56,10 @@ void Socket::connectWithRetries() {
   const int max_retries = 5;
   int retries = 0;
   while (retries < max_retries) {
-    if (connect(server_fd, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
+    if (connect(
+          server_fd, reinterpret_cast<struct sockaddr*>(&serv_addr),
+          sizeof(serv_addr)
+        ) < 0) {
       log4cpp::Category::getRoot().errorStream() << "Connection failed";
       retries++;
       log4cpp::Category::getRoot().errorStream()
@@ -121,7 +125,7 @@ void Socket::send(const ReqPtr& req) {
   }
 }
 
-ResPtr Socket::receive() {
+void Socket::receive() {
   read_buffer.resize(mp::MAX_MESSAGE_SIZE);  // 预留空间
 
   ssize_t bytesRead = read(server_fd, read_buffer.data(), mp::MAX_MESSAGE_SIZE);
@@ -150,6 +154,7 @@ ResPtr Socket::receive() {
         "Server " + std::to_string(server_fd) + "is broken, disconnect now"
       );
     }
+    // todo
 
     close(server_fd);
     // 未知错误
@@ -158,7 +163,6 @@ ResPtr Socket::receive() {
       " is broken for unknown reason, disconnect now"
     );
   }
-
   // read_buffer仍然有内容
   for (const uint8_t byte : read_buffer) {
     switch (state) {
@@ -167,7 +171,7 @@ ResPtr Socket::receive() {
         break;
       case ReceiveStatus::READ_DATA:
         if (readData(byte)) {
-          parseJsonFromBuffer();
+          handleRemoteResponse(parseJsonFromBuffer());
           state = ReceiveStatus::READ_DATA_SIZE;
         }
         break;
@@ -177,9 +181,6 @@ ResPtr Socket::receive() {
   }
 
   read_buffer.clear();
-
-  // todo: 返回解析出的response
-  return nullptr;
 }
 
 inline void Socket::readDataSize(uint8_t byte) {
@@ -205,21 +206,18 @@ inline bool Socket::readData(uint8_t byte) {
   return data_size == write_buffer.size();
 }
 
-void Socket::parseJsonFromBuffer() {
+Json::Value Socket::parseJsonFromBuffer() {
   Json::Reader reader;
   Json::Value jsonData;
   std::string jsonString(write_buffer.begin(), write_buffer.end());
 
   if (reader.parse(jsonString, jsonData)) {
-    ResPtr res = Res::fromJson(jsonData);
-
-    // todo: 处理解析出的response
-  } else {
     write_buffer.clear();
-    throw std::runtime_error("Illegal json format");
-  }
 
+    return jsonData;
+  }
   write_buffer.clear();
+  throw std::runtime_error("Illegal json format");
 }
 
 }  // namespace zipfiles::client

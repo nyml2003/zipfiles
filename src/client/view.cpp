@@ -1,9 +1,9 @@
-#include "client/view.h"
 #include <future>
 #include <log4cpp/Category.hh>
 #include <thread>
 #include "client/launcher.h"
 #include "client/socket.h"
+#include "client/view.h"
 #include "jsc/jsc.h"
 #include "json/value.h"
 #include "mp/Request.h"
@@ -304,54 +304,19 @@ void handleFunction(
   log4cpp::Category::getRoot().infoStream()
     << "Sending request: " << request->toJson();
   try {
-    handleRemoteResponse(request);
+    Socket::getInstance().send(request);
   } catch (const std::exception& e) {
     handleError("Failed to handle request: " + std::string(e.what()));
   }
 }
 
-void handleRemoteResponse(const ReqPtr& request) {
-  auto future = std::async(
-    std::launch::async,
-    [](const ReqPtr& request) -> ResPtr {
-      try {
-        Socket::getInstance().send(request);
-      } catch (const std::exception& e) {
-        handleError("Failed to send request: " + std::string(e.what()));
-        return nullptr;
-      }
-      ResPtr response = nullptr;
-      try {
-        response = Socket::getInstance().receive();
-        if (response == nullptr) {
-          handleError("Failed to receive response: response is null");
-          return nullptr;
-        }
-      } catch (const std::exception& e) {
-        handleError("Failed to receive response: " + std::string(e.what()));
-        return nullptr;
-      }
-      return response;
-    },
-    request
+void handleRemoteResponse(Json::Value res) {
+  Json::Value root;
+  log4cpp::Category::getRoot().infoStream() << "Received response: " << res;
+  handleResult(
+    root, res, res["timestamp"].asDouble(), res["apiEnum"].asInt(),
+    res["uuid"].asString()
   );
-
-  std::thread([future = std::move(future)]() mutable {
-    try {
-      ResPtr response = future.get();
-      if (response == nullptr) {
-        return;
-      }
-      Json::Value res = response->toJson();
-      Json::Value root;
-      handleResult(
-        root, res, res["timestamp"].asDouble(), res["apiEnum"].asInt(),
-        res["uuid"].asString()
-      );
-    } catch (const std::exception& e) {
-      handleError("Failed to handle request: " + std::string(e.what()));
-    }
-  }).detach();
 }
 
 }  // namespace zipfiles::client
