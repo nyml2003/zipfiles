@@ -48,7 +48,7 @@ class SingleThreadBackupAndRestore : public ::testing::Test {
 TEST_F(SingleThreadBackupAndRestore, SingleThreadBackupAndRestore) {  // NOLINT
   // 切换到测试文件目录
   fs::path current_work_path = std::filesystem::current_path();
-  current_work_path = current_work_path.parent_path() / "test_files";
+  current_work_path = current_work_path.parent_path() / "test_files" / "text";
 
   std::cout << "test_files path: " << current_work_path << std::endl;
 
