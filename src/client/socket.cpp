@@ -152,7 +152,7 @@ void Socket::send(const ReqPtr& req) {
  * @return ResPtr 解析出的response
  *
  */
-ResPtr Socket::receive() {
+void Socket::receive() {
   read_buffer.resize(mp::MAX_MESSAGE_SIZE);  // 预留空间
 
   ssize_t bytesRead = read(server_fd, read_buffer.data(), mp::MAX_MESSAGE_SIZE);

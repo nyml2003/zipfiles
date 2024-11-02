@@ -1,10 +1,11 @@
 
+#include "client/launcher.h"
+
 #include <libgen.h>
 #include <iostream>
 #include <log4cpp/Category.hh>
 #include <log4cpp/PropertyConfigurator.hh>
 #include <string>
-#include "client/launcher.h"
 #include "client/view.h"
 #include "glib-object.h"
 

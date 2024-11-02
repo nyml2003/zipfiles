@@ -8,3 +8,4 @@ lib/*.so
 tests/unittest/data
 .vscode/launch.json
 test_files/*
+ventus_temp/*

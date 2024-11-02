@@ -74,7 +74,7 @@ const Explorer: React.FC = () => {
           <Button
             type='text'
             onClick={() => {
-              console.log(state);
+              console.log(JSON.stringify(state, null, 2));
             }}>
             打印
           </Button>
