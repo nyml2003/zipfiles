@@ -1,0 +1,32 @@
+// tsconfig.test.json
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es5",
+        "lib": [
+            "es2015"
+        ],
+        "types": [
+            "jasmine"
+        ],
+        "sourceMap": true,
+        "outDir": "./dist/test",
+        "rootDir": "./test",
+        "typeRoots": [
+            "./node_modules/@types"
+        ],
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "skipLibCheck": true
+    },
+    "include": [
+        "test/**/*.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

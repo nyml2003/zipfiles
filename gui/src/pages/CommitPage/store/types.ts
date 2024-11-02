@@ -1,4 +1,5 @@
 import { FileType } from '@/types';
+import { Dir } from '@/utils';
 
 export interface FileDetail {
   name: string;
@@ -12,8 +13,6 @@ export interface FileDetail {
   path: string;
 }
 
-type Dir = { path: string; children: (Dir | FileDetail)[]; name: string };
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export declare type PayloadAction<P = any> = {
   payload: P;
@@ -23,5 +22,5 @@ export interface State {
   path: string;
   file: string;
   commitId: string;
-  files: Dir;
+  files: Dir<FileDetail>;
 }

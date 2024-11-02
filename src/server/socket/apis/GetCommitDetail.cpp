@@ -2,6 +2,7 @@
 #include <mp/Response.h>
 #include <server/socket/api.h>
 #include <fstream>
+#include <iostream>
 #include "json/value.h"
 #include "server/restore/restore.h"
 
@@ -20,12 +21,16 @@ response::GetCommitDetail handle(const request::GetCommitDetail& request) {
   // inFile >> directoryFile;
   // inFile.close();
   Json::Value directoryFile = readDirectoryFileById(uuid);
+  std::cout << directoryFile;
 
   for (const auto& file : directoryFile["data"]) {
     fs::path path = file["relativePath"].asString();
+    std::cout << path << std::endl;
     // 拆分成parent_path和filename
     std::string parentPath = path.parent_path().string();
     std::string name = path.filename().string();
+    std::cout << "parentPath: " << parentPath << std::endl;
+    std::cout << "name: " << name << std::endl;
 
     response.files.push_back(
       {.type = static_cast<fs::file_type>(file["type"].asInt()),

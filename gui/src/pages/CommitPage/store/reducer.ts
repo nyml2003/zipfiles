@@ -16,6 +16,7 @@ export const updateCommitId = (state: State, action: PayloadAction<string>) => {
 
 export const updateFiles = (state: State, action: PayloadAction<FileDetail[]>) => {
   const newFiles = buildTree(action.payload);
-  const newPath = newFiles.path;
-  return { ...state, files: newFiles, path: newPath };
+  //console.log(JSON.stringify(newFiles, null, 2));
+  //console.log(JSON.stringify(action.payload, null, 2));
+  return { ...state, files: newFiles, path: '' };
 };

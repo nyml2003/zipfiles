@@ -41,12 +41,13 @@ const TreeMenu = () => {
 
   const handleGetFileList = useCallback(
     (path: string) => {
+      //console.log(path)
       const res = findFile(state.files, path) as FileDetail[];
       const newTreeData = res.map(item => {
         const isDirectory = item.type === FileType.Directory;
         return {
           title: item.name,
-          key: `${path}/${item.name}`,
+          key: path === '' ? item.name : `${path}/${item.name}`,
           isLeaf: !isDirectory,
         };
       });

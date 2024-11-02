@@ -11,9 +11,9 @@ const defaultState: State = {
   file: '',
   commitId: '',
   files: {
-    path: '',
     name: '',
     children: [],
+    subDir: [],
   },
 };
 
