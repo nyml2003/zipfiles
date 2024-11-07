@@ -1,37 +1,36 @@
 #include "mp/Request.h"
+
 #include <optional>
 #include <utility>
-#include "log4cpp/Category.hh"
-#include "mp/Response.h"
+
 #include "mp/common.h"
 
 namespace zipfiles {
-Req::Req(ReqKind kind) : kind(std::move(kind)) {}
 
-Json::Value Req::toJson() {
+Req::Req(ReqKind kind, Api api, std::string uuid)
+  : kind(std::move(kind)), api(api), uuid(std::move(uuid)) {}
+
+Json::Value Req::toJson() const {
   Json::Value json;
-  json["timestamp"] = timestamp;
   json["uuid"] = uuid;
-  std::visit(
-    overload{
-      [&json](request::GetCommitDetail& req) {
-        json["apiEnum"] = toSizeT(ApiEnum::GET_COMMIT_DETAIL);
-        json["payload"]["uuid"] = req.uuid;
-      },
-      [&json](request::GetCommitList&) {
-        json["apiEnum"] = toSizeT(ApiEnum::GET_COMMIT_LIST);
-      },
-      [&json](request::GetFileList& req) {
-        json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_LIST);
-        json["payload"]["path"] = req.path;
-      },
-      [&json](request::GetFileDetailList& req) {
-        json["apiEnum"] = toSizeT(ApiEnum::GET_FILEDETAIL_LIST);
-        json["payload"]["path"] = req.path;
-        if (!req.filter.has_value()) {
-          return;
-        }
-        auto& filter = req.filter.value();
+  json["api"] = static_cast<int>(api);
+  switch (api) {
+    case Api::GET_COMMIT_DETAIL: {
+      json["payload"]["uuid"] = std::get<request::GetCommitDetail>(kind).uuid;
+      break;
+    }
+    case Api::GET_COMMIT_LIST: {
+      break;
+    }
+    case Api::GET_FILE_LIST: {
+      json["payload"]["path"] = std::get<request::GetFileList>(kind).path;
+      break;
+    }
+    case Api::GET_FILE_DETAIL_LIST: {
+      json["payload"]["path"] = std::get<request::GetFileDetailList>(kind).path;
+      if (std::get<request::GetFileDetailList>(kind).filter.has_value()) {
+        auto& filter =
+          std::get<request::GetFileDetailList>(kind).filter.value();
         if (filter.type.has_value()) {
           json["payload"]["filter"]["type"] =
             static_cast<int>(filter.type.value());
@@ -64,65 +63,70 @@ Json::Value Req::toJson() {
         if (filter.group) {
           json["payload"]["filter"]["group"] = filter.group.value();
         }
-      },
-      [&json](request::PostCommit& req) {
-        json["apiEnum"] = toSizeT(ApiEnum::POST_COMMIT);
-        json["payload"]["files"] = Json::arrayValue;
-        for (const auto& file : req.files) {
-          json["payload"]["files"].append(file);
-        }
-        json["payload"]["uuid"] = req.uuid;
-        json["payload"]["message"] = req.message;
-        json["payload"]["createTime"] = req.createTime;
-        json["payload"]["storagePath"] = req.storagePath;
-        json["payload"]["author"] = req.author;
-        json["payload"]["isEncrypt"] = req.isEncrypt;
-        if (req.key) {
-          json["payload"]["key"] = req.key.value();
-        }
-      },
-      [&json](request::MockNeedTime& req) {
-        json["apiEnum"] = toSizeT(ApiEnum::MOCK_NEED_TIME);
-        json["payload"]["id"] = req.id;
-      },
-      [&json](request::GetFileDetail& req) {
-        json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_DETAIL);
-        json["payload"]["path"] = req.path;
-        json["payload"]["name"] = req.name;
-      },
-      [](auto&&) { throw std::runtime_error("Unknown request type"); },
-    },
-    kind
-  );
+      }
+      break;
+    }
+    case Api::POST_COMMIT: {
+      json["payload"]["files"] = Json::arrayValue;
+      for (const auto& file : std::get<request::PostCommit>(kind).files) {
+        json["payload"]["files"].append(file);
+      }
+      json["payload"]["uuid"] = std::get<request::PostCommit>(kind).uuid;
+      json["payload"]["message"] = std::get<request::PostCommit>(kind).message;
+      json["payload"]["createTime"] =
+        std::get<request::PostCommit>(kind).createTime;
+      json["payload"]["storagePath"] =
+        std::get<request::PostCommit>(kind).storagePath;
+      json["payload"]["author"] = std::get<request::PostCommit>(kind).author;
+      json["payload"]["isEncrypt"] =
+        std::get<request::PostCommit>(kind).isEncrypt;
+      if (std::get<request::PostCommit>(kind).key) {
+        json["payload"]["key"] =
+          std::get<request::PostCommit>(kind).key.value();
+      }
+      break;
+    }
+    case Api::GET_FILE_DETAIL: {
+      json["payload"]["path"] = std::get<request::GetFileDetail>(kind).path;
+      json["payload"]["name"] = std::get<request::GetFileDetail>(kind).name;
+      break;
+    }
+    case Api::MOCK_NEED_TIME: {
+      json["payload"]["id"] = std::get<request::MockNeedTime>(kind).id;
+      break;
+    }
+    default:
+      throw std::runtime_error(
+        std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": " +
+        "Unknown request type"
+      );
+      break;
+  }
   return json;
 }
 
-ReqPtr Req::fromJson(const Json::Value& json) {
-  ReqPtr req = nullptr;
-  auto api = static_cast<ApiEnum>(json["apiEnum"].asInt());
-  log4cpp::Category::getRoot().infoStream()
-    << "Making a request from json: " << json << toSizeT(api);
+Req Req::fromJson(const Json::Value& json) {
+  auto api = static_cast<Api>(json["api"].asInt());
+  ReqKind kind;
   switch (api) {
-    case ApiEnum::GET_COMMIT_DETAIL: {
-      req = std::make_shared<Req>(
-        request::GetCommitDetail{json["payload"]["uuid"].asString()}
-      );
+    case Api::GET_COMMIT_DETAIL: {
+      kind =
+        request::GetCommitDetail{.uuid = json["payload"]["uuid"].asString()};
       break;
     }
-    case ApiEnum::GET_COMMIT_LIST: {
-      req = std::make_shared<Req>(request::GetCommitList{});
+    case Api::GET_COMMIT_LIST: {
+      kind = request::GetCommitList{};
       break;
     }
-    case ApiEnum::GET_FILE_LIST: {
-      req = std::make_shared<Req>(
-        request::GetFileList{json["payload"]["path"].asString()}
-      );
+    case Api::GET_FILE_LIST: {
+      kind = request::GetFileList{.path = json["payload"]["path"].asString()};
       break;
     }
-    case ApiEnum::GET_FILEDETAIL_LIST: {
+    case Api::GET_FILE_DETAIL_LIST: {
       auto path = json["payload"]["path"].asString();
       request::getFileDetailList::Filter filter;
       if (json["payload"]["filter"].isNull()) {
+        kind = request::GetFileDetailList{.path = path};
         break;
       }
       const auto& filterJson = json["payload"]["filter"];
@@ -153,61 +157,45 @@ ReqPtr Req::fromJson(const Json::Value& json) {
       if (!filterJson["group"].isNull()) {
         filter.group = filterJson["group"].asString();
       }
-      req = std::make_shared<Req>(request::GetFileDetailList{path, filter});
-      log4cpp::Category::getRoot().infoStream()
-        << "Made a file detail list request from json: " << req->toJson();
+      kind = request::GetFileDetailList{.path = path, .filter = filter};
       break;
     }
-    case ApiEnum::POST_COMMIT: {
+    case Api::POST_COMMIT: {
       std::vector<std::string> files;
       for (const auto& file : json["payload"]["files"]) {
         files.push_back(file.asString());
       }
-      req = std::make_shared<Req>(request::PostCommit{
-        files, json["payload"]["uuid"].asString(),
-        json["payload"]["message"].asString(),
-        json["payload"]["createTime"].asDouble(),
-        json["payload"]["storagePath"].asString(),
-        json["payload"]["author"].asString(),
-        json["payload"]["isEncrypt"].asBool(), json["payload"]["key"].asString()
-      });
+      kind = request::PostCommit{
+        .files = files,
+        .uuid = json["payload"]["uuid"].asString(),
+        .message = json["payload"]["message"].asString(),
+        .createTime = json["payload"]["createTime"].asDouble(),
+        .storagePath = json["payload"]["storagePath"].asString(),
+        .author = json["payload"]["author"].asString(),
+        .isEncrypt = json["payload"]["isEncrypt"].asBool(),
+        .key = json["payload"]["key"].asString()
+      };
       break;
     }
-    case ApiEnum::GET_FILE_DETAIL: {
-      req = std::make_shared<Req>(request::GetFileDetail{
-        json["payload"]["path"].asString(), json["payload"]["name"].asString()
-      });
+    case Api::GET_FILE_DETAIL: {
+      kind = request::GetFileDetail{
+        .path = json["payload"]["path"].asString(),
+        .name = json["payload"]["name"].asString()
+      };
       break;
-    } break;
-    case ApiEnum::MOCK_NEED_TIME: {
-      req = std::make_shared<Req>(
-        request::MockNeedTime{json["payload"]["id"].asInt()}
-      );
+    }
+    case Api::MOCK_NEED_TIME: {
+      kind = request::MockNeedTime{.id = json["payload"]["id"].asInt()};
       break;
     }
     default:
+      throw std::runtime_error(
+        std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": " +
+        "Unknown API type" + json["api"].asString()
+      );
       break;
   }
-  req->timestamp = json["timestamp"].asDouble();
-  req->uuid = json["uuid"].asString();
-  log4cpp::Category::getRoot().infoStream()
-    << "Made a request from json: " << req->toJson();
-  return req;
-}
-
-ReqPtr makeReqMockNeedTime(int id) {
-  log4cpp::Category::getRoot().infoStream()
-    << "Making a request to mock need time";
-  return std::make_shared<Req>(request::MockNeedTime{id});
-}
-
-ReqPtr makeReqMockNeedTime(Json::Value payload) {
-  log4cpp::Category::getRoot().infoStream()
-    << "Making a request to mock need time";
-  Json::Value json;
-  json["payload"] = std::move(payload);
-  json["apiEnum"] = toSizeT(ApiEnum::MOCK_NEED_TIME);
-  return Req::fromJson(json);
+  return {kind, api, json["uuid"].asString()};
 }
 
 }  // namespace zipfiles

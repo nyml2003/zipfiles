@@ -1,7 +1,5 @@
-#include "server/handler.h"
-#include <unistd.h>
-#include <csignal>
-#include <log4cpp/Category.hh>
+#include "server/socket/handler.h"
+
 #include "mp/Request.h"
 #include "mp/Response.h"
 #include "mp/common.h"
@@ -9,69 +7,79 @@
 #include "server/socket/api.h"
 #include "server/socket/socket.h"
 
+#include <unistd.h>
+#include <csignal>
+#include <log4cpp/Category.hh>
+
 namespace zipfiles::server {
-
-void doHandle(int client_fd) {
-  std::cout << client_fd << std::endl;
+/**
+ * @brief handler实现
+ *
+ * @param client_fd 发送来请求的client，用于回传response
+ *
+ * @param request selector解析出的request
+ *
+ */
+void doHandle(int client_fd, const Req& req) {
   try {
+    log4cpp::Category::getRoot().infoStream()
+      << "Request received: " << req.uuid << " " << static_cast<int>(req.api)
+      << req.kind.index();
     // 主eventloop
-    // log4cpp::Category::getRoot().infoStream()
-    //   << "Thread " << std::this_thread::get_id()
-    //   << " is waiting for request from " << client_fd << "...";
+    ResKind kind;
 
-    ReqPtr request = Socket::receive(client_fd);
+    switch (req.api) {
+      case Api::GET_COMMIT_DETAIL: {
+        kind = api::handle<request::GetCommitDetail, response::GetCommitDetail>(
+          std::get<request::GetCommitDetail>(req.kind)
+        );
+        break;
+      }
+      case Api::GET_COMMIT_LIST: {
+        kind = api::handle<request::GetCommitList, response::GetCommitList>(
+          std::get<request::GetCommitList>(req.kind)
+        );
+        break;
+      }
+      case Api::GET_FILE_LIST: {
+        kind = api::handle<request::GetFileList, response::GetFileList>(
+          std::get<request::GetFileList>(req.kind)
+        );
+        break;
+      }
+      case Api::GET_FILE_DETAIL_LIST: {
+        kind =
+          api::handle<request::GetFileDetailList, response::GetFileDetailList>(
+            std::get<request::GetFileDetailList>(req.kind)
+          );
+        break;
+      }
+      case Api::POST_COMMIT: {
+        kind = api::handle<request::PostCommit, response::PostCommit>(
+          std::get<request::PostCommit>(req.kind)
+        );
+        break;
+      }
+      case Api::GET_FILE_DETAIL: {
+        kind = api::handle<request::GetFileDetail, response::GetFileDetail>(
+          std::get<request::GetFileDetail>(req.kind)
+        );
+        break;
+      }
+      case Api::MOCK_NEED_TIME: {
+        kind = api::handle<request::MockNeedTime, response::MockNeedTime>(
+          std::get<request::MockNeedTime>(req.kind)
+        );
+        break;
+      }
+      default:
+        throw std::runtime_error("Unknown api type");
+    }
+    Res res = {kind, req.api, req.uuid, Code::OK, std::nullopt};
 
     log4cpp::Category::getRoot().infoStream()
-      << "Request received: " << request->toJson();
-
-    ResPtr response = std::visit(
-      overload{
-        [](request::GetFileList& req) {
-          return std::make_shared<Res>(
-            api::handle<request::GetFileList, response::GetFileList>(req)
-          );
-        },
-        [](request::GetFileDetailList& req) {
-          return std::make_shared<Res>(
-            api::handle<
-              request::GetFileDetailList, response::GetFileDetailList>(req)
-          );
-        },
-        [](request::PostCommit& req) {
-          return std::make_shared<Res>(
-            api::handle<request::PostCommit, response::PostCommit>(req)
-          );
-        },
-        [](request::GetCommitDetail& req) {
-          return std::make_shared<Res>(
-            api::handle<request::GetCommitDetail, response::GetCommitDetail>(req
-            )
-          );
-        },
-        [](request::GetCommitList& req) {
-          return std::make_shared<Res>(
-            api::handle<request::GetCommitList, response::GetCommitList>(req)
-          );
-        },
-        [](request::MockNeedTime& req) {
-          return std::make_shared<Res>(response::MockNeedTime{req.id});
-        },
-        [](request::GetFileDetail& req) {
-          return std::make_shared<Res>(
-            api::handle<request::GetFileDetail, response::GetFileDetail>(req)
-          );
-        },
-      },
-      request->kind
-    );
-
-    // 设置response
-    response->status = StatusCode::OK;
-    response->timestamp = request->timestamp;
-    response->uuid = request->uuid;
-    log4cpp::Category::getRoot().infoStream()
-      << "Response sent: " << response->toJson();
-    Socket::send(client_fd, response);
+      << "Response sent: " << res.toJson();
+    Socket::send(client_fd, res);
 
   }  // namespace zipfiles::server
   catch (const std::exception& e) {
@@ -85,49 +93,4 @@ void doHandle(int client_fd) {
       << "Failed to handle request: " << e.what();
   }
 }  // namespace zipfiles::server
-/**
- * @brief 守护进程初始化函数
- * ? 待使用
- */
-void daemonize() {
-  pid_t pid = fork();
-  if (pid < 0) {
-    log4cpp::Category::getRoot().errorStream() << "Failed to fork process";
-    exit(EXIT_FAILURE);
-  }
-  if (pid > 0) {
-    exit(EXIT_SUCCESS);  // 父进程退出
-  }
-
-  // 创建新的会话
-  if (setsid() < 0) {
-    log4cpp::Category::getRoot().errorStream()
-      << "Failed to create new session";
-    exit(EXIT_FAILURE);
-  }
-
-  // 捕捉和处理信号
-  if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
-    log4cpp::Category::getRoot().errorStream()
-      << "Failed to set signal handler for SIGCHLD";
-    exit(EXIT_FAILURE);
-  }
-  if (signal(SIGTSTP, SIG_IGN) == SIG_ERR) {
-    log4cpp::Category::getRoot().errorStream()
-      << "Failed to set signal handler for SIGTSTP";
-    exit(EXIT_FAILURE);
-  }
-
-  // 更改工作目录
-  if (chdir("/") < 0) {
-    log4cpp::Category::getRoot().errorStream()
-      << "Failed to change working directory";
-    exit(EXIT_FAILURE);
-  }
-
-  // 关闭文件描述符
-  close(STDIN_FILENO);
-  close(STDOUT_FILENO);
-  close(STDERR_FILENO);
-}
 }  // namespace zipfiles::server

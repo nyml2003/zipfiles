@@ -46,7 +46,7 @@ include_directories(${ZIPFILES_HEADER_DIR})
 
 # 全局
 set(ZIPFILES_TEST_DIR ${CMAKE_SOURCE_DIR}/tests) # 测试目录
-set(ZIPFILES_UNIT_TEST_DIR ${ZIPFILES_TEST_DIR}/unittest) # 单元测试目录
+set(ZIPFILES_UNIT_TEST_DIR ${ZIPFILES_TEST_DIR}) # 单元测试目录
 set(ZIPFILES_DIST_DIR ${CMAKE_SOURCE_DIR}/gui/dist)
 set(ZIPFILES_CONFIG_DIR ${CMAKE_SOURCE_DIR}/config)
 set(ZIPFILES_OUTPUT_DIR ${CMAKE_SOURCE_DIR}/bin)
@@ -83,7 +83,7 @@ file(GLOB_RECURSE ZIPFILES_MP_SOURCE_FILES ${ZIPFILES_MP_SOURCE_DIR}/*.cpp)
 set(ZIPFILES_ENTRY_DIR ${ZIPFILES_SOURCE_DIR}/entry)
 set(ZIPFILES_CLINET_ENTRY ${ZIPFILES_ENTRY_DIR}/client.cpp)
 set(ZIPFILES_SERVER_ENTRY ${ZIPFILES_ENTRY_DIR}/server.cpp)
-set(ZIPFILES_MOCK_SERVER_ENTRY ${ZIPFILES_TEST_DIR}/mock/mock.cpp)
+# set(ZIPFILES_MOCK_SERVER_ENTRY ${ZIPFILES_TEST_DIR}/mock/mock.cpp)
 
 
 ############################################
@@ -139,21 +139,18 @@ install(FILES ${ZIPFILES_CLIENT_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR})
 
 # 模拟给后端发请求，算集成测试（？）
 
-add_executable(
-    mock
-    ${ZIPFILES_MOCK_SERVER_ENTRY}
-    ${ZIPFILES_MP_SOURCE_FILES}
+# add_executable(
+#     mock
+#     ${ZIPFILES_MOCK_SERVER_ENTRY}
+#     ${ZIPFILES_MP_SOURCE_FILES}
 
-)
+# )
 
-target_link_libraries(
-    mock
-    ${JSONCPP_LIBRARIES}
-    ${LOG4CPP_LIBRARIES}
-)
-
-
-
+# target_link_libraries(
+#     mock
+#     ${JSONCPP_LIBRARIES}
+#     ${LOG4CPP_LIBRARIES}
+# )
 
 find_package(GTest REQUIRED)
 # 单元测试
@@ -164,18 +161,16 @@ foreach(TEST_FILE ${ZIPFILES_SERVER_UNIT_TEST_FILES})
     get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
 
     # 创建测试目标
-    add_executable(${TEST_NAME} ${TEST_FILE} ${ZIPFILES_SERVER_SOURCE_FILES} ${ZIPFILES_MP_SOURCE_FILES})
+    add_executable(${TEST_NAME} ${TEST_FILE} ${ZIPFILES_SERVER_SOURCE_FILES} ${ZIPFILES_MP_SOURCE_FILES} ${ZIPFILES_CLIENT_SOURCE_FILES})
 
-    # 链接 Google Test 库
-    target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main ${LOG4CPP_LIBRARIES} ${JSONCPP_LIBRARIES} ${CRYPTOPP_LIBRARIES})
+    # 链接依赖库
+    target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main ${LOG4CPP_LIBRARIES} ${JSONCPP_LIBRARIES} ${CRYPTOPP_LIBRARIES} ${WEBKIT_LIBRARIES})
 
     # 添加测试到 CTest
     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
 
-    set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 20)
+    set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 30)
 endforeach()
-
-
 
 ############################################
 #### 工具

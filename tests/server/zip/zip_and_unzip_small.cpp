@@ -1,39 +1,44 @@
 #include <gtest/gtest.h>
 #include <cstdint>
 #include <cstdio>
+#include <filesystem>
 #include <fstream>
 #include <ios>
 #include <vector>
 
 #include "server/deflate/zip.h"
 
-bool test(const std::string& src_filename);
+namespace fs = std::filesystem;
 
-TEST(ZIP, test1) {
-  ASSERT_TRUE(test("test.txt"));
-}
+namespace zipfiles::server {
 
-TEST(ZIP, test2) {
-  ASSERT_TRUE(test("test.pdf"));
-}
-
-TEST(ZIP, test3) {
-  ASSERT_TRUE(test("test.exe"));
-}
+std::string zip_path = "/tmp/zip";           // NOLINT
+std::string test_files = "/app/test_files";  // NOLINT
 
 bool test(const std::string& src_filename) {
-  using namespace zipfiles::server;
-  std::string base_dir = "/app/tests/unittest/data/";
-  std::string dst_filename = src_filename + ".zipfile";
-  std::string src_filename_ex = src_filename + ".copy";
+  std::string dst_filename = src_filename + ".zip";
+  std::string src_filename_ex = src_filename + ".unzip";
 
   // zip
   std::ifstream ifile;
   std::ofstream ofile;
   auto iflag = std::ios::in | std::ios::binary;
   auto oflag = std::ios::out | std::ios::binary | std::ios::trunc;
-  ifile.open(base_dir + src_filename, iflag);
-  ofile.open(base_dir + dst_filename, oflag);
+  fs::path ipath(test_files + src_filename);
+  fs::path opath(zip_path + dst_filename);
+  fs::create_directories(opath.parent_path());
+
+  ifile.open(ipath, iflag);
+  ofile.open(opath, oflag);
+
+  if (!ifile) {
+    std::cout << "Cant open file: " << ipath << std::endl;
+    return false;
+  }
+  if (!ofile) {
+    std::cout << "Cant open file: " << opath << std::endl;
+    return false;
+  }
   const int ibuf_size = (1143 << 16) + 191981;
   std::vector<std::uint8_t> ibuffer(ibuf_size);
   Zip zip_c;
@@ -56,8 +61,8 @@ bool test(const std::string& src_filename) {
   ofile.close();
 
   // unzip
-  ifile.open(base_dir + dst_filename, iflag);
-  ofile.open(base_dir + src_filename_ex, oflag);
+  ifile.open(zip_path + dst_filename, iflag);
+  ofile.open(zip_path + src_filename_ex, oflag);
   ibuffer.resize(ibuf_size);
   Unzip unzip_c;
   while (!ifile.eof()) {
@@ -80,23 +85,25 @@ bool test(const std::string& src_filename) {
   ofile.close();
 
   // compare
-  std::ifstream src1(base_dir + src_filename, iflag);
-  std::ifstream src2(base_dir + src_filename_ex, iflag);
-  char b1 = 0;
-  char b2 = 0;
-  while (true) {
-    src1.get(b1);
-    src2.get(b2);
-    if (src1.eof() != src2.eof()) {
-      return false;
-    }
-    if (src1.eof() && src2.eof()) {
-      return true;
-    }
-    if (b1 != b2) {
-      return false;
-    }
+  // compare
+  std::string cmpCommand = "cmp --silent " + test_files + src_filename + " " +
+                           zip_path + src_filename_ex;  // NOLINT
+  if (system(cmpCommand.c_str()) != 0) {                // NOLINT
+    std::cout << "文件 " << test_files + src_filename << " 和 "
+              << zip_path + src_filename_ex << " 不同" << std::endl;
+    return false;
   }
-  src1.close();
-  src2.close();
+  return true;
 }
+
+class ZipAndUnzipSmall : public ::testing::Test {
+ protected:
+  void SetUp() override { fs::remove_all(zip_path); }
+
+  void TearDown() override { fs::remove_all(zip_path); }
+};
+
+TEST_F(ZipAndUnzipSmall, ZipAndUnzipSmall) {  // NOLINT
+  ASSERT_TRUE(test("/text/small_text_test_file"));
+}
+}  // namespace zipfiles::server

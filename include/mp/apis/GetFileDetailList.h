@@ -1,11 +1,11 @@
 #ifndef ZIPFILES_MP_APIS_GET_FILEDETAIL_LIST_H
 #define ZIPFILES_MP_APIS_GET_FILEDETAIL_LIST_H
 
-#include <json/json.h>
 #include <sys/types.h>
 #include <filesystem>
 #include <optional>
 #include <vector>
+
 namespace fs = std::filesystem;
 namespace zipfiles {
 struct Req;
@@ -64,21 +64,6 @@ struct GetFileDetailList {
   std::vector<getFileDetailList::FileDetail> files;
 };
 }  // namespace response
-
-ReqPtr makeReqGetFileDetailList(std::string path);
-
-ReqPtr makeReqGetFileDetailList(
-  std::string path,
-  request::getFileDetailList::Filter filter
-);
-
-ReqPtr makeReqGetFileDetailList(Json::Value payload);
-
-ResPtr makeResGetFileDetailList(
-  std::vector<response::getFileDetailList::FileDetail> files
-);
-
-ResPtr makeResGetFileDetailList(Json::Value payload);
 
 }  // namespace zipfiles
 

@@ -1,6 +1,6 @@
 import React, { useState, createContext, ReactNode } from 'react';
 import * as reducers from './reducer';
-import { PayloadAction, State } from './reducer';
+import { PayloadAction, State } from './types';
 
 type Actions = {
   [K in keyof typeof reducers]: (action: PayloadAction) => void;
@@ -11,9 +11,9 @@ const defaultState: State = {
   file: '',
   commitId: '',
   files: {
-    path: '',
     name: '',
     children: [],
+    subDir: [],
   },
 };
 

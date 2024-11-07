@@ -1,4 +1,10 @@
-/* eslint-disable no-unused-vars */
+import { GetCommitDetailRequest, GetCommitDetailResponse } from './GetCommitDetail';
+import { GetCommitListRequest, GetCommitListResponse } from './GetCommitList';
+import { GetFileDetailRequest, GetFileDetailResponse } from './GetFileDetail';
+import { GetFileDetailListRequest, GetFileDetailListResponse } from './GetFileDetailList';
+import { GetFileListRequest, GetFileListResponse } from './GetFileList';
+import { PostCommitRequest, PostCommitResponse } from './PostCommit';
+
 export enum ApiEnum {
   ERROR = 0,
   Log = 'log',

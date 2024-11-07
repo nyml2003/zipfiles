@@ -32,12 +32,14 @@ namespace zipfiles::server {
  */
 void backupFiles(
   const std::vector<fs::path>& files,
-  const CommitTableRecord& cr,
+  CommitTableRecord& cr,
   const std::string& key
 ) {
   log4cpp::Category::getRoot().infoStream()
     << "Backup started, log messeag is \"" << cr.message << "\" at "
     << cr.createTime;
+
+  cr.encodedKey = Cryptor::encodeKey(key);
 
   // 检查是否提交过
   // 如果没有提交，那么会先在内存中添加本次commit
@@ -85,7 +87,7 @@ void backupFiles(
 
   if (encrypt) {
     // 如果需要加密
-    AutoSeededRandomPool prng;
+    CryptoPP::AutoSeededRandomPool prng;
     prng.GenerateBlock(iv.data(), iv.size());
 
     crc.update(std::vector<uint8_t>(iv.data(), iv.data() + iv.size()));
@@ -246,10 +248,13 @@ void backupFiles(
  * @param paths 绝对路径数组
  *
  */
-
 fs::path getCommonAncestor(const std::vector<fs::path>& paths) {
   if (paths.empty()) {
     throw std::runtime_error("Paths array is empty");
+  }
+
+  if (paths.size() == 1) {
+    return paths[0].filename();
   }
 
   // 初始化公共祖先为第一个路径
@@ -274,7 +279,7 @@ fs::path getCommonAncestor(const std::vector<fs::path>& paths) {
 }
 
 /**
- * @brief 给定一个路径，生成一个描述Commit内容的目录树文件(json形式)
+ * @brief 给定一个路径，生成一个描述Commit内容的目录树文件(Json形式)
  *
  * @param dst 指定的目录文件路径
  *

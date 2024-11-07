@@ -1,10 +1,11 @@
 
+#include "client/launcher.h"
+
 #include <libgen.h>
 #include <iostream>
 #include <log4cpp/Category.hh>
 #include <log4cpp/PropertyConfigurator.hh>
 #include <string>
-#include "client/launcher.h"
 #include "client/view.h"
 #include "glib-object.h"
 
@@ -37,6 +38,7 @@ void bindJS(WebKitUserContentManager* manager) {
     webkit_user_content_manager_register_script_message_handler(
       manager, handler.name.c_str()
     );
+    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
     g_signal_connect(
       manager, ("script-message-received::" + handler.name).c_str(),
       handler.callback, webView
@@ -49,6 +51,7 @@ GtkWidget* createWindow() {
   gtk_window_set_default_size(GTK_WINDOW(window), WINDOW_WIDTH, WINDOW_HEIGHT);
   gtk_window_set_resizable(GTK_WINDOW(window), TRUE);
   gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(webView));
+  // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
   g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
   return window;
 }

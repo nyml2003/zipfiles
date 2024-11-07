@@ -17,21 +17,47 @@ using CryptoPP::SHA256;
 using CryptoPP::StreamTransformationFilter;
 using CryptoPP::StringSource;
 
-namespace zipfiles::server {
+using CryptoPP::CBC_Mode;
+using CryptoPP::HashFilter;
+using CryptoPP::HexEncoder;
+using CryptoPP::SHA256;
+using CryptoPP::StreamTransformationFilter;
+using CryptoPP::StringSource;
 
-constexpr int CRYPTO_BLOCK_SIZE = 1 << 20;
+namespace zipfiles::server {
 
 Cryptor::Cryptor(const std::string& key) : key(generateKey(key)) {}
 
+/**
+ * @brief 由用户提供的rawKey生成一个固定长度的密钥
+ *
+ * @param rawKey 用户提供的rawKey
+ *
+ * @return 生成的密钥
+ *
+ */
 std::string Cryptor::generateKey(const std::string& rawKey) {
   SHA256 hash;
   std::string digest;
   StringSource ss(
     rawKey, true, new HashFilter(hash, new HexEncoder(new StringSink(digest)))
   );
+
   return digest.substr(0, 32);  // 32 字节作为密钥
 }
 
+/**
+ * @brief 对传来的数据块进行加密
+ *
+ * @param inputData 传入的数据块
+ *
+ * @param iv 加密的iv
+ *
+ * @param flush 是否flush
+ *
+ * @return 返回当前加密的状态
+ *
+ */
 CryptStatus Cryptor::encryptFile(
   const std::vector<uint8_t>& inputData,
   const std::array<CryptoPP::byte, AES::BLOCKSIZE>& iv,
@@ -73,7 +99,6 @@ CryptStatus Cryptor::encryptFile(
             StreamTransformationFilter::PKCS_PADDING
           )
         );
-        assert(outputData.size() == CRYPTO_BLOCK_SIZE || flush);
         ibuffer.clear();
         return {true, lack, &outputData};
       } catch (const CryptoPP::Exception& e) {
@@ -87,6 +112,18 @@ CryptStatus Cryptor::encryptFile(
   return {false, lack, &outputData};
 }
 
+/**
+ * @brief 对传来的数据块进行解密
+ *
+ * @param inputData 数据块
+ *
+ * @param iv 初始化向量
+ *
+ * @param flush 是否flush
+ *
+ * @return CryptStatus
+ *
+ */
 CryptStatus Cryptor::decryptFile(
   const std::vector<uint8_t>& inputData,
   const std::array<CryptoPP::byte, AES::BLOCKSIZE>& iv,
@@ -128,7 +165,6 @@ CryptStatus Cryptor::decryptFile(
             StreamTransformationFilter::PKCS_PADDING
           )
         );
-        assert(outputData.size() == CRYPTO_BLOCK_SIZE || flush);
         ibuffer.clear();
         return {true, lack, &outputData};
       } catch (const CryptoPP::Exception& e) {
@@ -142,16 +178,85 @@ CryptStatus Cryptor::decryptFile(
   return {false, lack, &outputData};
 }
 
+/**
+ * @brief 返回将key使用SHA256加密两次后的结果
+ *
+ * @param key
+ *
+ * @return std::string
+ *
+ */
+std::string Cryptor::encodeKey(const std::string& key) {
+  std::string firstHash;
+  std::string secondHash;
+
+  try {
+    // 第一次SHA256
+    SHA256 hash;
+    StringSource ss1(
+      key, true, new HashFilter(hash, new HexEncoder(new StringSink(firstHash)))
+    );
+
+    // 第二次SHA256
+    StringSource ss2(
+      firstHash, true,
+      new HashFilter(hash, new HexEncoder(new StringSink(secondHash)))
+    );
+  } catch (const CryptoPP::Exception& e) {
+    throw std::runtime_error("Failed to encode key, " + std::string(e.what()));
+  }
+
+  return secondHash;
+}
+
+/**
+ * @brief 检查提供的密码和加密后的密码
+ *
+ * @param encodedKey
+ *
+ * @param key
+ *
+ * @return true
+ *
+ * @return false
+ *
+ */
+bool Cryptor::checkKey(const std::string& encodedKey, const std::string& key) {
+  return encodedKey == encodeKey(key);
+}
+
+/**
+ * @brief 根据传入的数据块更新crc
+ *
+ * @param data 传入的数据块
+ *
+ */
 void CRC::update(const std::vector<uint8_t>& data) {
   crc.Update(data.data(), data.size());
 }
 
+/**
+ * @brief 依据已经生成crc生成最终checksum
+ *
+ * @return std::vector<uint8_t> 生成的checksum
+ *
+ */
 std::vector<uint8_t> CRC::getChecksum() {
   std::vector<uint8_t> checksum(CRC32::DIGESTSIZE);
   crc.Final(checksum.data());
   return checksum;
 }
 
+/**
+ * @brief 校验压缩文件包中的头部CRC32验证码是否合法
+ *
+ * @param filename 文件路径
+ *
+ * @return true
+ *
+ * @return false
+ *
+ */
 bool CRC::check(const std::string& filename) {
   std::ifstream file(filename, std::ios::binary);
   if (!file.is_open()) {

@@ -1,11 +1,11 @@
 #ifndef ZIPFILES_MP_APIS_POST_COMMIT_H
 #define ZIPFILES_MP_APIS_POST_COMMIT_H
 
-#include <json/json.h>
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
+
 namespace zipfiles {
 struct Req;
 using ReqPtr = std::shared_ptr<Req>;
@@ -40,21 +40,6 @@ namespace response {
 struct PostCommit {};
 
 }  // namespace response
-
-ReqPtr makeReqPostCommit(
-  std::vector<std::string> files,
-  std::string uuid,
-  std::string message,
-  double createTime,
-  std::string storagePath,
-  std::string author,
-  bool isEncrypt,
-  std::optional<std::string> key
-);
-
-ReqPtr makeReqPostCommit(Json::Value payload);
-
-ResPtr makeResPostCommit();
 
 }  // namespace zipfiles
 

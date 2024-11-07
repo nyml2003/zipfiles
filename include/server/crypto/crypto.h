@@ -16,7 +16,6 @@
 namespace zipfiles::server {
 
 using CryptoPP::AES;
-using CryptoPP::ArraySink;
 using CryptoPP::ArraySource;
 using CryptoPP::AutoSeededRandomPool;
 using CryptoPP::CBC_Mode;
@@ -26,8 +25,9 @@ using CryptoPP::HexEncoder;
 using CryptoPP::SHA256;
 using CryptoPP::StreamTransformationFilter;
 using CryptoPP::StringSink;
-using CryptoPP::StringSource;
 using CryptoPP::VectorSink;
+
+constexpr int CRYPTO_BLOCK_SIZE = 1 << 20;
 
 struct CryptStatus {
   bool flush;
@@ -50,6 +50,10 @@ class Cryptor {
     const std::array<CryptoPP::byte, AES::BLOCKSIZE>& iv,
     bool flush
   );
+
+  static std::string encodeKey(const std::string& key);
+
+  static bool checkKey(const std::string& encodedKey, const std::string& key);
 
  private:
   std::string key;

@@ -8,7 +8,12 @@ import { GetFileDetailListRequest, GetFileDetailListResponse } from '@/apis/GetF
 import useApi from '@/hooks/useApi';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
-import { checkSelectedDirectory, checkSelectedFile } from '@/stores/CreateCommitReducer';
+import {
+  addSelectedDirectory,
+  addSelectedFile,
+  removeSelectedFile,
+  removeSelectedDirectory,
+} from '@/stores/CreateCommitReducer';
 interface FileDetail {
   name: string;
   type: FileType;
@@ -37,20 +42,36 @@ const TableView: React.FC = () => {
     (_: string, record: DataType) => {
       if (record.path === undefined) return;
       if (record.name === undefined) return;
-      const checked =
+      let checked =
         selectedFiles.findIndex(file => file.path === record.path && file.name === record.name) !==
-          -1 || selectedDirectories.includes(record.path ?? '');
-      const disabled = selectedDirectories.includes(record.path ?? '');
+        -1;
+      let disabled = false;
+      for (const directory of selectedDirectories) {
+        if (record.path.startsWith(directory)) {
+          disabled = true;
+          checked = true;
+          break;
+        }
+      }
       const file = {
         path: record.path,
         name: record.name,
       };
+
+      const handleClick = () => {
+        if (checked) {
+          dispatch(removeSelectedFile(file));
+        } else {
+          dispatch(addSelectedFile(file));
+        }
+      };
+
       return (
         <Checkbox
           disabled={disabled}
           checked={checked}
           onClick={() => {
-            dispatch(checkSelectedFile(file));
+            handleClick();
           }}></Checkbox>
       );
     },
@@ -58,18 +79,25 @@ const TableView: React.FC = () => {
   );
   const renderDirectoryCheckbox = useCallback(() => {
     let checked = false;
+    let disabled = false;
     for (const directory of selectedDirectories) {
       if (currentPath.startsWith(directory)) {
         checked = true;
+        if (currentPath !== directory) disabled = true;
         break;
       }
     }
+
+    const handleClick = () => {
+      if (checked) {
+        dispatch(removeSelectedDirectory(currentPath));
+      } else {
+        dispatch(addSelectedDirectory(currentPath));
+      }
+    };
+
     return (
-      <Checkbox
-        checked={checked}
-        onClick={() => {
-          dispatch(checkSelectedDirectory(currentPath));
-        }}></Checkbox>
+      <Checkbox checked={checked} disabled={disabled} onClick={() => handleClick()}></Checkbox>
     );
   }, [selectedDirectories, currentPath]);
   const columns: TableColumnsType<DataType> = [

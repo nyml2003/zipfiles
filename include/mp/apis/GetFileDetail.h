@@ -1,9 +1,9 @@
-#ifndef ZIPFILES_MP_APIS_GET_FILEDETAIL_H
-#define ZIPFILES_MP_APIS_GET_FILEDETAIL_H
+#ifndef ZIPFILES_MP_APIS_GET_FILE_DETAIL_H
+#define ZIPFILES_MP_APIS_GET_FILE_DETAIL_H
 
-#include <json/json.h>
 #include <sys/types.h>
 #include <filesystem>
+
 namespace fs = std::filesystem;
 namespace zipfiles {
 struct Req;
@@ -44,17 +44,10 @@ struct FileDetail {
 };
 }  // namespace getFileDetail
 
-struct GetFileDetail : public getFileDetail::FileDetail {};
+using GetFileDetail = getFileDetail::FileDetail;
+
 }  // namespace response
-
-ReqPtr makeReqGetFileDetail(std::string path, std::string name);
-
-ReqPtr makeReqGetFileDetail(Json::Value payload);
-
-ResPtr makeResGetFileDetail(response::getFileDetail::FileDetail file);
-
-ResPtr makeResGetFileDetail(Json::Value payload);
 
 }  // namespace zipfiles
 
-#endif
+#endif  // !ZIPFILES_MP_APIS_GET_FILE_DETAIL_H

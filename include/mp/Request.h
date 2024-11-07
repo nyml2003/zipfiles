@@ -3,23 +3,17 @@
 #include <json/json.h>
 #include <string>
 #include <variant>
-#include "json/value.h"
+
 #include "mp/apis/GetCommitDetail.h"
 #include "mp/apis/GetCommitList.h"
 #include "mp/apis/GetFileDetail.h"
 #include "mp/apis/GetFileDetailList.h"
 #include "mp/apis/GetFileList.h"
+#include "mp/apis/MockNeedTime.h"
 #include "mp/apis/PostCommit.h"
+#include "mp/common.h"
 
 namespace zipfiles {  // namespace request
-
-namespace request {
-struct MockNeedTime {
-  int id;
-};
-}  // namespace request
-
-struct Req;
 
 using ReqKind = std::variant<
   request::GetCommitDetail,
@@ -30,19 +24,14 @@ using ReqKind = std::variant<
   request::PostCommit,
   request::MockNeedTime>;
 
-using ReqPtr = std::shared_ptr<Req>;
-
 struct Req {
-  explicit Req(ReqKind kind);
-  ReqKind kind;
-  double timestamp{};
-  std::string uuid;
-  Json::Value toJson();
-  static ReqPtr fromJson(const Json::Value& json);
+  Req(ReqKind, Api, std::string);
+  ReqKind kind;      // 请求体
+  Api api;           // 请求类型
+  std::string uuid;  // 请求的uuid
+  [[nodiscard]] Json::Value toJson() const;
+  static Req fromJson(const Json::Value&);
 };
-
-ReqPtr makeReqMockNeedTime(int id);
-ReqPtr makeReqMockNeedTime(Json::Value payload);
 
 }  // namespace zipfiles
 

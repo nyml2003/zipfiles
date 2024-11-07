@@ -1,7 +1,7 @@
 import { ApiEnum } from '@/apis';
 import { GetFileDetailRequest, GetFileDetailResponse } from '@/apis/GetFileDetail';
 import useApi from '@/hooks/useApi';
-import { updateSelectedDirectory, updateSelectedFile } from '@/stores/CreateCommitReducer';
+import { clearSelectedDirectories, clearSelectedFiles } from '@/stores/CreateCommitReducer';
 import { RootState } from '@/stores/store';
 import { FileType } from '@/types';
 import { Button, List, Table } from 'antd';
@@ -69,7 +69,7 @@ interface FileListProps {
 
 const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
   const files = useSelector((state: RootState) => state.createCommit.selectedFile.files);
-  const directiories = useSelector(
+  const directories = useSelector(
     (state: RootState) => state.createCommit.selectedFile.directories,
   );
   const [fileData, setFileData] = React.useState<FileDetail[]>([]);
@@ -107,21 +107,42 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
     return res;
   };
 
-  const handleClear = () => {
-    dispatch(updateSelectedFile([]));
-    dispatch(updateSelectedDirectory([]));
+  const handleFileClear = () => {
+    dispatch(clearSelectedFiles());
   };
 
-  const handleFileClear = () => {
-    setFileData([]);
+  const handleDirectoryClear = () => {
+    dispatch(clearSelectedDirectories());
   };
+
+  const directoryColumns = [
+    {
+      title: '目录名',
+      dataIndex: 'name',
+      key: 'name',
+      render: (_: string, record: string) => <span>{record ? record : '/'}</span>,
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_: string, record: string) => (
+        <Button type='link' onClick={handleDelete}>
+          删除
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <div className='grow-item'>
-      <div className='bg-blue-100 rounded-md'>
-        <div className='flex flex-row justify-between items-center '>
-          <h2 className='text-xl font-bold px-2 py-1 m-2'>文件列表</h2>
-          <Button type='primary' onClick={handleFileClear} className='m-2' disabled={fileData.length === 0}>
+      <div className='rounded-md p-2 m-2 bg-white shadow-md'>
+        <div className='flex flex-row justify-between items-center border-b border-gray-200 pb-2'>
+          <h2 className='text-xl font-bold px-2 py-1 m-0'>文件列表</h2>
+          <Button
+            type='primary'
+            onClick={handleFileClear}
+            className='m-2'
+            disabled={fileData.length === 0}>
             清空
           </Button>
         </div>
@@ -133,24 +154,36 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
           className='p-2'
         />
       </div>
-      <h2 className='text-xl font-bold px-2 py-1 m-2'>路径列表</h2>
-      <List<string>
-        dataSource={directiories}
-        size='small'
-        renderItem={item =>
-          item === '' ? <List.Item> / </List.Item> : <List.Item> {item} </List.Item>
-        }
-      />
+      <div className='m-4 flex flex-col text-gray-600'>
+        <span>仅备份目录文件信息时，不会备份目录下的文件</span>
+        <span>若目录文件出现在文件列表中，说明是仅备份目录文件信息</span>
+      </div>
+      <div className='rounded-md p-2 m-2 bg-white shadow-md'>
+        <div className='flex flex-row justify-between items-center border-b border-gray-200 pb-2'>
+          <h2 className='text-xl font-bold px-2 py-1 m-0'>目录列表</h2>
+          <Button
+            type='primary'
+            onClick={handleDirectoryClear}
+            className='m-2'
+            disabled={directories.length === 0}>
+            清空
+          </Button>
+        </div>
+        <Table<string>
+          columns={directoryColumns}
+          dataSource={directories}
+          size='small'
+          rowKey={record => record}
+          className='p-2'
+        />
+      </div>
+      <div className='m-4 flex flex-col text-gray-600'>
+        <span>出现在目录列表中的目录，会先查询目录下的所有文件</span>
+      </div>
       <div className='m-4 flex flex-row justify-end items-center'>
         <div className='space-x-2'>
           <Button type='primary' onClick={handleAdd}>
             添加
-          </Button>
-          <Button type='primary' onClick={handleDelete}>
-            删除
-          </Button>
-          <Button type='primary' onClick={handleClear}>
-            清空
           </Button>
         </div>
       </div>

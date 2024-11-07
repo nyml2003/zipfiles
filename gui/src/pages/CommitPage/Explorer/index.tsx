@@ -34,18 +34,24 @@ const Explorer: React.FC = () => {
   }, []);
 
   const breadcrumbItems = useMemo(() => {
-    const rootLength = state.files.path.split('/').length;
-    return state.path.split('/').reduce((acc, item, index, arr) => {
+    const items =[{
+      title: <HomeOutlined />,
+      onClick: () => actions.updatePath({ payload: '' }),
+      className: 'px-2 py-1 rounded cursor-pointer hover:bg-gray-200 ',
+    }];
+    if (state.path === '') {
+      return items;
+    }
+    state.path.split('/').forEach((item, index, arr) => {
       const path = arr.slice(0, index + 1).join('/');
-      acc.push({
-        title: item === '' ? <HomeOutlined /> : item,
-        onClick: index > rootLength - 2 ? () => actions.updatePath({ payload: path }) : undefined,
-        className: `px-2 py-1 rounded ${
-          index > rootLength - 2 ? 'cursor-pointer hover:bg-gray-200 ' : 'cursor-not-allowed'
-        }`,
+      items.push({
+        title: <span>{item}</span>,
+        onClick: () => actions.updatePath({ payload: path }),
+        className: 'px-2 py-1 rounded cursor-pointer hover:bg-gray-200 ',
       });
-      return acc;
-    }, [] as BreadcrumbItemType[]);
+    }
+    );
+    return items;
   }, [state.path]);
 
   return (
@@ -74,7 +80,7 @@ const Explorer: React.FC = () => {
           <Button
             type='text'
             onClick={() => {
-              console.log(state);
+              console.log(JSON.stringify(state, null, 2));
             }}>
             打印
           </Button>

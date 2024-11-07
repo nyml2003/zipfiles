@@ -38,7 +38,7 @@ handle<request::GetFileDetailList, response::GetFileDetailList>(
        .owner = pwd ? pwd->pw_name : "",
        .group = grp ? grp->gr_name : "",
        .mode = file_stat.st_mode,
-       .path = file.string(),
+       .path = file.parent_path(),
        .name = file.filename().string()}
     );
     if (filter.has_value()) {
@@ -85,6 +85,8 @@ handle<request::GetFileDetailList, response::GetFileDetailList>(
       }
     }
   }
+  log4cpp::Category::getRoot().infoStream()
+    << "Get file detail list: " << files.size() << " files";
   return {.files = files};
 }
 

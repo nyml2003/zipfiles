@@ -2,7 +2,6 @@ import { setGlobalCallback } from '../useGlobalMessageHandler';
 import { Api, RequestWrapper } from './types';
 import { ApiEnum } from '@/apis';
 import { v4 as uuidv4 } from 'uuid';
-
 let apiInstance: Api | null = null;
 
 const useApi = () => {
@@ -10,27 +9,28 @@ const useApi = () => {
     return apiInstance;
   }
 
-  const request = async <Request, Response>(
-    apiEnum: ApiEnum,
-    request: Request,
-  ): Promise<Response> => {
-    const timestamp = Date.now();
+  const request = async <Req, Res>(api: ApiEnum, request: Req): Promise<Res> => {
     const uuid = uuidv4();
-    const message: RequestWrapper<Request> = { apiEnum, params: JSON.stringify(request), timestamp, uuid };
+    const message: RequestWrapper = { api, payload: request, uuid };
     if (!window.webkit?.messageHandlers) {
       console.error('No webkit message handlers');
       return Promise.reject('No webkit message handlers');
     }
-    if (!(typeof apiEnum === 'number') && !window.webkit.messageHandlers[apiEnum]) {
-      console.error('No such api: ', apiEnum);
-      return Promise.reject('No such api: ' + apiEnum);
+    if (!(typeof api === 'number') && !window.webkit.messageHandlers[api]) {
+      console.error('No such api: ', api);
+      return Promise.reject('No such api: ' + api);
     }
-    window.webkit.messageHandlers.function.postMessage(message);
+    console.log(api, request, uuid);
+    window.webkit.messageHandlers.function.postMessage({
+      api,
+      request: JSON.stringify(message),
+      uuid,
+    });
 
     return new Promise((resolve, reject) => {
       setGlobalCallback({
         request: message,
-        resolve: (data: Response) => {
+        resolve: data => {
           resolve(data);
         },
         reject: (message: string) => {
@@ -42,7 +42,7 @@ const useApi = () => {
   };
 
   const call = (apiEnum: ApiEnum, request: unknown): void => {
-    window.webkit.messageHandlers[apiEnum].postMessage({ 'params': request });
+    window.webkit.messageHandlers[apiEnum].postMessage(request);
   };
 
   apiInstance = {

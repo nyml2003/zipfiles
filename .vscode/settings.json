@@ -6,6 +6,8 @@
     "files.associations": {
         "*.cu": "cpp",
         "*.css": "css",
+        ".clang-format": "yaml",
+        ".clangd": "yaml",
         "any": "cpp",
         "array": "cpp",
         "atomic": "cpp",
@@ -89,11 +91,24 @@
         "xmemory": "cpp",
         "xstring": "cpp",
         "xtr1common": "cpp",
-        "xutility": "cpp"
+        "xutility": "cpp",
+        "bitset": "cpp",
+        "__bit_reference": "cpp",
+        "__locale": "cpp",
+        "__node_handle": "cpp",
+        "__split_buffer": "cpp",
+        "__threading_support": "cpp",
+        "__tree": "cpp",
+        "__verbose_abort": "cpp",
+        "print": "cpp",
+        "csignal": "cpp",
+        "__hash_table": "cpp",
+        "queue": "cpp",
+        "stack": "cpp",
+        "unordered_set": "cpp"
     },
     "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
     "editor.formatOnSave": true,
-    "C_Cpp.intelliSenseEngine": "disabled",
     "clangd.path": "/usr/bin/clangd",
     "clangd.checkUpdates": true,
     "clangd.arguments": [
@@ -104,7 +119,7 @@
         "--enable-config"
     ],
     "[cpp]": {
-        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+        "editor.defaultFormatter": "xaver.clang-format",
     },
     "[dockerfile]": {
         "editor.defaultFormatter": "ms-azuretools.vscode-docker"
