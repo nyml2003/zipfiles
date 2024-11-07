@@ -1,220 +1,227 @@
 #include "mp/Response.h"
 
+#include <json/json.h>
 #include <unistd.h>
 #include <filesystem>
 #include <log4cpp/Category.hh>
-#include <utility>
 #include <vector>
-#include <json/json.h>
 
-#include "mp/apis/GetFileDetailList.h"
 #include "mp/common.h"
 
 namespace zipfiles {
-namespace fs = std::filesystem;
-Res::Res(ResKind kind) : kind(std::move(kind)) {}
 
-std::ostream& operator<<(std::ostream& os, const StatusCode& status) {
-  switch (status) {
-    case StatusCode::OK:
-      os << "OK";
-      break;
-    case StatusCode::ERROR:
-      os << "ERROR";
-      break;
-    // 其他状态码...
-    default:
-      os << "Unknown Status";
-      break;
-  }
-  return os;
-}
+Res::Res(
+  ResKind kind,
+  Api api,
+  std::string uuid,
+  Code code,
+  std::optional<std::string> message
+)
+  : kind(std::move(kind)),
+    api(api),
+    uuid(std::move(uuid)),
+    code(code),
+    message(std::move(message)) {}
 
-size_t toSizeT(ApiEnum apiEnum) {
-  return static_cast<size_t>(apiEnum);
-}
-Json::Value Res::toJson() {
+Json::Value Res::toJson() const {
   Json::Value json;
-  json["status"] = static_cast<int>(status);
-  json["timestamp"] = timestamp;
+  json["api"] = static_cast<int>(api);
+  json["code"] = static_cast<int>(code);
   json["uuid"] = uuid;
-  std::visit(
-    overload{
-      [&json](response::GetCommitDetail& res) {
-        json["apiEnum"] = toSizeT(ApiEnum::GET_COMMIT_DETAIL);
-        json["payload"]["files"] = Json::arrayValue;
-        for (const auto& file : res.files) {
-          Json::Value fileJson;
-          fileJson["type"] = static_cast<int>(file.type);
-          fileJson["createTime"] = file.createTime;
-          fileJson["updateTime"] = file.updateTime;
-          fileJson["size"] = file.size;
-          fileJson["owner"] = file.owner;
-          fileJson["group"] = file.group;
-          fileJson["mode"] = file.mode;
-          fileJson["path"] = file.path;
-          fileJson["name"] = file.name;
-          json["payload"]["files"].append(fileJson);
-        }
-      },
-      [&json](response::GetCommitList& res) {
-        json["apiEnum"] = toSizeT(ApiEnum::GET_COMMIT_LIST);
-        Json::Value commits(Json::arrayValue);
-        for (const auto& commit : res.commits) {
-          Json::Value commitJson;
-          commitJson["uuid"] = commit.uuid;
-          commitJson["message"] = commit.message;
-          commitJson["createTime"] = commit.createTime;
-          commitJson["storagePath"] = commit.storagePath;
-          commitJson["author"] = commit.author;
-          commitJson["isEncrypt"] = commit.isEncrypt;
-          commitJson["isDelete"] = commit.isDelete;
-          commits.append(commitJson);
-        }
-        json["payload"]["commits"] = commits;
-      },
-      [&json](response::GetFileList& res) {
-        json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_LIST);
-        Json::Value files(Json::arrayValue);
-        for (const auto& file : res.files) {
-          Json::Value fileJson;
-          fileJson["name"] = file.name;
-          fileJson["type"] = static_cast<int>(file.type);
-          files.append(fileJson);
-        }
-        json["payload"]["files"] = files;
-      },
-      [&json](response::MockNeedTime& res) {
-        json["apiEnum"] = toSizeT(ApiEnum::MOCK_NEED_TIME);
-        json["payload"]["id"] = res.id;
-      },
-      [&json](response::PostCommit&) {
-        json["apiEnum"] = toSizeT(ApiEnum::POST_COMMIT);
-      },
-      [&json](response::GetFileDetail& res) {
-        json["apiEnum"] = toSizeT(ApiEnum::GET_FILE_DETAIL);
-        json["payload"]["type"] = static_cast<int>(res.type);
-        json["payload"]["createTime"] = res.createTime;
-        json["payload"]["updateTime"] = res.updateTime;
-        json["payload"]["size"] = res.size;
-        json["payload"]["owner"] = res.owner;
-        json["payload"]["group"] = res.group;
-        json["payload"]["mode"] = res.mode;
-        json["payload"]["path"] = res.path;
-        json["payload"]["name"] = res.name;
-      },
-      [&json](response::GetFileDetailList& res) {
-        json["apiEnum"] = toSizeT(ApiEnum::GET_FILEDETAIL_LIST);
-        Json::Value files(Json::arrayValue);
-        for (const auto& file : res.files) {
-          Json::Value fileJson;
-          fileJson["type"] = static_cast<int>(file.type);
-          fileJson["createTime"] = file.createTime;
-          fileJson["updateTime"] = file.updateTime;
-          fileJson["size"] = file.size;
-          fileJson["owner"] = file.owner;
-          fileJson["group"] = file.group;
-          fileJson["mode"] = file.mode;
-          fileJson["path"] = file.path;
-          fileJson["name"] = file.name;
-          files.append(fileJson);
-        }
-        json["payload"]["files"] = files;
-      },
+  switch (api) {
+    case Api::GET_COMMIT_DETAIL: {
+      json["payload"]["files"] = Json::arrayValue;
+      for (const auto& file : std::get<response::GetCommitDetail>(kind).files) {
+        Json::Value fileJson;
+        fileJson["type"] = static_cast<int>(file.type);
+        fileJson["createTime"] = file.createTime;
+        fileJson["updateTime"] = file.updateTime;
+        fileJson["size"] = file.size;
+        fileJson["owner"] = file.owner;
+        fileJson["group"] = file.group;
+        fileJson["mode"] = file.mode;
+        fileJson["path"] = file.path;
+        fileJson["name"] = file.name;
+        json["payload"]["files"].append(fileJson);
+      }
+      break;
+    }
+    case Api::GET_COMMIT_LIST: {
+      Json::Value commits(Json::arrayValue);
+      for (const auto& commit :
+           std::get<response::GetCommitList>(kind).commits) {
+        Json::Value commitJson;
+        commitJson["uuid"] = commit.uuid;
+        commitJson["message"] = commit.message;
+        commitJson["createTime"] = commit.createTime;
+        commitJson["storagePath"] = commit.storagePath;
+        commitJson["author"] = commit.author;
+        commitJson["isEncrypt"] = commit.isEncrypt;
+        commitJson["isDelete"] = commit.isDelete;
+        commits.append(commitJson);
+      }
+      json["payload"]["commits"] = commits;
+      break;
+    }
+    case Api::GET_FILE_LIST: {
+      Json::Value files(Json::arrayValue);
+      for (const auto& file : std::get<response::GetFileList>(kind).files) {
+        Json::Value fileJson;
+        fileJson["name"] = file.name;
+        fileJson["type"] = static_cast<int>(file.type);
+        files.append(fileJson);
+      }
+      json["payload"]["files"] = files;
+      break;
+    }
+    case Api::POST_COMMIT: {
+      break;
+    }
+    case Api::GET_FILE_DETAIL: {
+      json["payload"]["type"] =
+        static_cast<int>(std::get<response::GetFileDetail>(kind).type);
+      json["payload"]["createTime"] =
+        std::get<response::GetFileDetail>(kind).createTime;
+      json["payload"]["updateTime"] =
+        std::get<response::GetFileDetail>(kind).updateTime;
+      json["payload"]["size"] = std::get<response::GetFileDetail>(kind).size;
+      json["payload"]["owner"] = std::get<response::GetFileDetail>(kind).owner;
+      json["payload"]["group"] = std::get<response::GetFileDetail>(kind).group;
+      json["payload"]["mode"] = std::get<response::GetFileDetail>(kind).mode;
+      json["payload"]["path"] = std::get<response::GetFileDetail>(kind).path;
+      json["payload"]["name"] = std::get<response::GetFileDetail>(kind).name;
+      break;
+    }
+    case Api::GET_FILE_DETAIL_LIST: {
+      Json::Value files(Json::arrayValue);
+      for (const auto& file :
+           std::get<response::GetFileDetailList>(kind).files) {
+        Json::Value fileJson;
+        fileJson["type"] = static_cast<int>(file.type);
+        fileJson["createTime"] = file.createTime;
+        fileJson["updateTime"] = file.updateTime;
+        fileJson["size"] = file.size;
+        fileJson["owner"] = file.owner;
+        fileJson["group"] = file.group;
+        fileJson["mode"] = file.mode;
+        fileJson["path"] = file.path;
+        fileJson["name"] = file.name;
+        files.append(fileJson);
+      }
+      json["payload"]["files"] = files;
+      break;
+    }
+    case Api::MOCK_NEED_TIME: {
+      json["payload"]["id"] = std::get<response::MockNeedTime>(kind).id;
+      break;
+    }
+    default:
+      throw std::runtime_error("Unknown response type");
+  }
 
-      [](auto&&) { throw std::runtime_error("Unknown response type"); }
-    },
-    kind
-  );
   return json;
 }
 
-ResPtr Res::fromJson(const Json::Value& json) {
-  ResPtr res;
-  auto api = static_cast<ApiEnum>(json["apiEnum"].asInt());
+Res Res::fromJson(const Json::Value& json) {
+  auto api = static_cast<Api>(json["api"].asInt());
+  ResKind kind;
   switch (api) {
-    case ApiEnum::GET_COMMIT_DETAIL: {
+    case Api::GET_COMMIT_DETAIL: {
       std::vector<response::getCommitDetail::FileDetail> files;
       for (const auto& file : json["payload"]["files"]) {
         files.push_back(response::getCommitDetail::FileDetail{
-          static_cast<fs::file_type>(file["type"].asInt()),
-          file["createTime"].asDouble(), file["updateTime"].asDouble(),
-          file["size"].asInt(), file["owner"].asString(),
-          file["group"].asString(), static_cast<mode_t>(file["mode"].asInt()),
-          file["path"].asString(), file["name"].asString()
+          .type = static_cast<fs::file_type>(file["type"].asInt()),
+          .createTime = file["createTime"].asDouble(),
+          .updateTime = file["updateTime"].asDouble(),
+          .size = file["size"].asInt(),
+          .owner = file["owner"].asString(),
+          .group = file["group"].asString(),
+          .mode = static_cast<mode_t>(file["mode"].asInt()),
+          .path = file["path"].asString(),
+          .name = file["name"].asString()
         });
       }
-      res = std::make_shared<Res>(response::GetCommitDetail{files});
+      kind = response::GetCommitDetail{.files = files};
       break;
     }
-    case ApiEnum::GET_COMMIT_LIST: {
+    case Api::GET_COMMIT_LIST: {
       std::vector<response::getCommitList::CommitLog> commits;
       for (const auto& file : json["payload"]["files"]) {
-        commits.push_back(response::getCommitList::CommitLog{
-          file["uuid"].asString(), file["message"].asString(),
-          file["createTime"].asDouble(), file["storagePath"].asString(),
-          file["author"].asString(), file["isEncrypt"].asBool(),
-          file["isDelete"].asBool()
-        });
+        commits.push_back(
+          {.uuid = file["uuid"].asString(),
+           .message = file["message"].asString(),
+           .createTime = file["createTime"].asDouble(),
+           .storagePath = file["storagePath"].asString(),
+           .author = file["author"].asString(),
+           .isEncrypt = file["isEncrypt"].asBool(),
+           .isDelete = file["isDelete"].asBool()}
+        );
       }
-      res = std::make_shared<Res>(response::GetCommitList{commits});
+      kind = response::GetCommitList{.commits = commits};
       break;
     }
-    case ApiEnum::GET_FILE_LIST: {
+    case Api::GET_FILE_LIST: {
       std::vector<response::getFileList::File> files;
       for (const auto& file : json["payload"]["files"]) {
         files.push_back(response::getFileList::File{
-          static_cast<fs::file_type>(file["type"].asInt()),
-          file["name"].asString()
+          .type = static_cast<fs::file_type>(file["type"].asInt()),
+          .name = file["name"].asString()
         });
       }
-      res = std::make_shared<Res>(response::GetFileList{files});
+      kind = response::GetFileList{.files = files};
       break;
     }
-    case ApiEnum::POST_COMMIT: {
-      res = std::make_shared<Res>(response::PostCommit{});
+    case Api::POST_COMMIT: {
+      kind = response::PostCommit{};
       break;
     }
-    case ApiEnum::MOCK_NEED_TIME: {
-      res = std::make_shared<Res>(
-        response::MockNeedTime{json["payload"]["id"].asInt()}
+    case Api::GET_FILE_DETAIL: {
+      kind = response::GetFileDetail(
+        {.type = static_cast<fs::file_type>(json["payload"]["type"].asInt()),
+         .createTime = json["payload"]["createTime"].asDouble(),
+         .updateTime = json["payload"]["updateTime"].asDouble(),
+         .size = json["payload"]["size"].asInt(),
+         .owner = json["payload"]["owner"].asString(),
+         .group = json["payload"]["group"].asString(),
+         .mode = static_cast<mode_t>(json["payload"]["mode"].asInt()),
+         .path = json["payload"]["path"].asString(),
+         .name = json["payload"]["name"].asString()}
       );
       break;
     }
-    case ApiEnum::GET_FILE_DETAIL: {
-      res = std::make_shared<Res>(response::GetFileDetail{
-        static_cast<fs::file_type>(json["payload"]["type"].asInt()),
-        json["payload"]["createTime"].asDouble(),
-        json["payload"]["updateTime"].asDouble(),
-        json["payload"]["size"].asInt(), json["payload"]["owner"].asString(),
-        json["payload"]["group"].asString(),
-        static_cast<mode_t>(json["payload"]["mode"].asInt()),
-        json["payload"]["path"].asString(), json["payload"]["name"].asString()
-      });
+    case Api::GET_FILE_DETAIL_LIST: {
+      std::vector<response::getFileDetailList::FileDetail> files;
+      for (const auto& file : json["payload"]["files"]) {
+        files.push_back(response::getFileDetailList::FileDetail{
+          .type = static_cast<fs::file_type>(file["type"].asInt()),
+          .createTime = file["createTime"].asDouble(),
+          .updateTime = file["updateTime"].asDouble(),
+          .size = file["size"].asInt(),
+          .owner = file["owner"].asString(),
+          .group = file["group"].asString(),
+          .mode = static_cast<mode_t>(file["mode"].asInt()),
+          .path = file["path"].asString(),
+          .name = file["name"].asString()
+        });
+      }
+      kind = response::GetFileDetailList{.files = files};
+      break;
+    }
+    case Api::MOCK_NEED_TIME: {
+      kind = response::MockNeedTime{.id = json["payload"]["id"].asInt()};
       break;
     }
     default:
-      throw std::runtime_error("Invalid response kind");
+      throw std::runtime_error(
+        std::string(__FILE__) + ":" + std::to_string(__LINE__) +
+        ": Unknown api type"
+      );
       break;
   }
-  res->status = static_cast<StatusCode>(json["status"].asInt());
-  res->timestamp = json["timestamp"].asDouble();
-  res->uuid = json["uuid"].asString();
-  return res;
-}
-
-ResPtr makeResMockNeedTime(int id) {
-  sleep(10);
-  return std::make_shared<Res>(response::MockNeedTime{id});
-}
-
-ResPtr makeResMockNeedTime(Json::Value payload) {
-  log4cpp::Category::getRoot().infoStream()
-    << "Making a response to mock need time";
-  Json::Value json;
-  json["payload"] = std::move(payload);
-  json["apiEnum"] = toSizeT(ApiEnum::MOCK_NEED_TIME);
-  return Res::fromJson(json);
+  return {
+    kind, api, json["uuid"].asString(), static_cast<Code>(json["code"].asInt()),
+    json["message"].asString()
+  };
 }
 
 }  // namespace zipfiles

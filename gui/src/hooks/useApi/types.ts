@@ -5,21 +5,27 @@ export interface Api {
   request<Req, Res>(apiEnum: ApiEnum, request: Req): Promise<Res>;
   call(apiEnum: ApiEnum, request: unknown): void;
 }
-export interface ResponseWrapper {
-  timestamp: number;
-  apiEnum: ApiEnum;
-  data?: unknown;
-  // resolve: 返回数据
-  // reject: 返回错误信息
-  // notify: 返回通知信息
-  type: 'resolve' | 'reject' | 'notify';
-  message: string;
+
+export enum Code {
+  ILLEAGAL = 0, // StatusCode为0的情况不合法
+  OK = 1, // 正常返回
+  ERROR = 2, // 出现异常(默认，可自定义其他StatusCode)
+  NOTIFICATION = 3, // 后端主动向前端返回消息
 }
 
-export interface RequestWrapper<Request> {
-  apiEnum: ApiEnum;
-  params: string;
-  timestamp: number;
+export interface ResponseWrapper {
+  api: ApiEnum;
+  uuid: string;
+  code: Code;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload?: any;
+  message?: string;
+}
+
+export interface RequestWrapper {
+  api: ApiEnum;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload: any;
   uuid: string;
 }
 

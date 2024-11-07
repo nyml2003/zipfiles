@@ -1,15 +1,12 @@
 #include "server/socket/socket.h"
+
 #include <arpa/inet.h>
 #include <sys/epoll.h>
-#include <mutex>
-#include <sstream>
+#include <unistd.h>
 #include <stdexcept>
 #include <string>
-#include <unordered_set>
-#include "json/value.h"
+
 #include "log4cpp/Category.hh"
-#include "mp/Response.h"
-#include "mp/mp.h"
 
 namespace zipfiles::server {
 /**
@@ -36,7 +33,7 @@ Socket::Socket() : server_fd(socket(AF_INET, SOCK_STREAM, 0)), address{} {
   std::memset(&address, 0, sizeof(address));
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = INADDR_ANY;
-  address.sin_port = htons(mp::PORT);
+  address.sin_port = htons(PORT);
   addrlen = sizeof(address);
 
   // 绑定socket
@@ -132,9 +129,9 @@ void Socket::acceptConnection(int epoll_fd) {
  *
  */
 void Socket::receive(int client_fd, std::vector<uint8_t>& read_buffer) {
-  read_buffer.resize(mp::MAX_MESSAGE_SIZE);  // 预留空间
+  read_buffer.resize(MAX_MESSAGE_SIZE);  // 预留空间
 
-  ssize_t bytesRead = read(client_fd, read_buffer.data(), mp::MAX_MESSAGE_SIZE);
+  ssize_t bytesRead = read(client_fd, read_buffer.data(), MAX_MESSAGE_SIZE);
 
   if (bytesRead > 0) {
     read_buffer.resize(bytesRead);  // 调整缓冲区大小以适应实际读取的数据
@@ -178,10 +175,10 @@ void Socket::receive(int client_fd, std::vector<uint8_t>& read_buffer) {
  * @param res reponse
  *
  */
-void Socket::send(int client_fd, const ResPtr& res) {
+void Socket::send(int client_fd, const Res& res) {
   static Json::StreamWriterBuilder writer;
 
-  std::string data = Json::writeString(writer, res->toJson());
+  std::string data = Json::writeString(writer, res.toJson());
   uint32_t dataSize = data.size();
   data =
     std::string(reinterpret_cast<char*>(&dataSize), sizeof(dataSize)) + data;

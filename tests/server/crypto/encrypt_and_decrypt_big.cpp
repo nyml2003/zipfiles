@@ -7,7 +7,7 @@
 #include <vector>
 
 #include <array>
-#include <chrono>>
+#include <chrono>
 
 #include "server/crypto/crypto.h"
 

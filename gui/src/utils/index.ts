@@ -106,7 +106,7 @@ export function buildTree<DataType extends { path: string }>(files: DataType[]):
     let current = root;
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
-      let childIndex = current.subDir.findIndex(subDir => subDir.name === part);
+      const childIndex = current.subDir.findIndex(subDir => subDir.name === part);
       if (childIndex === -1) {
         current.subDir.push({
           name: part,
@@ -145,7 +145,7 @@ export function findFile<DataType extends {
       result.push({
         name: subDir.name,
         type: FileType.Directory,
-      })
+      });
     }
   });
   return result;

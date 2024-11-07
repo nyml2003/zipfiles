@@ -1,11 +1,11 @@
-#include "server/acceptor.h"
+#include "server/socket/acceptor.h"
 #include <fcntl.h>
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <cstdlib>
 #include <exception>
 #include "log4cpp/Category.hh"
-#include "server/selector.h"
+#include "server/socket/selector.h"
 #include "server/socket/socket.h"
 
 namespace zipfiles::server {

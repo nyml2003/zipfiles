@@ -2,6 +2,7 @@
 #include <thread>
 #include "client/launcher.h"
 #include "client/socket.h"
+#include "client/view.h"
 
 int main(int argc, char* argv[]) {
   // Debug
@@ -11,9 +12,11 @@ int main(int argc, char* argv[]) {
   ofs.close();
 
   zipfiles::client::Launcher::startLogger();
-  std::thread socketReceiver([]() {
+  std::thread receiverThread([]() {
     while (true) {
-      zipfiles::client::Socket::getInstance().receive();
+      zipfiles::client::Socket::getInstance().receive(
+        zipfiles::client::handleRemoteResponse
+      );
     }
   });
   zipfiles::client::Launcher::run(argc, argv);

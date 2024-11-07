@@ -1,7 +1,6 @@
 #ifndef ZIPFILES_SERVER_SELECTOR_H
 #define ZIPFILES_SERVER_SELECTOR_H
 
-#include <cstddef>
 #include <cstdint>
 #include <vector>
 #include "server/tools/threadpool.h"
@@ -18,7 +17,7 @@ enum class SelectorStatus { READ_DATA_SIZE, READ_DATA };
 
 class Selector {
  public:
-  Selector() : tp(MAX_THREADS), connectionCount(0){};
+  Selector() : tp(MAX_THREADS), connectionCount(0) {};
   ~Selector() = default;
   void doSelect(int client_fd);
   int getConnectionCount();

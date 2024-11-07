@@ -2,19 +2,10 @@
 import { ApiEnum } from '@/apis';
 import { notification } from 'antd';
 import { useEffect } from 'react';
-import { RequestWrapper } from './useApi/types';
-
-export interface ResponseWrapper {
-  uuid: string;
-  timestamp: number;
-  apiEnum: ApiEnum;
-  data?: any;
-  type: 'resolve' | 'reject' | 'notify';
-  message: string;
-}
+import { Code, RequestWrapper, ResponseWrapper } from './useApi/types';
 
 export interface CallBack {
-  request: RequestWrapper<any>;
+  request: RequestWrapper;
   resolve: (data: any) => void;
   reject: (message: string) => void;
   retries: number;
@@ -28,28 +19,23 @@ export const setGlobalCallback = (callback: CallBack) => {
 
 export const handler = (event: MessageEvent) => {
   const response = event.data as ResponseWrapper;
-  const { type, data, message, apiEnum, timestamp, uuid } = response;
-  if (type === 'notify') {
+  const { api, uuid, code, payload, message } = response;
+  if (code === Code.NOTIFICATION) {
     notification.error({
       message,
     });
     return;
   }
-  const callbackIndex = callbacks.findIndex(
-    callback =>
-      callback.request.timestamp === timestamp &&
-      callback.request.apiEnum === apiEnum &&
-      callback.request.uuid === uuid,
-  );
+  const callbackIndex = callbacks.findIndex(callback => callback.request.uuid === uuid && callback.request.api === api);
   // console.log('event.type: ', event.type);
   // console.log('event.timestamp: ', response.timestamp);
   // console.log('event.apiEnum: ', response.apiEnum);
   // console.log('callbacks: ', JSON.stringify(callbacks));
   const [callback] = callbacks.splice(callbackIndex, 1);
-  if (type === 'resolve') {
-    callback.resolve(data || {});
-  } else if (type === 'reject') {
-    callback.reject(message);
+  if (code === Code.OK) {
+    callback.resolve(payload || {});
+  } else {
+    callback.reject(message || '响应体异常');
   }
 };
 const MAX_REQUEST_TIMEOUT = 500;

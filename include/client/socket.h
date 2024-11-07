@@ -1,9 +1,8 @@
 #ifndef ZIPFILE_CLIENT_SOCKET_H
 #define ZIPFILE_CLIENT_SOCKET_H
+#include <json/json.h>
 #include <netinet/in.h>
-#include "mp/Request.h"
-#include "mp/Response.h"
-#include "mp/apis/GetCommitDetail.h"
+#include <functional>
 
 namespace zipfiles::client {
 /**
@@ -11,6 +10,12 @@ namespace zipfiles::client {
  *
  */
 enum class ReceiveStatus { READ_DATA_SIZE, READ_DATA };
+
+/**
+ * @brief socket状态
+ *
+ */
+enum class SocketStatus { CONNECTED, DISCONNECTED, PENDING };
 
 /**
  * @brief 客户端套接字
@@ -24,9 +29,8 @@ class Socket {
     static Socket instance;
     return instance;
   }
-  void receive();
-  void receive(std::vector<ResPtr>& responses);
-  void send(const ReqPtr& req);
+  void receive(const std::function<void(const Json::Value&)>& callback);
+  void send(const std::string& req);
   void reconnect();
   void connectWithRetries();
   void initializeSocket();
@@ -45,10 +49,13 @@ class Socket {
   std::vector<uint8_t> write_buffer;
   uint32_t data_size{};
   ReceiveStatus state{};
+  SocketStatus socketStatus{};
 
   void readDataSize(uint8_t byte);
   bool readData(uint8_t byte);
   Json::Value parseJsonFromBuffer();
+  void lazyConnect();
+  void resetSocket();
 };
 }  // namespace zipfiles::client
 #endif  // !ZIPFILE_CLIENT_SOCKET_H

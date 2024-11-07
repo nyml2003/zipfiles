@@ -2,9 +2,7 @@
 #define ZIPFILE_SERVER_SOCKET_H
 
 #include <netinet/in.h>
-#include <atomic>
 #include <cstdint>
-#include <mutex>
 #include "mp/Response.h"
 
 /**
@@ -27,7 +25,7 @@ class Socket {
 
   static void receive(int client_fd, std::vector<uint8_t>& read_buffer);
 
-  static void send(int client_fd, const ResPtr& res);
+  static void send(int client_fd, const Res& res);
 
   static void acceptConnection(int epoll_fd);
 

@@ -2,15 +2,10 @@
 
 #include "client/view.h"
 #include "log4cpp/Category.hh"
-#include "mp/Request.h"
-#include "mp/Response.h"
-#include "mp/apis/GetCommitDetail.h"
-#include "mp/mp.h"
+#include "mp/common.h"
 
 #include <arpa/inet.h>
-#include <cstddef>
 #include <cstdint>
-#include <optional>
 #include <thread>
 #include <vector>
 
@@ -31,12 +26,12 @@ void Socket::initializeSocket() {
   log4cpp::Category::getRoot().infoStream() << "Socket created";
 
   serv_addr.sin_family = AF_INET;
-  serv_addr.sin_port = htons(mp::PORT);
+  serv_addr.sin_port = htons(PORT);
 
   // int flags = fcntl(server_fd, F_GETFL, 0);
   // fcntl(server_fd, F_SETFL, flags | O_NONBLOCK);  // NOLINT
 
-  log4cpp::Category::getRoot().infoStream() << "Port set to " << mp::PORT;
+  log4cpp::Category::getRoot().infoStream() << "Port set to " << PORT;
   log4cpp::Category::getRoot().infoStream() << "Resolving address...";
 
   if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
@@ -71,7 +66,10 @@ void Socket::connectWithRetries() {
   const int max_retries = 5;
   int retries = 0;
   while (retries < max_retries) {
-    if (connect(server_fd, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
+    if (connect(
+          server_fd, reinterpret_cast<struct sockaddr*>(&serv_addr),
+          sizeof(serv_addr)
+        ) < 0) {
       log4cpp::Category::getRoot().errorStream() << "Connection failed";
       retries++;
       log4cpp::Category::getRoot().errorStream()
@@ -101,9 +99,9 @@ void Socket::reconnect() {
   try {
     initializeSocket();
     connectWithRetries();
-  } catch (...) {
+  } catch (const std::exception& e) {
     close(server_fd);
-    throw;
+    throw e;
   }
 }
 
@@ -113,13 +111,10 @@ void Socket::reconnect() {
  * @param req 请求对象
  *
  */
-void Socket::send(const ReqPtr& req) {
-  static Json::StreamWriterBuilder writer;
-
-  std::string data = Json::writeString(writer, req->toJson());
-  uint32_t dataSize = data.size();
-  data =
-    std::string(reinterpret_cast<char*>(&dataSize), sizeof(dataSize)) + data;
+void Socket::send(const std::string& req) {
+  uint32_t dataSize = req.size();
+  std::string data =
+    std::string(reinterpret_cast<char*>(&dataSize), sizeof(dataSize)) + req;
 
   ssize_t bytesSent = ::send(server_fd, data.c_str(), data.size(), 0);
 
@@ -153,73 +148,10 @@ void Socket::send(const ReqPtr& req) {
  * @return ResPtr 解析出的response
  *
  */
-void Socket::receive() {
-  read_buffer.resize(mp::MAX_MESSAGE_SIZE);  // 预留空间
+void Socket::receive(const std::function<void(const Json::Value&)>& callback) {
+  read_buffer.resize(MAX_MESSAGE_SIZE);  // 预留空间
 
-  ssize_t bytesRead = read(server_fd, read_buffer.data(), mp::MAX_MESSAGE_SIZE);
-
-  if (bytesRead > 0) {
-    read_buffer.resize(bytesRead);  // 调整缓冲区大小以适应实际读取的数据
-  }
-
-  // 连接是否关闭
-  if (bytesRead == 0) {
-    // 断开连接
-    close(server_fd);
-
-    throw std::runtime_error(
-      "Server " + std::to_string(server_fd) + " disconnect"
-    );
-  }
-
-  // socket是否产生了错误
-  if (bytesRead < 0) {
-    if (errno == EAGAIN || errno == EWOULDBLOCK) {
-      close(server_fd);
-
-      // 没有更多数据可读
-      throw std::runtime_error(
-        "Server " + std::to_string(server_fd) + "is broken, disconnect now"
-      );
-    }
-
-    close(server_fd);
-    // 未知错误
-    throw std::runtime_error(
-      "Server " + std::to_string(server_fd) +
-      " is broken for unknown reason, disconnect now"
-    );
-  }
-  // read_buffer仍然有内容
-  for (const uint8_t byte : read_buffer) {
-    switch (state) {
-      case ReceiveStatus::READ_DATA_SIZE:
-        readDataSize(byte);
-        break;
-      case ReceiveStatus::READ_DATA:
-        if (readData(byte)) {
-          handleRemoteResponse(parseJsonFromBuffer());
-          state = ReceiveStatus::READ_DATA_SIZE;
-        }
-        break;
-      default:
-        throw std::runtime_error("Unknown state");
-    }
-  }
-
-  read_buffer.clear();
-}
-
-/**
- * @brief 从server接收并解析response(mock使用)
- *
- * @param res 解析出的response
- *
- */
-void Socket::receive(std::vector<ResPtr>& responses) {
-  read_buffer.resize(mp::MAX_MESSAGE_SIZE);  // 预留空间
-
-  ssize_t bytesRead = read(server_fd, read_buffer.data(), mp::MAX_MESSAGE_SIZE);
+  ssize_t bytesRead = read(server_fd, read_buffer.data(), MAX_MESSAGE_SIZE);
 
   if (bytesRead > 0) {
     read_buffer.resize(bytesRead);  // 调整缓冲区大小以适应实际读取的数据
@@ -261,9 +193,7 @@ void Socket::receive(std::vector<ResPtr>& responses) {
         break;
       case ReceiveStatus::READ_DATA:
         if (readData(byte)) {
-          Json::Value resJson = parseJsonFromBuffer();
-          responses.push_back(Res::fromJson(resJson));
-
+          callback(parseJsonFromBuffer());
           state = ReceiveStatus::READ_DATA_SIZE;
         }
         break;

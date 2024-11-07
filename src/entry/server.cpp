@@ -1,8 +1,8 @@
 #include <fstream>
 #include <log4cpp/Category.hh>
 #include <log4cpp/PropertyConfigurator.hh>
-#include "server/acceptor.h"
 #include "server/configure/configure.h"
+#include "server/socket/acceptor.h"
 #include "server/tools/committable.h"
 
 int main() {

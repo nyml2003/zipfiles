@@ -1,7 +1,6 @@
 #ifndef ZIPFILES_MP_APIS_GET_COMMIT_LIST_H
 #define ZIPFILES_MP_APIS_GET_COMMIT_LIST_H
 
-#include <json/json.h>
 #include <memory>
 #include <string>
 #include <vector>
@@ -42,11 +41,6 @@ struct GetCommitList {
 };
 }  // namespace response
 
-ReqPtr makeReqGetCommitList();
-ResPtr makeResGetCommitList(
-  std::vector<response::getCommitList::CommitLog> commits
-);
-ResPtr makeResGetCommitList(Json::Value payload);
 }  // namespace zipfiles
 
 #endif  // !ZIPFILES_MP_APIS_GET_COMMIT_LIST_H

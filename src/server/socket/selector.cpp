@@ -1,14 +1,14 @@
-#include "server/selector.h"
+#include "server/socket/selector.h"
+
 #include <cstdint>
 #include <exception>
-#include <iostream>
+#include <log4cpp/Category.hh>
 #include <stdexcept>
 #include <string>
-#include <tuple>
 #include <vector>
 #include "mp/Request.h"
 #include "mp/apis/GetCommitDetail.h"
-#include "server/handler.h"
+#include "server/socket/handler.h"
 #include "server/socket/socket.h"
 
 namespace zipfiles::server {
@@ -131,9 +131,10 @@ void Selector::parseJsonFromBuffer(int client_fd) {
   std::string jsonString(write_buffer.begin(), write_buffer.end());
 
   if (reader.parse(jsonString, jsonData)) {
-    ReqPtr request = Req::fromJson(jsonData);
+    log4cpp::Category::getRoot().infoStream() << "Parsed json: " << jsonData;
+    Req req = Req::fromJson(jsonData);
 
-    tp.enqueue([client_fd, request]() { doHandle(client_fd, request); });
+    tp.enqueue([client_fd, req]() { doHandle(client_fd, req); });
   } else {
     write_buffer.clear();
     throw std::runtime_error(&"Illegal json format when reading: "[client_fd]);

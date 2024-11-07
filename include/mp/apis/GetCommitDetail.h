@@ -1,7 +1,6 @@
 #ifndef ZIPFILES_MP_APIS_GET_COMMIT_DETAIL_H
 #define ZIPFILES_MP_APIS_GET_COMMIT_DETAIL_H
 
-#include <json/json.h>
 #include <sys/types.h>
 #include <filesystem>
 #include <string>
@@ -51,12 +50,6 @@ struct GetCommitDetail {
 };
 }  // namespace response
 
-ReqPtr makeReqGetCommitDetail(std::string uuid);
-ReqPtr makeReqGetCommitDetail(Json::Value payload);
-ResPtr makeResGetCommitDetail(
-  std::vector<response::getCommitDetail::FileDetail> files
-);
-ResPtr makeResGetCommitDetail(Json::Value payload);
 }  // namespace zipfiles
 
 #endif  // !ZIPFILES_MP_APIS_GET_COMMIT_DETAIL_H

@@ -1,69 +1,16 @@
 #include "client/view.h"
 
-#include <future>
 #include <log4cpp/Category.hh>
-#include <thread>
 #include "client/launcher.h"
 #include "client/socket.h"
-#include "jsc/jsc.h"
 #include "json/value.h"
-#include "mp/Request.h"
-#include "mp/Response.h"
+#include "mp/common.h"
 namespace zipfiles::client {
-bool isFunctionValid(JSCValue* value) {
-  /*
-   * 检查函数是否合法
-   * 1. value不为空
-   * 2. value是一个对象
-   * 3. value中包含timestamp, apiEnum, uuid, params
-   * 4. timestamp是一个数字
-   * 5. apiEnum是一个数字
-   * 6. uuid是一个字符串
-   * 7. params是一个字符串
-   */
-  if (value == nullptr) {
-    log4cpp::Category::getRoot().errorStream() << __func__ << ": value is null";
-    return false;
-  }
-  if (jsc_value_is_object(value) == 0) {
-    log4cpp::Category::getRoot().errorStream()
-      << __func__ << ": value is not an object";
-    return false;
-  }
-  JSCValue* timestamp = jsc_value_object_get_property(value, "timestamp");
-  if (jsc_value_is_number(timestamp) == 0) {
-    log4cpp::Category::getRoot().errorStream()
-      << __func__ << ": timestamp is not a number";
-    return false;
-  }
-  JSCValue* apiEnum = jsc_value_object_get_property(value, "apiEnum");
-  if (jsc_value_is_number(apiEnum) == 0) {
-    log4cpp::Category::getRoot().errorStream()
-      << __func__ << ": apiEnum is not a number";
-    return false;
-  }
-  JSCValue* uuid = jsc_value_object_get_property(value, "uuid");
-  if (jsc_value_is_string(uuid) == 0) {
-    log4cpp::Category::getRoot().errorStream()
-      << __func__ << ": uuid is not a string";
-    return false;
-  }
-  JSCValue* params = jsc_value_object_get_property(value, "params");
-  if (jsc_value_is_string(params) == 0) {
-    log4cpp::Category::getRoot().errorStream()
-      << __func__ << ": params is not an object";
-    return false;
-  }
-  return true;
-}
-
 bool isProcedureValid(JSCValue* value) {
   /*
    * 检查过程是否合法
    * 1. value不为空
    * 2. value是一个对象
-   * 3. value中包含params
-   * 7. params是一个对象
    */
   if (value == nullptr) {
     log4cpp::Category::getRoot().errorStream() << __func__ << ": value is null";
@@ -74,16 +21,36 @@ bool isProcedureValid(JSCValue* value) {
       << __func__ << ": value is not an object";
     return false;
   }
-  JSCValue* params = jsc_value_object_get_property(value, "params");
-  if (jsc_value_is_object(params) == 0) {
-    log4cpp::Category::getRoot().errorStream()
-      << __func__ << ": params is not an object";
-    return false;
-  }
   return true;
 }
 
-void sendResponse(Json::Value& root) {
+void handleError(
+  const std::string& uuid,
+  const std::string& api,
+  const std::string& message,
+  Code code = Code::CLIENT_ERROR
+) {
+  Json::Value res;
+  res["message"] = message;
+  res["code"] = static_cast<int>(code);
+  res["uuid"] = uuid;
+  res["api"] = api;
+  sendResponse(res);
+}
+/**
+ * @brief 处理客户端主动向前端发送的消息
+ *
+ * @param message
+ * @param code 默认为Code::NOTIFICATION, 而且一般不应该是其他值
+ */
+void handleNotify(const std::string& message) {
+  Json::Value res;
+  res["message"] = message;
+  res["code"] = static_cast<int>(Code::NOTIFICATION);
+  sendResponse(res);
+}
+
+void sendResponse(const Json::Value& root) {
   if (webView == nullptr) {
     return;
   }
@@ -95,38 +62,6 @@ void sendResponse(Json::Value& root) {
   webkit_web_view_evaluate_javascript(
     webView, script.c_str(), -1, nullptr, nullptr, nullptr, nullptr, nullptr
   );
-}
-
-void handleResult(
-  Json::Value& root,
-  Json::Value& data,
-  double timestamp,
-  int apiEnum,
-  const std::string& uuid
-) {
-  root["type"] = "resolve";
-  root["message"] = "Success";
-  root["timestamp"] = timestamp;
-  root["apiEnum"] = apiEnum;
-  root["data"] = data["payload"];
-  root["uuid"] = uuid;
-  sendResponse(root);
-}
-
-void handleError(const std::string& message) {
-  Json::Value root;
-  root["type"] = "reject";
-  root["message"] = message;
-  root["data"] = Json::nullValue;
-  sendResponse(root);
-}
-
-void handleNotify(const std::string& message) {
-  Json::Value root;
-  root["type"] = "notify";
-  root["message"] = message;
-  root["data"] = Json::nullValue;
-  sendResponse(root);
 }
 
 void handleProcedureLog(
@@ -148,9 +83,8 @@ void handleProcedureLog(
   }
   std::string message;
   try {
-    message = jsc_value_to_string(jsc_value_object_get_property(
-      jsc_value_object_get_property(value, "params"), "message"
-    ));
+    message =
+      jsc_value_to_string(jsc_value_object_get_property(value, "message"));
   } catch (const std::exception& e) {
     handleNotify("Failed in getting message, error: " + std::string(e.what()));
     return;
@@ -178,9 +112,8 @@ void handleProcedureError(
   }
   std::string message;
   try {
-    message = jsc_value_to_string(jsc_value_object_get_property(
-      jsc_value_object_get_property(value, "params"), "message"
-    ));
+    message =
+      jsc_value_to_string(jsc_value_object_get_property(value, "message"));
   } catch (const std::exception& e) {
     handleNotify("Failed in getting message, error: " + std::string(e.what()));
     return;
@@ -208,9 +141,8 @@ void handleProcedureInfo(
   }
   std::string message;
   try {
-    message = jsc_value_to_string(jsc_value_object_get_property(
-      jsc_value_object_get_property(value, "params"), "message"
-    ));
+    message =
+      jsc_value_to_string(jsc_value_object_get_property(value, "message"));
   } catch (const std::exception& e) {
     handleNotify("Failed in getting message, error: " + std::string(e.what()));
     return;
@@ -238,9 +170,8 @@ void handleProcedureWarn(
   }
   std::string message;
   try {
-    message = jsc_value_to_string(jsc_value_object_get_property(
-      jsc_value_object_get_property(value, "params"), "message"
-    ));
+    message =
+      jsc_value_to_string(jsc_value_object_get_property(value, "message"));
   } catch (const std::exception& e) {
     handleNotify("Failed in getting message, error: " + std::string(e.what()));
     return;
@@ -255,69 +186,35 @@ void handleFunction(
   [[maybe_unused]] gpointer user_data
 ) {
   JSCValue* value = webkit_javascript_result_get_js_value(js_result);
+  JSCValue* uuid = jsc_value_object_get_property(value, "uuid");
+  JSCValue* api = jsc_value_object_get_property(value, "api");
+  JSCValue* request = jsc_value_object_get_property(value, "request");
   try {
-    if (!isFunctionValid(value)) {
-      handleError("Invalid function header");
-      return;
-    }
+    Json::Value req = jsc_value_to_string(request);
+    log4cpp::Category::getRoot().infoStream()
+      << "send request: " << req.asCString();
+    Socket::getInstance().send(req.asCString());
   } catch (const std::exception& e) {
     handleError(
-      "Failed in checking function header, error: " + std::string(e.what())
+      jsc_value_to_string(uuid), jsc_value_to_string(api),
+      "Failed to send request: " + std::string(e.what())
     );
-    return;
-  }
-
-  ApiEnum api = ApiEnum::ERROR;
-  try {
-    api = static_cast<ApiEnum>(
-      jsc_value_to_int32(jsc_value_object_get_property(value, "apiEnum"))
-    );
-    if (api == ApiEnum::ERROR) {
-      handleError("Invalid apiEnum");
-      return;
-    }
-  } catch (const std::exception& e) {
-    handleError("Failed in getting apiEnum, error: " + std::string(e.what()));
-    return;
-  }
-  Json::Reader reader;
-  Json::Value params;
-  try {
-    reader.parse(
-      jsc_value_to_string(jsc_value_object_get_property(value, "params")),
-      params
-    );
-  } catch (const std::exception& e) {
-    handleError("Failed in parsing params, error: " + std::string(e.what()));
-    return;
-  }
-  log4cpp::Category::getRoot().infoStream()
-    << "Received function call: " << params;
-  Json::Value reqJson;
-  reqJson["apiEnum"] = static_cast<int>(api);
-  reqJson["payload"] = params;
-  reqJson["timestamp"] =
-    jsc_value_to_double(jsc_value_object_get_property(value, "timestamp"));
-  reqJson["uuid"] =
-    jsc_value_to_string(jsc_value_object_get_property(value, "uuid"));
-
-  ReqPtr request = Req::fromJson(reqJson);
-  log4cpp::Category::getRoot().infoStream()
-    << "Sending request: " << request->toJson();
-  try {
-    Socket::getInstance().send(request);
-  } catch (const std::exception& e) {
-    handleError("Failed to handle request: " + std::string(e.what()));
   }
 }
 
 void handleRemoteResponse(Json::Value res) {
-  Json::Value root;
-  log4cpp::Category::getRoot().infoStream() << "Received response: " << res;
-  handleResult(
-    root, res, res["timestamp"].asDouble(), res["apiEnum"].asInt(),
-    res["uuid"].asString()
-  );
+  log4cpp::Category::getRoot().infoStream()
+    << "received response: " << res.toStyledString();
+  if (res["code"].asInt() == static_cast<int>(Code::NOTIFICATION)) {
+    handleNotify(res["message"].asString());
+  } else if (res["code"].asInt() == static_cast<int>(Code::OK)) {
+    sendResponse(res);
+  } else {
+    handleError(
+      res["uuid"].asString(), res["api"].asString(), res["message"].asString(),
+      static_cast<Code>(res["code"].asInt())
+    );
+  }
 }
 
 }  // namespace zipfiles::client

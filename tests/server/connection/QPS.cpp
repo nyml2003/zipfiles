@@ -1,13 +1,16 @@
 #include <gtest/gtest.h>
+#include <atomic>
 #include <exception>
 #include <mutex>
 #include <thread>
+#include <vector>
 #include "client/socket.h"
 #include "json/value.h"
+#include "mp/Request.h"
 
 namespace zipfiles {
 
-int id = 0;
+std::atomic<int> id(0);   // 使用原子操作确保线程安全
 std::mutex mutex;         // 全局互斥锁
 std::map<int, bool> map;  // 用于跟踪请求是否收到响应
 int max_request = 10000;
@@ -20,34 +23,45 @@ class QPS : public ::testing::Test {
 };
 
 void make_request() {
-  for (; id < max_request; id++) {
-    Json::Value request = zipfiles::makeReqMockNeedTime(id)->toJson();
-    request["timestamp"] = 0;
-    request["uuid"] = "1234567890";
-    // std::cout << "Sending request: " << request.toStyledString() <<
-    // std::endl;
-
-    client::Socket::getInstance().send(Req::fromJson(request));
+  while (true) {
+    int current_id = id.fetch_add(1);  // 原子操作递增id
+    if (current_id >= max_request) {
+      break;
+    }
+    Json::Value request = zipfiles::Req(
+                            zipfiles::request::MockNeedTime{current_id},
+                            zipfiles::Api::MOCK_NEED_TIME, "1234567890"
+    )
+                            .toJson();
+    Json::FastWriter writer;
+    std::string json_str = writer.write(request);
+    // std::cout << "Sending request: " << json_str << std::endl;
+    client::Socket::getInstance().send(json_str);
   }
 }
 
 void get_response() {
   while (true) {
-    std::vector<ResPtr> responses;
+    std::vector<Json::Value> responses;
     try {
-      client::Socket::getInstance().receive(responses);
-    } catch (std::exception& e) {
+      client::Socket::getInstance().receive([&responses](const Json::Value& json
+                                            ) {
+        responses.push_back(json);
+        // std::cout << "Received response: " << json.toStyledString()
+        //           << std::endl;
+      });
+    } catch (const std::exception& e) {
+      std::cout << __LINE__ << ": ";
       std::cout << e.what() << std::endl;
       break;
     }
 
     for (const auto& response : responses) {
-      Json::Value resJson = response->toJson();
-      int id = resJson["payload"]["id"].asInt();
+      int response_id = response["payload"]["id"].asInt();
 
       std::lock_guard<std::mutex> lg(mutex);
-      if (map.find(id) == map.end()) {
-        map[id] = true;
+      if (map.find(response_id) == map.end()) {
+        map[response_id] = true;
       }
     }
 
