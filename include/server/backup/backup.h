@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <string>
 #include <vector>
 #include "server/tools/committable.h"
 
@@ -20,6 +21,10 @@ void backupFiles(
 );
 
 fs::path getCommonAncestor(const std::vector<fs::path>& paths);
+
+void removeCommitById(const std::string& uuid);
+
+void removeCommitAndRecordById(const std::string& uuid);
 
 /**
  * * directory

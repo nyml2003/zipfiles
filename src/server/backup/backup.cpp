@@ -279,6 +279,67 @@ fs::path getCommonAncestor(const std::vector<fs::path>& paths) {
 }
 
 /**
+ * @brief 物理删除给定uuid的commit所对应的文件
+ *
+ * @param uuid 给定的uuid
+ *
+ */
+void removeCommitById(const std::string& uuid) {
+  CommitTableRecord ctr = CommitTable::getCommitRecordById(uuid);
+
+  if (!ctr.isDelete) {
+    throw std::runtime_error("Commit " + uuid + " is not deleted yet");
+  }
+
+  fs::path path = ctr.storagePath + "/" + ctr.uuid;
+
+  if (fs::exists(path)) {
+    try {
+      fs::remove_all(path);
+    } catch (std::exception& e) {
+      throw std::runtime_error(
+        "Cannot remove storage file at " + path.string()
+      );
+    }
+  }
+
+  // nothing...
+}
+
+/**
+ * @brief 物理删除给定uuid的CommitRecord，以及其所对应的文件
+ *
+ * @param uuid 给定的uuid
+ *
+ */
+void removeCommitAndRecordById(const std::string& uuid) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Removing commit files by given uuid: " << uuid;
+
+  // 尝试物理删除文件
+  try {
+    removeCommitById(uuid);
+  } catch (std::exception& e) {
+    throw std::runtime_error(
+      "Error occur when trying to remove commit files by given uuid: " + uuid +
+      ", because " + e.what()
+    );
+  }
+
+  // 尝试从commit_table里删除记录
+  try {
+    CommitTable::removeCommitRecord(uuid);
+    CommitTable::writeCommitTable(COMMIT_TABLE_PATH);
+  } catch (std::runtime_error& e) {
+    throw std::runtime_error(
+      "Error occur when trying to remove commit, because " +
+      std::string(e.what()) +
+      " (but its storage files already removed or moved)"
+    );
+  }
+}
+
+/**
  * @brief 给定一个路径，生成一个描述Commit内容的目录树文件(Json形式)
  *
  * @param dst 指定的目录文件路径

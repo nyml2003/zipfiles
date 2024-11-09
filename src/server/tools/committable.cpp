@@ -12,7 +12,7 @@ CommitTable::CommitTable() = default;
 CommitTable::~CommitTable() = default;
 
 /**
- * @brief 读取指定的CommitTable文件，加载到内存(如果不存在会创造一个新的)
+ * @brief 读取指定的commit_table文件，加载到内存(如果不存在会创造一个新的)
  *
  * @param src 指定的log文件绝对路径
  *
@@ -71,11 +71,11 @@ void CommitTable::readCommitTable(const fs::path& src) {
 }
 
 /**
- * @brief 返回一个CommitTable的视图
+ * @brief 返回一个commit_table的视图
  *
- * @param src commit table的路径
+ * @param src commit_table的路径
  *
- * @return Json::Value commit table
+ * @return Json::Value commit_table
  *
  */
 Json::Value CommitTable::readCommitTableView(const fs::path& src) {
@@ -243,7 +243,38 @@ void CommitTable::removeCommitRecord(const std::string& uuid) {
 }
 
 /**
- * @brief 给定uuid，返回内存中commit table里指定的CommitRecord
+ * @brief 给定uuid，将其isDelete设置为false
+ *
+ * @param uuid 给定的uuid
+ *
+ */
+void CommitTable::recoverCommitRecord(const std::string& uuid) {
+  // 获取锁
+  std::lock_guard<std::mutex> lock(getInstance().mutex);
+
+  Json::Value& ct = getInstance().commitTable;
+
+  if (ct.isMember(uuid)) {
+    if (ct[uuid].isMember("isDelete")) {
+      try {
+        ct[uuid]["isDelete"] = false;
+        return;
+      } catch (std::exception& e) {
+        throw std::runtime_error(
+          "Cannot set commit record by given uuid " + uuid
+        );
+      }
+    }
+  }
+
+  // 找不到对应的commit record
+  throw std::runtime_error(
+    "Cannot delete specific commit record by given uuid " + uuid
+  );
+}
+
+/**
+ * @brief 给定uuid，返回内存中CommitTable里指定的CommitRecord
  *
  * @param uuid 给定的uuid
  *
