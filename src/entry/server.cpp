@@ -22,10 +22,12 @@ int main() {
     std::cerr << "Configure Problem: " << f.what() << std::endl;
   }
 
-  // 启动acceptor
+  // 初始化commit_table
   zipfiles::server::CommitTable::readCommitTable(
     zipfiles::server::COMMIT_TABLE_PATH
   );
+
+  // 启动acceptor
   zipfiles::server::doAccept();
 
   return 0;
