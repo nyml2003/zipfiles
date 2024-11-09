@@ -134,7 +134,7 @@ class EncryptAndDecryptBig : public ::testing::Test {
 };
 
 TEST_F(EncryptAndDecryptBig, EncryptAndDecryptBig) {  // NOLINT
-  ASSERT_TRUE(test("/text/big_text_test_file"));
+  ASSERT_TRUE(test("/text/mega_text_test_file"));
 }
 
 }  // namespace zipfiles::server
