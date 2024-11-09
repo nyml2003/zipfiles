@@ -251,7 +251,8 @@ Json::Value Socket::parseJsonFromBuffer() {
 
   if (reader.parse(jsonString, jsonData)) {
     write_buffer.clear();
-
+    log4cpp::Category::getRoot().infoStream()
+      << "Received response: " << jsonData;
     return jsonData;
   }
   write_buffer.clear();

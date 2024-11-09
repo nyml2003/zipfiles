@@ -61,4 +61,9 @@ module.exports = merge(baseConfig, {
       },
     },
   },
+  resolve: {
+    alias: {
+      '@useApi': path.join(__dirname, '../src/hooks/useApi/development'),
+    },
+  },
 });

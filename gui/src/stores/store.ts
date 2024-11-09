@@ -1,14 +1,13 @@
-// store.ts
 import { configureStore } from '@reduxjs/toolkit';
 import counterReducer from './counter/reducer';
 import CreateCommitReducer from './CreateCommitReducer';
-// import CommitListReducer from './CommitListReducer';
+import NotificationReducer from './NotificationReducer';
 
 const store = configureStore({
   reducer: {
     counter: counterReducer,
     createCommit: CreateCommitReducer,
-    // commitList: CommitListReducer,
+    notification: NotificationReducer,
   },
 });
 

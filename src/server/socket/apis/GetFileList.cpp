@@ -1,13 +1,13 @@
 #include <mp/Request.h>
 #include <mp/Response.h>
 #include <server/socket/api.h>
+#include <server/socket/socket.h>
 #include <log4cpp/Category.hh>
+
 namespace zipfiles::server::api {
 namespace fs = std::filesystem;
-template <>
-response::GetFileList handle<request::GetFileList, response::GetFileList>(
-  const request::GetFileList& request
-) {
+void getFileList(int client_fd, const Req& req) {
+  const auto& request = std::get<request::GetFileList>(req.kind);
   const fs::path& path = request.path == "" ? "/" : request.path;
 
   if (!fs::exists(path)) {
@@ -24,7 +24,9 @@ response::GetFileList handle<request::GetFileList, response::GetFileList>(
       {.type = entry.status().type(), .name = entry.path().filename().string()}
     );
   }
-  return response;
+  Socket::send(
+    client_fd, Res(response, Api::GET_FILE_LIST, req.uuid, Code::OK)
+  );
 }
 
 }  // namespace zipfiles::server::api

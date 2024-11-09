@@ -2,9 +2,13 @@ import React, { useRef, useState } from 'react';
 import { HomeOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons';
 import type { TourStepProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
-import { Layout, Menu, theme, Tour } from 'antd';
+import { Layout, Menu, theme, Tour, notification } from 'antd';
 import { Outlet, useNavigate } from 'react-router-dom';
 import FootContent from './FootContent';
+import NotificationList from '@/components/NotificationList';
+import { CSSTransition } from 'react-transition-group';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/stores/store';
 
 const { Content, Sider } = Layout;
 
@@ -12,10 +16,11 @@ const App: React.FC = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const openTour = () => setOpen(true);
+  const notificationVisible = useSelector((state: RootState) => state.notification.open);
   const headerItems = [
     {
       key: 'index',
-      label: <div ref={el => (headerItemsRef.current[0] = el?.parentElement?.parentElement!)}>首页</div>,
+      label: <div ref={el => (headerItemsRef.current[0] = el)}>首页</div>,
       icon: React.createElement(HomeOutlined),
     },
     {
@@ -93,11 +98,16 @@ const App: React.FC = () => {
               borderInlineEnd: 'none',
             }}></Menu>
         </Sider>
-        <Layout className='grow-item split-container-col'>
-          <Content className='grow-item'>
-            <Outlet context={{ openTour }} />
-          </Content>
-          <FootContent />
+        <Layout className='grow-item split-container-row overflow-x-hidden'>
+          <div className='grow-item split-container-col'>
+            <Content className='grow-item'>
+              <Outlet context={{ openTour }} />
+            </Content>
+            <FootContent />
+          </div>
+          <CSSTransition in={notificationVisible} timeout={500} classNames='fade' unmountOnExit>
+            <NotificationList />
+          </CSSTransition>
         </Layout>
       </Layout>
       <Tour open={open} onClose={() => setOpen(false)} steps={steps} />

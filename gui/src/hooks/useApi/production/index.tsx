@@ -1,5 +1,5 @@
-import { setGlobalCallback } from '../useGlobalMessageHandler';
-import { Api, RequestWrapper } from './types';
+import { setGlobalCallback } from '../../useGlobalMessageHandler';
+import { Api, RequestWrapper } from '../types';
 import { ApiEnum } from '@/apis';
 import { v4 as uuidv4 } from 'uuid';
 let apiInstance: Api | null = null;
@@ -20,7 +20,6 @@ const useApi = () => {
       console.error('No such api: ', api);
       return Promise.reject('No such api: ' + api);
     }
-    console.log(api, request, uuid);
     window.webkit.messageHandlers.function.postMessage({
       api,
       request: JSON.stringify(message),

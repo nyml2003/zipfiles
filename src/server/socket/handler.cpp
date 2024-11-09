@@ -5,7 +5,6 @@
 #include "mp/common.h"
 #include "server/error.h"
 #include "server/socket/api.h"
-#include "server/socket/socket.h"
 
 #include <unistd.h>
 #include <csignal>
@@ -30,56 +29,40 @@ void doHandle(int client_fd, const Req& req) {
 
     switch (req.api) {
       case Api::GET_COMMIT_DETAIL: {
-        kind = api::handle<request::GetCommitDetail, response::GetCommitDetail>(
-          std::get<request::GetCommitDetail>(req.kind)
-        );
+        api::getCommitDetail(client_fd, req);
         break;
       }
       case Api::GET_COMMIT_LIST: {
-        kind = api::handle<request::GetCommitList, response::GetCommitList>(
-          std::get<request::GetCommitList>(req.kind)
-        );
+        api::getCommitList(client_fd, req);
         break;
       }
       case Api::GET_FILE_LIST: {
-        kind = api::handle<request::GetFileList, response::GetFileList>(
-          std::get<request::GetFileList>(req.kind)
-        );
+        api::getFileList(client_fd, req);
         break;
       }
       case Api::GET_FILE_DETAIL_LIST: {
-        kind =
-          api::handle<request::GetFileDetailList, response::GetFileDetailList>(
-            std::get<request::GetFileDetailList>(req.kind)
-          );
+        api::getFileDetailList(client_fd, req);
         break;
       }
       case Api::POST_COMMIT: {
-        kind = api::handle<request::PostCommit, response::PostCommit>(
-          std::get<request::PostCommit>(req.kind)
-        );
+        api::postCommit(client_fd, req);
         break;
       }
       case Api::GET_FILE_DETAIL: {
-        kind = api::handle<request::GetFileDetail, response::GetFileDetail>(
-          std::get<request::GetFileDetail>(req.kind)
-        );
+        api::getFileDetail(client_fd, req);
         break;
       }
       case Api::MOCK_NEED_TIME: {
-        kind = api::handle<request::MockNeedTime, response::MockNeedTime>(
-          std::get<request::MockNeedTime>(req.kind)
-        );
+        api::mockNeedTime(client_fd, req);
+        break;
+      }
+      case Api::MOCK_MANY_NOTIFICATIONS: {
+        api::mockManyNotifications(client_fd, req);
         break;
       }
       default:
         throw std::runtime_error("Unknown api type");
     }
-    Res res = {kind, req.api, req.uuid, Code::OK, std::nullopt};
-
-    log4cpp::Category::getRoot().infoStream()
-      << "Response sent: " << res.toJson();
-    Socket::send(client_fd, res);
 
   }  // namespace zipfiles::server
   catch (const std::exception& e) {

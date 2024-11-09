@@ -1,9 +1,22 @@
-#ifndef ZIPFILE_SERVER_SOCKET_API_H
-#define ZIPFILE_SERVER_SOCKET_API_H
-
+#ifndef ZIPFILES_MP_API_H
+#define ZIPFILES_MP_API_H
+#include "mp/Request.h"
 namespace zipfiles::server::api {
-template <typename RequestType, typename ResponseType>
-ResponseType handle(const RequestType& request);
-}
+void getCommitDetail(int client_fd, const Req& req);
 
-#endif  // ZIPFILE_SERVER_SOCKET_API_H
+void getCommitList(int client_fd, const Req& req);
+
+void getFileList(int client_fd, const Req& req);
+
+void getFileDetailList(int client_fd, const Req& req);
+
+void postCommit(int client_fd, const Req& req);
+
+void getFileDetail(int client_fd, const Req& req);
+
+void mockNeedTime(int client_fd, const Req& req);
+
+void mockManyNotifications(int client_fd, const Req& req);
+}  // namespace zipfiles::server::api
+
+#endif  // !ZIPFILES_MP_API_H

@@ -29,7 +29,7 @@ Json::Value Req::toJson() const {
     case Api::GET_FILE_DETAIL_LIST: {
       json["payload"]["path"] = std::get<request::GetFileDetailList>(kind).path;
       if (std::get<request::GetFileDetailList>(kind).filter.has_value()) {
-        auto& filter =
+        const auto& filter =
           std::get<request::GetFileDetailList>(kind).filter.value();
         if (filter.type.has_value()) {
           json["payload"]["filter"]["type"] =
@@ -93,6 +93,9 @@ Json::Value Req::toJson() const {
     }
     case Api::MOCK_NEED_TIME: {
       json["payload"]["id"] = std::get<request::MockNeedTime>(kind).id;
+      break;
+    }
+    case Api::MOCK_MANY_NOTIFICATIONS: {
       break;
     }
     default:
@@ -187,7 +190,10 @@ Req Req::fromJson(const Json::Value& json) {
     case Api::MOCK_NEED_TIME: {
       kind = request::MockNeedTime{.id = json["payload"]["id"].asInt()};
       break;
-    }
+    };
+    case Api::MOCK_MANY_NOTIFICATIONS:
+      kind = request::MockManyNotifications{};
+      break;
     default:
       throw std::runtime_error(
         std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": " +

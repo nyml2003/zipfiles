@@ -8,11 +8,16 @@
 #include "mp/apis/GetFileDetail.h"
 #include "mp/apis/GetFileDetailList.h"
 #include "mp/apis/GetFileList.h"
+#include "mp/apis/MockManyNotifications.h"
 #include "mp/apis/MockNeedTime.h"
 #include "mp/apis/PostCommit.h"
 #include "mp/common.h"
 
 namespace zipfiles {
+
+namespace response {
+struct NoResponse {};
+}  // namespace response
 
 using ResKind = std::variant<
   response::GetFileList,
@@ -21,10 +26,18 @@ using ResKind = std::variant<
   response::GetCommitDetail,
   response::GetCommitList,
   response::GetFileDetail,
-  response::MockNeedTime>;
+  response::MockNeedTime,
+  response::MockManyNotifications,
+  response::NoResponse>;
 
 struct Res {
-  Res(ResKind, Api, std::string, Code, std::optional<std::string>);
+  Res(
+    ResKind,
+    Api,
+    std::string,
+    Code,
+    std::optional<std::string> = std::nullopt
+  );
   ResKind kind;                        // 响应体
   Api api;                             // 响应类型
   std::string uuid;                    // 请求的uuid

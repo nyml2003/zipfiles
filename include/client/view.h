@@ -4,6 +4,7 @@
 #include <gtk/gtk.h>
 #include <json/json.h>
 #include <webkit2/webkit2.h>
+#include <optional>
 #include "mp/common.h"
 namespace zipfiles::client {
 /**
@@ -26,27 +27,16 @@ bool isProcedureValid(JSCValue* value);
  */
 void sendResponse(const Json::Value& root);
 
-/**
- * @brief 处理客户端的请求失败
- *
- * @param uuid 请求的uuid
- * @param api 请求的api
- * @param message 错误信息
- * @param code 默认为Code::CLIENT_ERROR, 而且一般不应该是其他值
- */
 void handleError(
   const std::string& uuid,
-  const std::string& api,
   const std::string& message,
-  Code code
+  Code code,
+  std::optional<Api> api = std::nullopt
 );
-/**
- * @brief 处理客户端主动向前端发送的消息
- *
- * @param message
- * @param code 默认为Code::NOTIFICATION, 而且一般不应该是其他值
- */
+
 void handleNotify(const std::string& message);
+
+void handleNotify(const std::string& message, Code code);
 
 /**
  * @brief 转发请求到具体的处理函数
@@ -63,8 +53,6 @@ void handleFunction(
   WebKitJavascriptResult* js_result,
   gpointer user_data
 );
-
-void handleRemoteResponse(Json::Value response);
 
 // void handleLocalResponse(const ReqPtr& request);
 

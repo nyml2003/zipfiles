@@ -179,6 +179,21 @@ void Socket::send(int client_fd, const Res& res) {
   static Json::StreamWriterBuilder writer;
 
   std::string data = Json::writeString(writer, res.toJson());
+  log4cpp::Category::getRoot().infoStream()
+    << "Send response: " << data << " to client_fd: " << client_fd;
+  uint32_t dataSize = data.size();
+  data =
+    std::string(reinterpret_cast<char*>(&dataSize), sizeof(dataSize)) + data;
+
+  ::send(client_fd, data.c_str(), data.size(), 0);
+}
+
+void Socket::send(int client_fd, const Notification& notification) {
+  static Json::StreamWriterBuilder writer;
+
+  std::string data = Json::writeString(writer, notification.toJson());
+  log4cpp::Category::getRoot().infoStream()
+    << "Send notification: " << data << " to client_fd: " << client_fd;
   uint32_t dataSize = data.size();
   data =
     std::string(reinterpret_cast<char*>(&dataSize), sizeof(dataSize)) + data;

@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ApiEnum } from '@/apis';
-import { notification } from 'antd';
 import { useEffect } from 'react';
-import { Code, RequestWrapper, ResponseWrapper } from './useApi/types';
+import { Code, RequestWrapper, ResponseWrapper, Notification } from './useApi/types';
+import { useDispatch } from 'react-redux';
+import { addNotification, finishMessage } from '@/stores/NotificationReducer';
+import { PlainText } from '@/components/NotificationList/types';
+import { notification } from 'antd';
 
 export interface CallBack {
   request: RequestWrapper;
@@ -17,31 +19,47 @@ export const setGlobalCallback = (callback: CallBack) => {
   callbacks.push(callback);
 };
 
-export const handler = (event: MessageEvent) => {
-  const response = event.data as ResponseWrapper;
-  const { api, uuid, code, payload, message } = response;
-  if (code === Code.NOTIFICATION) {
-    notification.error({
-      message,
-    });
-    return;
-  }
-  const callbackIndex = callbacks.findIndex(callback => callback.request.uuid === uuid && callback.request.api === api);
-  // console.log('event.type: ', event.type);
-  // console.log('event.timestamp: ', response.timestamp);
-  // console.log('event.apiEnum: ', response.apiEnum);
-  // console.log('callbacks: ', JSON.stringify(callbacks));
-  const [callback] = callbacks.splice(callbackIndex, 1);
-  if (code === Code.OK) {
-    callback.resolve(payload || {});
-  } else {
-    callback.reject(message || '响应体异常');
-  }
-};
-const MAX_REQUEST_TIMEOUT = 500;
+export const MAX_REQUEST_TIMEOUT = 500;
 const MAX_REQUEST_RETRY = 10;
 export const useGlobalMessageHandler = () => {
+  console.log('useGlobalMessageHandler is ok');
+  const dispatch = useDispatch();
+  console.log('dispatch is ok');
   useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      console.log('event.data: ', JSON.stringify(event.data));
+      const response = event.data as ResponseWrapper;
+      const { api, uuid, code, payload, message } = response;
+      if (code === Code.NOTIFICATION) {
+        dispatch(
+          addNotification({
+            type: 'plainText',
+            text: message,
+            state: 'warning',
+          } as PlainText),
+        );
+        return;
+      }
+      if (code === Code.POSTCOMMIT_SUCCESS || code === Code.POSTCOMMIT_FAILED) {
+        const notification = event.data as Notification;
+        dispatch(finishMessage(notification));
+        return;
+      }
+      const callbackIndex = callbacks.findIndex(
+        callback => callback.request.uuid === uuid && callback.request.api === api,
+      );
+      // console.log('event.type: ', event.type);
+      // console.log('event.timestamp: ', response.timestamp);
+      // console.log('event.apiEnum: ', response.apiEnum);
+      // console.log('callbacks: ', JSON.stringify(callbacks));
+      const [callback] = callbacks.splice(callbackIndex, 1);
+
+      if (code === Code.OK) {
+        callback.resolve(payload || {});
+      } else {
+        callback.reject(message || '响应体异常');
+      }
+    };
     window.addEventListener('message', handler);
     // const intervalId = setInterval(() => {
     //   const now = Date.now();

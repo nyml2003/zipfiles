@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Table } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { ApiEnum } from '@/apis';
-import useApi from '@/hooks/useApi';
+import useApi from '@useApi';
 import { GetCommitListRequest, GetCommitListResponse } from '@/apis/GetCommitList';
 interface CommitLog {
   uuid: string;

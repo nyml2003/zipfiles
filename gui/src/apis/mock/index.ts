@@ -19,4 +19,5 @@ export const mockApi: Record<ApiEnum, Function> = {
   [ApiEnum.GetCommitList]: GetCommitList,
   [ApiEnum.GetCommitDetail]: GetCommitDetail,
   [ApiEnum.GetFileDetail]: GetFileDetail,
+  [ApiEnum.MOCK_MANY_NOTIFICATIONS]: () => { },
 };

@@ -3,6 +3,7 @@
 
 #include <netinet/in.h>
 #include <cstdint>
+#include "mp/Notification.h"
 #include "mp/Response.h"
 
 /**
@@ -26,6 +27,8 @@ class Socket {
   static void receive(int client_fd, std::vector<uint8_t>& read_buffer);
 
   static void send(int client_fd, const Res& res);
+
+  static void send(int client_fd, const Notification& notification);
 
   static void acceptConnection(int epoll_fd);
 

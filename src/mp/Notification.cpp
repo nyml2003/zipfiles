@@ -4,9 +4,10 @@ namespace zipfiles {
 
 Notification::Notification(
   std::string message,
+  Code code,
   std::optional<Json::Value> payload
 )
-  : message(std::move(message)), payload(std::move(payload)) {}
+  : message(std::move(message)), code(code), payload(std::move(payload)) {}
 
 Json::Value Notification::toJson() const {
   Json::Value json;
@@ -19,11 +20,11 @@ Json::Value Notification::toJson() const {
 };
 
 Notification Notification::fromJson(const Json::Value& json) {
-  return {
-    json["message"].asString(), json.isMember("payload")
-                                  ? std::make_optional(json["payload"])
-                                  : std::nullopt
-  };
+  return Notification(
+    json["message"].asString(), static_cast<Code>(json["code"].asInt()),
+    json.isMember("payload") ? std::make_optional(json["payload"])
+                             : std::nullopt
+  );
 }
 
 }  // namespace zipfiles

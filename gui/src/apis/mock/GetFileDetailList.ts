@@ -1,11 +1,13 @@
 import { omit } from 'lodash';
 import { GetFileDetailListRequest, GetFileDetailListResponse } from '../GetFileDetailList';
-import { findFilesByPath, MockFileDetail } from './utils';
+import { findFilesByPath } from './utils';
+import { MockFileDetail } from './types';
+import { cachedFileRoot } from './init';
 
 export function mock(request: GetFileDetailListRequest): GetFileDetailListResponse {
   const { path } = request;
   const filter = request.filter || {};
-  const files: MockFileDetail[] | null = findFilesByPath(path, filter);
+  const files: MockFileDetail[] | null = findFilesByPath(cachedFileRoot, path, filter);
   if (!files) {
     throw new Error('File not found' + path);
   }

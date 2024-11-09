@@ -5,7 +5,7 @@ import { ApiEnum } from '@/apis';
 import { FileType, FileTypeToString } from '@/types';
 import { FileFilled, FolderFilled } from '@ant-design/icons';
 import { GetFileDetailListRequest, GetFileDetailListResponse } from '@/apis/GetFileDetailList';
-import useApi from '@/hooks/useApi';
+import useApi from '@useApi';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
 import {

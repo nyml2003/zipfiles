@@ -8,9 +8,12 @@ export interface Api {
 
 export enum Code {
   ILLEAGAL = 0, // StatusCode为0的情况不合法
-  OK = 1, // 正常返回
-  ERROR = 2, // 出现异常(默认，可自定义其他StatusCode)
-  NOTIFICATION = 3, // 后端主动向前端返回消息
+  OK = 100, // 正常返回
+  ERROR = 200, // 默认服务端异常
+  CLIENT_ERROR = 300, // 默认客户端异常
+  NOTIFICATION = 400, // 默认通知，应该是文本消息
+  POSTCOMMIT_SUCCESS = 401, // 提交Commit成功
+  POSTCOMMIT_FAILED = 402, // 提交Commit失败
 }
 
 export interface ResponseWrapper {
@@ -27,6 +30,12 @@ export interface RequestWrapper {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any;
   uuid: string;
+}
+
+export interface Notification {
+  code: Code;
+  message: string;
+  payload?: any;
 }
 
 export type useApiType = () => Api;

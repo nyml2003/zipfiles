@@ -1,13 +1,16 @@
+import { toggleNotification } from '@/stores/NotificationReducer';
+import { MessageOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
 import React from 'react';
-import { MessageOutlined, ProfileOutlined } from '@ant-design/icons';
-import { Button, Modal } from 'antd';
-import BackUpBuffer from '@/components/BackUpBuffer';
+import { useDispatch } from 'react-redux';
 
 const FootContent = () => {
-  const [modal, contextHolder] = Modal.useModal();
+  const dispatch = useDispatch();
   return (
     <div className='bg-white flex flex-row-reverse p-2'>
-      <Button icon={<MessageOutlined />} ></Button>
+      <Button icon={<MessageOutlined />} onClick={() => dispatch(toggleNotification())}>
+        通知
+      </Button>
     </div>
   );
 };

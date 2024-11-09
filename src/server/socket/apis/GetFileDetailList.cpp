@@ -1,17 +1,19 @@
+
+#include "mp/Request.h"
+#include "mp/Response.h"
+#include "server/socket/api.h"
+#include "server/socket/socket.h"
+
 #include <grp.h>
-#include <mp/Request.h>
-#include <mp/Response.h>
 #include <pwd.h>
-#include <server/socket/api.h>
 #include <filesystem>
 #include <log4cpp/Category.hh>
 #include <vector>
+
 namespace zipfiles::server::api {
-template <>
-response::GetFileDetailList
-handle<request::GetFileDetailList, response::GetFileDetailList>(
-  const request::GetFileDetailList& request
-) {
+
+void getFileDetailList(int client_fd, const Req& req) {
+  const auto& request = std::get<request::GetFileDetailList>(req.kind);
   const fs::path& path = request.path == "" ? "/" : request.path;
   if (!fs::exists(path)) {
     throw std::runtime_error("File does not exist");
@@ -87,7 +89,12 @@ handle<request::GetFileDetailList, response::GetFileDetailList>(
   }
   log4cpp::Category::getRoot().infoStream()
     << "Get file detail list: " << files.size() << " files";
-  return {.files = files};
+  Socket::send(
+    client_fd, Res(
+                 response::GetFileDetailList{.files = files},
+                 Api::GET_FILE_DETAIL_LIST, req.uuid, Code::OK
+               )
+  );
 }
 
 }  // namespace zipfiles::server::api

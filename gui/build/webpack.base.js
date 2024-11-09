@@ -162,7 +162,7 @@ module.exports = {
     alias: {
       '@': path.join(__dirname, '../src'),
     },
-    extensions: ['.js', '.tsx', '.ts'], //注意把高频出现的文件后缀放在前面
+    extensions: ['.js', '.tsx', '.ts'], // 注意把高频出现的文件后缀放在前面
   },
   plugins: [
     new HtmlWebpackPlugin({

@@ -1,57 +1,11 @@
 /* eslint-disable prefer-const */
 import { FileType } from '@/types';
-import { cleanObject } from '@/utils';
+import { cleanObject, findLongestCommonPrefix } from '@/utils';
 import Mock from 'mockjs';
 import { v4 as uuidv4 } from 'uuid';
-import { GetFileDetailListRequest } from '../GetFileDetailList';
+import { MockFileNumber } from './const';
 import { omit } from 'lodash';
-const MockFileNumber: [number, number] = [10, 20];
-
-interface File {
-  name: string;
-  type: FileType;
-}
-
-interface FileDetail {
-  name: string;
-  type: FileType;
-  createTime: number;
-  updateTime: number;
-  size: number;
-  owner: string;
-  group: string;
-  mode: number;
-  path: string;
-}
-
-interface RootFileDetail {
-  name: string;
-  type: FileType.Directory;
-  children: MockFileDetail[];
-}
-
-interface CommitLog {
-  uuid: string;
-  message: string;
-  createTime: number;
-  storagePath: string;
-  author: string;
-  isEncrypt: boolean;
-  isDelete: boolean;
-}
-
-type Filter = Partial<{
-  type: FileType;
-  name: string;
-  minSize: number;
-  maxSize: number;
-  minCreateTime: number;
-  maxCreateTime: number;
-  minUpdateTime: number;
-  maxUpdateTime: number;
-  owner: string;
-  group: string;
-}>;
+import { FileDetail, MockFileDetail, Filter, CommitLog, RootFileDetail } from './types';
 
 export function pickIndex<T>(choices: T[], _weights?: number[]): number {
   if (!_weights) {
@@ -78,10 +32,7 @@ export function pickIndex<T>(choices: T[], _weights?: number[]): number {
   };
   return binarySearch(x);
 }
-export const filterBy = <T extends FileDetail>(
-  files: T[],
-  filter: Partial<GetFileDetailListRequest['filter']>,
-): T[] => {
+export const filterBy = <T extends FileDetail>(files: T[], filter?: Filter): T[] => {
   const cleanedFilter: Filter = cleanObject(filter);
   if (!cleanedFilter || Object.keys(cleanedFilter).length === 0) return files;
   return files.filter(file => {
@@ -114,30 +65,8 @@ export function pickFileType(): FileType {
   const weights = [1, 1, 3, 5, 1, 1, 1, 1, 1, 1];
   return pickIndex<FileType>(fileTypes, weights);
 }
-export const cachedFileRoot: RootFileDetail = {
-  name: '',
-  type: FileType.Directory,
-  children: Array.from({ length: randomNumber(...MockFileNumber) }).map(() =>
-    generateRandomFileDetail(''),
-  ),
-};
 
-cachedFileRoot.children.push({
-  name: 'usr',
-  type: FileType.Directory,
-  children: Array.from({ length: randomNumber(...MockFileNumber) }).map(() =>
-    generateRandomFileDetail('usr'),
-  ),
-  createTime: new Date(Mock.mock('@datetime')).getTime() / 1000,
-  updateTime: new Date(Mock.mock('@datetime')).getTime() / 1000,
-  size: 0,
-  owner: Mock.mock('@name'),
-  group: Mock.mock('@name'),
-  mode: Mock.mock('@integer(0, 777)'),
-  path: '',
-});
-
-function generateWholeFileTree(root: MockFileDetail[], depth: number) {
+export function generateWholeFileTree(root: MockFileDetail[], depth: number) {
   if (depth === 0) return;
   root.forEach(file => {
     if (file.type === FileType.Directory) {
@@ -152,58 +81,78 @@ function generateWholeFileTree(root: MockFileDetail[], depth: number) {
   });
 }
 
-generateWholeFileTree(cachedFileRoot.children, 3);
-
 // 随机从文件列表cachedFileList中选择若干个文件
-function pickFiles(): MockFileDetail[] {
+export function pickFiles(_files: MockFileDetail[]): MockFileDetail[] {
   const files: MockFileDetail[] = [];
   const fileNumber = randomNumber(1, 10);
-  const flatFiles = cachedFileRoot.children.reduce(
-    (acc: MockFileDetail[], file: MockFileDetail) => {
-      acc.push(file);
-      if (file.children) {
-        acc.push(...file.children);
-      }
-      return acc;
-    },
-    [],
-  );
-  for (let i = 0; i < fileNumber; i++) {
-    const index = Math.floor(Math.random() * flatFiles.length);
-    files.push(flatFiles[index]);
+  const flatFiles = _files.reduce((acc: MockFileDetail[], file: MockFileDetail) => {
+    acc.push(file);
+    if (file.children) {
+      acc.push(...file.children);
+    }
+    return acc;
+  }, []);
+  for (let i = flatFiles.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [flatFiles[i], flatFiles[j]] = [flatFiles[j], flatFiles[i]]; // 交换元素
   }
-  return files;
+  return flatFiles.slice(0, fileNumber);
 }
-export let backups: Map<string, FileDetail[]> = new Map();
 
-export let cachedCommitList: CommitLog[] = [];
-
-function generateCommitLog() {
-  const files = pickFiles();
+export function mockPostCommit(
+  files: string[],
+  cachedCommitList: CommitLog[],
+  backups: Map<string, FileDetail[]>,
+  cachedFileRoot: RootFileDetail,
+) {
   const uuid = uuidv4();
-  backups.set(
-    uuid,
-    files.map(file => omit(file, 'children')),
-  );
+  saveFiles(files, uuid, backups, cachedFileRoot);
   cachedCommitList.push({
     uuid,
     message: Mock.mock('@sentence'),
     createTime: new Date(Mock.mock('@datetime')).getTime() / 1000,
     storagePath: '/usr/local/zipfiles',
-    author: Mock.mock('@name'),
-    isEncrypt: Mock.mock('@boolean'),
     isDelete: false,
+    isEncrypt: Mock.mock('@boolean'),
+    author: Mock.mock('@name'),
   });
 }
 
-Array.from({ length: randomNumber(5, 10) }).forEach(() => generateCommitLog());
-
-export interface MockFile extends File {
-  children: MockFile[] | null;
-}
-
-export interface MockFileDetail extends FileDetail {
-  children: MockFileDetail[] | null;
+export function saveFiles(
+  files: string[],
+  uuid: string,
+  backups: Map<string, FileDetail[]>,
+  cachedFileRoot: RootFileDetail,
+) {
+  const lca = findLongestCommonPrefix(files);
+  const fileDetails = files.map(path => {
+    const parts = path.split('/');
+    const name = parts.pop() as string;
+    const targetPath = parts.join('/');
+    return findFile(cachedFileRoot, targetPath, name);
+  });
+  const relativeFiles = fileDetails.map(file => {
+    if (!file) {
+      throw new Error('File not found');
+    }
+    let newPath = file.path.slice(lca.length);
+    if (newPath[0] === '/') {
+      newPath = newPath.slice(1);
+    }
+    if (newPath === '') {
+      newPath = '.';
+    }
+    return {
+      ...omit(file, 'children'),
+      path: newPath,
+    };
+  });
+  console.log('-------------------');
+  console.log('relativeFiles', relativeFiles);
+  console.log('lca', lca);
+  console.log('files', files);
+  console.log('-------------------');
+  backups.set(uuid, relativeFiles);
 }
 
 export function generateRandomFileDetail(path: string): MockFileDetail {
@@ -223,17 +172,10 @@ export function generateRandomFileDetail(path: string): MockFileDetail {
     path,
   };
 }
-// function calPath(currentPath: string, file: MockFileDetail) {
-//   if (currentPath === '/' && file.name === '/') return '/';
-//   if (currentPath === '/') {
-//     return `/${file.name}`;
-//   }
-//   return `${currentPath}/${file.name}`;
-// }
-// 递归查找函数
 export function findFilesByPath(
+  cachedFileRoot: RootFileDetail,
   targetPath: string,
-  filter?: Partial<Filter>,
+  filter?: Filter,
 ): MockFileDetail[] | null {
   if (targetPath === '') {
     return filterBy(cachedFileRoot.children, filter);
@@ -248,16 +190,15 @@ export function findFilesByPath(
     }
     current = current.children.find(file => file.name === parts[i]) as MockFileDetail;
   }
-  // if (!current.children && current.type === FileType.Directory) {
-  //   current.children = Array.from({ length: randomNumber(...MockFileNumber) }, () =>
-  //     generateRandomFileDetail(current.path + '/' + current.name),
-  //   );
-  // }
   return filterBy(current.children || [], filter);
 }
 
-export function findFile(targetPath: string, targetName: string): MockFileDetail | null {
-  const files = findFilesByPath(targetPath);
+export function findFile(
+  cachedFileRoot: RootFileDetail,
+  targetPath: string,
+  targetName: string,
+): MockFileDetail | null {
+  const files = findFilesByPath(cachedFileRoot, targetPath);
   if (!files) return null;
   return files.find(file => file.name === targetName) || null;
 }

@@ -1,16 +1,11 @@
 #ifndef ZIPFILES_MP_APIS_POST_COMMIT_H
 #define ZIPFILES_MP_APIS_POST_COMMIT_H
 
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
 namespace zipfiles {
-struct Req;
-using ReqPtr = std::shared_ptr<Req>;
-struct Res;
-using ResPtr = std::shared_ptr<Res>;
 
 namespace request {
 struct PostCommit {

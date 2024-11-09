@@ -31,17 +31,15 @@ const TreeMenu = () => {
   const { state, actions } = useContext(Context);
 
   useEffect(() => {
-    // 清空已有数据
-    setTreeData([]);
-    // 清空展开的节点
-    setExpandedKeys([]);
-    // 加载新的数据
     handleGetFileList(state.path);
+    return () => {
+      setTreeData([]);
+      setExpandedKeys([]);
+    };
   }, [state.path, state.files]);
 
   const handleGetFileList = useCallback(
-    (path: string) => {
-      //console.log(path)
+  (path: string) => {
       const res = findFile(state.files, path) as FileDetail[];
       const newTreeData = res.map(item => {
         const isDirectory = item.type === FileType.Directory;
@@ -85,10 +83,10 @@ const TreeMenu = () => {
     const currentTime = new Date().getTime();
     if (currentTime - lastClickTime < 300) {
       if (!info.node.isLeaf) {
-        actions.updatePath({ payload: selectedKeys[0].toString() });
+        actions.updatePath(selectedKeys[0].toString());
       }
     } else {
-      actions.updateFile({ payload: selectedKeys[0].toString() });
+      actions.updateFile(selectedKeys[0].toString());
     }
     setLastClickTime(currentTime);
   };

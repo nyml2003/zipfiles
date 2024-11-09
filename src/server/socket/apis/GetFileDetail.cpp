@@ -3,13 +3,13 @@
 #include <mp/Response.h>
 #include <pwd.h>
 #include <server/socket/api.h>
+#include <server/socket/socket.h>
 #include <log4cpp/Category.hh>
+
 namespace zipfiles::server::api {
 namespace fs = std::filesystem;
-template <>
-response::GetFileDetail handle<request::GetFileDetail, response::GetFileDetail>(
-  const request::GetFileDetail& request
-) {
+void getFileDetail(int client_fd, const Req& req) {
+  const auto& request = std::get<request::GetFileDetail>(req.kind);
   const fs::path& path = request.path == "" ? "/" : request.path;
   const std::string& name = request.name;
   const fs::path file = path / name;
@@ -37,7 +37,7 @@ response::GetFileDetail handle<request::GetFileDetail, response::GetFileDetail>(
   res.mode = file_stat.st_mode;
   res.name = name;
   res.path = path;
-  return res;
+  Socket::send(client_fd, Res(res, Api::GET_FILE_DETAIL, req.uuid, Code::OK));
 }
 
 }  // namespace zipfiles::server::api

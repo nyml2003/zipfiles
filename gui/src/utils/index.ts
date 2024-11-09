@@ -1,5 +1,15 @@
-import { FileType } from '@/types';
-import { omit } from 'lodash';
+enum FileType {
+  None = 0,
+  NotFound = -1,
+  Regular = 1,
+  Directory = 2,
+  Symlink = 3,
+  Block = 4,
+  Character = 5,
+  Fifo = 6,
+  Socket = 7,
+  Unknown = 8,
+}
 interface FileDetail {
   name: string;
   type: FileType;
@@ -10,6 +20,10 @@ interface FileDetail {
   group: string;
   mode: number;
   path: string;
+}
+interface File {
+  name: string;
+  type: FileType;
 }
 export function selectEnvironment<T>(production: T, development: T) {
   if (process.env.BASE_ENV === 'prod') {
@@ -94,7 +108,10 @@ export type Dir<DataType> = {
   subDir: Dir<DataType>[];
   name: string;
 };
-export function buildTree<DataType extends { path: string }>(files: DataType[]): Dir<DataType> {
+export function buildTree<DataType extends {
+  path: string
+  type: FileType
+ }>(files: DataType[]): Dir<DataType> {
   const root: Dir<DataType> = { children: [], name: '', subDir: [] };
   files.forEach(file => {
     if (file.path === '.') {
@@ -123,12 +140,10 @@ export function buildTree<DataType extends { path: string }>(files: DataType[]):
   return root;
 }
 
-export function findFile<DataType extends {
-  name: string; type: FileType;
-}>(
-  files: Dir<DataType>,
+export function findFile(
+  files: Dir<FileDetail>,
   targetPath: string,
-): ({ name: string; type: FileType })[] {
+): (FileDetail | File)[] {
   let current = files;
   if (targetPath !== '') {
     const parts = targetPath.split('/');
@@ -139,9 +154,9 @@ export function findFile<DataType extends {
       current = child;
     }
   }
-  const result: { name: string; type: FileType }[] = current.children;
+  const result: (FileDetail | File)[] = current.children;
   current.subDir.forEach(subDir => {
-    if (! result.find(file => file.name === subDir.name)) {
+    if (! result.find( file => file.name === subDir.name)) {
       result.push({
         name: subDir.name,
         type: FileType.Directory,

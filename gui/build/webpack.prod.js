@@ -98,4 +98,9 @@ module.exports = merge(baseConfig, {
       contextRegExp: /src[\\/]apis$/
     }),
   ],
+  resolve: {
+    alias: {
+      '@useApi': path.join(__dirname, '../src/hooks/useApi/production'),
+    },
+  },
 });

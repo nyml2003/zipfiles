@@ -115,6 +115,11 @@ Json::Value Res::toJson() const {
       json["payload"]["id"] = std::get<response::MockNeedTime>(kind).id;
       break;
     }
+    case Api::MOCK_MANY_NOTIFICATIONS: {
+      break;
+    }
+    case Api::NORESPONSE:
+      break;
     default:
       throw std::runtime_error("Unknown response type");
   }
@@ -209,6 +214,14 @@ Res Res::fromJson(const Json::Value& json) {
     }
     case Api::MOCK_NEED_TIME: {
       kind = response::MockNeedTime{.id = json["payload"]["id"].asInt()};
+      break;
+    }
+    case Api::MOCK_MANY_NOTIFICATIONS: {
+      kind = response::MockManyNotifications{};
+      break;
+    }
+    case Api::NORESPONSE: {
+      kind = response::NoResponse{};
       break;
     }
     default:

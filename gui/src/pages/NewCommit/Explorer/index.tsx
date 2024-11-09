@@ -15,9 +15,6 @@ import { BreadcrumbItemType } from 'antd/es/breadcrumb/Breadcrumb';
 import TreeMenu from './TreeMenu';
 import TableView from './TableView';
 import FilterForm from './FilterForm';
-import { GetFileListRequest, GetFileListResponse } from '../../../apis/GetFileList';
-import { ApiEnum } from '@/apis';
-import useApi from '@/hooks/useApi';
 
 const Explorer: React.FC = () => {
   const isFiltering = useSelector((state: RootState) => state.createCommit.isFiltering);

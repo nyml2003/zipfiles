@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Key } from 'react';
 import { Tree, TreeProps } from 'antd';
-import useApi from '@/hooks/useApi';
+import useApi from '@useApi';
 import { GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
 import { ApiEnum } from '@/apis';
 import { DownOutlined } from '@ant-design/icons';

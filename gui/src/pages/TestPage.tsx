@@ -1,6 +1,12 @@
+import { ApiEnum } from '@/apis';
+import {
+  MockManyNotificationsRequest,
+  MockManyNotificationsResponse,
+} from '@/apis/MockManyNotifications';
+import useApi from '@useApi';
 import { decrement, increment } from '@/stores/counter/action';
 import { RootState } from '@/stores/store';
-import { Button } from 'antd';
+import { Button, message } from 'antd';
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
@@ -18,6 +24,20 @@ const Counter: React.FC = () => {
 };
 
 const TestPage = () => {
+  const api = useApi();
+  const tryMockManyNotifications = () => {
+    api
+      .request<MockManyNotificationsRequest, MockManyNotificationsResponse>(
+        ApiEnum.MOCK_MANY_NOTIFICATIONS,
+        {},
+      )
+      .then(res => {
+        message.success({
+          content: JSON.stringify(res),
+          duration: 2,
+        });
+      });
+  };
   return (
     <div>
       <h1>Test Page</h1>
@@ -29,6 +49,11 @@ const TestPage = () => {
         点击查看环境变量
       </div>
       <Counter />
+      <div>
+        <Button onClick={tryMockManyNotifications} type='primary' className='mt-4'>
+          测试按钮
+        </Button>
+      </div>
     </div>
   );
 };

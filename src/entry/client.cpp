@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
   std::thread receiverThread([]() {
     while (true) {
       zipfiles::client::Socket::getInstance().receive(
-        zipfiles::client::handleRemoteResponse
+        zipfiles::client::sendResponse
       );
     }
   });

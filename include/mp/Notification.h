@@ -1,5 +1,5 @@
-#ifndef ZIPFILES_MP_RESPONSE_H
-#define ZIPFILES_MP_RESPONSE_H
+#ifndef ZIPFILES_MP_NOTIFICATION_H
+#define ZIPFILES_MP_NOTIFICATION_H
 
 #include <json/json.h>
 #include <optional>
@@ -10,10 +10,14 @@
 namespace zipfiles {
 
 struct Notification {
-  Notification(std::string message, std::optional<Json::Value> payload);
+  explicit Notification(
+    std::string message,
+    Code code,
+    std::optional<Json::Value> payload = std::nullopt
+  );
   std::string message;  // 消息内容
   std::optional<Json::Value> payload;
-  Code code{Code::NOTIFICATION};  // 状态码
+  Code code;  // 状态码
   [[nodiscard]] Json::Value toJson() const;
   static Notification fromJson(const Json::Value& json);
 };

@@ -1,6 +1,6 @@
 import { ApiEnum } from '@/apis';
 import { useEffect } from 'react';
-import useApi from './useApi';
+import useApi from '@useApi';
 import { LogRequest } from '@/apis/log';
 import { ErrorRequest } from '@/apis/error';
 import { WarnRequest } from '@/apis/warn';

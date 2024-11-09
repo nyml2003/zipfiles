@@ -1,9 +1,9 @@
 import React, { useState, createContext, ReactNode } from 'react';
 import * as reducers from './reducer';
-import { PayloadAction, State } from './types';
+import { State } from './types';
 
 type Actions = {
-  [K in keyof typeof reducers]: (action: PayloadAction) => void;
+  [K in keyof typeof reducers]: (payload : Parameters<typeof reducers[K]>[1]) => void;
 };
 
 const defaultState: State = {
@@ -15,6 +15,7 @@ const defaultState: State = {
     children: [],
     subDir: [],
   },
+  loading: false,
 };
 
 type ContextValue = { state: State; actions: Actions };
@@ -34,9 +35,8 @@ export const ExplorerProvider: React.FC<{ children: ReactNode; initialState?: Pa
       const actionName = key as keyof Actions;
       return [
         actionName,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (action: PayloadAction<any>) => {
-          setState(state => reducerFn(state, action));
+        (payload: never) => {
+          setState((prevState) => reducerFn(prevState, payload));
         },
       ];
     }),

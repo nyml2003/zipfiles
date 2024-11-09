@@ -1,16 +1,18 @@
 #include <mp/Request.h>
 #include <mp/Response.h>
 #include <server/socket/api.h>
+#include "server/socket/socket.h"
 
 namespace zipfiles::server::api {
 
-template <>
-response::MockNeedTime handle<request::MockNeedTime, response::MockNeedTime>(
-  const request::MockNeedTime& req
-) {
-  response::MockNeedTime response;
-  response.id = req.id;
-  return response;
+void mockNeedTime(int client_fd, const Req& req) {
+  const auto& request = std::get<request::MockNeedTime>(req.kind);
+
+  response::MockNeedTime response{};
+  response.id = request.id;
+  Socket::send(
+    client_fd, Res(response, Api::MOCK_NEED_TIME, req.uuid, Code::OK)
+  );
 }
 
 }  // namespace zipfiles::server::api

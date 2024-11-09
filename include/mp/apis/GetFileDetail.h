@@ -6,10 +6,6 @@
 
 namespace fs = std::filesystem;
 namespace zipfiles {
-struct Req;
-using ReqPtr = std::shared_ptr<Req>;
-struct Res;
-using ResPtr = std::shared_ptr<Res>;
 
 namespace request {
 

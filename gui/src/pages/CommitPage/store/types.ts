@@ -13,14 +13,10 @@ export interface FileDetail {
   path: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export declare type PayloadAction<P = any> = {
-  payload: P;
-};
-
 export interface State {
   path: string;
   file: string;
   commitId: string;
   files: Dir<FileDetail>;
+  loading: boolean;
 }

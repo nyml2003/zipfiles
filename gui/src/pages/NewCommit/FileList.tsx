@@ -1,10 +1,10 @@
 import { ApiEnum } from '@/apis';
 import { GetFileDetailRequest, GetFileDetailResponse } from '@/apis/GetFileDetail';
-import useApi from '@/hooks/useApi';
+import useApi from '@useApi';
 import { clearSelectedDirectories, clearSelectedFiles } from '@/stores/CreateCommitReducer';
 import { RootState } from '@/stores/store';
 import { FileType } from '@/types';
-import { Button, List, Table } from 'antd';
+import { Button, Table } from 'antd';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -78,6 +78,10 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
   const api = useApi();
 
   useEffect(() => {
+    if (files.length === 0) {
+      setFileData([]);
+      return;
+    }
     Promise.all(
       files.map(async (file: { name: string; path: string }) => {
         const res = await fetchFileDetail(file.path, file.name);

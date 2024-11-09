@@ -1,13 +1,16 @@
-import { Button, Checkbox, Form, Input, message, Modal } from 'antd';
+import { Button, Checkbox, Form, Input, List, message, Modal, Steps } from 'antd';
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/stores/store';
-import { v4 as uuidv4 } from 'uuid';
-import useApi from '@/hooks/useApi';
+import useApi from '@useApi';
 import { ApiEnum } from '@/apis';
 import { PostCommitRequest, PostCommitResponse } from '@/apis/PostCommit';
 import { GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
 import { FileType } from '@/types';
+import { CalculatorOutlined } from '@ant-design/icons';
+import { addNotification, openNotification } from '@/stores/NotificationReducer';
+import { CommitPush } from '@/components/NotificationList/types';
+import { handleRefresh } from '@/stores/CreateCommitReducer';
 type BackupFormProps = Partial<{
   message: string;
   storagePath: string;
@@ -29,23 +32,23 @@ interface File {
 
 const BackupOption: React.FC = () => {
   const [form] = Form.useForm();
+  const dispatch = useDispatch();
   const files = useSelector((state: RootState) => state.createCommit.selectedFile.files);
   const directories = useSelector(
     (state: RootState) => state.createCommit.selectedFile.directories,
   );
   const [messageApi, contextHolder] = message.useMessage();
   const api = useApi();
-
-  // useEffect(() => {
-  //   setFileData(files.map(file => file.path + '/' + file.name));
-  // }, [files]);
-
-  // useEffect(() => {
-  //   directories.forEach(async path => {
-  //     const files = await fetchAllFiles(path);
-  //     setDirectoryData(prev => prev.concat(files));
-  //   });
-  // }, [directories]);
+  const backupSteps = [
+    {
+      title: '收集文件',
+      icon: <CalculatorOutlined />,
+      subTitle: '计算需要备份的文件列表',
+    },
+    {
+      title: '备份',
+    },
+  ];
 
   const fetchFileList = async (path: string) => {
     const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
@@ -85,55 +88,18 @@ const BackupOption: React.FC = () => {
       messageApi.error('请选择文件');
       return;
     }
-    const uuid = uuidv4();
-    const fileData = files.map(file => file.path + '/' + file.name);
-    let dirData: string[] = [];
-
-    try {
-      // 使用 Promise.all 处理所有的异步操作
-      const dirPromises = directories.map(async path => {
-        const files = await fetchAllFiles(path);
-        return files;
-      });
-      const dirResults = await Promise.all(dirPromises);
-      dirData = dirResults.flat(); // 将所有目录的结果合并到 dirData
-
-      const backupFiles = [...fileData, ...dirData];
-
-      const request: PostCommitRequest = {
-        files: backupFiles,
-        ...values,
-        uuid,
-        createTime: Date.now(),
-      };
-      Modal.confirm({
-        title: '确认备份',
-        content: (
-          <div>
-            <p>UUID: {request.uuid}</p>
-            <p>文件列表:</p>
-            <ul>
-              {request.files.map((file, index) => (
-                <li key={index}>{file}</li>
-              ))}
-            </ul>
-          </div>
-        ),
-        okText: '确认',
-        cancelText: '取消',
-        onOk: async () => {
-          // 用户点击确认后发送请求
-          await api.request<PostCommitRequest, PostCommitResponse>(ApiEnum.PostCommit, request);
-          messageApi.success('备份成功');
-        },
-        onCancel() {
-          // 用户点击取消后不发送请求
-          console.log('备份取消');
-        },
-      });
-    } catch (error) {
-      messageApi.error('备份过程中发生错误');
-    }
+    dispatch(
+      addNotification({
+        type: 'commitPush',
+        progress: 0,
+        files,
+        directories,
+        options: values,
+      } as CommitPush),
+    );
+    dispatch(handleRefresh());
+    dispatch(openNotification());
+    form.resetFields();
   };
 
   return (
@@ -187,7 +153,10 @@ const BackupOption: React.FC = () => {
           <Form.Item label='作者' name='author' rules={[{ required: true, message: '请输入作者' }]}>
             <Input />
           </Form.Item>
-          <Form.Item label='存储路径' name='storagePath' rules={[{ required: true, message: '请输入存储路径' }]}>
+          <Form.Item
+            label='存储路径'
+            name='storagePath'
+            rules={[{ required: true, message: '请输入存储路径' }]}>
             <Input />
           </Form.Item>
           <Form.Item wrapperCol={{ offset: 4, span: 14 }}>

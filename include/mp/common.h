@@ -21,16 +21,27 @@ constexpr size_t MAX_MESSAGE_SIZE = (1 << 16);
  */
 constexpr size_t PORT = 8080;
 
+/**
+ * @brief 状态码
+ * 1xx 请求顺利执行
+ * 2xx 服务端异常
+ * 3xx 客户端异常
+ * 4xx Notification
+ */
 enum class Code {
-  ILLEAGAL = 0,      // StatusCode为0的情况不合法
-  OK = 1,            // 正常返回
-  ERROR = 2,         // 出现异常(默认，可自定义其他StatusCode)
-  NOTIFICATION = 3,  // 后端主动向前端返回消息
-  CLIENT_ERROR = 4,  // 客户端异常
+  ILLEAGAL = 0,              // StatusCode为0的情况不合法
+  OK = 100,                  // 正常返回
+  ERROR = 200,               // 默认服务端异常
+  CLIENT_ERROR = 300,        // 默认客户端异常
+  NOTIFICATION = 400,        // 默认通知，应该是文本消息
+  POSTCOMMIT_SUCCESS = 401,  // 提交Commit成功
+  POSTCOMMIT_FAILED = 402,   // 提交Commit失败
 };
 
 enum class Api {
-  ILLEAGAL = 0,  // ApiEnum为0的情况不合法
+  ILLEAGAL = 0,    // ApiEnum为0的情况不合法
+  NORESPONSE = 1,  // 请求途中发生错误，无法返回结果
+  MOCK_MANY_NOTIFICATIONS = 98,
   MOCK_NEED_TIME = 99,
   GET_FILE_LIST = 100,
   GET_FILE_DETAIL_LIST = 101,

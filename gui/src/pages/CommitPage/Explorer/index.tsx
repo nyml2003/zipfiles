@@ -10,7 +10,7 @@ import { BreadcrumbItemType } from 'antd/es/breadcrumb/Breadcrumb';
 import TreeMenu from './TreeMenu';
 import TableView from './TableView';
 import { ApiEnum } from '@/apis';
-import useApi from '@/hooks/useApi';
+import useApi from '@useApi';
 import { Context } from '../store/context';
 import { GetCommitDetailResponse, GetCommitDetailRequest } from '@/apis/GetCommitDetail';
 
@@ -26,7 +26,7 @@ const Explorer: React.FC = () => {
         uuid: commitId,
       },
     );
-    actions.updateFiles({ payload: res.files });
+    actions.updateFiles(res.files);
   };
 
   useEffect(() => {
@@ -34,11 +34,16 @@ const Explorer: React.FC = () => {
   }, []);
 
   const breadcrumbItems = useMemo(() => {
-    const items =[{
-      title: <HomeOutlined />,
-      onClick: () => actions.updatePath({ payload: '' }),
-      className: 'px-2 py-1 rounded cursor-pointer hover:bg-gray-200 ',
-    }];
+    if (state.loading) {
+      return [];
+    }
+    const items = [
+      {
+        title: <HomeOutlined />,
+        onClick: () => actions.updatePath(''),
+        className: 'px-2 py-1 rounded cursor-pointer hover:bg-gray-200 ',
+      },
+    ];
     if (state.path === '') {
       return items;
     }
@@ -46,13 +51,12 @@ const Explorer: React.FC = () => {
       const path = arr.slice(0, index + 1).join('/');
       items.push({
         title: <span>{item}</span>,
-        onClick: () => actions.updatePath({ payload: path }),
+        onClick: () => actions.updatePath(path),
         className: 'px-2 py-1 rounded cursor-pointer hover:bg-gray-200 ',
       });
-    }
-    );
+    });
     return items;
-  }, [state.path]);
+  }, [state.path, state.loading]);
 
   return (
     <div className='split-container-col grow-item'>
@@ -61,9 +65,7 @@ const Explorer: React.FC = () => {
           <Button
             type='text'
             icon={<ArrowLeftOutlined />}
-            onClick={() =>
-              actions.updatePath({ payload: path.split('/').slice(0, -1).join('/') })
-            }></Button>
+            onClick={() => actions.updatePath(path.split('/').slice(0, -1).join('/'))}></Button>
           <Button
             type='text'
             onClick={() => {
@@ -72,7 +74,7 @@ const Explorer: React.FC = () => {
             icon={<Loading3QuartersOutlined />}></Button>
           <Button
             type='text'
-            onClick={() => actions.updatePath({ payload: '' })}
+            onClick={() => actions.updatePath('')}
             icon={<ClearOutlined />}></Button>
           <Breadcrumb items={breadcrumbItems} />
         </div>

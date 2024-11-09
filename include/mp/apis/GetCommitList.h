@@ -1,15 +1,11 @@
 #ifndef ZIPFILES_MP_APIS_GET_COMMIT_LIST_H
 #define ZIPFILES_MP_APIS_GET_COMMIT_LIST_H
 
-#include <memory>
 #include <string>
 #include <vector>
 
 namespace zipfiles {
-struct Req;
-using ReqPtr = std::shared_ptr<Req>;
-struct Res;
-using ResPtr = std::shared_ptr<Res>;
+
 // namespace response::GetCommitList
 
 namespace request {

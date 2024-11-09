@@ -1,25 +1,17 @@
 #include <mp/Request.h>
 #include <mp/Response.h>
 #include <server/socket/api.h>
-#include <fstream>
 #include <iostream>
 #include "json/value.h"
 #include "server/restore/restore.h"
+#include "server/socket/socket.h"
 
 namespace zipfiles::server::api {
 
-template <>
-response::GetCommitDetail handle(const request::GetCommitDetail& request) {
-  const std::string& uuid = request.uuid;
-  //
-  // std::ifstream inFile(path);
-  // if (!inFile) {
-  //   throw std::runtime_error("Failed to open file: " + path.string());
-  // }
+void getCommitDetail(int client_fd, const Req& req) {
+  const auto& kind = std::get<request::GetCommitDetail>(req.kind);
+  const std::string& uuid = kind.uuid;
   response::GetCommitDetail response;
-  // Json::Value directoryFile;
-  // inFile >> directoryFile;
-  // inFile.close();
   Json::Value directoryFile = readDirectoryFileById(uuid);
   std::cout << directoryFile;
 
@@ -44,7 +36,8 @@ response::GetCommitDetail handle(const request::GetCommitDetail& request) {
        .name = name}
     );
   }
-  return response;
+  Res res(response, Api::GET_COMMIT_DETAIL, req.uuid, Code::OK);
+  Socket::send(client_fd, res);
 }
 
 }  // namespace zipfiles::server::api
