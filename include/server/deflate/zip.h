@@ -16,6 +16,7 @@ constexpr int ZIP_BLOCK_SIZE = 1 << 20;
 constexpr int ZIP_INPUT_QUEUE_SIZE = 4;
 constexpr int ZIP_WORKER_NUM = 4;
 
+// data packet for zip input and processing
 struct ZipDataPacket {
   int index = 0;  // packet index
   std::vector<uint8_t> data;
@@ -24,29 +25,11 @@ struct ZipDataPacket {
   bool operator<(const ZipDataPacket& other) const;
 };
 
+// data packet for zip output
 struct ZippedDataPacket {
   bool valid = false;  // if the data is valid
   bool eof = false;    // if the data is the end of the file
   std::vector<uint8_t> data;
-};
-
-struct ZipBuffer {
-  std::vector<uint8_t> ibuffer;         // input buffer
-  std::vector<uint8_t> obuffer;         // output buffer
-  std::vector<uint8_t> lc_alphabet;     // letter and length buffer
-  std::vector<uint16_t> dist_alphabet;  // distance buffer
-  ZipBuffer() {
-    ibuffer.reserve(ZIP_BLOCK_SIZE + 5);
-    obuffer.reserve(ZIP_BLOCK_SIZE + 5);
-    lc_alphabet.reserve(ZIP_BLOCK_SIZE + 5);
-    dist_alphabet.reserve(ZIP_BLOCK_SIZE + 5);
-  }
-};
-
-struct ZipStatus {
-  bool flush;                     // if there is output
-  bool lack;                      // if there is not enough input
-  std::vector<uint8_t>* obuffer;  // output data
 };
 
 class Zip {
@@ -68,26 +51,11 @@ class Zip {
   // worker threads
   std::array<std::thread, ZIP_WORKER_NUM> worker_threads;
 
-  const std::vector<uint8_t>* input = nullptr;
-  std::vector<uint8_t>::const_iterator ibuf_start;
-  bool flush = false;
-
-  ZipBuffer buffer;
-  LZ77::Encoder lz77_ecodoer;
-  huffman::Encoder huffman_encoder;
-
   // worker thread
   void worker();
 
  public:
-  Zip()
-    : lz77_ecodoer(buffer.ibuffer, buffer.lc_alphabet, buffer.dist_alphabet),
-      huffman_encoder(
-        buffer.lc_alphabet,
-        buffer.dist_alphabet,
-        buffer.obuffer
-      ) {}
-
+  Zip() = default;
   Zip(const Zip&) = delete;
   Zip& operator=(const Zip&) = delete;
   Zip(Zip&&) = delete;
@@ -142,6 +110,27 @@ class Zip {
    * the worker threads will be terminated after you get all the output.
    */
   void init_worker();
+};
+
+// used by unzip
+struct ZipBuffer {
+  std::vector<uint8_t> ibuffer;         // input buffer
+  std::vector<uint8_t> obuffer;         // output buffer
+  std::vector<uint8_t> lc_alphabet;     // letter and length buffer
+  std::vector<uint16_t> dist_alphabet;  // distance buffer
+  ZipBuffer() {
+    ibuffer.reserve(ZIP_BLOCK_SIZE + 5);
+    obuffer.reserve(ZIP_BLOCK_SIZE + 5);
+    lc_alphabet.reserve(ZIP_BLOCK_SIZE + 5);
+    dist_alphabet.reserve(ZIP_BLOCK_SIZE + 5);
+  }
+};
+
+// return status of unzip
+struct ZipStatus {
+  bool flush;                     // if there is output
+  bool lack;                      // if there is not enough input
+  std::vector<uint8_t>* obuffer;  // output data
 };
 
 class Unzip {
