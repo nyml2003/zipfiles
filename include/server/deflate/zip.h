@@ -1,7 +1,11 @@
 #ifndef ZIPFILES_INCLUDE_SERVER_DEFLATE_ZIP_H
 #define ZIPFILES_INCLUDE_SERVER_DEFLATE_ZIP_H
 
+#include <condition_variable>
 #include <cstdint>
+#include <mutex>
+#include <queue>
+#include <thread>
 #include <vector>
 #include "server/deflate/huffman.h"
 #include "server/deflate/lz77.h"
@@ -9,6 +13,22 @@
 namespace zipfiles::server {
 
 constexpr int ZIP_BLOCK_SIZE = 1 << 20;
+constexpr int ZIP_INPUT_QUEUE_SIZE = 4;
+constexpr int ZIP_WORKER_NUM = 4;
+
+struct ZipDataPacket {
+  int index = 0;  // packet index
+  std::vector<uint8_t> data;
+
+  // used by the priority queue
+  bool operator<(const ZipDataPacket& other) const;
+};
+
+struct ZippedDataPacket {
+  bool valid = false;  // if the data is valid
+  bool eof = false;    // if the data is the end of the file
+  std::vector<uint8_t> data;
+};
 
 struct ZipBuffer {
   std::vector<uint8_t> ibuffer;         // input buffer
@@ -24,13 +44,30 @@ struct ZipBuffer {
 };
 
 struct ZipStatus {
-  bool flush;
-  bool lack;
-  std::vector<uint8_t>* obuffer;
+  bool flush;                     // if there is output
+  bool lack;                      // if there is not enough input
+  std::vector<uint8_t>* obuffer;  // output data
 };
 
 class Zip {
  private:
+  // input queue
+  int packet_index = 0;  // next packet index
+  bool eof = false;      // end of input
+  std::queue<ZipDataPacket> input_queue;
+  std::mutex input_queue_mutex;
+  std::condition_variable input_queue_cv;
+  ZipDataPacket unfinished_input_packet;
+
+  // output queue
+  int output_index = 0;  // expected output index
+  std::priority_queue<ZipDataPacket> output_queue;
+  std::mutex output_queue_mutex;
+  std::condition_variable output_queue_cv;
+
+  // worker threads
+  std::array<std::thread, ZIP_WORKER_NUM> worker_threads;
+
   const std::vector<uint8_t>* input = nullptr;
   std::vector<uint8_t>::const_iterator ibuf_start;
   bool flush = false;
@@ -38,6 +75,9 @@ class Zip {
   ZipBuffer buffer;
   LZ77::Encoder lz77_ecodoer;
   huffman::Encoder huffman_encoder;
+
+  // worker thread
+  void worker();
 
  public:
   Zip()
@@ -47,8 +87,61 @@ class Zip {
         buffer.dist_alphabet,
         buffer.obuffer
       ) {}
-  void reset_input(const std::vector<uint8_t>* input_ptr, bool eof = false);
-  ZipStatus run();
+
+  Zip(const Zip&) = delete;
+  Zip& operator=(const Zip&) = delete;
+  Zip(Zip&&) = delete;
+  Zip& operator=(Zip&&) = delete;
+  ~Zip();
+
+  /**
+   * @brief
+   * check if the input queue is full
+   *
+   * @return true
+   * if the input queue is full
+   *
+   * @return false
+   * if the input queue is not full
+   */
+  [[nodiscard]] bool full();
+
+  /**
+   * @brief
+   * fill input to the input queue even if the input queue is full
+   *
+   * @param input
+   * input data
+   *
+   * @param eof
+   * if the input is the end of the file
+   *
+   * @return false
+   * if the input queue is full
+   */
+  bool fill_input(const std::vector<uint8_t>& input, bool eof = false);
+
+  /**
+   * @brief
+   * get the next output data.
+   * you should call this function with block = true when eof is true
+   *
+   * @param block
+   * if block is true, block until the next output is ready
+   *
+   * @return ZippedDataPacket
+   * output data, look at the definition of ZippedDataPacket
+   */
+  ZippedDataPacket get_output(bool block = false);
+
+  /**
+   * @brief
+   * initialize the worker threads.
+   * you should call this function before calling fill_input and get_output.
+   * you should call this function only once.
+   * the worker threads will be terminated after you get all the output.
+   */
+  void init_worker();
 };
 
 class Unzip {
@@ -71,12 +164,6 @@ class Unzip {
   void reset_input(const std::vector<uint8_t>* input_ptr);
   ZipStatus run();
 };
-
-// ! deprecated
-// [[deprecated]] ZipStatus
-// zip(const std::vector<uint8_t>& input, bool flush = false);
-// [[deprecated]] ZipStatus unzip(const std::vector<uint8_t>& input);
-// [[deprecated]] std::pair<bool, std::vector<uint8_t>&> unzip(uint8_t byte);
 
 }  // namespace zipfiles::server
 

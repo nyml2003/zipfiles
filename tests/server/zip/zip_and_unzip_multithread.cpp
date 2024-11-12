@@ -42,29 +42,53 @@ bool test(const std::string& src_filename) {
   const int ibuf_size = (1143 << 16) + 191981;
   std::vector<std::uint8_t> ibuffer(ibuf_size);
   Zip zip_c;
+  zip_c.init_worker();
+
+  // Start timing for zip
+  auto start_zip = std::chrono::high_resolution_clock::now();
+
   while (!ifile.eof()) {
     ifile.read(reinterpret_cast<char*>(ibuffer.data()), ibuf_size);
+
     ibuffer.resize(ifile.gcount());
-    ZipStatus zip_ret = {false, false, nullptr};
-    zip_c.reset_input(&ibuffer, ifile.eof());
-    while (!zip_ret.lack) {
-      zip_ret = zip_c.run();
-      if (zip_ret.flush) {
+
+    zip_c.fill_input(ibuffer, ifile.eof());
+
+    while (zip_c.full() || ifile.eof()) {
+      ZippedDataPacket zipped_data = zip_c.get_output(true);
+      while (zipped_data.valid) {
         ofile.write(
-          reinterpret_cast<char*>(zip_ret.obuffer->data()),
-          static_cast<int>(zip_ret.obuffer->size())
+          reinterpret_cast<char*>(zipped_data.data.data()),
+          static_cast<int>(zipped_data.data.size())
         );
+        if (zipped_data.eof) {
+          break;
+        }
+        zipped_data = zip_c.get_output(ifile.eof());
+      }
+      if (zipped_data.eof) {
+        break;
       }
     }
   }
   ifile.close();
   ofile.close();
 
+  // End timing for zip and output the time taken
+  auto end_zip = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> encryption_time =
+    end_zip - start_zip;
+  std::cout << "Zip time: " << encryption_time.count() << " ms" << std::endl;
+
   // unzip
   ifile.open(zip_path + dst_filename, iflag);
   ofile.open(zip_path + src_filename_ex, oflag);
   ibuffer.resize(ibuf_size);
   Unzip unzip_c;
+
+  // Start timing for unzip
+  auto start_unzip = std::chrono::high_resolution_clock::now();
+
   while (!ifile.eof()) {
     ifile.read(reinterpret_cast<char*>(ibuffer.data()), ibuf_size);
     ibuffer.resize(ifile.gcount());
@@ -84,7 +108,12 @@ bool test(const std::string& src_filename) {
   ifile.close();
   ofile.close();
 
-  // compare
+  // End timing for unzip and output the time taken
+  auto end_unzip = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> decryption_time =
+    end_unzip - start_unzip;
+  std::cout << "Unzip time: " << decryption_time.count() << " ms" << std::endl;
+
   // compare
   std::string cmpCommand = "cmp --silent " + test_files + src_filename + " " +
                            zip_path + src_filename_ex;  // NOLINT
@@ -96,14 +125,22 @@ bool test(const std::string& src_filename) {
   return true;
 }
 
-class ZipAndUnzipSmall : public ::testing::Test {
+class ZipAndUnzipMultiThread : public ::testing::Test {
  protected:
   void SetUp() override { fs::remove_all(zip_path); }
 
   void TearDown() override { fs::remove_all(zip_path); }
 };
 
-TEST_F(ZipAndUnzipSmall, ZipAndUnzipSmall) {  // NOLINT
+TEST_F(ZipAndUnzipMultiThread, SmallFile) {  // NOLINT
   ASSERT_TRUE(test("/text/small_text_test_file"));
+}
+
+TEST_F(ZipAndUnzipMultiThread, BigFile) {  // NOLINT
+  ASSERT_TRUE(test("/text/big_text_test_file"));
+}
+
+TEST_F(ZipAndUnzipMultiThread, VeryBigFile) {  // NOLINT
+  ASSERT_TRUE(test("/text/mega_text_test_file"));
 }
 }  // namespace zipfiles::server
