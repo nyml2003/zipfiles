@@ -11,4 +11,5 @@ export enum ApiEnum {
   GetCommitDetail = 103,
   GetCommitList = 104,
   GetFileDetail = 105,
+  Restore = 106,
 }

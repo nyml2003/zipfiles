@@ -1,5 +1,5 @@
-import { FileType } from '@/types';
-import { Dir } from '@/utils';
+import { FileType } from "@/types";
+import { Dir } from "@/utils";
 
 export interface FileDetail {
   name: string;

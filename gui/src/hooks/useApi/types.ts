@@ -14,6 +14,28 @@ export enum Code {
   NOTIFICATION = 400, // 默认通知，应该是文本消息
   POSTCOMMIT_SUCCESS = 401, // 提交Commit成功
   POSTCOMMIT_FAILED = 402, // 提交Commit失败
+  RESTORE_SUCCESS = 403, // 恢复成功
+  RESTORE_FAILED = 404, // 恢复失败
+}
+
+export function isOK(code: Code): boolean {
+  return code === Code.OK;
+}
+
+export function isNotification(code: Code): boolean {
+  return code === Code.NOTIFICATION;
+}
+
+export function isClientError(code: Code): boolean {
+  return code === Code.CLIENT_ERROR;
+}
+
+export function isServerError(code: Code): boolean {
+  return code === Code.ERROR;
+}
+
+export function isResponseNotification(code: Code): boolean {
+  return Math.floor(code / 100) === 4;
 }
 
 export interface ResponseWrapper {
@@ -35,6 +57,7 @@ export interface RequestWrapper {
 export interface Notification {
   code: Code;
   message: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: any;
 }
 

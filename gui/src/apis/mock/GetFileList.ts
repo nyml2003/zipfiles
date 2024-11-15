@@ -1,6 +1,6 @@
-import { GetFileListRequest, GetFileListResponse } from '../GetFileList';
-import { cachedFileRoot } from './init';
-import { findFilesByPath } from './utils';
+import { GetFileListRequest, GetFileListResponse } from "../GetFileList";
+import { cachedFileRoot } from "./init";
+import { findFilesByPath } from "./utils";
 
 // 全局变量来缓存嵌套的目录结构
 

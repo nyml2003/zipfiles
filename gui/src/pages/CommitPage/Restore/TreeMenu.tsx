@@ -1,21 +1,13 @@
-import React, { useState, useEffect, Key, useContext, useCallback } from "react";
+import React, { useState, useEffect, Key, useContext } from "react";
 import { Tree, TreeProps } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import { FileType } from "@/types";
 import { Context } from "./store/context";
-import { findFile } from "@/utils";
+import useApi from "@useApi";
+import { GetFileListRequest, GetFileListResponse } from "@/apis/GetFileList";
+import { ApiEnum } from "@/apis";
+import { GetFileDetailListRequest, GetFileDetailListResponse } from "@/apis/GetFileDetailList";
 const { DirectoryTree } = Tree;
-interface FileDetail {
-  name: string;
-  type: FileType;
-  createTime: number;
-  updateTime: number;
-  size: number;
-  owner: string;
-  group: string;
-  mode: number;
-  path: string;
-}
 interface DataNode {
   title: React.ReactNode;
   key: string;
@@ -29,6 +21,7 @@ const TreeMenu = () => {
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
   const [lastClickTime, setLastClickTime] = useState<number>(0);
   const { state, actions } = useContext(Context);
+  const api = useApi();
 
   useEffect(() => {
     handleGetFileList(state.path);
@@ -36,24 +29,23 @@ const TreeMenu = () => {
       setTreeData([]);
       setExpandedKeys([]);
     };
-  }, [state.path, state.files]);
+  }, [state.path, state.fresh]);
 
-  const handleGetFileList = useCallback(
-  (path: string) => {
-      const res = findFile(state.files, path) as FileDetail[];
-      const newTreeData = res.map(item => {
-        const isDirectory = item.type === FileType.Directory;
-        return {
-          title: item.name,
-          key: path === "" ? item.name : `${path}/${item.name}`,
-          isLeaf: !isDirectory,
-        };
-      });
-      setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
-    },
-    [state.files],
-  );
-
+  const handleGetFileList = async (path: string) => {
+    const res = await api.request<GetFileDetailListRequest, GetFileDetailListResponse>(
+      ApiEnum.GetFileDetailList,
+      { path, filter: { type: FileType.Directory } },
+    );
+    const newTreeData = res.files.map(item => {
+      const isDirectory = item.type === FileType.Directory;
+      return {
+        title: item.name,
+        key: `${path}/${item.name}`,
+      };
+    });
+    console.log(newTreeData);
+    setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
+  };
   const updateTreeData = (
     treeData: DataNode[],
     path: string,
@@ -85,8 +77,6 @@ const TreeMenu = () => {
       if (!info.node.isLeaf) {
         actions.updatePath(selectedKeys[0].toString());
       }
-    } else {
-      actions.updateFile(selectedKeys[0].toString());
     }
     setLastClickTime(currentTime);
   };
@@ -105,7 +95,7 @@ const TreeMenu = () => {
       onSelect={handleSelect}
       onExpand={handleExpand}
       expandedKeys={expandedKeys}
-      className='whitespace-nowrap bg-white grow-item'
+      className='whitespace-nowrap bg-white grow-item min-h-32'
     />
   );
 };

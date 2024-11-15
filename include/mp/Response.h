@@ -11,6 +11,7 @@
 #include "mp/apis/MockManyNotifications.h"
 #include "mp/apis/MockNeedTime.h"
 #include "mp/apis/PostCommit.h"
+#include "mp/apis/Restore.h"
 #include "mp/common.h"
 
 namespace zipfiles {
@@ -26,6 +27,7 @@ using ResKind = std::variant<
   response::GetCommitDetail,
   response::GetCommitList,
   response::GetFileDetail,
+  response::Restore,
   response::MockNeedTime,
   response::MockManyNotifications,
   response::NoResponse>;

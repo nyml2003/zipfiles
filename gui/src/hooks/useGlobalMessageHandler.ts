@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from 'react';
-import { Code, RequestWrapper, ResponseWrapper, Notification } from './useApi/types';
+import { Code, RequestWrapper, ResponseWrapper, Notification, isNotification, isResponseNotification } from './useApi/types';
 import { useDispatch } from 'react-redux';
 import { addNotification, finishMessage } from '@/stores/NotificationReducer';
 import { PlainText } from '@/components/NotificationList/types';
@@ -27,10 +27,10 @@ export const useGlobalMessageHandler = () => {
   console.log('dispatch is ok');
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      console.log('event.data: ', JSON.stringify(event.data));
+      // console.log('event.data: ', JSON.stringify(event.data));
       const response = event.data as ResponseWrapper;
       const { api, uuid, code, payload, message } = response;
-      if (code === Code.NOTIFICATION) {
+      if (isNotification(code)) {
         dispatch(
           addNotification({
             type: 'plainText',
@@ -40,7 +40,7 @@ export const useGlobalMessageHandler = () => {
         );
         return;
       }
-      if (code === Code.POSTCOMMIT_SUCCESS || code === Code.POSTCOMMIT_FAILED) {
+      if (isResponseNotification(code)) {
         const notification = event.data as Notification;
         dispatch(finishMessage(notification));
         return;

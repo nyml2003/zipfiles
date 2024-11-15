@@ -191,7 +191,7 @@ add_custom_target(
     ${ZIPFILES_HEADER_DIR}
     ${ZIPFILES_SOURCE_DIR}
     ${ZIPFILES_FRONTEND_DIR}
-    -type f -name "*.h" -o -name "*.cpp" -o -name "*.ts" -o -name "*.tsx" | xargs wc -l
+    -type f -name "*.h" -o -name "*.cpp" | xargs wc -l
     COMMENT "Counting lines of code"
 )
 

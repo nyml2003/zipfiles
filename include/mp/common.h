@@ -36,6 +36,8 @@ enum class Code {
   NOTIFICATION = 400,        // 默认通知，应该是文本消息
   POSTCOMMIT_SUCCESS = 401,  // 提交Commit成功
   POSTCOMMIT_FAILED = 402,   // 提交Commit失败
+  RESTORE_SUCCESS = 403,     // 恢复成功
+  RESTORE_FAILED = 404,      // 恢复失败
 };
 
 enum class Api {

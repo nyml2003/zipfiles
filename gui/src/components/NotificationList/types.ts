@@ -1,9 +1,9 @@
-import { Notification } from '@/hooks/useApi/types';
+import { Notification } from "@/hooks/useApi/types";
 export type PlainText = NotificationUnion & {
-  type: 'plainText';
+  type: "plainText";
   text: string;
   description?: string;
-  state: 'info' | 'success' | 'error' | 'warning';
+  state: "info" | "success" | "error" | "warning";
 };
 
 type File = {
@@ -19,16 +19,21 @@ type BackupOption = {
   key?: string;
 };
 
-export enum Progress {
+export enum CommitPushProgress {
   Cancel = 3,
   CollectingFiles = 0,
   PackingFiles = 1,
   Finish = 2,
 }
 
+export enum CommitRestoreProgress {
+  Finish = 0,
+  Cancel = 1,
+}
+
 export type CommitPush = NotificationUnion & {
-  type: 'commitPush';
-  progress: Progress;
+  type: "commitPush";
+  progress: CommitPushProgress;
   files: File[];
   directories: string[];
   options: BackupOption;
@@ -39,3 +44,12 @@ export interface NotificationUnion {
   type: string;
   id: string;
 }
+
+export type CommitRestore = NotificationUnion & {
+  type: "commitRestore";
+  progress: CommitRestoreProgress;
+  commitId: string;
+  isEncrypt: boolean;
+  result?: Notification;
+};
+

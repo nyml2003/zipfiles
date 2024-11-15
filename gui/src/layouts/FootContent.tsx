@@ -8,8 +8,7 @@ const FootContent = () => {
   const dispatch = useDispatch();
   return (
     <div className='bg-white flex flex-row-reverse p-2'>
-      <Button icon={<MessageOutlined />} onClick={() => dispatch(toggleNotification())}>
-        通知
+      <Button icon={<MessageOutlined />} onClick={() => dispatch(toggleNotification())} type='text'>
       </Button>
     </div>
   );

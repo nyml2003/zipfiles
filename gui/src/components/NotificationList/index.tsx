@@ -1,17 +1,18 @@
-import { removeNotification } from '@/stores/NotificationReducer';
-import { RootState } from '@/stores/store';
-import { useDispatch, useSelector } from 'react-redux';
+import { removeNotification } from "@/stores/NotificationReducer";
+import { RootState } from "@/stores/store";
+import { useDispatch, useSelector } from "react-redux";
 import {
   NotificationUnion,
   PlainText as TypePlainText,
   CommitPush as TypeCommitPush,
-} from '@/components/NotificationList/types';
-import React from 'react';
-import NoMoreData from '../NoMoreData';
-import PlainText from './PlainText';
-import CommitPush from './CommitPush';
-import { Button } from 'antd';
-import { CloseOutlined } from '@ant-design/icons';
+  CommitRestore as TypeCommitRestore,
+} from "@/components/NotificationList/types";
+import React from "react";
+import NoMoreData from "../NoMoreData";
+import PlainText from "./PlainText";
+import CommitPush from "./CommitPush";
+import { Button } from "antd";
+import { CloseOutlined } from "@ant-design/icons";
 
 const NotificationList = () => {
   const notifications = useSelector((state: RootState) => state.notification.notifications);
@@ -23,10 +24,10 @@ const NotificationList = () => {
 
   const renderItem = (notification: NotificationUnion) => {
     switch (notification.type) {
-      case 'plainText': {
+      case "plainText": {
         return <PlainText {...(notification as TypePlainText)} />;
       }
-      case 'commitPush': {
+      case "commitPush": {
         return <CommitPush {...(notification as TypeCommitPush)} />;
       }
       default:

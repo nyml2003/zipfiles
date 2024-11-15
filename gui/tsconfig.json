@@ -19,8 +19,11 @@
     "paths": {
       "@/*": [
         "src/*"
-      ]
+      ],
+      "@useApi": [
+        "src/hooks/useApi/development"
+      ],
     }
   },
-  "include": ["./src"]
+  "include": ["./src"],
 }

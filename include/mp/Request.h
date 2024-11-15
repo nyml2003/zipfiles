@@ -12,6 +12,7 @@
 #include "mp/apis/MockManyNotifications.h"
 #include "mp/apis/MockNeedTime.h"
 #include "mp/apis/PostCommit.h"
+#include "mp/apis/Restore.h"
 #include "mp/common.h"
 
 namespace zipfiles {  // namespace request
@@ -23,6 +24,7 @@ using ReqKind = std::variant<
   request::GetFileDetail,
   request::GetFileDetailList,
   request::PostCommit,
+  request::Restore,
   request::MockNeedTime,
   request::MockManyNotifications>;
 

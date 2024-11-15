@@ -1,17 +1,17 @@
-import React, { useState, createContext, ReactNode } from 'react';
-import * as reducers from './reducer';
-import { State } from './types';
+import React, { useState, createContext, ReactNode } from "react";
+import * as reducers from "./reducer";
+import { State } from "./types";
 
 type Actions = {
   [K in keyof typeof reducers]: (payload : Parameters<typeof reducers[K]>[1]) => void;
 };
 
 const defaultState: State = {
-  path: '',
-  file: '',
-  commitId: '',
+  path: "",
+  file: "",
+  commitId: "",
   files: {
-    name: '',
+    name: "",
     children: [],
     subDir: [],
   },

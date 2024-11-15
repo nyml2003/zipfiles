@@ -98,7 +98,6 @@ const BackupOption: React.FC = () => {
       } as CommitPush),
     );
     dispatch(handleRefresh());
-    dispatch(openNotification());
     form.resetFields();
   };
 

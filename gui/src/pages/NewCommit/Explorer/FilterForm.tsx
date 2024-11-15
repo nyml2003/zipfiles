@@ -1,10 +1,10 @@
-import React from 'react';
-import { Button, DatePicker, Form, Input, InputNumber, Mentions, Select, Space } from 'antd';
-import { FileType } from '@/types';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/stores/store';
-import { updateFilter, updateIsFiltering } from '@/stores/CreateCommitReducer';
-import dayjs from 'dayjs';
+import React from "react";
+import { Button, DatePicker, Form, Input, InputNumber, Mentions, Select, Space } from "antd";
+import { FileType } from "@/types";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/stores/store";
+import { updateFilter, updateIsFiltering } from "@/stores/CreateCommitReducer";
+import dayjs from "dayjs";
 type Filter = Partial<{
   type: FileType;
   name: string;
@@ -18,13 +18,13 @@ type Filter = Partial<{
   group: string;
 }>;
 const fileTypeOptions = [
-  { label: '文件', value: FileType.Regular },
-  { label: '文件夹', value: FileType.Directory },
-  { label: '链接', value: FileType.Symlink },
-  { label: '块设备', value: FileType.Block },
-  { label: '字符设备', value: FileType.Character },
-  { label: 'FIFO', value: FileType.Fifo },
-  { label: 'Socket', value: FileType.Socket },
+  { label: "文件", value: FileType.Regular },
+  { label: "文件夹", value: FileType.Directory },
+  { label: "链接", value: FileType.Symlink },
+  { label: "块设备", value: FileType.Block },
+  { label: "字符设备", value: FileType.Character },
+  { label: "FIFO", value: FileType.Fifo },
+  { label: "Socket", value: FileType.Socket },
 ];
 
 const FilterForm: React.FC = () => {
@@ -86,62 +86,62 @@ const FilterForm: React.FC = () => {
         <Form.Item
           label='文件类型'
           name='type'
-          rules={[{ required: false, message: 'Please select file type!' }]}>
+          rules={[{ required: false, message: "Please select file type!" }]}>
           <Select options={fileTypeOptions} />
         </Form.Item>
         <Form.Item label='大小'>
           <Space.Compact>
             <Form.Item
-              name={['minSize']}
+              name={["minSize"]}
               noStyle
               rules={[
                 {
-                  type: 'number',
+                  type: "number",
                   validator: (rule, value) => {
                     if (value === undefined) {
                       return Promise.resolve();
                     }
                     if (
-                      form.getFieldValue(['maxSize']) !== undefined &&
-                      value > form.getFieldValue(['maxSize'])
+                      form.getFieldValue(["maxSize"]) !== undefined &&
+                      value > form.getFieldValue(["maxSize"])
                     ) {
-                      return Promise.reject('最小值不能大于最大值');
+                      return Promise.reject("最小值不能大于最大值");
                     }
                     return Promise.resolve();
                   },
                 },
               ]}>
-              <InputNumber style={{ width: '40%' }} placeholder='最小值' min={0} />
+              <InputNumber style={{ width: "40%" }} placeholder='最小值' min={0} />
             </Form.Item>
             <Input
               style={{
-                width: '20%',
-                textAlign: 'center',
+                width: "20%",
+                textAlign: "center",
               }}
               placeholder='~'
               disabled
             />
             <Form.Item
-              name={['maxSize']}
+              name={["maxSize"]}
               noStyle
               rules={[
                 {
-                  type: 'number',
+                  type: "number",
                   validator: (rule, value) => {
                     if (value === undefined) {
                       return Promise.resolve();
                     }
                     if (
-                      form.getFieldValue(['minSize']) !== undefined &&
-                      value < form.getFieldValue(['minSize'])
+                      form.getFieldValue(["minSize"]) !== undefined &&
+                      value < form.getFieldValue(["minSize"])
                     ) {
-                      return Promise.reject('最大值不能小于最小值');
+                      return Promise.reject("最大值不能小于最小值");
                     }
                     return Promise.resolve();
                   },
                 },
               ]}>
-              <InputNumber style={{ width: '40%' }} placeholder='最大值' min={0} />
+              <InputNumber style={{ width: "40%" }} placeholder='最大值' min={0} />
             </Form.Item>
           </Space.Compact>
         </Form.Item>
@@ -152,16 +152,16 @@ const FilterForm: React.FC = () => {
               name='minCreateTime'
               rules={[
                 {
-                  type: 'number',
+                  type: "number",
                   validator: (rule, value) => {
                     if (value === undefined) {
                       return Promise.resolve();
                     }
                     if (
-                      form.getFieldValue(['maxCreateTime']) !== undefined &&
-                      value > form.getFieldValue(['maxCreateTime'])
+                      form.getFieldValue(["maxCreateTime"]) !== undefined &&
+                      value > form.getFieldValue(["maxCreateTime"])
                     ) {
-                      return Promise.reject('时间区间不合法');
+                      return Promise.reject("时间区间不合法");
                     }
                     return Promise.resolve();
                   },
@@ -169,14 +169,14 @@ const FilterForm: React.FC = () => {
               ]}>
               <DatePicker
                 showTime
-                style={{ width: '40%' }}
+                style={{ width: "40%" }}
                 placeholder='最小值'
               />
             </Form.Item>
             <Input
               style={{
-                width: '20%',
-                textAlign: 'center',
+                width: "20%",
+                textAlign: "center",
               }}
               placeholder='~'
               disabled
@@ -186,16 +186,16 @@ const FilterForm: React.FC = () => {
               noStyle
               rules={[
                 {
-                  type: 'number',
+                  type: "number",
                   validator: (rule, value) => {
                     if (value === undefined) {
                       return Promise.resolve();
                     }
                     if (
-                      form.getFieldValue(['minCreateTime']) !== undefined &&
-                      value < form.getFieldValue(['minCreateTime'])
+                      form.getFieldValue(["minCreateTime"]) !== undefined &&
+                      value < form.getFieldValue(["minCreateTime"])
                     ) {
-                      return Promise.reject('时间区间不合法');
+                      return Promise.reject("时间区间不合法");
                     }
                     return Promise.resolve();
                   },
@@ -203,7 +203,7 @@ const FilterForm: React.FC = () => {
               ]}>
               <DatePicker
                 showTime
-                style={{ width: '40%' }}
+                style={{ width: "40%" }}
                 placeholder='最大值'
               />
             </Form.Item>
@@ -217,16 +217,16 @@ const FilterForm: React.FC = () => {
               name='minUpdateTime'
               rules={[
                 {
-                  type: 'number',
+                  type: "number",
                   validator: (rule, value) => {
                     if (value === undefined) {
                       return Promise.resolve();
                     }
                     if (
-                      form.getFieldValue(['maxUpdateTime']) !== undefined &&
-                      value > form.getFieldValue(['maxUpdateTime'])
+                      form.getFieldValue(["maxUpdateTime"]) !== undefined &&
+                      value > form.getFieldValue(["maxUpdateTime"])
                     ) {
-                      return Promise.reject('时间区间不合法');
+                      return Promise.reject("时间区间不合法");
                     }
                     return Promise.resolve();
                   },
@@ -234,14 +234,14 @@ const FilterForm: React.FC = () => {
               ]}>
               <DatePicker
                 showTime
-                style={{ width: '40%' }}
+                style={{ width: "40%" }}
                 placeholder='最小值'
               />
             </Form.Item>
             <Input
               style={{
-                width: '20%',
-                textAlign: 'center',
+                width: "20%",
+                textAlign: "center",
               }}
               placeholder='~'
               disabled
@@ -251,16 +251,16 @@ const FilterForm: React.FC = () => {
               noStyle
               rules={[
                 {
-                  type: 'number',
+                  type: "number",
                   validator: (rule, value) => {
                     if (value === undefined) {
                       return Promise.resolve();
                     }
                     if (
-                      form.getFieldValue(['minUpdateTime']) !== undefined &&
-                      value < form.getFieldValue(['minUpdateTime'])
+                      form.getFieldValue(["minUpdateTime"]) !== undefined &&
+                      value < form.getFieldValue(["minUpdateTime"])
                     ) {
-                      return Promise.reject('时间区间不合法');
+                      return Promise.reject("时间区间不合法");
                     }
                     return Promise.resolve();
                   },
@@ -268,7 +268,7 @@ const FilterForm: React.FC = () => {
               ]}>
               <DatePicker
                 showTime
-                style={{ width: '40%' }}
+                style={{ width: "40%" }}
                 placeholder='最大值'
               />
             </Form.Item>
@@ -278,14 +278,14 @@ const FilterForm: React.FC = () => {
         <Form.Item
           label='所有者'
           name='owner'
-          rules={[{ required: false, message: 'Please input owner!' }]}>
+          rules={[{ required: false, message: "Please input owner!" }]}>
           <Mentions rows={1} placeholder='输入用户名' />
         </Form.Item>
 
         <Form.Item
           label='组'
           name='group'
-          rules={[{ required: false, message: 'Please input group!' }]}>
+          rules={[{ required: false, message: "Please input group!" }]}>
           <Mentions rows={1} placeholder='输入组名' />
         </Form.Item>
 

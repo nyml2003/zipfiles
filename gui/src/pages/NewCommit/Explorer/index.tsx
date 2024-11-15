@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   ArrowLeftOutlined,
   ClearOutlined,
@@ -6,15 +6,15 @@ import {
   FilterOutlined,
   HomeOutlined,
   Loading3QuartersOutlined,
-} from '@ant-design/icons';
-import { Breadcrumb, Button, Splitter } from 'antd';
-import { handleRefresh, updateCurrentPath, updateIsFiltering } from '@/stores/CreateCommitReducer';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/stores/store';
-import { BreadcrumbItemType } from 'antd/es/breadcrumb/Breadcrumb';
-import TreeMenu from './TreeMenu';
-import TableView from './TableView';
-import FilterForm from './FilterForm';
+} from "@ant-design/icons";
+import { Breadcrumb, Button, Splitter } from "antd";
+import { handleRefresh, updateCurrentPath, updateIsFiltering } from "@/stores/CreateCommitReducer";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/stores/store";
+import { BreadcrumbItemType } from "antd/es/breadcrumb/Breadcrumb";
+import TreeMenu from "./TreeMenu";
+import TableView from "./TableView";
+import FilterForm from "./FilterForm";
 
 const Explorer: React.FC = () => {
   const isFiltering = useSelector((state: RootState) => state.createCommit.isFiltering);
@@ -29,11 +29,11 @@ const Explorer: React.FC = () => {
             type='text'
             icon={<ArrowLeftOutlined />}
             onClick={() =>
-              dispatch(updateCurrentPath(currentPath.split('/').slice(0, -1).join('/')))
+              dispatch(updateCurrentPath(currentPath.split("/").slice(0, -1).join("/")))
             }></Button>
           <Button
             type='text'
-            onClick={() => { console.log('刷新'); }}
+            onClick={() => { console.log("刷新"); }}
             icon={<Loading3QuartersOutlined />}
             disabled={isFiltering}></Button>
           <Button
@@ -41,12 +41,12 @@ const Explorer: React.FC = () => {
             onClick={() => dispatch(handleRefresh())}
             icon={<ClearOutlined />}></Button>
           <Breadcrumb
-            items={currentPath.split('/').reduce((acc, item, index, arr) => {
-              const path = arr.slice(0, index + 1).join('/');
+            items={currentPath.split("/").reduce((acc, item, index, arr) => {
+              const path = arr.slice(0, index + 1).join("/");
               acc.push({
-                title: item === '' ? <HomeOutlined /> : item,
+                title: item === "" ? <HomeOutlined /> : item,
                 onClick: () => dispatch(updateCurrentPath(path)),
-                className: 'cursor-pointer px-2 py-1 rounded hover:bg-gray-200',
+                className: "cursor-pointer px-2 py-1 rounded hover:bg-gray-200",
               });
               return acc;
             }, [] as BreadcrumbItemType[])}

@@ -46,5 +46,10 @@ class Socket {
   struct sockaddr_in address;
   int addrlen;
 };
+
+/**
+ * @brief 服务端产生错误的默认行为
+ */
+void sendError(int client_fd, const std::string& message);
 }  // namespace zipfiles::server
 #endif  // !ZIPFILE_SERVER_SOCKET_SOCKET_H

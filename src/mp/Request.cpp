@@ -91,6 +91,16 @@ Json::Value Req::toJson() const {
       json["payload"]["name"] = std::get<request::GetFileDetail>(kind).name;
       break;
     }
+    case Api::RESTORE: {
+      const auto& restore = std::get<request::Restore>(kind);
+      if (restore.key.has_value()) {
+        json["payload"]["key"] = restore.key.value();
+      }
+      json["payload"]["commitId"] = restore.commitId;
+      json["payload"]["messageId"] = restore.messageId;
+      json["payload"]["path"] = restore.path;
+      break;
+    }
     case Api::MOCK_NEED_TIME: {
       json["payload"]["id"] = std::get<request::MockNeedTime>(kind).id;
       break;
@@ -186,6 +196,17 @@ Req Req::fromJson(const Json::Value& json) {
         .name = json["payload"]["name"].asString()
       };
       break;
+    }
+    case Api::RESTORE: {
+      kind = request::Restore{
+        .key =
+          json["payload"]["key"].isNull()
+            ? std::nullopt
+            : std::optional<std::string>(json["payload"]["key"].asString()),
+        .commitId = json["payload"]["commitId"].asString(),
+        .path = json["payload"]["path"].asString(),
+        .messageId = json["payload"]["messageId"].asString(),
+      };
     }
     case Api::MOCK_NEED_TIME: {
       kind = request::MockNeedTime{.id = json["payload"]["id"].asInt()};

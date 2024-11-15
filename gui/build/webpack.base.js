@@ -43,7 +43,7 @@ module.exports = {
         ],
       },
       {
-        test: /\.css$/, //匹配所有的 css 文件
+        test: /\.css$/, // 匹配所有的 css 文件
         exclude: /\.module\.css$/,
         enforce: 'pre',
         use: [
@@ -78,7 +78,7 @@ module.exports = {
         ],
       },
       {
-        test: /\.less$/, //匹配所有的 less 文件
+        test: /\.less$/, // 匹配所有的 less 文件
         exclude: /\.module\.less$/,
         enforce: 'pre',
         include: [path.resolve(__dirname, '../src')],
@@ -118,7 +118,7 @@ module.exports = {
         test: /\.(png|jpg|jpeg|gif)$/, // 匹配图片文件
         type: 'asset', // type选择asset
         parser: {
-          //转base64的条件
+          // 转base64的条件
           dataUrlCondition: {
             maxSize: 10 * 1024, // 小于10kb转base64位
           },

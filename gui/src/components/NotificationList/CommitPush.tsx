@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { CommitPush as CommitPushProps, Progress } from './types';
-import { Button, message, Space, Steps, notification } from 'antd';
+import { CommitPush as CommitPushProps, CommitPushProgress } from './types';
+import { Button, Space, Steps } from 'antd';
 import { FileType } from '@/types';
 import { GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
 import { ApiEnum } from '@/apis';
 import useApi from '@useApi';
 import { PostCommitRequest, PostCommitResponse } from '@/apis/PostCommit';
-import { v4 as uuidv4 } from 'uuid';
 import { useDispatch } from 'react-redux';
 import { updateProgress } from '@/stores/NotificationReducer';
 import { StepsProps } from 'antd/lib';
@@ -18,7 +17,7 @@ interface File {
   type: FileType;
 }
 
-const progresses: Progress[] = [Progress.CollectingFiles, Progress.PackingFiles, Progress.Finish];
+const progresses: CommitPushProgress[] = [CommitPushProgress.CollectingFiles, CommitPushProgress.PackingFiles, CommitPushProgress.Finish];
 
 const CommitPush = ({ progress, files, directories, options, id, result }: CommitPushProps) => {
   const dispatch = useDispatch();
@@ -124,16 +123,16 @@ const CommitPush = ({ progress, files, directories, options, id, result }: Commi
   };
 
   const nextProgress = async () => {
-    if (progress === Progress.CollectingFiles) {
+    if (progress === CommitPushProgress.CollectingFiles) {
       await collectFiles();
-    } else if (progress === Progress.PackingFiles) {
+    } else if (progress === CommitPushProgress.PackingFiles) {
       await backup();
     }
     dispatch(updateProgress({ id, progress: progresses[progress + 1] }));
   };
 
   const cancel = () => {
-    dispatch(updateProgress({ id, progress: Progress.Cancel }));
+    dispatch(updateProgress({ id, progress: CommitPushProgress.Cancel }));
   };
 
   useEffect(() => {
@@ -158,10 +157,10 @@ const CommitPush = ({ progress, files, directories, options, id, result }: Commi
     }
   }, [result]);
 
-  return progress !== Progress.Cancel ? (
+  return progress !== CommitPushProgress.Cancel ? (
     <div>
       <Steps current={progress} size='small' direction='vertical' items={steps} />
-      {progress !== Progress.Finish && (
+      {progress !== CommitPushProgress.Finish && (
         <div className='absolute bottom-2 right-2'>
           <Space>
             <Button type='text' size='small' onClick={cancel}>

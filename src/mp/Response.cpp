@@ -111,6 +111,9 @@ Json::Value Res::toJson() const {
       json["payload"]["files"] = files;
       break;
     }
+    case Api::RESTORE: {
+      break;
+    }
     case Api::MOCK_NEED_TIME: {
       json["payload"]["id"] = std::get<response::MockNeedTime>(kind).id;
       break;
@@ -210,6 +213,10 @@ Res Res::fromJson(const Json::Value& json) {
         });
       }
       kind = response::GetFileDetailList{.files = files};
+      break;
+    }
+    case Api::RESTORE: {
+      kind = response::Restore{};
       break;
     }
     case Api::MOCK_NEED_TIME: {

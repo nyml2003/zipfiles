@@ -5,6 +5,7 @@
 #include "mp/common.h"
 #include "server/error.h"
 #include "server/socket/api.h"
+#include "server/socket/socket.h"
 
 #include <unistd.h>
 #include <csignal>
@@ -61,7 +62,7 @@ void doHandle(int client_fd, const Req& req) {
         break;
       }
       default:
-        throw std::runtime_error("Unknown api type");
+        sendError(client_fd, "Unknown api type");
     }
 
   }  // namespace zipfiles::server
@@ -74,6 +75,7 @@ void doHandle(int client_fd, const Req& req) {
     }
     log4cpp::Category::getRoot().errorStream()
       << "Failed to handle request: " << e.what();
+    sendError(client_fd, e.what());
   }
 }  // namespace zipfiles::server
 }  // namespace zipfiles::server

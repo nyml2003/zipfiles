@@ -1,17 +1,17 @@
-import React, { useState, useEffect, Key } from 'react';
-import { Tree, TreeProps } from 'antd';
-import useApi from '@useApi';
-import { GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
-import { ApiEnum } from '@/apis';
-import { DownOutlined } from '@ant-design/icons';
-import { FileType, LoadingState } from '@/types';
-import LoadingWrapper from '@/components/LoadingWrapper';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/stores/store';
+import React, { useState, useEffect, Key } from "react";
+import { Tree, TreeProps } from "antd";
+import useApi from "@useApi";
+import { GetFileListRequest, GetFileListResponse } from "@/apis/GetFileList";
+import { ApiEnum } from "@/apis";
+import { DownOutlined } from "@ant-design/icons";
+import { FileType, LoadingState } from "@/types";
+import LoadingWrapper from "@/components/LoadingWrapper";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/stores/store";
 import {
   updateCurrentFile,
   updateCurrentPath,
-} from '@/stores/CreateCommitReducer';
+} from "@/stores/CreateCommitReducer";
 const { DirectoryTree } = Tree;
 
 interface DataNode {
@@ -31,33 +31,15 @@ const TreeMenu = () => {
   const currentPath = useSelector((state: RootState) => state.createCommit.currentPath);
   const dispatch = useDispatch();
   useEffect(() => {
-    // 清空已有数据
-    setTreeData([]);
-    // 清空展开的节点
-    setExpandedKeys([]);
-    // 清空选中的节点
-    // setCheckedKeys([]);
-    // 加载新的数据
     handleGetFileList(currentPath);
+    return () => {
+      setTreeData([]);
+      setExpandedKeys([]);
+    };
   }, [currentPath]);
-
-  // const getRootFile = async (path: string) => {
-  //   setTreeData([
-  //     {
-  //       title: '.',
-  //       key: path,
-  //       isLeaf: false,
-  //       expanded: true,
-  //     },
-  //   ]);
-  //   setExpandedKeys([path]);
-  // };
 
   const handleGetFileList = async (path: string, needLoading = true) => {
     if (needLoading) setLoading(LoadingState.Loading);
-    // if (path === currentPath) {
-    //   await getRootFile(currentPath);
-    // }
     try {
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
         path,
@@ -73,7 +55,7 @@ const TreeMenu = () => {
       });
       setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
     } catch (err) {
-      console.log('获取文件列表失败: ', err);
+      console.log("获取文件列表失败: ", err);
     }
     setLoading(LoadingState.Done);
   };
@@ -112,7 +94,7 @@ const TreeMenu = () => {
     await handleGetFileList(key as string, false);
   };
 
-  const handleSelect: TreeProps['onSelect'] = (selectedKeys, info) => {
+  const handleSelect: TreeProps["onSelect"] = (selectedKeys, info) => {
     const currentTime = new Date().getTime();
     if (currentTime - lastClickTime < 300) {
       if (!info.node.isLeaf) {

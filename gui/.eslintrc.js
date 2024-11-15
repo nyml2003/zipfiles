@@ -66,7 +66,7 @@ module.exports = {
     // 禁止出现多行空行
     'no-multiple-empty-lines': ['error', { max: 1 }],
     semi: ['error', 'always'], // 禁止末尾分号
-    quotes: ['error', 'single'], // 单引号
+    quotes: ['error', 'double'], // 强制使用双引号
     'space-infix-ops': 2, // 操作符周围必须有空格
     'spaced-comment': ['error', 'always'], // 注释后面必须跟随至少一个空白
     /**
