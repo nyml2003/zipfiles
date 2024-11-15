@@ -99,6 +99,8 @@ void backupFiles(
   // 实例化压缩类
   Zip zip;
 
+  zip.init_worker();
+
   // 初始化循环条件
   bool flush = false;
 
@@ -112,27 +114,33 @@ void backupFiles(
       auto [packFlush, packedData] = packFilesByBlock(files, flush, lca);
 
       if (packFlush) {
-        // 将pack的obuffer拷入zip
-        zip.reset_input(&packedData, flush);
-        while (true) {
-          // 如果当前flush为真，说明不会再有后继输出，则zip输出所有剩余数据
-          // 否则还是只将数据拷贝入zip ibuffer而不输出
-          // 将pack的obuffer的数据都加入zip的ibuffer
-          // zipLack代表packedData是否还有数据可读，如果zipLack为真，说明已经读完当前packedData
-          auto [zipFlush, zipLack, outputData] = zip.run();
+        // fill input to zip
+        zip.fill_input(packedData, flush);
 
-          if (zipFlush) {
-            // 如果zip的ibuffer满，那么压缩，并输出到zippedData
+        // if zip is full or flush, then try to get the output
+        while (zip.full() || flush) {
+          // get output from zip blockedly
+          auto zipped_data = zip.get_output(true);
+
+          // if zipped_data is valid, append it to zippedData and try to get
+          // more output
+          while (zipped_data.valid) {
+            // append zipped data to zippedData
             zippedData.insert(
-              zippedData.end(), outputData->begin(), outputData->end()
+              zippedData.end(), zipped_data.data.begin(), zipped_data.data.end()
             );
 
-            // 清空zip的obuffer
-            outputData->clear();
+            // if eof, break
+            if (zipped_data.eof) {
+              break;
+            }
+
+            // if flush, get output with block
+            zipped_data = zip.get_output(flush);
           }
 
-          if (zipLack) {
-            // packedData已经被读完，退出
+          // if eof, break
+          if (zipped_data.eof) {
             break;
           }
         }
@@ -276,6 +284,67 @@ fs::path getCommonAncestor(const std::vector<fs::path>& paths) {
   }
 
   return commonAncestor;
+}
+
+/**
+ * @brief 物理删除给定uuid的commit所对应的文件
+ *
+ * @param uuid 给定的uuid
+ *
+ */
+void removeCommitById(const std::string& uuid) {
+  CommitTableRecord ctr = CommitTable::getCommitRecordById(uuid);
+
+  if (!ctr.isDelete) {
+    throw std::runtime_error("Commit " + uuid + " is not deleted yet");
+  }
+
+  fs::path path = ctr.storagePath + "/" + ctr.uuid;
+
+  if (fs::exists(path)) {
+    try {
+      fs::remove_all(path);
+    } catch (std::exception& e) {
+      throw std::runtime_error(
+        "Cannot remove storage file at " + path.string()
+      );
+    }
+  }
+
+  // nothing...
+}
+
+/**
+ * @brief 物理删除给定uuid的CommitRecord，以及其所对应的文件
+ *
+ * @param uuid 给定的uuid
+ *
+ */
+void removeCommitAndRecordById(const std::string& uuid) {
+  log4cpp::Category::getRoot().infoStream()
+    << "Removing commit files by given uuid: " << uuid;
+
+  // 尝试物理删除文件
+  try {
+    removeCommitById(uuid);
+  } catch (std::exception& e) {
+    throw std::runtime_error(
+      "Error occur when trying to remove commit files by given uuid: " + uuid +
+      ", because " + e.what()
+    );
+  }
+
+  // 尝试从commit_table里删除记录
+  try {
+    CommitTable::removeCommitRecord(uuid);
+    CommitTable::writeCommitTable(COMMIT_TABLE_PATH);
+  } catch (std::runtime_error& e) {
+    throw std::runtime_error(
+      "Error occur when trying to remove commit, because " +
+      std::string(e.what()) +
+      " (but its storage files already removed or moved)"
+    );
+  }
 }
 
 /**

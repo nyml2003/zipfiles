@@ -58,6 +58,8 @@ class CommitTable {
 
   static void removeCommitRecord(const std::string& uuid);
 
+  static void recoverCommitRecord(const std::string& uuid);
+
   static CommitTableRecord getCommitRecordById(const std::string& uuid);
 
   static CommitTableRecord getCommitRecordViewById(const std::string& uuid);

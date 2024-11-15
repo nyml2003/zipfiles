@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cstdint>
+#include <mutex>
 #include <vector>
 
 #include "server/deflate/huffman.h"
@@ -8,38 +9,154 @@
 
 namespace zipfiles::server {
 
-void Zip::reset_input(const std::vector<uint8_t>* input_ptr, bool eof) {
-  input = input_ptr;
-  flush = eof;
-  ibuf_start = input->begin();
+bool ZipDataPacket::operator<(const ZipDataPacket& other) const {
+  return index > other.index;
 }
 
-ZipStatus Zip::run() {
-  auto append_ibuffer = [&](int len) {
-    buffer.ibuffer.insert(buffer.ibuffer.end(), ibuf_start, ibuf_start + len);
-    ibuf_start += len;
-    assert(ibuf_start <= input->end());
-  };
+void Zip::worker() {
+  std::unique_lock<std::mutex> input_lock(input_queue_mutex, std::defer_lock);
 
-  bool lack = (ibuf_start == input->end());
+  while (true) {
+    // wait for input
+    input_lock.lock();
+    input_queue_cv.wait(input_lock, [&] {
+      return !input_queue.empty() || eof;
+    });
+    if (input_queue.empty() && eof) {
+      input_lock.unlock();
+      break;
+    }
 
-  if (!lack) {
-    append_ibuffer(std::min(
-      static_cast<int>(ZIP_BLOCK_SIZE - buffer.ibuffer.size()),
-      static_cast<int>(input->end() - ibuf_start)
-    ));
-    lack = (ibuf_start == input->end());
+    // check if the input queue is empty and eof is false
+    // this should never happen
+    assert(input_queue.empty() == false);
 
-    // if data is enough or force flush, zip and flush
-    if (buffer.ibuffer.size() == ZIP_BLOCK_SIZE || flush) {
-      // zip
-      lz77_ecodoer.run();
-      huffman_encoder.encode();
-      buffer.ibuffer.clear();
-      return {true, lack, &buffer.obuffer};
+    // get the input packet
+    ZipDataPacket packet = std::move(input_queue.front());
+    input_queue.pop();
+    input_lock.unlock();
+
+    // process the input packet
+    std::vector<uint8_t> lc_alphabet;
+    std::vector<uint16_t> dist_alphabet;
+    LZ77::Encoder(packet.data, lc_alphabet, dist_alphabet).run();
+    huffman::Encoder(lc_alphabet, dist_alphabet, packet.data).encode();
+
+    // push the output packet into the output queue
+    std::unique_lock<std::mutex> output_lock(output_queue_mutex);
+    output_queue.push(std::move(packet));
+    if (output_queue.top().index == output_index) {
+      output_lock.unlock();
+      output_queue_cv.notify_one();
+    } else {
+      output_lock.unlock();
     }
   }
-  return {false, true, nullptr};
+}
+
+Zip::~Zip() {
+  for (std::thread& worker_thread : worker_threads) {
+    if (worker_thread.joinable()) {
+      worker_thread.join();
+    }
+  }
+}
+
+bool Zip::full() {
+  std::lock_guard<std::mutex> input_lock(input_queue_mutex);
+  std::lock_guard<std::mutex> output_lock(output_queue_mutex);
+  return input_queue.size() >= ZIP_INPUT_QUEUE_SIZE || output_queue.size() > 1;
+}
+
+bool Zip::fill_input(const std::vector<uint8_t>& input, bool eof) {
+  auto input_ptr = input.begin();
+  while (input_ptr != input.end()) {
+    // calculate the length of the data to be filled
+    int len = std::min(
+      static_cast<int>(ZIP_BLOCK_SIZE - unfinished_input_packet.data.size()),
+      static_cast<int>(input.end() - input_ptr)
+    );
+
+    // fill the data
+    unfinished_input_packet.data.insert(
+      unfinished_input_packet.data.end(), input_ptr, input_ptr + len
+    );
+
+    // move the input pointer
+    input_ptr += len;
+
+    // if the packet is full, push it into the input queue and create a new
+    // packet
+    if (unfinished_input_packet.data.size() == ZIP_BLOCK_SIZE) {
+      {
+        std::lock_guard<std::mutex> lock(input_queue_mutex);
+        input_queue.push(std::move(unfinished_input_packet));
+        unfinished_input_packet = {++packet_index, {}};  // create a new packet
+      }
+      input_queue_cv.notify_one();
+    }
+  }
+
+  // if eof is true and there is still data in the packet, push it into the
+  // input queue
+  if (eof) {
+    std::unique_lock<std::mutex> lock(input_queue_mutex);
+    this->eof = true;
+    if (!unfinished_input_packet.data.empty()) {
+      input_queue.push(std::move(unfinished_input_packet));
+      unfinished_input_packet = {++packet_index, {}};  // create a new packet
+      lock.unlock();
+      input_queue_cv.notify_one();
+    } else {
+      lock.unlock();
+    }
+  }
+
+  return full();
+}
+
+ZippedDataPacket Zip::get_output(bool block) {
+  std::unique_lock<std::mutex> lock(output_queue_mutex);
+
+  // if not blocking and the output queue is empty, return an empty packet
+  if ((output_queue.empty() || output_queue.top().index != output_index) &&
+      !block) {
+    return {};
+  }
+
+  // wait for the output queue to be ready
+  output_queue_cv.wait(lock, [&] {
+    return !output_queue.empty() && output_queue.top().index == output_index;
+  });
+
+  // check if the next output is ready
+  // this should never happen
+  assert(output_queue.top().index == output_index);
+
+  std::unique_lock<std::mutex> input_lock(input_queue_mutex);
+  // get the output packet
+  ZippedDataPacket packet = {
+    true, eof && packet_index == output_index + 1,
+    std::move(const_cast<ZipDataPacket&>(output_queue.top()).data)
+  };
+  output_queue.pop();
+  output_index++;
+  lock.unlock();
+
+  // notify the worker thread to exit if the output queue is empty
+  if (packet.eof) {
+    input_lock.unlock();
+    input_queue_cv.notify_all();
+  } else {
+    input_lock.unlock();
+  }
+  return packet;
+}
+
+void Zip::init_worker() {
+  for (std::thread& worker_thread : worker_threads) {
+    worker_thread = std::thread(&Zip::worker, this);
+  }
 }
 
 void Unzip::reset_input(const std::vector<uint8_t>* input_ptr) {
@@ -72,21 +189,6 @@ ZipStatus Unzip::run() {
   }
   lz77_decoder.run();
   return {true, false, &buffer.obuffer};
-}
-
-ZipStatus unzip(const std::vector<uint8_t>& input) {
-  static std::vector<uint8_t> buffer(input);
-  return {false, true, &buffer};
-}
-
-ZipStatus zip(const std::vector<uint8_t>& input, bool flush) {
-  static std::vector<uint8_t> buffer(input);
-  return {flush, true, &buffer};
-}
-
-std::pair<bool, std::vector<uint8_t>&> unzip(uint8_t byte) {
-  static std::vector<uint8_t> ret{byte};
-  return {false, ret};
 }
 
 }  // namespace zipfiles::server
