@@ -31,7 +31,7 @@ const TreeMenu = () => {
   const currentPath = useSelector((state: RootState) => state.createCommit.currentPath);
   const dispatch = useDispatch();
   useEffect(() => {
-    handleGetFileList(currentPath);
+   handleGetFileList(currentPath);
     return () => {
       setTreeData([]);
       setExpandedKeys([]);

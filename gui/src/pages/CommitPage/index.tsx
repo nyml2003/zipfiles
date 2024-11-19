@@ -2,8 +2,8 @@ import React from "react";
 import CommitTable from "./CommitTable";
 import { Tabs, TabsProps } from "antd";
 import Explorer from "./Explorer";
-import { createProvider as createExplorerProvider } from "./Explorer/store/context";
-import { createProvider as createRestoreProvider } from "./Restore/store/context";
+import { createProvider as createExplorerProvider } from "./Explorer/store";
+import { createProvider as createRestoreProvider } from "./Restore/store";
 import { v4 as uuidv4 } from "uuid";
 import RestoreForm from "./Restore/RestoreForm";
 

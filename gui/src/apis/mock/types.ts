@@ -1,9 +1,4 @@
-import { FileType } from '@/types';
-
-export interface File {
-  name: string;
-  type: FileType;
-}
+import { FileType } from "@/types";
 
 export interface FileDetail {
   name: string;

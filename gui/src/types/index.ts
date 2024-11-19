@@ -1,19 +1,3 @@
-/* eslint-disable no-unused-vars */
-export interface RouteConfig {
-  path: string;
-  element: React.LazyExoticComponent<() => React.JSX.Element>;
-  children?: () => Promise<RouteConfig[]>;
-}
-export enum DarkMode {
-  Light = 'light',
-  Dark = 'dark',
-}
-
-export class IngoreError extends Error {
-  constructor() {
-    super('IngoreError');
-  }
-}
 export enum LoadingState {
   Loading,
   Done,
@@ -35,26 +19,26 @@ export enum FileType {
 export function FileTypeToString(type: FileType): string {
   switch (type) {
     case FileType.None:
-      return 'None';
+      return "None";
     case FileType.NotFound:
-      return 'NotFound';
+      return "NotFound";
     case FileType.Regular:
-      return 'Regular';
+      return "Regular";
     case FileType.Directory:
-      return 'Directory';
+      return "Directory";
     case FileType.Symlink:
-      return 'Symlink';
+      return "Symlink";
     case FileType.Block:
-      return 'Block';
+      return "Block";
     case FileType.Character:
-      return 'Character';
+      return "Character";
     case FileType.Fifo:
-      return 'Fifo';
+      return "Fifo";
     case FileType.Socket:
-      return 'Socket';
+      return "Socket";
     case FileType.Unknown:
-      return 'Unknown';
+      return "Unknown";
     default:
-      return 'Undefined';
+      return "Undefined";
   }
 }

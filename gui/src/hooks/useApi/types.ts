@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { ApiEnum } from '@/apis';
+import { ApiEnum } from "@/apis";
 
 export interface Api {
   request<Req, Res>(apiEnum: ApiEnum, request: Req): Promise<Res>;

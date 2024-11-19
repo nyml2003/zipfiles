@@ -1,9 +1,9 @@
-import { Api, Code, useApiType } from '../types';
-import { ApiEnum } from '@/apis';
-import { mockApi } from '@/apis/mock';
-import { PostCommitRequest } from '@/apis/PostCommit';
-import { finishMessage } from '@/stores/NotificationReducer';
-import { useDispatch } from 'react-redux';
+import { Api, Code, useApiType } from "../types";
+import { ApiEnum } from "@/apis";
+import { mockApi } from "@/apis/mock";
+import { PostCommitRequest } from "@/apis/PostCommit";
+import { finishMessage } from "@/stores/NotificationReducer";
+import { useDispatch } from "react-redux";
 const useApi: useApiType = () => {
   const dispatch = useDispatch();
   const api: Api = {
@@ -28,7 +28,7 @@ const useApi: useApiType = () => {
               dispatch(
                 finishMessage({
                   payload: { id: (request as PostCommitRequest).uuid },
-                  message: '提交成功',
+                  message: "提交成功",
                   code: Code.POSTCOMMIT_SUCCESS,
                 }),
               );

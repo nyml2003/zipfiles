@@ -1,5 +1,5 @@
-import { FileType } from '@/types';
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { FileType } from "@/types";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 type Filter = Partial<{
   type: FileType;
   name: string;
@@ -31,8 +31,8 @@ export interface CreateCommitState {
 }
 
 const initialState: CreateCommitState = {
-  currentFile: '',
-  currentPath: '',
+  currentFile: "",
+  currentPath: "",
   selectedFile: {
     files: [],
     directories: [],
@@ -43,7 +43,7 @@ const initialState: CreateCommitState = {
 };
 
 const CreateCommitReducer = createSlice({
-  name: 'createCommit',
+  name: "createCommit",
   initialState,
   reducers: {
     updateCurrentFile(state, action: PayloadAction<string>) {
@@ -53,8 +53,8 @@ const CreateCommitReducer = createSlice({
       state.currentPath = action.payload;
     },
     handleRefresh(state) {
-      state.currentFile = '';
-      state.currentPath = '';
+      state.currentFile = "";
+      state.currentPath = "";
       state.selectedFile = {
         files: [],
         directories: [],
@@ -63,9 +63,6 @@ const CreateCommitReducer = createSlice({
     },
     updateFilter(state, action: PayloadAction<Partial<Filter>>) {
       state.filter = action.payload;
-    },
-    resetFilter(state) {
-      state.filter = initialState.filter;
     },
     updateIsFiltering(state, action: PayloadAction<boolean>) {
       state.isFiltering = action.payload;
@@ -123,11 +120,9 @@ export const {
   updateCurrentPath,
   handleRefresh,
   updateFilter,
-  resetFilter,
   updateIsFiltering,
   addSelectedFile,
   removeSelectedFile,
-  updateBackupFiles,
   removeSelectedDirectory,
   addSelectedDirectory,
   clearSelectedFiles,

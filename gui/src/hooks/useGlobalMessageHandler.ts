@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect } from 'react';
-import { Code, RequestWrapper, ResponseWrapper, Notification, isNotification, isResponseNotification } from './useApi/types';
-import { useDispatch } from 'react-redux';
-import { addNotification, finishMessage } from '@/stores/NotificationReducer';
-import { PlainText } from '@/components/NotificationList/types';
-import { notification } from 'antd';
+import { useEffect } from "react";
+import { Code, RequestWrapper, ResponseWrapper, Notification, isNotification, isResponseNotification } from "./useApi/types";
+import { useDispatch } from "react-redux";
+import { addNotification, finishMessage } from "@/stores/NotificationReducer";
+import { PlainText } from "@/components/NotificationList/types";
+import { notification } from "antd";
 
 export interface CallBack {
   request: RequestWrapper;
@@ -22,20 +22,17 @@ export const setGlobalCallback = (callback: CallBack) => {
 export const MAX_REQUEST_TIMEOUT = 500;
 const MAX_REQUEST_RETRY = 10;
 export const useGlobalMessageHandler = () => {
-  console.log('useGlobalMessageHandler is ok');
   const dispatch = useDispatch();
-  console.log('dispatch is ok');
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      // console.log('event.data: ', JSON.stringify(event.data));
       const response = event.data as ResponseWrapper;
       const { api, uuid, code, payload, message } = response;
       if (isNotification(code)) {
         dispatch(
           addNotification({
-            type: 'plainText',
+            type: "plainText",
             text: message,
-            state: 'warning',
+            state: "warning",
           } as PlainText),
         );
         return;
@@ -57,10 +54,10 @@ export const useGlobalMessageHandler = () => {
       if (code === Code.OK) {
         callback.resolve(payload || {});
       } else {
-        callback.reject(message || '响应体异常');
+        callback.reject(message || "响应体异常");
       }
     };
-    window.addEventListener('message', handler);
+    window.addEventListener("message", handler);
     // const intervalId = setInterval(() => {
     //   const now = Date.now();
     //   callbacks = callbacks.filter(callback => {
@@ -87,7 +84,7 @@ export const useGlobalMessageHandler = () => {
     //   });
     // }, MAX_REQUEST_TIMEOUT);
     return () => {
-      window.removeEventListener('message', handler);
+      window.removeEventListener("message", handler);
       // clearInterval(intervalId);
     };
   }, []);

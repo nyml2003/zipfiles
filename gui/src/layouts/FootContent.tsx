@@ -1,8 +1,8 @@
-import { toggleNotification } from '@/stores/NotificationReducer';
-import { MessageOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
-import React from 'react';
-import { useDispatch } from 'react-redux';
+import { toggleNotification } from "@/stores/NotificationReducer";
+import { MessageOutlined } from "@ant-design/icons";
+import { Button } from "antd";
+import React from "react";
+import { useDispatch } from "react-redux";
 
 const FootContent = () => {
   const dispatch = useDispatch();

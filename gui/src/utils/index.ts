@@ -25,19 +25,20 @@ interface File {
   name: string;
   type: FileType;
 }
+
 export function selectEnvironment<T>(production: T, development: T) {
-  if (process.env.BASE_ENV === 'prod') {
+  if (process.env.BASE_ENV === "prod") {
     return production;
   }
   return development;
 }
 
 export function isProduction() {
-  return process.env.BASE_ENV === 'prod';
+  return process.env.BASE_ENV === "prod";
 }
 
 export function isDevelopment() {
-  return process.env.BASE_ENV === 'dev';
+  return process.env.BASE_ENV === "dev";
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,7 +46,7 @@ export function cleanObject(obj: any) {
   if (obj === null || obj === undefined) return obj;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return Object.entries(obj).reduce((acc: any, [key, value]) => {
-    if (value && typeof value === 'object') {
+    if (value && typeof value === "object") {
       value = cleanObject(value);
     }
     if (value !== null && value !== undefined) {
@@ -76,11 +77,11 @@ export function cleanObject(obj: any) {
 // };
 
 export function findLongestCommonPrefix(paths: string[]) {
-  if (paths.length === 0) return '';
+  if (paths.length === 0) return "";
   if (paths.length === 1) return paths[0];
 
   // 将路径分割成数组
-  const splitPaths = paths.map(path => path.split('/'));
+  const splitPaths = paths.map(path => path.split("/"));
 
   // 找到最短路径的长度，因为公共前缀的长度不会超过最短路径
   const minLength = Math.min(...splitPaths.map(p => p.length));
@@ -99,9 +100,8 @@ export function findLongestCommonPrefix(paths: string[]) {
       break;
     }
   }
-  const lca = commonPrefix.join('/');
   // 将数组转换回字符串，并用斜杠连接
-  return lca;
+  return commonPrefix.join("/");
 }
 export type Dir<DataType> = {
   children: DataType[];
@@ -112,14 +112,14 @@ export function buildTree<DataType extends {
   path: string
   type: FileType
  }>(files: DataType[]): Dir<DataType> {
-  const root: Dir<DataType> = { children: [], name: '', subDir: [] };
+  const root: Dir<DataType> = { children: [], name: "", subDir: [] };
   files.forEach(file => {
-    if (file.path === '.') {
-      file.path = '';
+    if (file.path === ".") {
+      file.path = "";
       root.children.push(file);
       return;
     }
-    const parts = file.path.split('/');
+    const parts = file.path.split("/");
     let current = root;
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
@@ -145,8 +145,8 @@ export function findFile(
   targetPath: string,
 ): (FileDetail | File)[] {
   let current = files;
-  if (targetPath !== '') {
-    const parts = targetPath.split('/');
+  if (targetPath !== "") {
+    const parts = targetPath.split("/");
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       const child = current.subDir.find(subDir => subDir.name === part);

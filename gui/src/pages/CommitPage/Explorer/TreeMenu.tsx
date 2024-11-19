@@ -2,7 +2,7 @@ import React, { useState, useEffect, Key, useContext, useCallback } from "react"
 import { Tree, TreeProps } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import { FileType } from "@/types";
-import { Context } from "./store/context";
+import { Context } from "./store";
 import { findFile } from "@/utils";
 const { DirectoryTree } = Tree;
 interface FileDetail {

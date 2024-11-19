@@ -1,5 +1,5 @@
-import { GetCommitListResponse } from '../GetCommitList';
-import { cachedCommitList } from './init';
+import { GetCommitListResponse } from "../GetCommitList";
+import { cachedCommitList } from "./init";
 
 // function generateRandomCommitLog(): CommitLog {
 //   return {

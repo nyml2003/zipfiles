@@ -3,7 +3,7 @@ import { Table } from "antd";
 import type { TableColumnsType } from "antd";
 import { FileType, FileTypeToString } from "@/types";
 import { FileFilled, FolderFilled } from "@ant-design/icons";
-import { Context } from "./store/context";
+import { Context } from "./store";
 import { findFile } from "@/utils";
 interface FileDetail {
   name: string;

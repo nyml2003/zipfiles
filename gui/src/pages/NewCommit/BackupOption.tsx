@@ -1,16 +1,15 @@
-import { Button, Checkbox, Form, Input, List, message, Modal, Steps } from 'antd';
-import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/stores/store';
-import useApi from '@useApi';
-import { ApiEnum } from '@/apis';
-import { PostCommitRequest, PostCommitResponse } from '@/apis/PostCommit';
-import { GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
-import { FileType } from '@/types';
-import { CalculatorOutlined } from '@ant-design/icons';
-import { addNotification, openNotification } from '@/stores/NotificationReducer';
-import { CommitPush } from '@/components/NotificationList/types';
-import { handleRefresh } from '@/stores/CreateCommitReducer';
+import { Button, Checkbox, Form, Input, message } from "antd";
+import React from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/stores/store";
+import useApi from "@useApi";
+import { ApiEnum } from "@/apis";
+import { GetFileListRequest, GetFileListResponse } from "@/apis/GetFileList";
+import { FileType } from "@/types";
+import { CalculatorOutlined } from "@ant-design/icons";
+import { addNotification } from "@/stores/NotificationReducer";
+import { CommitPush } from "@/components/NotificationList/types";
+import { handleRefresh } from "@/stores/CreateCommitReducer";
 type BackupFormProps = Partial<{
   message: string;
   storagePath: string;
@@ -21,8 +20,8 @@ type BackupFormProps = Partial<{
 
 const initialState: BackupFormProps = {
   isEncrypt: false,
-  author: 'root',
-  storagePath: '/usr/local/zipfiles',
+  author: "root",
+  storagePath: "/usr/local/zipfiles",
 };
 
 interface File {
@@ -41,12 +40,12 @@ const BackupOption: React.FC = () => {
   const api = useApi();
   const backupSteps = [
     {
-      title: '收集文件',
+      title: "收集文件",
       icon: <CalculatorOutlined />,
-      subTitle: '计算需要备份的文件列表',
+      subTitle: "计算需要备份的文件列表",
     },
     {
-      title: '备份',
+      title: "备份",
     },
   ];
 
@@ -71,12 +70,12 @@ const BackupOption: React.FC = () => {
     files.forEach((file: File) => {
       if (file.type === FileType.Directory) {
         promises.push(
-          fetchAllFiles(path + '/' + file.name).then(subFiles => {
+          fetchAllFiles(path + "/" + file.name).then(subFiles => {
             allFiles.push(...subFiles);
           }),
         );
       }
-      allFiles.push(path + '/' + file.name);
+      allFiles.push(path + "/" + file.name);
     });
 
     await Promise.all(promises);
@@ -85,12 +84,12 @@ const BackupOption: React.FC = () => {
 
   const onFinish = async (values: Required<BackupFormProps>) => {
     if ((!files || files.length === 0) && (!directories || directories.length === 0)) {
-      messageApi.error('请选择文件');
+      messageApi.error("请选择文件");
       return;
     }
     dispatch(
       addNotification({
-        type: 'commitPush',
+        type: "commitPush",
         progress: 0,
         files,
         directories,
@@ -119,12 +118,12 @@ const BackupOption: React.FC = () => {
             label='是否加密'
             name='isEncrypt'
             valuePropName='checked'
-            rules={[{ required: true, message: '请选择是否加密' }]}>
+            rules={[{ required: true, message: "请选择是否加密" }]}>
             <Checkbox />
           </Form.Item>
           <Form.Item shouldUpdate noStyle>
             {() => {
-              const encrypt = form.getFieldValue('isEncrypt');
+              const encrypt = form.getFieldValue("isEncrypt");
               return encrypt ? (
                 <Form.Item
                   label='密码'
@@ -132,7 +131,7 @@ const BackupOption: React.FC = () => {
                   rules={[
                     {
                       required: true,
-                      message: '请输入密码',
+                      message: "请输入密码",
                     },
                   ]}
                   shouldUpdate>
@@ -144,18 +143,18 @@ const BackupOption: React.FC = () => {
           <Form.Item
             label='commit'
             name='message'
-            rules={[{ required: true, message: '请输入commit信息' }]}
+            rules={[{ required: true, message: "请输入commit信息" }]}
             valuePropName='value'>
             <Input />
           </Form.Item>
 
-          <Form.Item label='作者' name='author' rules={[{ required: true, message: '请输入作者' }]}>
+          <Form.Item label='作者' name='author' rules={[{ required: true, message: "请输入作者" }]}>
             <Input />
           </Form.Item>
           <Form.Item
             label='存储路径'
             name='storagePath'
-            rules={[{ required: true, message: '请输入存储路径' }]}>
+            rules={[{ required: true, message: "请输入存储路径" }]}>
             <Input />
           </Form.Item>
           <Form.Item wrapperCol={{ offset: 4, span: 14 }}>

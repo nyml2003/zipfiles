@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { CommitPush as CommitPushProps, CommitPushProgress } from './types';
-import { Button, Space, Steps } from 'antd';
-import { FileType } from '@/types';
-import { GetFileListRequest, GetFileListResponse } from '@/apis/GetFileList';
-import { ApiEnum } from '@/apis';
-import useApi from '@useApi';
-import { PostCommitRequest, PostCommitResponse } from '@/apis/PostCommit';
-import { useDispatch } from 'react-redux';
-import { updateProgress } from '@/stores/NotificationReducer';
-import { StepsProps } from 'antd/lib';
-import { CheckCircleOutlined, LoadingOutlined, StopOutlined } from '@ant-design/icons';
-import { Code } from '@/hooks/useApi/types';
+import React, {useEffect, useState} from "react";
+import {CommitPush as CommitPushProps, CommitPushProgress} from "./types";
+import {Button, Space, Steps} from "antd";
+import {FileType} from "@/types";
+import {GetFileListRequest, GetFileListResponse} from "@/apis/GetFileList";
+import {ApiEnum} from "@/apis";
+import useApi from "@useApi";
+import {PostCommitRequest, PostCommitResponse} from "@/apis/PostCommit";
+import {useDispatch} from "react-redux";
+import {updateProgress} from "@/stores/NotificationReducer";
+import {StepsProps} from "antd/lib";
+import {CheckCircleOutlined, LoadingOutlined, StopOutlined} from "@ant-design/icons";
+import {Code} from "@/hooks/useApi/types";
 
 interface File {
   name: string;
@@ -44,44 +44,43 @@ const CommitPush = ({ progress, files, directories, options, id, result }: Commi
     files.forEach((file: File) => {
       if (file.type === FileType.Directory) {
         promises.push(
-          fetchAllFiles(path + '/' + file.name).then(subFiles => {
+          fetchAllFiles(path + "/" + file.name).then(subFiles => {
             allFiles.push(...subFiles);
           }),
         );
       }
-      allFiles.push(path + '/' + file.name);
+      allFiles.push(path + "/" + file.name);
     });
 
     await Promise.all(promises);
     return allFiles;
   };
 
-  const [steps, setSteps] = useState<StepsProps['items']>([
+  const [steps, setSteps] = useState<StepsProps["items"]>([
     {
-      title: '收集文件',
+      title: "收集文件",
     },
     {
-      title: '打包文件',
+      title: "打包文件",
     },
     {
-      title: '完成',
-      description: '提交完成',
+      title: "完成",
+      description: "提交完成",
     },
   ]);
 
   const collectFiles = async () => {
     setSteps(prev => {
       if (!prev) return prev;
-      prev[0].description = '正在收集文件';
-      prev[0].status = 'process';
+      prev[0].description = "正在收集文件";
+      prev[0].status = "process";
       prev[0].icon = <LoadingOutlined />;
       return [...prev];
     });
-    const fileData = files.map(file => file.path + '/' + file.name);
+    const fileData = files.map(file => file.path + "/" + file.name);
     let dirData: string[] = [];
     const dirPromises = directories.map(async path => {
-      const files = await fetchAllFiles(path);
-      return files;
+      return await fetchAllFiles(path);
     });
     const dirResults = await Promise.all(dirPromises);
     dirData = dirResults.flat(); // 将所有目录的结果合并到 dirData
@@ -89,7 +88,7 @@ const CommitPush = ({ progress, files, directories, options, id, result }: Commi
     setSteps(prev => {
       if (!prev) return prev;
       prev[0].description = `共计${fileData.length + dirData.length}个文件`;
-      prev[0].status = 'finish';
+      prev[0].status = "finish";
       prev[0].icon = <CheckCircleOutlined />;
       return [...prev];
     });
@@ -98,8 +97,8 @@ const CommitPush = ({ progress, files, directories, options, id, result }: Commi
   const backup = async () => {
     setSteps(prev => {
       if (!prev) return prev;
-      prev[1].description = '正在发送文件列表';
-      prev[1].status = 'process';
+      prev[1].description = "正在发送文件列表";
+      prev[1].status = "process";
       prev[1].icon = <LoadingOutlined />;
       return [...prev];
     });
@@ -113,10 +112,10 @@ const CommitPush = ({ progress, files, directories, options, id, result }: Commi
     setSteps(prev => {
       if (!prev) return prev;
       prev[1].description = `本次提交的uuid为${id}, 文件正在备份中`;
-      prev[1].status = 'finish';
+      prev[1].status = "finish";
       prev[1].icon = <CheckCircleOutlined />;
-      prev[2].description = '备份中';
-      prev[2].status = 'process';
+      prev[2].description = "备份中";
+      prev[2].status = "process";
       prev[2].icon = <LoadingOutlined />;
       return [...prev];
     });
@@ -140,8 +139,8 @@ const CommitPush = ({ progress, files, directories, options, id, result }: Commi
     if (result.code === Code.POSTCOMMIT_SUCCESS) {
       setSteps(prev => {
         if (!prev) return prev;
-        prev[2].description = '提交成功';
-        prev[2].status = 'finish';
+        prev[2].description = "提交成功";
+        prev[2].status = "finish";
         prev[2].icon = <CheckCircleOutlined />;
         return [...prev];
       });
@@ -149,8 +148,8 @@ const CommitPush = ({ progress, files, directories, options, id, result }: Commi
     if (result.code === Code.POSTCOMMIT_FAILED) {
       setSteps(prev => {
         if (!prev) return prev;
-        prev[2].description = '提交失败';
-        prev[2].status = 'error';
+        prev[2].description = "提交失败";
+        prev[2].status = "error";
         prev[2].icon = <StopOutlined />;
         return [...prev];
       });
@@ -180,9 +179,9 @@ const CommitPush = ({ progress, files, directories, options, id, result }: Commi
       direction='vertical'
       items={[
         {
-          title: '取消',
-          description: '取消提交',
-          status: 'error',
+          title: "取消",
+          description: "取消提交",
+          status: "error",
         },
       ]}
     />

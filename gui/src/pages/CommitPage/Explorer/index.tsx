@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo } from "react";
 import {
   ArrowLeftOutlined,
   ClearOutlined,
@@ -10,26 +10,25 @@ import TreeMenu from "./TreeMenu";
 import TableView from "./TableView";
 import { ApiEnum } from "@/apis";
 import useApi from "@useApi";
-import { Context } from "./store/context";
+import { Context } from "./store";
 import { GetCommitDetailResponse, GetCommitDetailRequest } from "@/apis/GetCommitDetail";
 
 const Explorer: React.FC = () => {
   const { state, actions } = useContext(Context);
-  const { path, commitId } = state;
   const api = useApi();
 
   const fetchData = async () => {
     const res = await api.request<GetCommitDetailRequest, GetCommitDetailResponse>(
       ApiEnum.GetCommitDetail,
       {
-        uuid: commitId,
+        uuid: state.commitId,
       },
     );
     actions.updateFiles(res.files);
   };
 
-  useEffect(() => {
-    fetchData();
+  useEffect(async() => {
+    await fetchData();
   }, []);
 
   const breadcrumbItems = useMemo(() => {
@@ -64,7 +63,7 @@ const Explorer: React.FC = () => {
           <Button
             type='text'
             icon={<ArrowLeftOutlined />}
-            onClick={() => actions.updatePath(path.split("/").slice(0, -1).join("/"))}></Button>
+            onClick={() => actions.updatePath(state.path.split("/").slice(0, -1).join("/"))}></Button>
           <Button
             type='text'
             onClick={() => {

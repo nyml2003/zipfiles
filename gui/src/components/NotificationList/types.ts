@@ -27,8 +27,10 @@ export enum CommitPushProgress {
 }
 
 export enum CommitRestoreProgress {
-  Finish = 0,
-  Cancel = 1,
+  Confirm = 0,
+  Restore = 1,
+  Finish = 2,
+  Cancel = 3,
 }
 
 export type CommitPush = NotificationUnion & {
@@ -40,16 +42,17 @@ export type CommitPush = NotificationUnion & {
   result?: Notification;
 };
 
-export interface NotificationUnion {
-  type: string;
-  id: string;
-}
-
 export type CommitRestore = NotificationUnion & {
   type: "commitRestore";
   progress: CommitRestoreProgress;
   commitId: string;
-  isEncrypt: boolean;
+  path: string;
+  password: string;
   result?: Notification;
 };
+
+export interface NotificationUnion {
+  type: string;
+  id: string;
+}
 

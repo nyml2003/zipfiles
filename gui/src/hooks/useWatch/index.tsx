@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 function useWatch(value: any, callback: (value: any, prevValue: any) => void) {
   const prevValue = useRef(value);

@@ -13,6 +13,7 @@ import PlainText from "./PlainText";
 import CommitPush from "./CommitPush";
 import { Button } from "antd";
 import { CloseOutlined } from "@ant-design/icons";
+import CommitRestore from "./CommitRestore";
 
 const NotificationList = () => {
   const notifications = useSelector((state: RootState) => state.notification.notifications);
@@ -29,6 +30,9 @@ const NotificationList = () => {
       }
       case "commitPush": {
         return <CommitPush {...(notification as TypeCommitPush)} />;
+      }
+      case "commitRestore": {
+        return <CommitRestore {...(notification as TypeCommitRestore)} />;
       }
       default:
         return null;

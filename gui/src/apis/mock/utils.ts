@@ -1,11 +1,11 @@
 /* eslint-disable prefer-const */
-import { FileType } from '@/types';
-import { cleanObject, findLongestCommonPrefix } from '@/utils';
-import Mock from 'mockjs';
-import { v4 as uuidv4 } from 'uuid';
-import { MockFileNumber } from './const';
-import { omit } from 'lodash';
-import { FileDetail, MockFileDetail, Filter, CommitLog, RootFileDetail } from './types';
+import { FileType } from "@/types";
+import { cleanObject, findLongestCommonPrefix } from "@/utils";
+import Mock from "mockjs";
+import { v4 as uuidv4 } from "uuid";
+import { MockFileNumber } from "./const";
+import { omit } from "lodash";
+import { FileDetail, MockFileDetail, Filter, CommitLog, RootFileDetail } from "./types";
 
 export function pickIndex<T>(choices: T[], _weights?: number[]): number {
   if (!_weights) {
@@ -45,8 +45,8 @@ export const filterBy = <T extends FileDetail>(files: T[], filter?: Filter): T[]
     if (cleanedFilter.minUpdateTime && file.updateTime < cleanedFilter.minUpdateTime) return false;
     if (cleanedFilter.maxUpdateTime && file.updateTime > cleanedFilter.maxUpdateTime) return false;
     if (cleanedFilter.owner && !file.owner.includes(cleanedFilter.owner)) return false;
-    if (cleanedFilter.group && !file.group.includes(cleanedFilter.group)) return false;
-    return true;
+    return !(cleanedFilter.group && !file.group.includes(cleanedFilter.group));
+
   });
 };
 export function pickFileType(): FileType {
@@ -71,7 +71,7 @@ export function generateWholeFileTree(root: MockFileDetail[], depth: number) {
   root.forEach(file => {
     if (file.type === FileType.Directory) {
       file.children = Array.from({ length: randomNumber(...MockFileNumber) }).map(() =>
-        generateRandomFileDetail(file.path + '/' + file.name),
+        generateRandomFileDetail(file.path + "/" + file.name),
       );
       if (depth === 1) {
         file.children = file.children.filter(file => file.type !== FileType.Directory);
@@ -109,12 +109,12 @@ export function mockPostCommit(
   saveFiles(files, uuid, backups, cachedFileRoot);
   cachedCommitList.push({
     uuid,
-    message: Mock.mock('@sentence'),
-    createTime: new Date(Mock.mock('@datetime')).getTime() / 1000,
-    storagePath: '/usr/local/zipfiles',
+    message: Mock.mock("@sentence"),
+    createTime: new Date(Mock.mock("@datetime")).getTime() / 1000,
+    storagePath: "/usr/local/zipfiles",
     isDelete: false,
-    isEncrypt: Mock.mock('@boolean'),
-    author: Mock.mock('@name'),
+    isEncrypt: Mock.mock("@boolean"),
+    author: Mock.mock("@name"),
   });
 }
 
@@ -126,49 +126,44 @@ export function saveFiles(
 ) {
   const lca = findLongestCommonPrefix(files);
   const fileDetails = files.map(path => {
-    const parts = path.split('/');
+    const parts = path.split("/");
     const name = parts.pop() as string;
-    const targetPath = parts.join('/');
+    const targetPath = parts.join("/");
     return findFile(cachedFileRoot, targetPath, name);
   });
   const relativeFiles = fileDetails.map(file => {
     if (!file) {
-      throw new Error('File not found');
+      throw new Error("File not found");
     }
     let newPath = file.path.slice(lca.length);
-    if (newPath[0] === '/') {
+    if (newPath[0] === "/") {
       newPath = newPath.slice(1);
     }
-    if (newPath === '') {
-      newPath = '.';
+    if (newPath === "") {
+      newPath = ".";
     }
     return {
-      ...omit(file, 'children'),
+      ...omit(file, "children"),
       path: newPath,
     };
   });
-  console.log('-------------------');
-  console.log('relativeFiles', relativeFiles);
-  console.log('lca', lca);
-  console.log('files', files);
-  console.log('-------------------');
   backups.set(uuid, relativeFiles);
 }
 
 export function generateRandomFileDetail(path: string): MockFileDetail {
   const type = pickFileType(); // 随机选择文件类型
-  const name = Mock.mock('@word(3, 10)');
+  const name = Mock.mock("@word(3, 10)");
   return {
     name,
     type,
     children: null,
     // 随机生成数值时间戳
-    createTime: new Date(Mock.mock('@datetime')).getTime() / 1000,
-    updateTime: new Date(Mock.mock('@datetime')).getTime() / 1000,
-    size: type === FileType.Regular ? Mock.mock('@integer(1024, 1024 * 1024)') : 0,
-    owner: Mock.mock('@name'),
-    group: Mock.mock('@name'),
-    mode: Mock.mock('@integer(0, 777)'),
+    createTime: new Date(Mock.mock("@datetime")).getTime() / 1000,
+    updateTime: new Date(Mock.mock("@datetime")).getTime() / 1000,
+    size: type === FileType.Regular ? Mock.mock("@integer(1024, 1024 * 1024)") : 0,
+    owner: Mock.mock("@name"),
+    group: Mock.mock("@name"),
+    mode: Mock.mock("@integer(0, 777)"),
     path,
   };
 }
@@ -177,16 +172,16 @@ export function findFilesByPath(
   targetPath: string,
   filter?: Filter,
 ): MockFileDetail[] | null {
-  if (targetPath === '') {
+  if (targetPath === "") {
     return filterBy(cachedFileRoot.children, filter);
   }
-  const parts = targetPath.split('/').slice(1);
+  const parts = targetPath.split("/").slice(1);
   let current: MockFileDetail = cachedFileRoot.children.find(
     file => file.name === parts[0],
   ) as MockFileDetail;
   for (let i = 1; i < parts.length; i++) {
     if (!current.children) {
-      throw new Error('File not found' + targetPath);
+      throw new Error("File not found" + targetPath);
     }
     current = current.children.find(file => file.name === parts[i]) as MockFileDetail;
   }

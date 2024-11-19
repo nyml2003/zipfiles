@@ -1,14 +1,14 @@
-import React, { useRef, useState } from 'react';
-import { HomeOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons';
-import type { TourStepProps } from 'antd';
-import { MenuInfo } from 'rc-menu/lib/interface';
-import { Layout, Menu, theme, Tour, notification } from 'antd';
-import { Outlet, useNavigate } from 'react-router-dom';
-import FootContent from './FootContent';
-import NotificationList from '@/components/NotificationList';
-import { CSSTransition } from 'react-transition-group';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/stores/store';
+import React, { useRef, useState } from "react";
+import { HomeOutlined, SettingOutlined, UploadOutlined } from "@ant-design/icons";
+import type { TourStepProps } from "antd";
+import { MenuInfo } from "rc-menu/lib/interface";
+import { Layout, Menu, Tour } from "antd";
+import { Outlet, useNavigate } from "react-router-dom";
+import FootContent from "./FootContent";
+import NotificationList from "@/components/NotificationList";
+import { CSSTransition } from "react-transition-group";
+import { useSelector } from "react-redux";
+import { RootState } from "@/stores/store";
 
 const { Content, Sider } = Layout;
 
@@ -19,35 +19,35 @@ const App: React.FC = () => {
   const notificationVisible = useSelector((state: RootState) => state.notification.open);
   const headerItems = [
     {
-      key: 'index',
+      key: "index",
       label: <div ref={el => (headerItemsRef.current[0] = el)}>首页</div>,
       icon: React.createElement(HomeOutlined),
     },
     {
-      key: 'new_commit',
+      key: "new_commit",
       label: <div ref={el => (headerItemsRef.current[1] = el)}>新建提交</div>,
       icon: React.createElement(UploadOutlined),
     },
     {
-      key: 'commit_history',
+      key: "commit_history",
       label: <div ref={el => (headerItemsRef.current[2] = el)}>提交历史</div>,
       icon: React.createElement(UploadOutlined),
     },
     {
-      key: 'setting',
+      key: "setting",
       label: <div ref={el => (headerItemsRef.current[3] = el)}>设置</div>,
       icon: React.createElement(UploadOutlined),
     },
     {
-      key: 'test',
-      label: '测试',
+      key: "test",
+      label: "测试",
       icon: React.createElement(SettingOutlined),
     },
   ];
 
   const handleClick = (info: MenuInfo) => {
-    if (info.key === 'github') {
-      navigate('/index');
+    if (info.key === "github") {
+      navigate("/index");
       return;
     }
     navigate(info.key);
@@ -59,27 +59,27 @@ const App: React.FC = () => {
 
   const steps: TourStepProps[] = [
     {
-      title: '欢迎使用',
-      description: '这是您的应用首页。',
-      placement: 'right',
+      title: "欢迎使用",
+      description: "这是您的应用首页。",
+      placement: "right",
       target: headerItemsRef.current[0]!,
     },
     {
-      title: '新建提交',
-      description: '点击这里可以快速创建新的提交，方便您的工作流程。',
-      placement: 'right',
+      title: "新建提交",
+      description: "点击这里可以快速创建新的提交，方便您的工作流程。",
+      placement: "right",
       target: headerItemsRef.current[1]!,
     },
     {
-      title: '提交历史',
-      description: '在这里查看您所有的提交历史，便于管理和追踪。',
-      placement: 'right',
+      title: "提交历史",
+      description: "在这里查看您所有的提交历史，便于管理和追踪。",
+      placement: "right",
       target: headerItemsRef.current[2]!,
     },
     {
-      title: '设置',
-      description: '在设置中，您可以自定义应用的各种选项。',
-      placement: 'right',
+      title: "设置",
+      description: "在设置中，您可以自定义应用的各种选项。",
+      placement: "right",
       target: headerItemsRef.current[3]!,
     },
   ];
@@ -89,13 +89,13 @@ const App: React.FC = () => {
       <Layout hasSider className='select-none flex flex-row h-screen'>
         <Sider breakpoint='lg' className=' bg-white'>
           <Menu
-            defaultSelectedKeys={['1']}
-            defaultOpenKeys={['sub1']}
+            defaultSelectedKeys={["1"]}
+            defaultOpenKeys={["sub1"]}
             onClick={handleClick}
             items={headerItems}
             className='bg-white'
             style={{
-              borderInlineEnd: 'none',
+              borderInlineEnd: "none",
             }}></Menu>
         </Sider>
         <Layout className='grow-item split-container-row overflow-x-hidden'>

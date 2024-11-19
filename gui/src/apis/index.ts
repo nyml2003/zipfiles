@@ -1,9 +1,9 @@
 export enum ApiEnum {
   ERROR = 0,
-  Log = 'log',
-  Error = 'error',
-  Warn = 'warn',
-  Info = 'info',
+  Log = "log",
+  Error = "error",
+  Warn = "warn",
+  Info = "info",
   MOCK_MANY_NOTIFICATIONS = 98,
   GetFileList = 100,
   GetFileDetailList = 101,

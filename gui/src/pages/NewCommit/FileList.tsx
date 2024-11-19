@@ -1,53 +1,53 @@
-import { ApiEnum } from '@/apis';
-import { GetFileDetailRequest, GetFileDetailResponse } from '@/apis/GetFileDetail';
-import useApi from '@useApi';
-import { clearSelectedDirectories, clearSelectedFiles } from '@/stores/CreateCommitReducer';
-import { RootState } from '@/stores/store';
-import { FileType } from '@/types';
-import { Button, Table } from 'antd';
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import {ApiEnum} from "@/apis";
+import {GetFileDetailRequest, GetFileDetailResponse} from "@/apis/GetFileDetail";
+import useApi from "@useApi";
+import {clearSelectedDirectories, clearSelectedFiles} from "@/stores/CreateCommitReducer";
+import {RootState} from "@/stores/store";
+import {FileType} from "@/types";
+import {Button, Table} from "antd";
+import React, {useEffect} from "react";
+import {useDispatch, useSelector} from "react-redux";
 
 const columns = [
   {
-    title: '文件名',
-    dataIndex: 'name',
-    key: 'name',
+    title: "文件名",
+    dataIndex: "name",
+    key: "name",
   },
   {
-    title: '类型',
-    dataIndex: 'type',
-    key: 'type',
+    title: "类型",
+    dataIndex: "type",
+    key: "type",
   },
   {
-    title: '创建时间',
-    dataIndex: 'createTime',
-    key: 'createTime',
+    title: "创建时间",
+    dataIndex: "createTime",
+    key: "createTime",
   },
   {
-    title: '更新时间',
-    dataIndex: 'updateTime',
-    key: 'updateTime',
+    title: "更新时间",
+    dataIndex: "updateTime",
+    key: "updateTime",
   },
   {
-    title: '大小',
-    dataIndex: 'size',
-    key: 'size',
+    title: "大小",
+    dataIndex: "size",
+    key: "size",
   },
   {
-    title: '所有者',
-    dataIndex: 'owner',
-    key: 'owner',
+    title: "所有者",
+    dataIndex: "owner",
+    key: "owner",
   },
   {
-    title: '组',
-    dataIndex: 'group',
-    key: 'group',
+    title: "组",
+    dataIndex: "group",
+    key: "group",
   },
   {
-    title: '权限',
-    dataIndex: 'mode',
-    key: 'mode',
+    title: "权限",
+    dataIndex: "mode",
+    key: "mode",
   },
 ];
 
@@ -84,8 +84,7 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
     }
     Promise.all(
       files.map(async (file: { name: string; path: string }) => {
-        const res = await fetchFileDetail(file.path, file.name);
-        return res;
+        return await fetchFileDetail(file.path, file.name);
       }),
     ).then(res => {
       setFileData(res);
@@ -97,18 +96,17 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
   };
 
   const handleDelete = () => {
-    console.log('删除');
+    console.log("删除");
   };
 
   const fetchFileDetail = async (path: string, name: string) => {
-    const res = await api.request<GetFileDetailRequest, GetFileDetailResponse>(
-      ApiEnum.GetFileDetail,
-      {
-        path,
-        name,
-      },
+    return await api.request<GetFileDetailRequest, GetFileDetailResponse>(
+        ApiEnum.GetFileDetail,
+        {
+          path,
+          name,
+        },
     );
-    return res;
   };
 
   const handleFileClear = () => {
@@ -121,14 +119,14 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
 
   const directoryColumns = [
     {
-      title: '目录名',
-      dataIndex: 'name',
-      key: 'name',
-      render: (_: string, record: string) => <span>{record ? record : '/'}</span>,
+      title: "目录名",
+      dataIndex: "name",
+      key: "name",
+      render: (_: string, record: string) => <span>{record ? record : "/"}</span>,
     },
     {
-      title: '操作',
-      key: 'action',
+      title: "操作",
+      key: "action",
       render: (_: string, record: string) => (
         <Button type='link' onClick={handleDelete}>
           删除
@@ -154,7 +152,7 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
           columns={columns}
           dataSource={fileData}
           size='small'
-          rowKey={'name'}
+          rowKey={"name"}
           className='p-2'
         />
       </div>

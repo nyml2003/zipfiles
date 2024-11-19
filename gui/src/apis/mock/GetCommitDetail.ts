@@ -1,11 +1,10 @@
-import { GetCommitDetailRequest, GetCommitDetailResponse } from '../GetCommitDetail';
-import { backups, cachedCommitList } from './init';
+import { GetCommitDetailRequest, GetCommitDetailResponse } from "../GetCommitDetail";
+import { backups } from "./init";
 
 export function mock(request: GetCommitDetailRequest): GetCommitDetailResponse {
   const files = backups.get(request.uuid);
-  console.log(files);
   if (!files) {
-    throw new Error('no such commit');
+    throw new Error("no such commit");
   }
   return {
     files,

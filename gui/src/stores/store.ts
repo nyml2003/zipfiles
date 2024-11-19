@@ -1,7 +1,7 @@
-import { configureStore } from '@reduxjs/toolkit';
-import counterReducer from './counter/reducer';
-import CreateCommitReducer from './CreateCommitReducer';
-import NotificationReducer from './NotificationReducer';
+import { configureStore } from "@reduxjs/toolkit";
+import counterReducer from "./counter/reducer";
+import CreateCommitReducer from "./CreateCommitReducer";
+import NotificationReducer from "./NotificationReducer";
 
 const store = configureStore({
   reducer: {

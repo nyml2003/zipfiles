@@ -1,8 +1,8 @@
 import React, { useState, useEffect, Key, useContext } from "react";
-import { Tree, TreeProps } from "antd";
+import { FormInstance, Tree, TreeProps } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import { FileType } from "@/types";
-import { Context } from "./store/context";
+import { Context } from "./store";
 import useApi from "@useApi";
 import { GetFileListRequest, GetFileListResponse } from "@/apis/GetFileList";
 import { ApiEnum } from "@/apis";
@@ -43,7 +43,6 @@ const TreeMenu = () => {
         key: `${path}/${item.name}`,
       };
     });
-    console.log(newTreeData);
     setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
   };
   const updateTreeData = (
@@ -61,7 +60,7 @@ const TreeMenu = () => {
           children: newTreeData,
         };
       }
-      if (item.children) {
+      if (item.children && item.children.length > 0) {
         return {
           ...item,
           children: updateTreeData(item.children, path, newTreeData),
@@ -77,6 +76,9 @@ const TreeMenu = () => {
       if (!info.node.isLeaf) {
         actions.updatePath(selectedKeys[0].toString());
       }
+    } else {
+      actions.updateFile(selectedKeys[0].toString());
+      // form.setFieldsValue({ path: selectedKeys[0].toString() });
     }
     setLastClickTime(currentTime);
   };
@@ -95,7 +97,7 @@ const TreeMenu = () => {
       onSelect={handleSelect}
       onExpand={handleExpand}
       expandedKeys={expandedKeys}
-      className='whitespace-nowrap bg-white grow-item min-h-32'
+      className='whitespace-nowrap grow-item h-96 bg-gray-100'
     />
   );
 };
