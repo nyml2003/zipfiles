@@ -1,22 +1,21 @@
-import { Button } from 'antd';
-import { PlainText as PlainTextProps } from './types';
-import React from 'react';
+import { PlainText as PlainTextProps } from "./types";
+import React from "react";
 import {
   CheckCircleOutlined,
   InfoCircleOutlined,
   ExclamationCircleOutlined,
   CloseCircleOutlined,
-} from '@ant-design/icons';
+} from "@ant-design/icons";
 const PlainText = ({ text, state, description, id }: PlainTextProps) => {
   const renderIcon = (type: string) => {
     switch (type) {
-      case 'success':
+      case "success":
         return <CheckCircleOutlined className='text-green-500 text-lg ' />;
-      case 'info':
+      case "info":
         return <InfoCircleOutlined className='text-blue-500 text-lg' />;
-      case 'warning':
+      case "warning":
         return <ExclamationCircleOutlined className='text-yellow-500 text-lg' />;
-      case 'error':
+      case "error":
         return <CloseCircleOutlined className='text-red-500 text-lg' />;
       default:
         return null;

@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Button, Popconfirm, Space, Table } from "antd";
 import type { TableColumnsType } from "antd";
-import { ApiEnum } from "@/apis";
+import {
+  GetCommitRecycleBinRequest,
+  GetCommitRecycleBinResponse,
+} from "@/apis/GetCommitRecycleBin";
 import useApi from "@useApi";
-import { GetCommitListRequest, GetCommitListResponse } from "@/apis/GetCommitList";
-import { LogicDeleteCommitRequest, LogicDeleteCommitResponse } from "@/apis/LogicDeleteCommit";
+import { ApiEnum } from "@/apis";
+import { PhysicalDeleteCommitRequest, PhysicalDeleteCommitResponse } from "@/apis/PhysicalDeleteCommit";
 interface CommitLog {
   uuid: string;
   message: string;
@@ -16,12 +19,7 @@ interface CommitLog {
 }
 type DataType = CommitLog;
 
-interface ExplorerProps {
-  openExplorer: (uuid: string) => void;
-  openRestore: (uuid: string, isEncrypt: boolean) => void;
-}
-
-const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => {
+const RecycleBin = () => {
   const api = useApi();
   const [data, setData] = useState<DataType[]>([]);
   const columns: TableColumnsType<DataType> = [
@@ -31,34 +29,19 @@ const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => 
       key: "operation",
       render: (_, record) => (
         <Space>
-          <Button
-            onClick={() => {
-              if (!record.uuid) return;
-              openExplorer(record.uuid);
-            }}>
-            查看
-          </Button>
-          <Button
-            onClick={() => {
-              if (!record.uuid) return;
-              openRestore(record.uuid, record.isEncrypt);
-            }}>
-            还原
-          </Button>
           <Popconfirm
-            title='确认删除？'
+            title={<div className='text-red-500'>删除后不可恢复，确认删除？</div>}
             onConfirm={() => {
               if (!record.uuid) return;
               deleteCommit(record.uuid);
               setData(data.filter(item => item.uuid !== record.uuid));
             }}>
-            <Button>删除</Button>
+            <Button danger type="primary">彻底删除</Button>
           </Popconfirm>
         </Space>
       ),
       ellipsis: true,
       align: "center",
-      fixed: "left",
     },
     {
       title: "ID",
@@ -120,7 +103,10 @@ const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => 
   ];
   const fetchData = () => {
     api
-      .request<GetCommitListRequest, GetCommitListResponse>(ApiEnum.GetCommitList, {})
+      .request<GetCommitRecycleBinRequest, GetCommitRecycleBinResponse>(
+        ApiEnum.GetCommitRecycleBin,
+        {},
+      )
       .then(res => {
         setData(res.commits);
       });
@@ -130,12 +116,13 @@ const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => 
     fetchData();
   }, []);
 
-  const deleteCommit = async(commitId: string) => {
+  const deleteCommit = async (commitId: string) => {
     await api
-      .request<LogicDeleteCommitRequest, LogicDeleteCommitResponse>(ApiEnum.LogicDeleteCommit, {
+      .request<PhysicalDeleteCommitRequest, PhysicalDeleteCommitResponse>(ApiEnum.PhysicalDeleteCommit, {
         commitId,
-      })
-      ;
+      });
+    
+    setData(data.filter(item => item.uuid !== commitId));
   };
 
   return (
@@ -152,4 +139,4 @@ const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => 
   );
 };
 
-export default CommitTable;
+export default RecycleBin;

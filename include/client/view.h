@@ -34,6 +34,19 @@ void handleError(
   std::optional<Api> api = std::nullopt
 );
 
+void handleClientError(
+  const std::string& uuid,
+  const std::string& message,
+  Api api
+);
+
+void SendLocalResponse(
+  const Json::Value& root,
+  Api api,
+  const std::string& uuid,
+  Code code
+);
+
 void handleNotify(const std::string& message);
 
 void handleNotify(const std::string& message, Code code);
@@ -54,7 +67,17 @@ void handleFunction(
   gpointer user_data
 );
 
-// void handleLocalResponse(const ReqPtr& request);
+void handleUpdateConfig(
+  WebKitUserContentManager* manager,
+  WebKitJavascriptResult* js_result,
+  gpointer user_data
+);
+
+void handleReadConfig(
+  WebKitUserContentManager* manager,
+  WebKitJavascriptResult* js_result,
+  gpointer user_data
+);
 
 void handleProcedureLog(
   WebKitUserContentManager* manager,

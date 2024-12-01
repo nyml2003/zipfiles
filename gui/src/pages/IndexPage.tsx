@@ -1,9 +1,9 @@
-import React from 'react';
-import { useOutletContext } from 'react-router-dom';
+import React from "react";
+import { useOutletContext } from "react-router-dom";
 
 const WelcomePage = () => {
   const outletContext : { openTour: () => void } = useOutletContext();
-  const openTour = outletContext && outletContext.openTour || (() => { throw new Error('openTour is not defined'); });
+  const openTour = outletContext && outletContext.openTour || (() => { throw new Error("openTour is not defined"); });
   return (
     <div className='grow-item h-full flex items-center justify-center bg-gray-50'>
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>

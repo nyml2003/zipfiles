@@ -1,18 +1,18 @@
-import React from 'react';
-import FileList from './FileList';
-import BackupOption from './BackupOption';
-import { Tabs, TabsProps } from 'antd';
-import Explorer from './Explorer';
+import React from "react";
+import FileList from "./FileList";
+import BackupOption from "./BackupOption";
+import { Tabs, TabsProps } from "antd";
+import Explorer from "./Explorer";
 
 const NewCommit: React.FC = () => {
-  const [activeKey, setActiveKey] = React.useState('1');
+  const [activeKey, setActiveKey] = React.useState("1");
   const addExplorer = () => {
-    setPanes((prev: TabsProps['items']) => {
+    setPanes((prev: TabsProps["items"]) => {
       if (!prev) {
         return [
           {
-            label: '新建备份列表',
-            key: '1',
+            label: "新建备份列表",
+            key: "1",
             children: (
               <>
                 <FileList addExplorer={addExplorer} />
@@ -20,13 +20,13 @@ const NewCommit: React.FC = () => {
               </>
             ),
             closable: false,
-            className: 'grow-item',
+            className: "grow-item",
           },
           {
-            label: '浏览文件',
-            key: '2',
+            label: "浏览文件",
+            key: "2",
             children: <Explorer />,
-            className: 'grow-item',
+            className: "grow-item",
           },
         ];
       }
@@ -35,18 +35,18 @@ const NewCommit: React.FC = () => {
       return [
         ...prev,
         {
-          label: '浏览文件',
+          label: "浏览文件",
           key: newKey,
           children: <Explorer />,
-          className: 'grow-item',
+          className: "grow-item",
         },
       ];
     });
   };
-  const [panes, setPanes] = React.useState<TabsProps['items']>([
+  const [panes, setPanes] = React.useState<TabsProps["items"]>([
     {
-      label: '新建备份列表',
-      key: '1',
+      label: "新建备份列表",
+      key: "1",
       children: (
         <>
           <FileList addExplorer={addExplorer} />
@@ -54,20 +54,20 @@ const NewCommit: React.FC = () => {
         </>
       ),
       closable: false,
-      className: 'grow-item',
+      className: "grow-item",
     },
   ]);
 
   const handleEdit = (
     e: React.MouseEvent | React.KeyboardEvent | string,
-    action: 'add' | 'remove',
+    action: "add" | "remove",
   ) => {
     if (!panes) {
       return;
     }
-    if (action === 'remove') {
+    if (action === "remove") {
       const newPanes = panes.filter(pane => pane.key !== e);
-      setActiveKey(newPanes.length > 0 ? newPanes[newPanes.length - 1].key : '');
+      setActiveKey(newPanes.length > 0 ? newPanes[newPanes.length - 1].key : "");
       setPanes(newPanes);
     }
   };

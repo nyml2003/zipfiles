@@ -7,6 +7,9 @@
 #include "mp/Notification.h"
 #include "mp/Response.h"
 #include "mp/common.h"
+
+#include <fstream>
+
 namespace zipfiles::client {
 bool isProcedureValid(JSCValue* value) {
   /*
@@ -49,6 +52,33 @@ void handleError(
   sendResponse(
     Res(response::NoResponse({}), Api::NORESPONSE, uuid, code, message).toJson()
   );
+}
+
+void handleClientError(
+  const std::string& uuid,
+  const std::string& message,
+  Api api
+) {
+  Json::Value root;
+  root["api"] = static_cast<int>(api);
+  root["uuid"] = uuid;
+  root["code"] = static_cast<int>(Code::CLIENT_ERROR);
+  root["message"] = message;
+  sendResponse(root);
+}
+
+void SendLocalResponse(
+  const Json::Value& root,
+  Api api,
+  const std::string& uuid,
+  Code code
+) {
+  Json::Value res;
+  res["api"] = static_cast<int>(api);
+  res["uuid"] = uuid;
+  res["code"] = static_cast<int>(code);
+  res["payload"] = root;
+  sendResponse(res);
 }
 
 void sendResponse(const Json::Value& root) {
@@ -216,6 +246,91 @@ void handleFunction(
       static_cast<Api>(jsc_value_to_int32(api))
     );
   }
+}
+
+void handleUpdateConfig(
+  [[maybe_unused]] WebKitUserContentManager* manager,
+  WebKitJavascriptResult* js_result,
+  [[maybe_unused]] gpointer user_data
+) {
+  JSCValue* value = webkit_javascript_result_get_js_value(js_result);
+  JSCValue* uuid = jsc_value_object_get_property(value, "uuid");
+  std::string _uuid = jsc_value_to_string(uuid);
+  JSCValue* api = jsc_value_object_get_property(value, "api");
+  Api _api = static_cast<Api>(jsc_value_to_int32(api));
+  JSCValue* request = jsc_value_object_get_property(value, "request");
+  Json::Reader reader;
+  Json::Value root;
+  // 读取CONFIGURE_PATH
+  std::ifstream in(CONFIGURE_PATH);
+  if (!in.is_open()) {
+    handleClientError(_uuid, "Failed in opening config", _api);
+    return;
+  }
+
+  if (!reader.parse(in, root, false)) {
+    handleClientError(_uuid, "Failed in parsing config", _api);
+    return;
+  }
+
+  if (!root.isObject()) {
+    return;
+  }
+
+  JSCValue* ip = jsc_value_object_get_property(request, "ip");
+  if (ip && !jsc_value_is_null(ip) && jsc_value_is_undefined(ip)) {
+    root["ip"] = jsc_value_to_string(ip);
+  }
+  JSCValue* defaultBackupPath =
+    jsc_value_object_get_property(request, "defaultBackupPath");
+  if (defaultBackupPath && !jsc_value_is_null(defaultBackupPath) &&
+      !jsc_value_is_undefined(defaultBackupPath)) {
+    root["defaultBackupPath"] = jsc_value_to_string(defaultBackupPath);
+  }
+
+  std::ofstream out(CONFIGURE_PATH);
+  if (!out.is_open()) {
+    handleClientError(_uuid, "Failed in opening config", _api);
+    return;
+  }
+  out << root;
+  out.close();
+  Json::Value nullJson;
+  SendLocalResponse(nullJson, _api, _uuid, Code::OK);
+}
+
+void handleReadConfig(
+  WebKitUserContentManager* manager,
+  WebKitJavascriptResult* js_result,
+  gpointer user_data
+) {
+  JSCValue* value = webkit_javascript_result_get_js_value(js_result);
+  JSCValue* uuid = jsc_value_object_get_property(value, "uuid");
+  std::string _uuid = jsc_value_to_string(uuid);
+  JSCValue* api = jsc_value_object_get_property(value, "api");
+  Api _api = static_cast<Api>(jsc_value_to_int32(api));
+  Json::Reader reader;
+  Json::Value root;
+  // 读取CONFIGURE_PATH
+  std::ifstream in(CONFIGURE_PATH);
+  if (!in.is_open()) {
+    handleClientError(_uuid, "Failed in opening config", _api);
+    return;
+  }
+
+  if (!reader.parse(in, root, false)) {
+    handleClientError(_uuid, "Failed in parsing config", _api);
+    return;
+  }
+
+  if (!root.isObject()) {
+    return;
+  }
+
+  Json::Value res;
+  res["ip"] = root["ip"];
+  res["defaultBackupPath"] = root["defaultBackupPath"];
+  SendLocalResponse(res, _api, _uuid, Code::OK);
 }
 
 }  // namespace zipfiles::client

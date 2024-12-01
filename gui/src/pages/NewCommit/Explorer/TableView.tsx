@@ -1,19 +1,19 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Checkbox, Table } from 'antd';
-import type { TableColumnsType } from 'antd';
-import { ApiEnum } from '@/apis';
-import { FileType, FileTypeToString } from '@/types';
-import { FileFilled, FolderFilled } from '@ant-design/icons';
-import { GetFileDetailListRequest, GetFileDetailListResponse } from '@/apis/GetFileDetailList';
-import useApi from '@useApi';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/stores/store';
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Checkbox, Table } from "antd";
+import type { TableColumnsType } from "antd";
+import { ApiEnum } from "@/apis";
+import { FileType, FileTypeToString } from "@/types";
+import { FileFilled, FolderFilled } from "@ant-design/icons";
+import { GetFileDetailListRequest, GetFileDetailListResponse } from "@/apis/GetFileDetailList";
+import useApi from "@useApi";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/stores/store";
 import {
   addSelectedDirectory,
   addSelectedFile,
   removeSelectedFile,
   removeSelectedDirectory,
-} from '@/stores/CreateCommitReducer';
+} from "@/stores/CreateCommitReducer";
 interface FileDetail {
   name: string;
   type: FileType;
@@ -103,29 +103,29 @@ const TableView: React.FC = () => {
   const columns: TableColumnsType<DataType> = [
     {
       title: renderDirectoryCheckbox(),
-      dataIndex: 'operation',
-      key: 'operation',
+      dataIndex: "operation",
+      key: "operation",
       render: (text, record: DataType) => {
         return renderFileCheckbox(text, record);
       },
-      align: 'center',
+      align: "center",
       ellipsis: true,
     },
     {
-      title: '文件名',
-      dataIndex: 'name',
+      title: "文件名",
+      dataIndex: "name",
 
-      key: 'name',
+      key: "name",
       render: text => {
         return <a>{text}</a>;
       },
       ellipsis: true,
     },
     {
-      title: '类型',
-      dataIndex: 'type',
+      title: "类型",
+      dataIndex: "type",
       ellipsis: true,
-      key: 'type',
+      key: "type",
       render: text => {
         if (text === FileType.Directory) {
           return <FolderFilled />;
@@ -137,9 +137,9 @@ const TableView: React.FC = () => {
       },
     },
     {
-      title: '创建时间',
-      dataIndex: 'createTime',
-      key: 'createTime',
+      title: "创建时间",
+      dataIndex: "createTime",
+      key: "createTime",
       ellipsis: true,
       render: text => {
         return text ? (
@@ -150,9 +150,9 @@ const TableView: React.FC = () => {
       },
     },
     {
-      title: '更新时间',
-      dataIndex: 'updateTime',
-      key: 'updateTime',
+      title: "更新时间",
+      dataIndex: "updateTime",
+      key: "updateTime",
       ellipsis: true,
       render: text => {
         return text ? (
@@ -163,9 +163,9 @@ const TableView: React.FC = () => {
       },
     },
     {
-      title: '大小',
-      dataIndex: 'size',
-      key: 'size',
+      title: "大小",
+      dataIndex: "size",
+      key: "size",
       ellipsis: true,
       render: text => {
         if (text === undefined) return <span>加载中...</span>;
@@ -174,27 +174,27 @@ const TableView: React.FC = () => {
       },
     },
     {
-      title: '所有者',
-      dataIndex: 'owner',
-      key: 'owner',
+      title: "所有者",
+      dataIndex: "owner",
+      key: "owner",
       ellipsis: true,
       render: text => {
         return text ? <span>{text}</span> : <span>加载中...</span>;
       },
     },
     {
-      title: '组',
-      dataIndex: 'group',
-      key: 'group',
+      title: "组",
+      dataIndex: "group",
+      key: "group",
       ellipsis: true,
       render: text => {
         return text ? <span>{text}</span> : <span>加载中...</span>;
       },
     },
     {
-      title: '权限',
-      dataIndex: 'mode',
-      key: 'mode',
+      title: "权限",
+      dataIndex: "mode",
+      key: "mode",
       ellipsis: true,
       render: text => {
         return text ? <span>{text}</span> : <span>加载中...</span>;
@@ -223,21 +223,21 @@ const TableView: React.FC = () => {
     // 确保表格已经被渲染
     if (tableRef && tableRef.current) {
       const rows = (tableRef.current as HTMLDivElement).ownerDocument.querySelectorAll(
-        '.ant-table-row',
+        ".ant-table-row",
       );
       rows.forEach(row => {
-        const prefix = currentPath === '/' ? '' : currentPath;
-        const absoluteRowPath = `${prefix}/${row.getAttribute('data-row-key')}`;
+        const prefix = currentPath === "/" ? "" : currentPath;
+        const absoluteRowPath = `${prefix}/${row.getAttribute("data-row-key")}`;
         if (filename.startsWith(absoluteRowPath)) {
           // 滚动到对应行
-          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          row.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       });
     }
   };
 
   useEffect(() => {
-    if (currentFile === '') return;
+    if (currentFile === "") return;
     scrollToRow(currentFile);
   }, [currentFile]);
 
@@ -249,11 +249,11 @@ const TableView: React.FC = () => {
       pagination={false}
       className='overflow-auto fade-in-down'
       size='small'
-      rowKey={'name'}
+      rowKey={"name"}
       rowClassName={record => {
-        const prefix = currentPath === '/' ? '' : currentPath;
+        const prefix = currentPath === "/" ? "" : currentPath;
         const absoluteRowPath = `${prefix}/${record.name}`;
-        return currentFile.startsWith(absoluteRowPath) ? 'bg-gray-200' : '';
+        return currentFile.startsWith(absoluteRowPath) ? "bg-gray-200" : "";
       }}
     />
   );

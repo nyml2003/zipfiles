@@ -27,8 +27,8 @@ const Explorer: React.FC = () => {
     actions.updateFiles(res.files);
   };
 
-  useEffect(async() => {
-    await fetchData();
+  useEffect(() => {
+    fetchData();
   }, []);
 
   const breadcrumbItems = useMemo(() => {

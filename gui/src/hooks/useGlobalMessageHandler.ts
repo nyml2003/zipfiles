@@ -4,7 +4,6 @@ import { Code, RequestWrapper, ResponseWrapper, Notification, isNotification, is
 import { useDispatch } from "react-redux";
 import { addNotification, finishMessage } from "@/stores/NotificationReducer";
 import { PlainText } from "@/components/NotificationList/types";
-import { notification } from "antd";
 
 export interface CallBack {
   request: RequestWrapper;

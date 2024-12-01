@@ -1,135 +1,102 @@
 import React, { useEffect, useState } from "react";
-import { CommitRestore as CommitRestoreProps, CommitRestoreProgress } from "./types";
-import { Button, Space, Steps } from "antd";
-import { FileType } from "@/types";
+import { CommitRestore as CommitRestoreProps } from "./types";
+import Button from "@/components/Button";
+import { Code } from "@/hooks/useApi/types";
 import { ApiEnum } from "@/apis";
 import useApi from "@useApi";
-import { useDispatch } from "react-redux";
-import { updateProgress } from "@/stores/NotificationReducer";
-import { StepsProps } from "antd/lib";
-import { CheckCircleOutlined, LoadingOutlined, StopOutlined } from "@ant-design/icons";
-import { Code } from "@/hooks/useApi/types";
 import { RestoreRequest, RestoreResponse } from "@/apis/Restore";
-
-interface File {
-  name: string;
-  type: FileType;
-}
-
-const progresses: CommitRestoreProgress[] = [CommitRestoreProgress.Finish];
-
-const CommitRestore = ({ progress, password, id, result, commitId, path }: CommitRestoreProps) => {
-  const dispatch = useDispatch();
-  const [backupFiles, setBackupFiles] = useState<string[]>([]);
-
-  const api = useApi();
-
-  const [steps, setSteps] = useState<StepsProps["items"]>([
-    {
-      title: "确认请求",
-      description: (
-        <div>
-          <div>提交ID: {commitId}</div>
-          <div>路径: {path}</div>
-          <div>密钥: {password}</div>
+import { Step, StepProps } from "../Step/Step";
+const RestoreInfo = ({
+  commitId,
+  path,
+}: {
+  commitId: string;
+  path: string;
+}) => {
+  return (
+    <div>
+      <div className='text-lg font-semibold mb-2'>请确认还原信息</div>
+      <div className='mb-2'>
+        <label htmlFor='commit-id' className='block text-sm font-medium text-gray-600 mb-1'>
+          Commit ID:
+        </label>
+        <div id='commit-id' className='bg-gray-100 rounded px-2 py-1 text-sm font-semibold'>
+          {commitId}
         </div>
-      ),
-    },
-    {
-      title: "发送请求",
-    },
-    {
-      title: "还原",
-    },
-  ]);
+      </div>
+      <div className='mb-2'>
+        <label htmlFor='path' className='block text-sm font-medium text-gray-600 mb-1'>
+          Path:
+        </label>
+        <div id='path' className='bg-gray-100 rounded px-2 py-1 text-sm font-semibold'>
+          {path}
+        </div>
+      </div>
+    </div>
+  );
+};
+const CommitRestore = ({ password, id, result, commitId, path }: CommitRestoreProps) => {
+  const api = useApi();
+  const [confirmRequest, setConfirmRequest] = useState<StepProps>({
+    title: "确认请求",
+    status: "running",
+    description: RestoreInfo({ commitId, path}),
+  });
+
+  const [restoreRequest, setRestoreRequest] = useState<StepProps>({
+    title: "还原",
+    status: "pending",
+  });
 
   const restore = async () => {
-    setSteps(prev => {
-      if (!prev) return prev;
-      prev[1].description = "正在发送还原备份请求...";
-      prev[1].status = "process";
-      prev[1].icon = <LoadingOutlined />;
-      return [...prev];
-    });
     const key = password ? { key: password } : {};
-    const res = await api.request<RestoreRequest, RestoreResponse>(ApiEnum.Restore, {
+    setRestoreRequest(prev => {
+      return { ...prev, status: "running", description: "正在发送还原请求" };
+    });
+    await api.request<RestoreRequest, RestoreResponse>(ApiEnum.Restore, {
       commitId,
       path,
       messageId: id,
       ...key,
     });
-    setSteps(prev => {
-      if (!prev) return prev;
-      prev[1].description = "请求已收到, 正在还原备份...";
-      prev[1].status = "finish";
-      prev[1].icon = <CheckCircleOutlined />;
-      prev[2].description = "还原中";
-      prev[2].status = "process";
-      prev[2].icon = <LoadingOutlined />;
-      return [...prev];
+    setRestoreRequest(prev => {
+      return { ...prev, description: "还原中" };
     });
-  };
-
-  const nextProgress = async () => {
-    await restore();
-    dispatch(updateProgress({ id, progress: progresses[progress + 1] }));
-  };
-
-  const cancel = () => {
-    dispatch(updateProgress({ id, progress: CommitRestoreProgress.Cancel }));
   };
 
   useEffect(() => {
     if (!result) return;
     if (result.code === Code.RESTORE_SUCCESS) {
-      setSteps(prev => {
-        if (!prev) return prev;
-        prev[2].description = "还原成功";
-        prev[2].status = "finish";
-        prev[2].icon = <CheckCircleOutlined />;
-        return [...prev];
+      setRestoreRequest(prev => {
+        return { ...prev, status: "completed", description: "还原完成" };
       });
     }
     if (result.code === Code.RESTORE_FAILED) {
-      setSteps(prev => {
-        if (!prev) return prev;
-        prev[2].description = "还原失败";
-        prev[2].status = "error";
-        prev[2].icon = <StopOutlined />;
-        return [...prev];
+      setRestoreRequest(prev => {
+        return { ...prev, status: "failed", description: result.message };
       });
     }
   }, [result]);
 
-  return progress !== CommitRestoreProgress.Cancel ? (
-    <div>
-      <Steps current={progress} size='small' direction='vertical' items={steps} />
-      {progress !== CommitRestoreProgress.Finish && (
-        <div className='absolute bottom-2 right-2'>
-          <Space>
-            <Button type='text' size='small' onClick={cancel}>
-              取消
-            </Button>
-            <Button type='primary' size='small' onClick={nextProgress}>
-              继续
-            </Button>
-          </Space>
-        </div>
-      )}
+  const execute = async () => {
+    setStart(true);
+    setConfirmRequest(prev => {
+      return { ...prev, status: "completed" };
+    });
+    await restore();
+  };
+  const [start, setStart] = useState<boolean>(false);
+  return (
+    <div className='grow-item split-container-col div-2'>
+      <Step {...confirmRequest} />
+      <Step {...restoreRequest} />
+
+      <div className='flex space-x-2 justify-end'>
+        <Button onClick={() => execute()} disabled={start} variant='confirm' visible={!start}>
+          Next
+        </Button>
+      </div>
     </div>
-  ) : (
-    <Steps
-      current={0}
-      size='small'
-      direction='vertical'
-      items={[
-        {
-          title: "取消",
-          description: "取消提交",
-          status: "error",
-        },
-      ]}
-    />
   );
 };
 

@@ -1,10 +1,9 @@
 import React, { useState, useEffect, Key, useContext } from "react";
-import { FormInstance, Tree, TreeProps } from "antd";
+import { Tree, TreeProps } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import { FileType } from "@/types";
 import { Context } from "./store";
 import useApi from "@useApi";
-import { GetFileListRequest, GetFileListResponse } from "@/apis/GetFileList";
 import { ApiEnum } from "@/apis";
 import { GetFileDetailListRequest, GetFileDetailListResponse } from "@/apis/GetFileDetailList";
 const { DirectoryTree } = Tree;
@@ -37,7 +36,6 @@ const TreeMenu = () => {
       { path, filter: { type: FileType.Directory } },
     );
     const newTreeData = res.files.map(item => {
-      const isDirectory = item.type === FileType.Directory;
       return {
         title: item.name,
         key: `${path}/${item.name}`,

@@ -4,7 +4,7 @@
     "target": "ESNext",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "allowJs": false,
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
     "strict": true,
@@ -13,10 +13,14 @@
     "moduleResolution": "Node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
-    "skipDefaultLibCheck": true,
-    "jsx": "react-jsx", // react18这里也可以改成react-jsx
+    "strictNullChecks": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noEmit": false,
+    "jsx": "react-jsx",
     "baseUrl": ".",
+    "rootDir": "./src",
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "paths": {
       "@/*": [
         "src/*"
@@ -26,6 +30,9 @@
       ]
     }
   },
-  "include": ["src**/*"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "test/**/*"
+  ]
 }

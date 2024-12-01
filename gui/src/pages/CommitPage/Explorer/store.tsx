@@ -41,7 +41,6 @@ const reducers = {
   },
 
   updateFile: (state: State, payload: string) => {
-    console.log("updateFile", state, payload);
     state.file = payload;
   },
 

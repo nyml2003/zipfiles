@@ -26,12 +26,14 @@ void loadDistUri() {
 }
 
 void bindJS(WebKitUserContentManager* manager) {
-  std::array<Handler, 5> handlers = {{
+  std::array<Handler, 7> handlers = {{
     {"function", reinterpret_cast<GCallback>(handleFunction)},
     {"log", reinterpret_cast<GCallback>(handleProcedureLog)},
     {"error", reinterpret_cast<GCallback>(handleProcedureError)},
     {"info", reinterpret_cast<GCallback>(handleProcedureInfo)},
     {"warn", reinterpret_cast<GCallback>(handleProcedureWarn)},
+    {"updateConfig", reinterpret_cast<GCallback>(handleUpdateConfig)},
+    {"readConfig", reinterpret_cast<GCallback>(handleReadConfig)},
   }};
 
   for (const auto& handler : handlers) {

@@ -90,9 +90,15 @@ importers:
       '@svgr/webpack':
         specifier: ^8.1.0
         version: 8.1.0(typescript@5.6.3)
+      '@types/css-modules':
+        specifier: ^1.0.5
+        version: 1.0.5
       '@types/jest':
         specifier: ^29.5.14
         version: 29.5.14
+      '@types/less':
+        specifier: ^3.0.7
+        version: 3.0.7
       '@types/lodash':
         specifier: ^4.17.13
         version: 4.17.13
@@ -1516,6 +1522,9 @@ packages:
   '@types/cors@2.8.17':
     resolution: {integrity: sha512-8CGDvrBj1zgo2qE+oS3pOCyYNqCPryMWY2bGfwA0dcfopWGgxs+78df0Rs3rc9THP4JkOhLsAa+15VdpAqkcUA==}
 
+  '@types/css-modules@1.0.5':
+    resolution: {integrity: sha512-oeKafs/df9lwOvtfiXVliZsocFVOexK9PZtLQWuPeuVCFR7jwiqlg60lu80JTe5NFNtH3tnV6Fs/ySR8BUPHAw==}
+
   '@types/eslint-scope@3.7.7':
     resolution: {integrity: sha512-MzMFlSLBqNF2gcHWO0G1vP/YQyfvrxZ0bF+u7mzUdZ1/xK4A4sru+nraZz5i3iEIk1l1uyicaDVTB4QbbEkAYg==}
 
@@ -1563,6 +1572,9 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
+
+  '@types/less@3.0.7':
+    resolution: {integrity: sha512-+SD1DrM8EwJsilPFSR1IMMGWOTg5sO1waewoJ1k3BHCvU07zQThy8t2wTfxvHz//R0uK3koAUl9WbWwal0H+YA==}
 
   '@types/lodash@4.17.13':
     resolution: {integrity: sha512-lfx+dftrEZcdBPczf9d0Qv0x+j/rfNCMuC6OcfXmO8gkfeNAY88PgKUbvG56whcN23gc27yenwF6oJZXGFpYxg==}
@@ -8214,6 +8226,8 @@ snapshots:
     dependencies:
       '@types/node': 18.19.63
 
+  '@types/css-modules@1.0.5': {}
+
   '@types/eslint-scope@3.7.7':
     dependencies:
       '@types/eslint': 9.6.1
@@ -8280,6 +8294,8 @@ snapshots:
       pretty-format: 29.7.0
 
   '@types/json-schema@7.0.15': {}
+
+  '@types/less@3.0.7': {}
 
   '@types/lodash@4.17.13': {}
 

@@ -45,3 +45,10 @@ export const cachedCommitList: CommitLog[] = [];
 Array.from({ length: 10 }).forEach(() =>
   mockPostCommit(pickFiles(cachedFileRoot.children).map(file => file.path + "/" + file.name), cachedCommitList, backups, cachedFileRoot),
 );
+
+export let config = {
+  ip: "127.0.0.1",
+  defaultBackupPath: "/usr/local/zipfiles",
+  port: 8080,
+  version: "1.0.0",
+};

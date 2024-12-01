@@ -1,13 +1,14 @@
-import { createHashRouter, Navigate, RouteObject } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
-import React from 'react';
-const NewCommit = lazy(() => import('@/pages/NewCommit'));
-const CommitPage = lazy(() => import('@/pages/CommitPage'));
-const Fallback = lazy(() => import('@/components/Fallback'));
-const IndexPage = lazy(() => import('@/pages/IndexPage'));
-const EntryLayout = lazy(() => import('@/layouts/EntryLayout'));
-const NotFound = lazy(() => import('@/components/NotFound'));
-const TestPage = lazy(() => import('@/pages/TestPage'));
+import { createHashRouter, Navigate, RouteObject } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import React from "react";
+import ConfigPage from "@/pages/ConfigPage";
+const NewCommit = lazy(() => import("@/pages/NewCommit"));
+const CommitPage = lazy(() => import("@/pages/CommitPage"));
+const Fallback = lazy(() => import("@/components/Fallback"));
+const IndexPage = lazy(() => import("@/pages/IndexPage"));
+const EntryLayout = lazy(() => import("@/layouts/EntryLayout"));
+const NotFound = lazy(() => import("@/components/NotFound"));
+const TestPage = lazy(() => import("@/pages/TestPage"));
 
 const fallbackWrapper = (component: React.ReactNode) => {
   return <Suspense fallback={<Fallback />}>{component}</Suspense>;
@@ -15,31 +16,35 @@ const fallbackWrapper = (component: React.ReactNode) => {
 
 const routes: RouteObject[] = [
   {
-    path: '/*',
+    path: "/*",
     element: fallbackWrapper(<EntryLayout />),
     children: [
       {
-        path: '',
+        path: "",
         element: <Navigate to='/index' />,
       },
       {
-        path: 'index',
+        path: "index",
         element: fallbackWrapper(<IndexPage />),
       },
       {
-        path: 'commit_history',
+        path: "commit_history",
         element: fallbackWrapper(<CommitPage />),
       },
       {
-        path: 'new_commit',
+        path: "new_commit",
         element: fallbackWrapper(<NewCommit />),
       },
       {
-        path: 'test',
+        path: "setting",
+        element: fallbackWrapper(<ConfigPage />),
+      },
+      {
+        path: "test",
         element: fallbackWrapper(<TestPage />),
       },
       {
-        path: '*',
+        path: "*",
         element: fallbackWrapper(<NotFound />),
       },
     ],

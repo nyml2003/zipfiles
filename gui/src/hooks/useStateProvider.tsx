@@ -5,7 +5,7 @@ type Reducer<State> = (state: State, ...args: any[]) => void;
 
 type Action<Args extends any[]> = (...args: Args) => void;
 
-type WithoutFirstArgument<F> = F extends (...args: infer A) => any
+type WithoutFirstArgument<F, R=void> = F extends (...args: infer A) => R
   ? A extends [infer _, ...infer Rest]
     ? Rest
     : []

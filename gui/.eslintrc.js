@@ -42,8 +42,10 @@ module.exports = {
     'no-multi-spaces': 1, // 禁止使用多个空格
     radix: 1, // 强制在parseInt()使用基数参数
     // 'no-unused-vars': 'warn',
-    'no-unused-vars': 'off',
-    "@typescript-eslint/no-unused-vars": ["off"],
+    // export不检查
+    'no-unused-vars': ["error", { "args": "none" }],
+
+    "@typescript-eslint/no-unused-vars": ["error", { "args": "none" }],
     /**
      * 变量声明
      */
@@ -78,10 +80,6 @@ module.exports = {
     'prefer-arrow-callback': 2, // 要求回调函数使用箭头函数
     'prefer-const': 2, // 使用 const 声明那些声明后不再被修改的变量
     'prefer-rest-params': 2, // 要求使用剩余参数而不是 arguments
-    /**
-     * vue
-     */
-    'vue/valid-v-model': 0,
   },
   settings: {
     // 让eslint自己检测react版本

@@ -105,7 +105,7 @@ const App: React.FC = () => {
             </Content>
             <FootContent />
           </div>
-          <CSSTransition in={notificationVisible} timeout={500} classNames='fade' unmountOnExit>
+          <CSSTransition in={notificationVisible} timeout={500} classNames='fade' unmountOnExit={false}>
             <NotificationList />
           </CSSTransition>
         </Layout>

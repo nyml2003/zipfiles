@@ -1,5 +1,5 @@
 {
-    "name": "webpack5-ts-react18",
+    "name": "zipfile",
     "version": "1.0.0",
     "description": "",
     "scripts": {
@@ -33,7 +33,9 @@
         "@nuxt/friendly-errors-webpack-plugin": "^2.6.0",
         "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
         "@svgr/webpack": "^8.1.0",
+        "@types/css-modules": "^1.0.5",
         "@types/jest": "^29.5.14",
+        "@types/less": "^3.0.7",
         "@types/lodash": "^4.17.13",
         "@types/mockjs": "^1.0.10",
         "@types/node": "^18.19.63",

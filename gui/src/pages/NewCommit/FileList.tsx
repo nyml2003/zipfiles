@@ -1,12 +1,12 @@
-import {ApiEnum} from "@/apis";
-import {GetFileDetailRequest, GetFileDetailResponse} from "@/apis/GetFileDetail";
+import { ApiEnum } from "@/apis";
+import { GetFileDetailRequest, GetFileDetailResponse } from "@/apis/GetFileDetail";
 import useApi from "@useApi";
-import {clearSelectedDirectories, clearSelectedFiles} from "@/stores/CreateCommitReducer";
-import {RootState} from "@/stores/store";
-import {FileType} from "@/types";
-import {Button, Table} from "antd";
-import React, {useEffect} from "react";
-import {useDispatch, useSelector} from "react-redux";
+import { clearSelectedDirectories, clearSelectedFiles, removeSelectedDirectory } from "@/stores/CreateCommitReducer";
+import { RootState } from "@/stores/store";
+import { FileType } from "@/types";
+import { Button, Table } from "antd";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 const columns = [
   {
@@ -95,18 +95,15 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
     addExplorer();
   };
 
-  const handleDelete = () => {
-    console.log("删除");
+  const handleDelete = (record: string) => {
+    dispatch(removeSelectedDirectory(record));
   };
 
   const fetchFileDetail = async (path: string, name: string) => {
-    return await api.request<GetFileDetailRequest, GetFileDetailResponse>(
-        ApiEnum.GetFileDetail,
-        {
-          path,
-          name,
-        },
-    );
+    return await api.request<GetFileDetailRequest, GetFileDetailResponse>(ApiEnum.GetFileDetail, {
+      path,
+      name,
+    });
   };
 
   const handleFileClear = () => {
@@ -128,7 +125,7 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
       title: "操作",
       key: "action",
       render: (_: string, record: string) => (
-        <Button type='link' onClick={handleDelete}>
+        <Button type='link' onClick={() => handleDelete(record)}>
           删除
         </Button>
       ),

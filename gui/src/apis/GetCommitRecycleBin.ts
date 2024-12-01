@@ -8,8 +8,8 @@ interface CommitLog {
   isDelete: boolean;
 }
 
-export interface GetCommitListRequest {}
+export interface GetCommitRecycleBinRequest {}
 
-export interface GetCommitListResponse {
+export interface GetCommitRecycleBinResponse {
   commits: CommitLog[];
 }

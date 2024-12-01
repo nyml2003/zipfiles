@@ -39,7 +39,12 @@ enum class Code {
   RESTORE_SUCCESS = 403,     // 恢复成功
   RESTORE_FAILED = 404,      // 恢复失败
 };
-
+/**
+ * @brief: 定义所有的接口枚举
+ * 数字为1xx的为Remote Function
+ * 数字为2xx的为Local Function
+ * 数字为9x的为Mock Function
+ */
 enum class Api {
   ILLEAGAL = 0,    // ApiEnum为0的情况不合法
   NORESPONSE = 1,  // 请求途中发生错误，无法返回结果
@@ -52,6 +57,9 @@ enum class Api {
   GET_COMMIT_LIST = 104,
   GET_FILE_DETAIL = 105,
   RESTORE = 106,
+  LogicDeleteCommit = 107,
+  PhysicalDeleteCommit = 108,
+  GetCommitRecycleBin = 109,
 };
 
 }  // namespace zipfiles

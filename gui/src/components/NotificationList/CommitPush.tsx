@@ -1,28 +1,20 @@
-import React, {useEffect, useState} from "react";
-import {CommitPush as CommitPushProps, CommitPushProgress} from "./types";
-import {Button, Space, Steps} from "antd";
-import {FileType} from "@/types";
-import {GetFileListRequest, GetFileListResponse} from "@/apis/GetFileList";
-import {ApiEnum} from "@/apis";
+import React, { useEffect, useState } from "react";
+import { CommitPush as CommitPushProps } from "./types";
+import { FileType } from "@/types";
+import { GetFileListRequest, GetFileListResponse } from "@/apis/GetFileList";
+import { ApiEnum } from "@/apis";
 import useApi from "@useApi";
-import {PostCommitRequest, PostCommitResponse} from "@/apis/PostCommit";
-import {useDispatch} from "react-redux";
-import {updateProgress} from "@/stores/NotificationReducer";
-import {StepsProps} from "antd/lib";
-import {CheckCircleOutlined, LoadingOutlined, StopOutlined} from "@ant-design/icons";
-import {Code} from "@/hooks/useApi/types";
-
+import { PostCommitRequest, PostCommitResponse } from "@/apis/PostCommit";
+import { Step, StepProps } from "@/components/Step/Step";
+import Button from "@/components/Button";
+import { Code } from "@/hooks/useApi/types";
 interface File {
   name: string;
   type: FileType;
 }
 
-const progresses: CommitPushProgress[] = [CommitPushProgress.CollectingFiles, CommitPushProgress.PackingFiles, CommitPushProgress.Finish];
-
-const CommitPush = ({ progress, files, directories, options, id, result }: CommitPushProps) => {
-  const dispatch = useDispatch();
+const CommitPush = ({ files, directories, options, id, result }: CommitPushProps) => {
   const [backupFiles, setBackupFiles] = useState<string[]>([]);
-
   const api = useApi();
   const fetchFileList = async (path: string) => {
     const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
@@ -55,28 +47,7 @@ const CommitPush = ({ progress, files, directories, options, id, result }: Commi
     await Promise.all(promises);
     return allFiles;
   };
-
-  const [steps, setSteps] = useState<StepsProps["items"]>([
-    {
-      title: "收集文件",
-    },
-    {
-      title: "打包文件",
-    },
-    {
-      title: "完成",
-      description: "提交完成",
-    },
-  ]);
-
   const collectFiles = async () => {
-    setSteps(prev => {
-      if (!prev) return prev;
-      prev[0].description = "正在收集文件";
-      prev[0].status = "process";
-      prev[0].icon = <LoadingOutlined />;
-      return [...prev];
-    });
     const fileData = files.map(file => file.path + "/" + file.name);
     let dirData: string[] = [];
     const dirPromises = directories.map(async path => {
@@ -85,106 +56,98 @@ const CommitPush = ({ progress, files, directories, options, id, result }: Commi
     const dirResults = await Promise.all(dirPromises);
     dirData = dirResults.flat(); // 将所有目录的结果合并到 dirData
     setBackupFiles([...fileData, ...dirData]);
-    setSteps(prev => {
-      if (!prev) return prev;
-      prev[0].description = `共计${fileData.length + dirData.length}个文件`;
-      prev[0].status = "finish";
-      prev[0].icon = <CheckCircleOutlined />;
-      return [...prev];
-    });
   };
-
-  const backup = async () => {
-    setSteps(prev => {
-      if (!prev) return prev;
-      prev[1].description = "正在发送文件列表";
-      prev[1].status = "process";
-      prev[1].icon = <LoadingOutlined />;
-      return [...prev];
+  useEffect(() => {
+    if (!result) return;
+    if (result.code === Code.POSTCOMMIT_SUCCESS) {
+      setPackingFiles(prev => {
+        return {
+          ...prev,
+          status: "completed",
+          description: "备份完成",
+        };
+      });
+    }
+    if (result.code === Code.POSTCOMMIT_FAILED) {
+      setPackingFiles((prev) => {
+        return {
+          ...prev,
+          status: "failed",
+          description: result.message,
+        };
+      });
+    }
+  }, [result]);
+  const [collectingFiles, setCollectingFiles] = useState<StepProps>({
+    title: "统计",
+    status: "pending",
+  });
+  const [packingFiles, setPackingFiles] = useState<StepProps>({
+    title: "备份",
+    status: "pending",
+  });
+  const execute = async () => {
+    setStart(true);
+    setCollectingFiles((prev) => {
+      return {
+        ...prev,
+        status: "running",
+        description: "正在收集文件",
+      };
     });
+    await collectFiles();
     const request: PostCommitRequest = {
       files: backupFiles,
       ...options,
       uuid: id,
       createTime: Date.now(),
     };
+    setCollectingFiles((prev) => {
+      return {
+        ...prev,
+        status: "completed",
+        description: (
+          <div>
+            <div>备份信息如下, 正在打包中</div>
+            <div>提交的uuid为: {id}</div>
+            <div>提交的文件数为: {backupFiles.length}</div>
+            <div>提交的信息为: {options.message}</div>
+            <div>提交的作者为: {options.author}</div>
+            <div>提交的时间为: {request.createTime}</div>
+            <div>是否加密: {options.isEncrypt ? "是" : "否"}</div>
+            {options.isEncrypt && <input type='password' disabled value={options.key} />}
+          </div>
+        ),
+      };
+    });
+    setPackingFiles((prev) => {
+      return {
+        ...prev,
+        status: "running",
+        description: "发送文件中",
+      };
+    });
     await api.request<PostCommitRequest, PostCommitResponse>(ApiEnum.PostCommit, request);
-    setSteps(prev => {
-      if (!prev) return prev;
-      prev[1].description = `本次提交的uuid为${id}, 文件正在备份中`;
-      prev[1].status = "finish";
-      prev[1].icon = <CheckCircleOutlined />;
-      prev[2].description = "备份中";
-      prev[2].status = "process";
-      prev[2].icon = <LoadingOutlined />;
-      return [...prev];
+    setPackingFiles((prev) => {
+      return {
+        ...prev,
+        description: "备份中",
+      };
     });
   };
 
-  const nextProgress = async () => {
-    if (progress === CommitPushProgress.CollectingFiles) {
-      await collectFiles();
-    } else if (progress === CommitPushProgress.PackingFiles) {
-      await backup();
-    }
-    dispatch(updateProgress({ id, progress: progresses[progress + 1] }));
-  };
+  const [start, setStart] = useState<boolean>(false);
+  return (
+    <div className='grow-item split-container-col div-2'>
+      <Step {...collectingFiles} />
+      <Step {...packingFiles} />
 
-  const cancel = () => {
-    dispatch(updateProgress({ id, progress: CommitPushProgress.Cancel }));
-  };
-
-  useEffect(() => {
-    if (!result) return;
-    if (result.code === Code.POSTCOMMIT_SUCCESS) {
-      setSteps(prev => {
-        if (!prev) return prev;
-        prev[2].description = "提交成功";
-        prev[2].status = "finish";
-        prev[2].icon = <CheckCircleOutlined />;
-        return [...prev];
-      });
-    }
-    if (result.code === Code.POSTCOMMIT_FAILED) {
-      setSteps(prev => {
-        if (!prev) return prev;
-        prev[2].description = "提交失败";
-        prev[2].status = "error";
-        prev[2].icon = <StopOutlined />;
-        return [...prev];
-      });
-    }
-  }, [result]);
-
-  return progress !== CommitPushProgress.Cancel ? (
-    <div>
-      <Steps current={progress} size='small' direction='vertical' items={steps} />
-      {progress !== CommitPushProgress.Finish && (
-        <div className='absolute bottom-2 right-2'>
-          <Space>
-            <Button type='text' size='small' onClick={cancel}>
-              取消
-            </Button>
-            <Button type='primary' size='small' onClick={nextProgress}>
-              继续
-            </Button>
-          </Space>
-        </div>
-      )}
+      <div className='flex space-x-2 justify-end'>
+        <Button onClick={() => execute()} disabled={start} variant='confirm' visible={!start}>
+          Next
+        </Button>
+      </div>
     </div>
-  ) : (
-    <Steps
-      current={0}
-      size='small'
-      direction='vertical'
-      items={[
-        {
-          title: "取消",
-          description: "取消提交",
-          status: "error",
-        },
-      ]}
-    />
   );
 };
 

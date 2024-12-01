@@ -6,6 +6,7 @@ import { createProvider as createExplorerProvider } from "./Explorer/store";
 import { createProvider as createRestoreProvider } from "./Restore/store";
 import { v4 as uuidv4 } from "uuid";
 import RestoreForm from "./Restore/RestoreForm";
+import RecycleBin from "./RecycleBin";
 
 const ExplorerPane = (uuid: string, key: string) => ({
   label: "浏览文件",
@@ -22,12 +23,12 @@ const RestorePane = (uuid: string, key: string, isEncrypt: boolean) => ({
 });
 
 const CommitPage: React.FC = () => {
-  const [activeKey, setActiveKey] = React.useState("initial");
+  const [activeKey, setActiveKey] = React.useState("commitList");
   const openExplorer = (uuid: string) => {
     setPanes((prev: TabsProps["items"]) => {
       const newKey = uuidv4();
       if (!prev) {
-        return [InitialPane, ExplorerPane(uuid, newKey)];
+        return [...InitialPanes, ExplorerPane(uuid, newKey)];
       }
       setActiveKey(newKey);
       return [...prev, ExplorerPane(uuid, newKey)];
@@ -38,21 +39,30 @@ const CommitPage: React.FC = () => {
     setPanes((prev: TabsProps["items"]) => {
       const newKey = uuidv4();
       if (!prev) {
-        return [InitialPane, RestorePane(uuid, newKey, isEncrypt)];
+        return [...InitialPanes, RestorePane(uuid, newKey, isEncrypt)];
       }
       setActiveKey(newKey);
       return [...prev, RestorePane(uuid, newKey, isEncrypt)];
     });
   };
-  const InitialPane = {
-    label: "提交列表",
-    key: "initial",
-    children: <CommitTable openExplorer={openExplorer} openRestore={openRestore} />,
-    closable: false,
-    className: "grow-item",
-  };
+  const InitialPanes = [
+    {
+      label: "提交列表",
+      key: "commitList",
+      children: <CommitTable openExplorer={openExplorer} openRestore={openRestore} />,
+      closable: false,
+      className: "grow-item",
+    },
+    {
+      label: "回收站",
+      key: "recycle",
+      children: <RecycleBin />,
+      closable: false,
+      className: "grow-item",
+    },
+  ];
 
-  const [panes, setPanes] = React.useState<TabsProps["items"]>([InitialPane]);
+  const [panes, setPanes] = React.useState<TabsProps["items"]>(InitialPanes);
 
   const handleEdit = (
     e: React.MouseEvent | React.KeyboardEvent | string,
@@ -76,6 +86,7 @@ const CommitPage: React.FC = () => {
         onChange={setActiveKey}
         onEdit={handleEdit}
         hideAdd
+        destroyInactiveTabPane={true}
         className='split-container-col grow-item'
         items={panes}></Tabs>
     </div>

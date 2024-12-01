@@ -2,11 +2,6 @@ import { Button, Checkbox, Form, Input, message } from "antd";
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/stores/store";
-import useApi from "@useApi";
-import { ApiEnum } from "@/apis";
-import { GetFileListRequest, GetFileListResponse } from "@/apis/GetFileList";
-import { FileType } from "@/types";
-import { CalculatorOutlined } from "@ant-design/icons";
 import { addNotification } from "@/stores/NotificationReducer";
 import { CommitPush } from "@/components/NotificationList/types";
 import { handleRefresh } from "@/stores/CreateCommitReducer";
@@ -24,11 +19,6 @@ const initialState: BackupFormProps = {
   storagePath: "/usr/local/zipfiles",
 };
 
-interface File {
-  name: string;
-  type: FileType;
-}
-
 const BackupOption: React.FC = () => {
   const [form] = Form.useForm();
   const dispatch = useDispatch();
@@ -37,50 +27,6 @@ const BackupOption: React.FC = () => {
     (state: RootState) => state.createCommit.selectedFile.directories,
   );
   const [messageApi, contextHolder] = message.useMessage();
-  const api = useApi();
-  const backupSteps = [
-    {
-      title: "收集文件",
-      icon: <CalculatorOutlined />,
-      subTitle: "计算需要备份的文件列表",
-    },
-    {
-      title: "备份",
-    },
-  ];
-
-  const fetchFileList = async (path: string) => {
-    const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
-      path,
-    });
-    return res.files;
-  };
-
-  /**
-   * @brief 返回指定路径下的所有文件
-   * @description 先获取指定路径下的一级文件，如果该文件是文件，直接加入集合，否则调用fetchAllFiles后，concat在后面
-   * @param path
-   * @returns String[] 所有文件的path+name形成的path的集合
-   */
-  const fetchAllFiles = async (path: string): Promise<string[]> => {
-    const files = await fetchFileList(path);
-    const allFiles: string[] = [];
-    const promises: Promise<void>[] = [];
-
-    files.forEach((file: File) => {
-      if (file.type === FileType.Directory) {
-        promises.push(
-          fetchAllFiles(path + "/" + file.name).then(subFiles => {
-            allFiles.push(...subFiles);
-          }),
-        );
-      }
-      allFiles.push(path + "/" + file.name);
-    });
-
-    await Promise.all(promises);
-    return allFiles;
-  };
 
   const onFinish = async (values: Required<BackupFormProps>) => {
     if ((!files || files.length === 0) && (!directories || directories.length === 0)) {
@@ -90,7 +36,6 @@ const BackupOption: React.FC = () => {
     dispatch(
       addNotification({
         type: "commitPush",
-        progress: 0,
         files,
         directories,
         options: values,

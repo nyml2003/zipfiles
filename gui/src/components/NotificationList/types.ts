@@ -19,23 +19,8 @@ type BackupOption = {
   key?: string;
 };
 
-export enum CommitPushProgress {
-  Cancel = 3,
-  CollectingFiles = 0,
-  PackingFiles = 1,
-  Finish = 2,
-}
-
-export enum CommitRestoreProgress {
-  Confirm = 0,
-  Restore = 1,
-  Finish = 2,
-  Cancel = 3,
-}
-
 export type CommitPush = NotificationUnion & {
   type: "commitPush";
-  progress: CommitPushProgress;
   files: File[];
   directories: string[];
   options: BackupOption;
@@ -44,7 +29,6 @@ export type CommitPush = NotificationUnion & {
 
 export type CommitRestore = NotificationUnion & {
   type: "commitRestore";
-  progress: CommitRestoreProgress;
   commitId: string;
   path: string;
   password: string;

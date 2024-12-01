@@ -109,30 +109,32 @@ body {
   animation: fadeInLeft 0.5s ease-in-out;
 }
 
-.ant-tabs-content {
-  flex-grow: 1;
-}
+
 
 /* 定义进入过渡的开始状态 */
 .fade-enter {
   opacity: 0;
-  transform: translateX(-100%); /* 从左侧滑入 */
 }
 
 /* 定义进入过渡的结束状态 */
 .fade-enter-active {
   opacity: 1;
-  transform: translateX(0); /* 移动到原位 */
-  transition: opacity 500ms, transform 500ms; /* 同时过渡opacity和transform */
+  transition: opacity 500ms; /* 同时过渡opacity和transform */
 }
 
 /* 定义离开过渡的开始状态 */
 .fade-exit {
   opacity: 1;
+  transition: opacity 500ms;
 }
 
 /* 定义离开过渡的结束状态 */
 .fade-exit-active {
   opacity: 0;
-  transition: opacity 500ms;  /* 同时过渡opacity和transform */
+  transition: opacity 500ms; /* 同时过渡opacity和transform */
+}
+
+/* 定义离开过渡结束后的状态 */
+.fade-exit-done {
+  display: none;
 }

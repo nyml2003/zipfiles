@@ -2,6 +2,7 @@ import {
   CommitPush,
   CommitRestore,
   NotificationUnion,
+  PlainText,
 } from "@/components/NotificationList/types";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
@@ -14,7 +15,15 @@ export interface NotificationState {
 
 const initialState: NotificationState = {
   open: false,
-  notifications: [],
+  notifications: [
+    {
+      id: "1",
+      type: "plainText",
+      text: "Welcome to the notification center",
+      description:
+        "This is a notification center This is a notification centerThis is a notification centerThis is a notification centerThis is a notification center",
+    } as PlainText,
+  ],
 };
 
 const NotificationReducer = createSlice({
@@ -22,7 +31,6 @@ const NotificationReducer = createSlice({
   initialState,
   reducers: {
     addNotification(state, action: PayloadAction<Omit<NotificationUnion, "id">>) {
-      console.log("addNotification", action.payload);
       const id = uuidv4();
       state.notifications.unshift({ ...action.payload, id });
       state.open = true;
@@ -31,17 +39,6 @@ const NotificationReducer = createSlice({
       state.notifications = state.notifications.filter(
         notification => notification.id !== action.payload,
       );
-    },
-    updateProgress(state, action: PayloadAction<{ id: string; progress: number }>) {
-      const notification = state.notifications.find(
-        notification => notification.id === action.payload.id,
-      );
-      if (notification && notification.type === "commitPush") {
-        (notification as CommitPush).progress = action.payload.progress;
-      }
-      if (notification && notification.type === "commitRestore") {
-        (notification as CommitRestore).progress = action.payload.progress;
-      }
     },
     toggleNotification(state) {
       state.open = !state.open;
@@ -53,7 +50,7 @@ const NotificationReducer = createSlice({
       if (notification && notification.type === "commitPush") {
         (notification as CommitPush).result = action.payload;
       }
-      if (notification && notification.type === "restore") {
+      if (notification && notification.type === "commitRestore") {
         (notification as CommitRestore).result = action.payload;
       }
     },
@@ -63,7 +60,6 @@ const NotificationReducer = createSlice({
 export const {
   addNotification,
   removeNotification,
-  updateProgress,
   toggleNotification,
   finishMessage,
 } = NotificationReducer.actions;
