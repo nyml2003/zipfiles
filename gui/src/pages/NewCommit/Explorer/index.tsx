@@ -1,7 +1,6 @@
 import React from "react";
 import {
   ArrowLeftOutlined,
-  ClearOutlined,
   FilterFilled,
   FilterOutlined,
   HomeOutlined,
@@ -33,13 +32,11 @@ const Explorer: React.FC = () => {
             }></Button>
           <Button
             type='text'
-            onClick={() => { console.log("刷新"); }}
+            onClick={() => {
+              dispatch(handleRefresh());
+            }}
             icon={<Loading3QuartersOutlined />}
             disabled={isFiltering}></Button>
-          <Button
-            type='text'
-            onClick={() => dispatch(handleRefresh())}
-            icon={<ClearOutlined />}></Button>
           <Breadcrumb
             items={currentPath.split("/").reduce((acc, item, index, arr) => {
               const path = arr.slice(0, index + 1).join("/");

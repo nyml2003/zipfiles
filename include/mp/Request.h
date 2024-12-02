@@ -6,13 +6,18 @@
 
 #include "mp/apis/GetCommitDetail.h"
 #include "mp/apis/GetCommitList.h"
+#include "mp/apis/GetCommitRecycleBin.h"
 #include "mp/apis/GetFileDetail.h"
 #include "mp/apis/GetFileDetailList.h"
 #include "mp/apis/GetFileList.h"
+#include "mp/apis/LogicDeleteCommit.h"
 #include "mp/apis/MockManyNotifications.h"
 #include "mp/apis/MockNeedTime.h"
+#include "mp/apis/PhysicalDeleteCommit.h"
 #include "mp/apis/PostCommit.h"
+#include "mp/apis/RecoverCommit.h"
 #include "mp/apis/Restore.h"
+
 #include "mp/common.h"
 
 namespace zipfiles {  // namespace request
@@ -25,6 +30,10 @@ using ReqKind = std::variant<
   request::GetFileDetailList,
   request::PostCommit,
   request::Restore,
+  request::LogicDeleteCommit,
+  request::PhysicalDeleteCommit,
+  request::GetCommitRecycleBin,
+  request::RecoverCommit,
   request::MockNeedTime,
   request::MockManyNotifications>;
 

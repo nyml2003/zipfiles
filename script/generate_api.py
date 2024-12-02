@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 include_path = '/app/include/mp/apis'
 src_path = '/app/src/server/socket/apis'
 

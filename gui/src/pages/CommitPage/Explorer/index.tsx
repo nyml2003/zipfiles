@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeftOutlined,
   ClearOutlined,
@@ -12,24 +12,38 @@ import { ApiEnum } from "@/apis";
 import useApi from "@useApi";
 import { Context } from "./store";
 import { GetCommitDetailResponse, GetCommitDetailRequest } from "@/apis/GetCommitDetail";
+import { ReportError } from "@/stores/NotificationReducer";
+import { useDispatch } from "react-redux";
 
 const Explorer: React.FC = () => {
   const { state, actions } = useContext(Context);
   const api = useApi();
+  const dispatch = useDispatch();
+  const [fresh, setFresh] = useState<boolean>(false);
 
   const fetchData = async () => {
-    const res = await api.request<GetCommitDetailRequest, GetCommitDetailResponse>(
-      ApiEnum.GetCommitDetail,
-      {
-        uuid: state.commitId,
-      },
-    );
-    actions.updateFiles(res.files);
+    try {
+      const res = await api.request<GetCommitDetailRequest, GetCommitDetailResponse>(
+        ApiEnum.GetCommitDetail,
+        {
+          uuid: state.commitId,
+        },
+      );
+      actions.updateFiles(res.files);
+    } catch (e: unknown) {
+      dispatch(
+        ReportError({
+          state: "error",
+          text: "获取提交详情失败",
+          description: (e as Error).message,
+        }),
+      );
+    }
   };
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fresh]);
 
   const breadcrumbItems = useMemo(() => {
     if (state.loading) {
@@ -63,11 +77,13 @@ const Explorer: React.FC = () => {
           <Button
             type='text'
             icon={<ArrowLeftOutlined />}
-            onClick={() => actions.updatePath(state.path.split("/").slice(0, -1).join("/"))}></Button>
+            onClick={() =>
+              actions.updatePath(state.path.split("/").slice(0, -1).join("/"))
+            }></Button>
           <Button
             type='text'
             onClick={() => {
-              console.log("刷新");
+              setFresh((prev) => !prev);
             }}
             icon={<Loading3QuartersOutlined />}></Button>
           <Button

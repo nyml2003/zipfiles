@@ -22,6 +22,7 @@ export enum ApiEnum {
   LogicDeleteCommit = 107,
   PhysicalDeleteCommit = 108,
   GetCommitRecycleBin = 109,
+  RecoverCommit = 110,
   UpdateConfig = "updateConfig",
   ReadConfig = "readConfig",
 }

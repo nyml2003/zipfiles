@@ -40,7 +40,7 @@ const NotificationList = () => {
   };
 
   return (
-    <div className='w-25vw fade-in-left flex flex-col align-start overflow-auto'>
+    <div className='w-25vw fade-in-left flex-col align-start overflow-auto hidden'>
       <div className='text-lg font-bold p-4'>消息列表</div>
       {notifications.length > 0 ? (
         notifications.map(notification => (

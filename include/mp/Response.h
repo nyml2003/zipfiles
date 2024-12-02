@@ -2,15 +2,18 @@
 #define ZIPFILES_MP_RESPONSE_H
 #include <json/json.h>
 #include <variant>
-
 #include "mp/apis/GetCommitDetail.h"
 #include "mp/apis/GetCommitList.h"
+#include "mp/apis/GetCommitRecycleBin.h"
 #include "mp/apis/GetFileDetail.h"
 #include "mp/apis/GetFileDetailList.h"
 #include "mp/apis/GetFileList.h"
+#include "mp/apis/LogicDeleteCommit.h"
 #include "mp/apis/MockManyNotifications.h"
 #include "mp/apis/MockNeedTime.h"
+#include "mp/apis/PhysicalDeleteCommit.h"
 #include "mp/apis/PostCommit.h"
+#include "mp/apis/RecoverCommit.h"
 #include "mp/apis/Restore.h"
 #include "mp/common.h"
 
@@ -28,6 +31,10 @@ using ResKind = std::variant<
   response::GetCommitList,
   response::GetFileDetail,
   response::Restore,
+  response::LogicDeleteCommit,
+  response::PhysicalDeleteCommit,
+  response::GetCommitRecycleBin,
+  response::RecoverCommit,
   response::MockNeedTime,
   response::MockManyNotifications,
   response::NoResponse>;

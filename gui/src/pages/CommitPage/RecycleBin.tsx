@@ -7,7 +7,13 @@ import {
 } from "@/apis/GetCommitRecycleBin";
 import useApi from "@useApi";
 import { ApiEnum } from "@/apis";
-import { PhysicalDeleteCommitRequest, PhysicalDeleteCommitResponse } from "@/apis/PhysicalDeleteCommit";
+import {
+  PhysicalDeleteCommitRequest,
+  PhysicalDeleteCommitResponse,
+} from "@/apis/PhysicalDeleteCommit";
+import { useDispatch } from "react-redux";
+import { ReportError } from "@/stores/NotificationReducer";
+import { RecoverCommitRequest, RecoverCommitResponse } from "@/apis/RecoverCommit";
 interface CommitLog {
   uuid: string;
   message: string;
@@ -21,6 +27,7 @@ type DataType = CommitLog;
 
 const RecycleBin = () => {
   const api = useApi();
+  const dispatch = useDispatch();
   const [data, setData] = useState<DataType[]>([]);
   const columns: TableColumnsType<DataType> = [
     {
@@ -36,8 +43,13 @@ const RecycleBin = () => {
               deleteCommit(record.uuid);
               setData(data.filter(item => item.uuid !== record.uuid));
             }}>
-            <Button danger type="primary">彻底删除</Button>
+            <Button danger type='primary'>
+              彻底删除
+            </Button>
           </Popconfirm>
+          <Button type='primary' onClick={() => recoverCommit(record.uuid)}>
+            还原
+          </Button>
         </Space>
       ),
       ellipsis: true,
@@ -109,6 +121,15 @@ const RecycleBin = () => {
       )
       .then(res => {
         setData(res.commits);
+      })
+      .catch(e => {
+        dispatch(
+          ReportError({
+            state: "error",
+            text: "获取回收站失败",
+            description: (e as Error).message,
+          }),
+        );
       });
   };
 
@@ -117,12 +138,41 @@ const RecycleBin = () => {
   }, []);
 
   const deleteCommit = async (commitId: string) => {
-    await api
-      .request<PhysicalDeleteCommitRequest, PhysicalDeleteCommitResponse>(ApiEnum.PhysicalDeleteCommit, {
+    try {
+      await api.request<PhysicalDeleteCommitRequest, PhysicalDeleteCommitResponse>(
+        ApiEnum.PhysicalDeleteCommit,
+        {
+          commitId,
+        },
+      );
+
+      setData(data.filter(item => item.uuid !== commitId));
+    } catch (e) {
+      dispatch(
+        ReportError({
+          state: "error",
+          text: "删除提交失败",
+          description: (e as Error).message,
+        }),
+      );
+    }
+  };
+
+  const recoverCommit = async (commitId: string) => {
+    try {
+      await api.request<RecoverCommitRequest, RecoverCommitResponse>(ApiEnum.RecoverCommit, {
         commitId,
       });
-    
-    setData(data.filter(item => item.uuid !== commitId));
+      setData(data.filter(item => item.uuid !== commitId));
+    } catch (e) {
+      dispatch(
+        ReportError({
+          state: "error",
+          text: "还原提交失败",
+          description: (e as Error).message,
+        }),
+      );
+    }
   };
 
   return (

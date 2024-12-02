@@ -105,6 +105,24 @@ Json::Value Req::toJson() const {
       json["payload"]["id"] = std::get<request::MockNeedTime>(kind).id;
       break;
     }
+    case Api::GET_COMMIT_RECYCLE_BIN: {
+      break;
+    }
+    case Api::LOGIC_DELETE_COMMIT: {
+      json["payload"]["commitId"] =
+        std::get<request::LogicDeleteCommit>(kind).commitId;
+      break;
+    }
+    case Api::PHYSICAL_DELETE_COMMIT: {
+      json["payload"]["commitId"] =
+        std::get<request::PhysicalDeleteCommit>(kind).commitId;
+      break;
+    }
+    case Api::RECOVER_COMMIT: {
+      json["payload"]["commitId"] =
+        std::get<request::RecoverCommit>(kind).commitId;
+      break;
+    }
     case Api::MOCK_MANY_NOTIFICATIONS: {
       break;
     }
@@ -207,6 +225,7 @@ Req Req::fromJson(const Json::Value& json) {
         .path = json["payload"]["path"].asString(),
         .messageId = json["payload"]["messageId"].asString(),
       };
+      break;
     }
     case Api::MOCK_NEED_TIME: {
       kind = request::MockNeedTime{.id = json["payload"]["id"].asInt()};
@@ -215,6 +234,27 @@ Req Req::fromJson(const Json::Value& json) {
     case Api::MOCK_MANY_NOTIFICATIONS:
       kind = request::MockManyNotifications{};
       break;
+    case Api::GET_COMMIT_RECYCLE_BIN:
+      kind = request::GetCommitRecycleBin{};
+      break;
+    case Api::LOGIC_DELETE_COMMIT: {
+      kind = request::LogicDeleteCommit{
+        .commitId = json["payload"]["commitId"].asString()
+      };
+      break;
+    }
+    case Api::PHYSICAL_DELETE_COMMIT: {
+      kind = request::PhysicalDeleteCommit{
+        .commitId = json["payload"]["commitId"].asString()
+      };
+      break;
+    }
+    case Api::RECOVER_COMMIT: {
+      kind = request::RecoverCommit{
+        .commitId = json["payload"]["commitId"].asString()
+      };
+      break;
+    }
     default:
       throw std::runtime_error(
         std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": " +

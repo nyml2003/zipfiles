@@ -1,19 +1,17 @@
-#include <mp/Request.h>
-#include <mp/Response.h>
 #include <server/backup/backup.h>
-#include <server/socket/api.h>
-#include <vector>
-#include "json/value.h"
+#include "mp/Request.h"
+#include "mp/Response.h"
 #include "server/configure/configure.h"
+#include "server/socket/api.h"
 #include "server/socket/socket.h"
-
 namespace zipfiles::server::api {
-void getCommitList(int client_fd, const Req& req) {
+
+void getCommitRecycleBin(int client_fd, const Req& req) {
   Json::Value commitTable = CommitTable::readCommitTableView(COMMIT_TABLE_PATH);
-  response::GetCommitList response;
+  response::GetCommitRecycleBin response;
   for (const auto& uuid : commitTable.getMemberNames()) {
     Json::Value commit = commitTable[uuid];
-    if (commit["isDelete"].asBool()) {
+    if (!commit["isDelete"].asBool()) {
       continue;
     }
     response.commits.push_back({
@@ -26,9 +24,8 @@ void getCommitList(int client_fd, const Req& req) {
       .isDelete = commit["isDelete"].asBool(),
     });
   }
-
   Socket::send(
-    client_fd, Res(response, Api::GET_COMMIT_LIST, req.uuid, Code::OK)
+    client_fd, Res(response, Api::GET_COMMIT_RECYCLE_BIN, req.uuid, Code::OK)
   );
 }
 

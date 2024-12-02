@@ -4,22 +4,48 @@ export interface StepProps {
   title: string;
   description?: ReactNode;
 }
-import styles from "./Step.module.less";
+import {
+  CheckOutlined,
+  CoffeeOutlined,
+  EllipsisOutlined,
+  StopOutlined,
+  WarningOutlined,
+} from "@ant-design/icons";
 
 export const Step = ({ status, title, description }: StepProps) => {
   const getStatusIcon = (status: string) => {
     const iconClasses = "w-6 h-6 flex items-center justify-center rounded-full text-white text-xs";
     switch (status) {
       case "completed":
-        return <div className={`${iconClasses} bg-green-500 text-white`}>✓</div>;
+        return (
+          <div className={`${iconClasses} bg-green-500 `}>
+            <CheckOutlined />
+          </div>
+        );
       case "failed":
-        return <div className={`${iconClasses} bg-red-500 text-white`}>✕</div>;
+        return (
+          <div className={`${iconClasses} bg-red-500 `}>
+            <StopOutlined />
+          </div>
+        );
       case "running":
-        return <div className={`${iconClasses} bg-blue-500 ${styles.spinner}`}>⏳</div>;
+        return (
+          <div className={`${iconClasses} bg-blue-500 `}>
+            <CoffeeOutlined />
+          </div>
+        );
       case "pending":
-        return <div className={`${iconClasses} bg-gray-500`}>···</div>;
+        return (
+          <div className={`${iconClasses} bg-gray-500`}>
+            <EllipsisOutlined />
+          </div>
+        );
       case "cancel":
-        return <div className={`${iconClasses} bg-yellow-500`}>⚠️</div>;
+        return (
+          <div className={`${iconClasses} bg-yellow-500`}>
+            <WarningOutlined />
+          </div>
+        );
       default:
         return null;
     }
@@ -32,7 +58,9 @@ export const Step = ({ status, title, description }: StepProps) => {
         <h3 className='ml-4 text-lg font-semibold truncate'>{title}</h3>
       </div>
       {description && (
-        <div className='mt-2 border-2 border-dashed rounded-lg p-2 text-gray-500'>{description}</div>
+        <div className='mt-2 border-2 border-dashed rounded-lg p-2 text-gray-500'>
+          {description}
+        </div>
       )}
     </div>
   );

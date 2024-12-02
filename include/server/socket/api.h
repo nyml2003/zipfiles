@@ -17,6 +17,16 @@ void getFileDetail(int client_fd, const Req& req);
 void mockNeedTime(int client_fd, const Req& req);
 
 void mockManyNotifications(int client_fd, const Req& req);
+
+void restore(int client_fd, const Req& req);
+
+void logicDeleteCommit(int client_fd, const Req& req);
+
+void physicalDeleteCommit(int client_fd, const Req& req);
+
+void getCommitRecycleBin(int client_fd, const Req& req);
+
+void recoverCommit(int client_fd, const Req& req);
 }  // namespace zipfiles::server::api
 
 #endif  // !ZIPFILES_MP_API_H

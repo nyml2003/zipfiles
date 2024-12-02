@@ -1,6 +1,7 @@
 #include "server/tools/committable.h"
 
 #include <exception>
+#include <fstream>
 #include <mutex>
 #include <stdexcept>
 #include "json/reader.h"

@@ -8,19 +8,32 @@ import { PostCommitRequest, PostCommitResponse } from "@/apis/PostCommit";
 import { Step, StepProps } from "@/components/Step/Step";
 import Button from "@/components/Button";
 import { Code } from "@/hooks/useApi/types";
+import { useDispatch } from "react-redux";
+import { ReportError } from "@/stores/NotificationReducer";
 interface File {
   name: string;
   type: FileType;
 }
 
 const CommitPush = ({ files, directories, options, id, result }: CommitPushProps) => {
-  const [backupFiles, setBackupFiles] = useState<string[]>([]);
+  const dispatch = useDispatch();
   const api = useApi();
   const fetchFileList = async (path: string) => {
-    const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
-      path,
-    });
-    return res.files;
+    try {
+      const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
+        path,
+      });
+      return res.files;
+    } catch (e: unknown) {
+      dispatch(
+        ReportError({
+          state: "error",
+          text: "获取文件列表失败",
+          description: (e as Error).message,
+        }),
+      );
+    }
+    return [];
   };
   /**
    * @brief 返回指定路径下的所有文件
@@ -31,17 +44,14 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
   const fetchAllFiles = async (path: string): Promise<string[]> => {
     const files = await fetchFileList(path);
     const allFiles: string[] = [];
-    const promises: Promise<void>[] = [];
-
-    files.forEach((file: File) => {
+    const promises: Promise<void>[] = files.map((file: File) => {
       if (file.type === FileType.Directory) {
-        promises.push(
-          fetchAllFiles(path + "/" + file.name).then(subFiles => {
-            allFiles.push(...subFiles);
-          }),
-        );
+        return fetchAllFiles(path + "/" + file.name).then(subFiles => {
+          allFiles.push(...subFiles);
+        });
       }
       allFiles.push(path + "/" + file.name);
+      return Promise.resolve();
     });
 
     await Promise.all(promises);
@@ -55,7 +65,7 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
     });
     const dirResults = await Promise.all(dirPromises);
     dirData = dirResults.flat(); // 将所有目录的结果合并到 dirData
-    setBackupFiles([...fileData, ...dirData]);
+    return [...fileData, ...dirData];
   };
   useEffect(() => {
     if (!result) return;
@@ -69,7 +79,7 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
       });
     }
     if (result.code === Code.POSTCOMMIT_FAILED) {
-      setPackingFiles((prev) => {
+      setPackingFiles(prev => {
         return {
           ...prev,
           status: "failed",
@@ -88,21 +98,21 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
   });
   const execute = async () => {
     setStart(true);
-    setCollectingFiles((prev) => {
+    setCollectingFiles(prev => {
       return {
         ...prev,
         status: "running",
         description: "正在收集文件",
       };
     });
-    await collectFiles();
+    const backupFiles = await collectFiles();
     const request: PostCommitRequest = {
       files: backupFiles,
       ...options,
       uuid: id,
       createTime: Date.now(),
     };
-    setCollectingFiles((prev) => {
+    setCollectingFiles(prev => {
       return {
         ...prev,
         status: "completed",
@@ -120,15 +130,26 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
         ),
       };
     });
-    setPackingFiles((prev) => {
+    setPackingFiles(prev => {
       return {
         ...prev,
         status: "running",
         description: "发送文件中",
       };
     });
-    await api.request<PostCommitRequest, PostCommitResponse>(ApiEnum.PostCommit, request);
-    setPackingFiles((prev) => {
+    try {
+      await api.request<PostCommitRequest, PostCommitResponse>(ApiEnum.PostCommit, request);
+    } catch (e) {
+      setPackingFiles(prev => {
+        return {
+          ...prev,
+          status: "failed",
+          description: (e as Error).message,
+        };
+      });
+      return;
+    }
+    setPackingFiles(prev => {
       return {
         ...prev,
         description: "备份中",

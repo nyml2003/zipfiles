@@ -11,7 +11,6 @@ const webpack = require("webpack");
 const CopyPlugin = require("copy-webpack-plugin");
 const { merge } = require("webpack-merge");
 const baseConfig = require("./webpack.base.js");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin"); // 抽离css
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin"); // 压缩css文件
 const TerserPlugin = require("terser-webpack-plugin"); // 压缩js
 const globAll = require("glob-all");
@@ -70,10 +69,7 @@ module.exports = merge(baseConfig, {
         },
       ],
     }),
-    // 抽离css插件
-    new MiniCssExtractPlugin({
-      filename: "static/css/[name].[contenthash:8].css", // 抽离css的输出目录和名称,加上[contenthash:8]
-    }),
+    
     // 去除没用到的css插件
     new PurgeCSSPlugin({
       // 检测src下所有tsx文件和public下index.html中使用的类名和id和标签名称
@@ -83,7 +79,7 @@ module.exports = merge(baseConfig, {
         `${path.join(__dirname, "../public")}/index.html`,
       ]),
       safelist: {
-          standard: [/^ant-/, /^hover:/, /^focus:/, /^active:/, /^disabled:/, /^module_/],
+          standard: [/^ant-/, /^hover:/, /^focus:/, /^active:/, /^disabled:/, /^module_/, /^fade/],
       },
     }),
     new CompressionPlugin({
@@ -100,7 +96,8 @@ module.exports = merge(baseConfig, {
   ],
   resolve: {
     alias: {
-      "@useApi": path.join(__dirname, "../src/hooks/useApi/production"),
+      "@useApi": path.join(__dirname, "../src/hooks/useApi/production"), 
+      "@useEntry": path.join(__dirname, "../src/prod.tsx"),
     },
   },
 });

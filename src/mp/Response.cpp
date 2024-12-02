@@ -114,6 +114,32 @@ Json::Value Res::toJson() const {
     case Api::RESTORE: {
       break;
     }
+    case Api::GET_COMMIT_RECYCLE_BIN: {
+      Json::Value commits(Json::arrayValue);
+      for (const auto& commit :
+           std::get<response::GetCommitRecycleBin>(kind).commits) {
+        Json::Value commitJson;
+        commitJson["uuid"] = commit.uuid;
+        commitJson["message"] = commit.message;
+        commitJson["createTime"] = commit.createTime;
+        commitJson["storagePath"] = commit.storagePath;
+        commitJson["author"] = commit.author;
+        commitJson["isEncrypt"] = commit.isEncrypt;
+        commitJson["isDelete"] = commit.isDelete;
+        commits.append(commitJson);
+      }
+      json["payload"]["commits"] = commits;
+      break;
+    }
+    case Api::LOGIC_DELETE_COMMIT: {
+      break;
+    }
+    case Api::RECOVER_COMMIT: {
+      break;
+    }
+    case Api::PHYSICAL_DELETE_COMMIT: {
+      break;
+    }
     case Api::MOCK_NEED_TIME: {
       json["payload"]["id"] = std::get<response::MockNeedTime>(kind).id;
       break;
@@ -217,6 +243,34 @@ Res Res::fromJson(const Json::Value& json) {
     }
     case Api::RESTORE: {
       kind = response::Restore{};
+      break;
+    }
+    case Api::LOGIC_DELETE_COMMIT: {
+      kind = response::LogicDeleteCommit{};
+      break;
+    }
+    case Api::PHYSICAL_DELETE_COMMIT: {
+      kind = response::PhysicalDeleteCommit{};
+      break;
+    }
+    case Api::GET_COMMIT_RECYCLE_BIN: {
+      std::vector<response::getCommitRecycleBin::CommitLog> commits;
+      for (const auto& file : json["payload"]["commits"]) {
+        commits.push_back(
+          {.uuid = file["uuid"].asString(),
+           .message = file["message"].asString(),
+           .createTime = file["createTime"].asDouble(),
+           .storagePath = file["storagePath"].asString(),
+           .author = file["author"].asString(),
+           .isEncrypt = file["isEncrypt"].asBool(),
+           .isDelete = file["isDelete"].asBool()}
+        );
+      }
+      kind = response::GetCommitRecycleBin{.commits = commits};
+      break;
+    }
+    case Api::RECOVER_COMMIT: {
+      kind = response::RecoverCommit{};
       break;
     }
     case Api::MOCK_NEED_TIME: {

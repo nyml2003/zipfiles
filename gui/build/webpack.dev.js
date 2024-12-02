@@ -39,6 +39,7 @@ module.exports = merge(baseConfig, {
   resolve: {
     alias: {
       "@useApi": path.join(__dirname, "../src/hooks/useApi/development"),
+      "@useEntry": path.join(__dirname, "../src/dev.tsx"),
     },
   },
 });

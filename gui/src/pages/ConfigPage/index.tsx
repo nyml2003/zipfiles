@@ -4,6 +4,8 @@ import useApi from "@useApi";
 import { ReadConfigRequest, ReadConfigResponse } from "@/apis/ReadConfig";
 import { ApiEnum } from "@/apis";
 import { UpdateConfigRequest, UpdateConfigResponse } from "@/apis/UpdateConfig";
+import { ReportError } from "@/stores/NotificationReducer";
+import { useDispatch } from "react-redux";
 type Config = Partial<{
   ip: string; // 服务器ip
   defaultBackupPath: string; // 默认备份路径
@@ -15,10 +17,20 @@ const ConfigPage: React.FC = () => {
   const [form] = Form.useForm();
   const [initialConfig, setInitialConfig] = useState<Config | null>(null);
   const api = useApi();
+  const dispatch = useDispatch();
   const fetchData = async () => {
     api
       .request<ReadConfigRequest, ReadConfigResponse>(ApiEnum.ReadConfig, {})
-      .then(setInitialConfig);
+      .then(setInitialConfig)
+      .catch(e => {
+        dispatch(
+          ReportError({
+            state: "error",
+            text: "获取配置失败",
+            description: (e as Error).message,
+          }),
+        );
+      });
   };
   useEffect(() => {
     fetchData();
@@ -43,6 +55,15 @@ const ConfigPage: React.FC = () => {
       .request<UpdateConfigRequest, UpdateConfigResponse>(ApiEnum.UpdateConfig, request)
       .then(() => {
         fetchData();
+      })
+      .catch(e => {
+        dispatch(
+          ReportError({
+            state: "error",
+            text: "更新配置失败",
+            description: (e as Error).message,
+          }),
+        );
       });
   };
 

@@ -1,12 +1,17 @@
 import { ApiEnum } from "@/apis";
 import { GetFileDetailRequest, GetFileDetailResponse } from "@/apis/GetFileDetail";
 import useApi from "@useApi";
-import { clearSelectedDirectories, clearSelectedFiles, removeSelectedDirectory } from "@/stores/CreateCommitReducer";
+import {
+  clearSelectedDirectories,
+  clearSelectedFiles,
+  removeSelectedDirectory,
+} from "@/stores/CreateCommitReducer";
 import { RootState } from "@/stores/store";
 import { FileType } from "@/types";
 import { Button, Table } from "antd";
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { ReportError } from "@/stores/NotificationReducer";
 
 const columns = [
   {
@@ -86,9 +91,19 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
       files.map(async (file: { name: string; path: string }) => {
         return await fetchFileDetail(file.path, file.name);
       }),
-    ).then(res => {
-      setFileData(res);
-    });
+    )
+      .then(res => {
+        setFileData(res);
+      })
+      .catch(e => {
+        dispatch(
+          ReportError({
+            state: "error",
+            text: "获取文件详情失败",
+            description: (e as Error).message,
+          }),
+        );
+      });
   }, [files]);
 
   const handleAdd = () => {

@@ -83,7 +83,6 @@ export function generateWholeFileTree(root: MockFileDetail[], depth: number) {
 
 // 随机从文件列表cachedFileList中选择若干个文件
 export function pickFiles(_files: MockFileDetail[]): MockFileDetail[] {
-  const files: MockFileDetail[] = [];
   const fileNumber = randomNumber(1, 10);
   const flatFiles = _files.reduce((acc: MockFileDetail[], file: MockFileDetail) => {
     acc.push(file);

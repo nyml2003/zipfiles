@@ -13,13 +13,13 @@ body {
 }
 
 @font-face {
-  font-family: 'JetBrains Mono';
-  src: url('assets/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+  font-family: "JetBrains Mono";
+  src: url("assets/fonts/JetBrainsMono-Regular.woff2") format("woff2");
 }
 
 /* 字体：JetBrains Mono */
 .font-jetbrains-mono {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
 }
 
 .separator-container {
@@ -27,7 +27,7 @@ body {
     &:not(:first-child)::before {
       margin: 0 10px;
       color: #e5e5e5;
-      content: '|';
+      content: "|";
     }
 
     color: #000;
@@ -43,10 +43,9 @@ body {
 }
 
 .hide-scrollbar {
-  -ms-overflow-style: none;  /* 适用于 IE 和 Edge */
-  scrollbar-width: none;  /* 适用于 Firefox */
+  -ms-overflow-style: none; /* 适用于 IE 和 Edge */
+  scrollbar-width: none; /* 适用于 Firefox */
 }
-
 
 .grow-item {
   @apply flex-1 overflow-auto;
@@ -111,30 +110,28 @@ body {
 
 
 
-/* 定义进入过渡的开始状态 */
-.fade-enter {
-  opacity: 0;
-}
-
-/* 定义进入过渡的结束状态 */
-.fade-enter-active {
-  opacity: 1;
-  transition: opacity 500ms; /* 同时过渡opacity和transform */
-}
-
-/* 定义离开过渡的开始状态 */
 .fade-exit {
-  opacity: 1;
-  transition: opacity 500ms;
+  @apply hidden;
 }
 
-/* 定义离开过渡的结束状态 */
 .fade-exit-active {
-  opacity: 0;
-  transition: opacity 500ms; /* 同时过渡opacity和transform */
+  @apply flex transition-opacity duration-500 ease-in-out;
 }
 
-/* 定义离开过渡结束后的状态 */
 .fade-exit-done {
-  display: none;
+  @apply flex;
+}
+
+
+.fade-enter {
+  @apply flex;
+}
+
+
+.fade-enter-active {
+  @apply flex transition-opacity duration-500 ease-in-out;
+}
+
+.fade-enter-done {
+  @apply hidden;
 }

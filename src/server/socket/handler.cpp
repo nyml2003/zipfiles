@@ -61,10 +61,24 @@ void doHandle(int client_fd, const Req& req) {
         api::mockManyNotifications(client_fd, req);
         break;
       }
+      case Api::RESTORE:
+        api::restore(client_fd, req);
+        break;
+      case Api::LOGIC_DELETE_COMMIT:
+        api::logicDeleteCommit(client_fd, req);
+        break;
+      case Api::PHYSICAL_DELETE_COMMIT:
+        api::physicalDeleteCommit(client_fd, req);
+        break;
+      case Api::GET_COMMIT_RECYCLE_BIN:
+        api::getCommitRecycleBin(client_fd, req);
+        break;
+      case Api::RECOVER_COMMIT:
+        api::recoverCommit(client_fd, req);
+        break;
       default:
         sendError(client_fd, "Unknown api type");
     }
-
   }  // namespace zipfiles::server
   catch (const std::exception& e) {
     // 如果是SocketTemporarilyUnavailable
@@ -75,7 +89,12 @@ void doHandle(int client_fd, const Req& req) {
     }
     log4cpp::Category::getRoot().errorStream()
       << "Failed to handle request: " << e.what();
-    sendError(client_fd, e.what());
+    Socket::send(
+      client_fd,
+      Res(
+        response::NoResponse(), Api::NORESPONSE, req.uuid, Code::ERROR, e.what()
+      )
+    );
   }
 }  // namespace zipfiles::server
 }  // namespace zipfiles::server

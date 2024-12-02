@@ -14,14 +14,14 @@ export interface NotificationState {
 }
 
 const initialState: NotificationState = {
-  open: false,
+  open: true,
   notifications: [
     {
       id: "1",
       type: "plainText",
       text: "Welcome to the notification center",
       description:
-        "This is a notification center This is a notification centerThis is a notification centerThis is a notification centerThis is a notification center",
+        "This is a notification center.",
     } as PlainText,
   ],
 };
@@ -33,7 +33,7 @@ const NotificationReducer = createSlice({
     addNotification(state, action: PayloadAction<Omit<NotificationUnion, "id">>) {
       const id = uuidv4();
       state.notifications.unshift({ ...action.payload, id });
-      state.open = true;
+      state.open = false;
     },
     removeNotification(state, action: PayloadAction<string>) {
       state.notifications = state.notifications.filter(
@@ -54,6 +54,10 @@ const NotificationReducer = createSlice({
         (notification as CommitRestore).result = action.payload;
       }
     },
+    ReportError(state, action: PayloadAction<Omit<PlainText, "id" | "type">>) {
+      state.notifications.unshift({ ...action.payload, id: uuidv4(), type: "plainText" });
+      state.open = false;
+    },
   },
 });
 
@@ -61,6 +65,7 @@ export const {
   addNotification,
   removeNotification,
   toggleNotification,
+  ReportError,
   finishMessage,
 } = NotificationReducer.actions;
 

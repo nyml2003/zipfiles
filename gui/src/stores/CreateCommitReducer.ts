@@ -28,6 +28,7 @@ export interface CreateCommitState {
   backupFiles: string[];
   filter: Partial<Filter>;
   isFiltering: boolean;
+  fresh: boolean;
 }
 
 const initialState: CreateCommitState = {
@@ -40,6 +41,7 @@ const initialState: CreateCommitState = {
   filter: {},
   isFiltering: false,
   backupFiles: [],
+  fresh: false,
 };
 
 const CreateCommitReducer = createSlice({
@@ -60,6 +62,7 @@ const CreateCommitReducer = createSlice({
         directories: [],
       };
       state.filter = {};
+      state.fresh = !state.fresh;
     },
     updateFilter(state, action: PayloadAction<Partial<Filter>>) {
       state.filter = action.payload;
@@ -112,6 +115,9 @@ const CreateCommitReducer = createSlice({
     updateBackupFiles(state, action: PayloadAction<string[]>) {
       state.backupFiles = action.payload;
     },
+    finishRefresh(state) {
+      state.fresh = true;
+    },
   },
 });
 
@@ -127,6 +133,8 @@ export const {
   addSelectedDirectory,
   clearSelectedFiles,
   clearSelectedDirectories,
+  updateBackupFiles,
+  finishRefresh,
 } = CreateCommitReducer.actions;
 
 export default CreateCommitReducer.reducer;

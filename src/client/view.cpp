@@ -278,16 +278,17 @@ void handleUpdateConfig(
   }
 
   JSCValue* ip = jsc_value_object_get_property(request, "ip");
-  if (ip && !jsc_value_is_null(ip) && jsc_value_is_undefined(ip)) {
-    root["ip"] = jsc_value_to_string(ip);
-  }
   JSCValue* defaultBackupPath =
     jsc_value_object_get_property(request, "defaultBackupPath");
+  if (ip && !jsc_value_is_null(ip) && !jsc_value_is_undefined(ip)) {
+    root["ip"] = jsc_value_to_string(ip);
+  }
+
   if (defaultBackupPath && !jsc_value_is_null(defaultBackupPath) &&
       !jsc_value_is_undefined(defaultBackupPath)) {
     root["defaultBackupPath"] = jsc_value_to_string(defaultBackupPath);
   }
-
+  log4cpp::Category::getRoot().infoStream() << "update config: " << root;
   std::ofstream out(CONFIGURE_PATH);
   if (!out.is_open()) {
     handleClientError(_uuid, "Failed in opening config", _api);
@@ -314,8 +315,20 @@ void handleReadConfig(
   // 读取CONFIGURE_PATH
   std::ifstream in(CONFIGURE_PATH);
   if (!in.is_open()) {
-    handleClientError(_uuid, "Failed in opening config", _api);
-    return;
+    Json::Value defaultConfig;
+    defaultConfig["ip"] = "127.0.0.1";
+    defaultConfig["defaultBackupPath"] = "/usr/local/zipfiles";
+    defaultConfig["port"] = 8080;
+    defaultConfig["version"] = "1.0.0";
+    // 创建文件
+    std::ofstream out(CONFIGURE_PATH);
+    if (!out.is_open()) {
+      handleClientError(_uuid, "Failed in writing config", _api);
+      return;
+    }
+    out << defaultConfig;
+    out.close();
+    in.open(CONFIGURE_PATH);
   }
 
   if (!reader.parse(in, root, false)) {
@@ -330,6 +343,8 @@ void handleReadConfig(
   Json::Value res;
   res["ip"] = root["ip"];
   res["defaultBackupPath"] = root["defaultBackupPath"];
+  res["port"] = root["port"];
+  res["version"] = root["version"];
   SendLocalResponse(res, _api, _uuid, Code::OK);
 }
 

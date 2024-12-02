@@ -165,6 +165,10 @@ module.exports = {
     extensions: [".js", ".tsx", ".ts"], // 注意把高频出现的文件后缀放在前面
   },
   plugins: [
+    // 抽离css插件
+    new MiniCssExtractPlugin({
+      filename: "static/css/[name].[contenthash:8].css", // 抽离css的输出目录和名称,加上[contenthash:8]
+    }),
     new HtmlWebpackPlugin({
       title: "zipfiles",
       template: path.resolve(__dirname, "../public/index.html"), // 模板取定义root节点的模板

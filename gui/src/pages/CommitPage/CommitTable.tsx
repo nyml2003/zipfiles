@@ -5,6 +5,8 @@ import { ApiEnum } from "@/apis";
 import useApi from "@useApi";
 import { GetCommitListRequest, GetCommitListResponse } from "@/apis/GetCommitList";
 import { LogicDeleteCommitRequest, LogicDeleteCommitResponse } from "@/apis/LogicDeleteCommit";
+import { useDispatch } from "react-redux";
+import { ReportError } from "@/stores/NotificationReducer";
 interface CommitLog {
   uuid: string;
   message: string;
@@ -24,6 +26,7 @@ interface ExplorerProps {
 const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => {
   const api = useApi();
   const [data, setData] = useState<DataType[]>([]);
+  const dispatch = useDispatch();
   const columns: TableColumnsType<DataType> = [
     {
       title: "操作",
@@ -123,6 +126,15 @@ const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => 
       .request<GetCommitListRequest, GetCommitListResponse>(ApiEnum.GetCommitList, {})
       .then(res => {
         setData(res.commits);
+      })
+      .catch(e => {
+        dispatch(
+          ReportError({
+            state: "error",
+            text: "获取提交列表失败",
+            description: (e as Error).message,
+          }),
+        );
       });
   };
 
@@ -130,12 +142,13 @@ const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => 
     fetchData();
   }, []);
 
-  const deleteCommit = async(commitId: string) => {
-    await api
-      .request<LogicDeleteCommitRequest, LogicDeleteCommitResponse>(ApiEnum.LogicDeleteCommit, {
+  const deleteCommit = async (commitId: string) => {
+    await api.request<LogicDeleteCommitRequest, LogicDeleteCommitResponse>(
+      ApiEnum.LogicDeleteCommit,
+      {
         commitId,
-      })
-      ;
+      },
+    );
   };
 
   return (

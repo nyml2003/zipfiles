@@ -9,10 +9,10 @@ const useApi: useApiType = () => {
   const dispatch = useDispatch();
   const api: Api = {
     request: async <Request, Response>(apiEnum: ApiEnum, request: Request): Promise<Response> => {
-      return new Promise(resolve => {
+      return new Promise((resolve, reject) => {
         // 时不时不稳定
         // if (Math.random() > 0.5) {
-        //   reject('请求失败');
+        //   reject("请求失败");
         //   return;
         // }
         // 时不时慢

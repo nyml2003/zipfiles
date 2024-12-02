@@ -14,6 +14,7 @@ import {
   removeSelectedFile,
   removeSelectedDirectory,
 } from "@/stores/CreateCommitReducer";
+import { ReportError } from "@/stores/NotificationReducer";
 interface FileDetail {
   name: string;
   type: FileType;
@@ -37,6 +38,7 @@ const TableView: React.FC = () => {
   const selectedDirectories = useSelector(
     (state: RootState) => state.createCommit.selectedFile.directories,
   );
+  const fresh = useSelector((state: RootState) => state.createCommit.fresh);
   const dispatch = useDispatch();
   const renderFileCheckbox = useCallback(
     (_: string, record: DataType) => {
@@ -210,12 +212,17 @@ const TableView: React.FC = () => {
       })
       .then((res: GetFileDetailListResponse) => {
         setData(res.files);
+      })
+      .catch((err: Error) => {
+        dispatch(
+          ReportError({ state: "error", text: "获取文件详情失败", description: err.message }),
+        );
       });
   };
 
   useEffect(() => {
     fetchData(currentPath);
-  }, [currentPath, filter]);
+  }, [currentPath, filter, fresh]);
 
   const tableRef = useRef(null);
 

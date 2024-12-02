@@ -57,9 +57,10 @@ enum class Api {
   GET_COMMIT_LIST = 104,
   GET_FILE_DETAIL = 105,
   RESTORE = 106,
-  LogicDeleteCommit = 107,
-  PhysicalDeleteCommit = 108,
-  GetCommitRecycleBin = 109,
+  LOGIC_DELETE_COMMIT = 107,
+  PHYSICAL_DELETE_COMMIT = 108,
+  GET_COMMIT_RECYCLE_BIN = 109,
+  RECOVER_COMMIT = 110,
 };
 
 }  // namespace zipfiles

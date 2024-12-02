@@ -53,12 +53,18 @@ const CommitRestore = ({ password, id, result, commitId, path }: CommitRestorePr
     setRestoreRequest(prev => {
       return { ...prev, status: "running", description: "正在发送还原请求" };
     });
-    await api.request<RestoreRequest, RestoreResponse>(ApiEnum.Restore, {
-      commitId,
-      path,
-      messageId: id,
-      ...key,
-    });
+    try {
+      await api.request<RestoreRequest, RestoreResponse>(ApiEnum.Restore, {
+        commitId,
+        path,
+        messageId: id,
+        ...key,
+      });
+    } catch (e) {
+      setRestoreRequest(prev => {
+        return { ...prev, status: "failed", description: (e as Error).message };
+      });
+    }
     setRestoreRequest(prev => {
       return { ...prev, description: "还原中" };
     });

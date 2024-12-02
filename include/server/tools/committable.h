@@ -1,10 +1,7 @@
 #ifndef ZIPFILES_COMMITTABLE_H
 #define ZIPFILES_COMMITTABLE_H
 
-#include <algorithm>
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <mutex>
 #include "json/value.h"
 

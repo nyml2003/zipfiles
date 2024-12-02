@@ -6,6 +6,8 @@ import { Context } from "./store";
 import useApi from "@useApi";
 import { ApiEnum } from "@/apis";
 import { GetFileDetailListRequest, GetFileDetailListResponse } from "@/apis/GetFileDetailList";
+import { ReportError } from "@/stores/NotificationReducer";
+import { useDispatch } from "react-redux";
 const { DirectoryTree } = Tree;
 interface DataNode {
   title: React.ReactNode;
@@ -20,6 +22,7 @@ const TreeMenu = () => {
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
   const [lastClickTime, setLastClickTime] = useState<number>(0);
   const { state, actions } = useContext(Context);
+  const dispatch = useDispatch();
   const api = useApi();
 
   useEffect(() => {
@@ -31,17 +34,27 @@ const TreeMenu = () => {
   }, [state.path, state.fresh]);
 
   const handleGetFileList = async (path: string) => {
-    const res = await api.request<GetFileDetailListRequest, GetFileDetailListResponse>(
-      ApiEnum.GetFileDetailList,
-      { path, filter: { type: FileType.Directory } },
-    );
-    const newTreeData = res.files.map(item => {
-      return {
-        title: item.name,
-        key: `${path}/${item.name}`,
-      };
-    });
-    setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
+    try {
+      const res = await api.request<GetFileDetailListRequest, GetFileDetailListResponse>(
+        ApiEnum.GetFileDetailList,
+        { path, filter: { type: FileType.Directory } },
+      );
+      const newTreeData = res.files.map(item => {
+        return {
+          title: item.name,
+          key: `${path}/${item.name}`,
+        };
+      });
+      setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
+    } catch (e: unknown) {
+      dispatch(
+        ReportError({
+          state: "error",
+          text: "获取文件列表失败",
+          description: (e as Error).message,
+        }),
+      );
+    }
   };
   const updateTreeData = (
     treeData: DataNode[],

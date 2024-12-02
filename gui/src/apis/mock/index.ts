@@ -11,6 +11,7 @@ import { mock as PhysicalDeleteCommit } from "./PhysicalDeleteCommit";
 import { mock as GetCommitRecycleBin } from "./GetCommitRecycleBin";
 import { mock as UpdateConfig } from "./UpdateConfig";
 import { mock as ReadConfig } from "./ReadConfig";
+import { mock as RecoverCommit } from "./RecoverCommit";
 import { ApiEnum } from "..";
 // eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any
 export const mockApi: Record<ApiEnum, (req: any) => any> = {
@@ -34,4 +35,5 @@ export const mockApi: Record<ApiEnum, (req: any) => any> = {
   [ApiEnum.UpdateConfig]: UpdateConfig,
   [ApiEnum.GetCommitRecycleBin]: GetCommitRecycleBin,
   [ApiEnum.ReadConfig]: ReadConfig,
+  [ApiEnum.RecoverCommit]: RecoverCommit,
 };

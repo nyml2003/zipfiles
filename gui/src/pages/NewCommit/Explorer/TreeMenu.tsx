@@ -8,10 +8,8 @@ import { FileType, LoadingState } from "@/types";
 import LoadingWrapper from "@/components/LoadingWrapper";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/stores/store";
-import {
-  updateCurrentFile,
-  updateCurrentPath,
-} from "@/stores/CreateCommitReducer";
+import { updateCurrentFile, updateCurrentPath } from "@/stores/CreateCommitReducer";
+import { ReportError } from "@/stores/NotificationReducer";
 const { DirectoryTree } = Tree;
 
 interface DataNode {
@@ -31,7 +29,7 @@ const TreeMenu = () => {
   const currentPath = useSelector((state: RootState) => state.createCommit.currentPath);
   const dispatch = useDispatch();
   useEffect(() => {
-   handleGetFileList(currentPath);
+    handleGetFileList(currentPath);
     return () => {
       setTreeData([]);
       setExpandedKeys([]);
@@ -44,7 +42,6 @@ const TreeMenu = () => {
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
         path,
       });
-
       const newTreeData = res.files.map(item => {
         const isDirectory = item.type === FileType.Directory;
         return {
@@ -55,7 +52,13 @@ const TreeMenu = () => {
       });
       setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
     } catch (err) {
-      console.log("获取文件列表失败: ", err);
+      dispatch(
+        ReportError({
+          state: "error",
+          text: "获取文件列表失败",
+          description: (err as Error).message,
+        }),
+      );
     }
     setLoading(LoadingState.Done);
   };
