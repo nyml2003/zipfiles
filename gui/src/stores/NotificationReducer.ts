@@ -18,10 +18,10 @@ const initialState: NotificationState = {
   notifications: [
     {
       id: "1",
+      state: "info",
       type: "plainText",
-      text: "Welcome to the notification center",
-      description:
-        "This is a notification center.",
+      text: "欢迎来到通知中心",
+      description: "这是一个通知中心，为您提供各类重要通知。",
     } as PlainText,
   ],
 };

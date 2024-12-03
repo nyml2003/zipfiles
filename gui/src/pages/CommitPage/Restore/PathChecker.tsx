@@ -49,7 +49,6 @@ const PathChecker = () => {
             onClick={() => {
               const newPath = state.path.split("/").slice(0, -1).join("/");
               actions.updatePath(newPath);
-              // form.setFieldsValue({ path: newPath });
             }}
             disabled={state.path === ""}></Button>
           <Button
@@ -62,7 +61,6 @@ const PathChecker = () => {
             type='text'
             onClick={() => {
               actions.initial();
-              // form.setFieldsValue({ path: "" });
             }}
             icon={<SwitcherOutlined />}></Button>
           <Breadcrumb items={breadcrumbItems} />

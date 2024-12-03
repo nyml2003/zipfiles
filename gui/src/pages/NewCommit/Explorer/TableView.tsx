@@ -3,7 +3,6 @@ import { Checkbox, Table } from "antd";
 import type { TableColumnsType } from "antd";
 import { ApiEnum } from "@/apis";
 import { FileType, FileTypeToString } from "@/types";
-import { FileFilled, FolderFilled } from "@ant-design/icons";
 import { GetFileDetailListRequest, GetFileDetailListResponse } from "@/apis/GetFileDetailList";
 import useApi from "@useApi";
 import { useDispatch, useSelector } from "react-redux";
@@ -15,6 +14,7 @@ import {
   removeSelectedDirectory,
 } from "@/stores/CreateCommitReducer";
 import { ReportError } from "@/stores/NotificationReducer";
+import { convertBytesToHumanReadable, modeToString } from "@/utils";
 interface FileDetail {
   name: string;
   type: FileType;
@@ -27,7 +27,6 @@ interface FileDetail {
   path: string;
 }
 type DataType = Partial<FileDetail>;
-
 const TableView: React.FC = () => {
   const api = useApi();
   const [data, setData] = useState<DataType[]>([]);
@@ -112,16 +111,17 @@ const TableView: React.FC = () => {
       },
       align: "center",
       ellipsis: true,
+      width: 50,
     },
     {
       title: "文件名",
       dataIndex: "name",
-
       key: "name",
       render: text => {
         return <a>{text}</a>;
       },
       ellipsis: true,
+      width: 100,
     },
     {
       title: "类型",
@@ -129,14 +129,9 @@ const TableView: React.FC = () => {
       ellipsis: true,
       key: "type",
       render: text => {
-        if (text === FileType.Directory) {
-          return <FolderFilled />;
-        }
-        if (text === FileType.Regular) {
-          return <FileFilled />;
-        }
         return FileTypeToString(text);
       },
+      width: 75,
     },
     {
       title: "创建时间",
@@ -150,6 +145,7 @@ const TableView: React.FC = () => {
           <span>加载中...</span>
         );
       },
+      width: 150,
     },
     {
       title: "更新时间",
@@ -163,6 +159,7 @@ const TableView: React.FC = () => {
           <span>加载中...</span>
         );
       },
+      width: 150,
     },
     {
       title: "大小",
@@ -172,8 +169,10 @@ const TableView: React.FC = () => {
       render: text => {
         if (text === undefined) return <span>加载中...</span>;
         if (text === null) return <span>未知</span>;
-        return <span>{text}</span>;
+        if (text === 0) return <span>-</span>;
+        return <span>{convertBytesToHumanReadable(text)}</span>;
       },
+      width: 100,
     },
     {
       title: "所有者",
@@ -199,8 +198,10 @@ const TableView: React.FC = () => {
       key: "mode",
       ellipsis: true,
       render: text => {
-        return text ? <span>{text}</span> : <span>加载中...</span>;
+        return text ? <span>{modeToString(text)}</span> : <span>加载中...</span>;
       },
+      width: 75,
+      align: "center",
     },
   ];
 
@@ -254,7 +255,7 @@ const TableView: React.FC = () => {
       columns={columns}
       dataSource={data}
       pagination={false}
-      className='overflow-auto fade-in-down'
+      className='fade-in-down grow-item'
       size='small'
       rowKey={"name"}
       rowClassName={record => {

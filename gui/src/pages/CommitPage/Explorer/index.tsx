@@ -92,15 +92,6 @@ const Explorer: React.FC = () => {
             icon={<ClearOutlined />}></Button>
           <Breadcrumb items={breadcrumbItems} />
         </div>
-        <div>
-          <Button
-            type='text'
-            onClick={() => {
-              console.log(JSON.stringify(state, null, 2));
-            }}>
-            打印
-          </Button>
-        </div>
       </div>
       <div
         className='

@@ -9,7 +9,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "primary", visible, ...props }, ref) => {
-    const baseStyles = "px-4 py-2 rounded focus:outline-none focus:ring";
+    const baseStyles = "px-4 py-2 rounded focus:outline-none";
     const variantStyles: Record<Variant, string> = {
       confirm: "bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-300 disabled:bg-blue-200",
       primary: "bg-white text-black hover:bg-gray-50 focus:ring-gray-300 disabled:bg-gray-200",

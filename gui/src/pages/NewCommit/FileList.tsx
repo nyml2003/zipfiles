@@ -149,6 +149,13 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
 
   return (
     <div className='grow-item'>
+      <div className='m-4 flex flex-row justify-start items-center'>
+        <div className='space-x-2'>
+          <Button type='primary' onClick={handleAdd}>
+            添加
+          </Button>
+        </div>
+      </div>
       <div className='rounded-md p-2 m-2 bg-white shadow-md'>
         <div className='flex flex-row justify-between items-center border-b border-gray-200 pb-2'>
           <h2 className='text-xl font-bold px-2 py-1 m-0'>文件列表</h2>
@@ -193,13 +200,6 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
       </div>
       <div className='m-4 flex flex-col text-gray-600'>
         <span>出现在目录列表中的目录，会先查询目录下的所有文件</span>
-      </div>
-      <div className='m-4 flex flex-row justify-end items-center'>
-        <div className='space-x-2'>
-          <Button type='primary' onClick={handleAdd}>
-            添加
-          </Button>
-        </div>
       </div>
     </div>
   );

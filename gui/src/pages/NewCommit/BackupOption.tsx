@@ -26,11 +26,10 @@ const BackupOption: React.FC = () => {
   const directories = useSelector(
     (state: RootState) => state.createCommit.selectedFile.directories,
   );
-  const [messageApi, contextHolder] = message.useMessage();
 
   const onFinish = async (values: Required<BackupFormProps>) => {
     if ((!files || files.length === 0) && (!directories || directories.length === 0)) {
-      messageApi.error("请选择文件");
+      message.error("请选择文件");
       return;
     }
     dispatch(
@@ -47,8 +46,7 @@ const BackupOption: React.FC = () => {
 
   return (
     <div className='p-2'>
-      备份文件设置
-      {contextHolder}
+      <h3 className='text-lg font-semibold'>备份选项</h3>
       <div className='fade-in-down p-4 max-w-3xl'>
         <Form
           labelCol={{ span: 4 }}
@@ -86,9 +84,9 @@ const BackupOption: React.FC = () => {
             }}
           </Form.Item>
           <Form.Item
-            label='commit'
+            label='提交信息'
             name='message'
-            rules={[{ required: true, message: "请输入commit信息" }]}
+            rules={[{ required: true, message: "请输入提交信息" }]}
             valuePropName='value'>
             <Input />
           </Form.Item>

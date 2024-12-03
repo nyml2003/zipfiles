@@ -19,25 +19,25 @@ export enum FileType {
 export function FileTypeToString(type: FileType): string {
   switch (type) {
     case FileType.None:
-      return "None";
+      return "空";
     case FileType.NotFound:
-      return "NotFound";
+      return "未找到";
     case FileType.Regular:
-      return "Regular";
+      return "文件";
     case FileType.Directory:
-      return "Directory";
+      return "目录";
     case FileType.Symlink:
-      return "Symlink";
+      return "符号链接";
     case FileType.Block:
-      return "Block";
+      return "块设备";
     case FileType.Character:
-      return "Character";
+      return "字符设备";
     case FileType.Fifo:
-      return "Fifo";
+      return "管道";
     case FileType.Socket:
-      return "Socket";
+      return "套接字";
     case FileType.Unknown:
-      return "Unknown";
+      return "未知";
     default:
       return "Undefined";
   }

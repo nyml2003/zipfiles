@@ -1,15 +1,5 @@
-enum FileType {
-  None = 0,
-  NotFound = -1,
-  Regular = 1,
-  Directory = 2,
-  Symlink = 3,
-  Block = 4,
-  Character = 5,
-  Fifo = 6,
-  Socket = 7,
-  Unknown = 8,
-}
+import { FileType } from "@/types";
+
 interface FileDetail {
   name: string;
   type: FileType;
@@ -56,26 +46,6 @@ export function cleanObject(obj: any) {
   }, {});
 }
 
-// export const filterBy = <T extends FileDetail>(
-//   files: T[],
-//   filter: Partial<GetFileListRequest['filter']>,
-// ): T[] => {
-//   const cleanedFilter = cleanObject(filter);
-//   if (!cleanedFilter || Object.keys(cleanedFilter).length === 0) return files;
-
-//   return files.filter(file => {
-//     if (file.type === FileType.Directory) return true;
-//     if (cleanedFilter.type && file.type !== cleanedFilter.type) return false;
-//     if (cleanedFilter.size) {
-//       if (cleanedFilter.size.min && file.size < cleanedFilter.size.min) return false;
-//       if (cleanedFilter.size.max && file.size > cleanedFilter.size.max) return false;
-//     }
-//     if (cleanedFilter.owner && !file.owner.includes(cleanedFilter.owner)) return false;
-//     if (cleanedFilter.group && !file.group.includes(cleanedFilter.group)) return false;
-//     return true;
-//   });
-// };
-
 export function findLongestCommonPrefix(paths: string[]) {
   if (paths.length === 0) return "";
   if (paths.length === 1) return paths[0];
@@ -108,10 +78,12 @@ export type Dir<DataType> = {
   subDir: Dir<DataType>[];
   name: string;
 };
-export function buildTree<DataType extends {
-  path: string
-  type: FileType
- }>(files: DataType[]): Dir<DataType> {
+export function buildTree<
+  DataType extends {
+    path: string;
+    type: FileType;
+  },
+>(files: DataType[]): Dir<DataType> {
   const root: Dir<DataType> = { children: [], name: "", subDir: [] };
   files.forEach(file => {
     if (file.path === ".") {
@@ -140,10 +112,7 @@ export function buildTree<DataType extends {
   return root;
 }
 
-export function findFile(
-  files: Dir<FileDetail>,
-  targetPath: string,
-): (FileDetail | File)[] {
+export function findFile(files: Dir<FileDetail>, targetPath: string): (FileDetail | File)[] {
   let current = files;
   if (targetPath !== "") {
     const parts = targetPath.split("/");
@@ -156,7 +125,7 @@ export function findFile(
   }
   const result: (FileDetail | File)[] = current.children;
   current.subDir.forEach(subDir => {
-    if (! result.find( file => file.name === subDir.name)) {
+    if (!result.find(file => file.name === subDir.name)) {
       result.push({
         name: subDir.name,
         type: FileType.Directory,
@@ -171,3 +140,59 @@ export type Required<T> = T extends unknown
       [P in keyof T]-?: Required<T[P]>;
     }
   : never;
+
+export function modeToString(mode: number): string {
+  // 权限位常量
+  const S_IRUSR = 0o400; // 用户（所有者）权限: 读
+  const S_IWUSR = 0o200; // 用户（所有者）权限: 写
+  const S_IXUSR = 0o100; // 用户（所有者）权限: 执行
+
+  const S_IRGRP = 0o040; // 用户组权限: 读
+  const S_IWGRP = 0o020; // 用户组权限: 写
+  const S_IXGRP = 0o010; // 用户组权限: 执行
+
+  const S_IROTH = 0o004; // 其他人权限: 读
+  const S_IWOTH = 0o002; // 其他人权限: 写
+  const S_IXOTH = 0o001; // 其他人权限: 执行
+
+  // 检查并构建权限字符串
+  let permissions = "";
+
+  // 用户权限
+  if ((mode & S_IRUSR) === S_IRUSR) permissions += "r";
+  else permissions += "-";
+  if ((mode & S_IWUSR) === S_IWUSR) permissions += "w";
+  else permissions += "-";
+  if ((mode & S_IXUSR) === S_IXUSR) permissions += "x";
+  else permissions += "-";
+
+  // 用户组权限
+  if ((mode & S_IRGRP) === S_IRGRP) permissions += "r";
+  else permissions += "-";
+  if ((mode & S_IWGRP) === S_IWGRP) permissions += "w";
+  else permissions += "-";
+  if ((mode & S_IXGRP) === S_IXGRP) permissions += "x";
+  else permissions += "-";
+
+  // 其他人权限
+  if ((mode & S_IROTH) === S_IROTH) permissions += "r";
+  else permissions += "-";
+  if ((mode & S_IWOTH) === S_IWOTH) permissions += "w";
+  else permissions += "-";
+  if ((mode & S_IXOTH) === S_IXOTH) permissions += "x";
+  else permissions += "-";
+
+  return permissions;
+}
+
+export function convertBytesToHumanReadable(bytes: number): string {
+  const unitLabels = ["Byte", "KB", "MB", "GB", "TB"];
+  let unitIndex = 0;
+
+  while (bytes >= 1024 && unitIndex < unitLabels.length - 1) {
+    bytes /= 1024;
+    unitIndex++;
+  }
+
+  return `${bytes.toFixed(2)} ${unitLabels[unitIndex]}`;
+}

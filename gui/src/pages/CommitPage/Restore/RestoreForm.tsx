@@ -78,10 +78,10 @@ const RestoreForm = () => {
       <Form.Item wrapperCol={{ offset: 4, span: 14 }}>
         <Space>
           <Button type='primary' htmlType='submit'>
-            Submit
+            提交
           </Button>
           <Button htmlType='button' onClick={onReset}>
-            Reset
+            重置
           </Button>
         </Space>
       </Form.Item>

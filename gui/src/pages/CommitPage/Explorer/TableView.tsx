@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState, useContext } from "react";
 import { Table } from "antd";
 import type { TableColumnsType } from "antd";
 import { FileType, FileTypeToString } from "@/types";
-import { FileFilled, FolderFilled } from "@ant-design/icons";
 import { Context } from "./store";
 import { findFile } from "@/utils";
 interface FileDetail {
@@ -33,12 +32,6 @@ const columns: TableColumnsType<DataType> = [
     ellipsis: true,
     key: "type",
     render: text => {
-      if (text === FileType.Directory) {
-        return <FolderFilled />;
-      }
-      if (text === FileType.Regular) {
-        return <FileFilled />;
-      }
       return FileTypeToString(text);
     },
   },
