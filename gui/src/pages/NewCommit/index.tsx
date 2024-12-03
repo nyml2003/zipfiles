@@ -1,11 +1,22 @@
-import React from "react";
+import React, { FC, useState } from "react";
 import FileList from "./FileList";
 import BackupOption from "./BackupOption";
 import { Tabs, TabsProps } from "antd";
 import Explorer from "./Explorer";
 
-const NewCommit: React.FC = () => {
-  const [activeKey, setActiveKey] = React.useState("1");
+const NewCommit: FC = () => {
+  const [activeKey, setActiveKey] = useState("1");
+  const createCloseExplorer = (key: string) => {
+    return () => {
+      setActiveKey("1");
+      setPanes((prev: TabsProps["items"]) => {
+        if (!prev) {
+          return [];
+        }
+        return prev.filter(pane => pane.key !== key);
+      });
+    };
+  };
   const addExplorer = () => {
     setPanes((prev: TabsProps["items"]) => {
       if (!prev) {
@@ -25,7 +36,7 @@ const NewCommit: React.FC = () => {
           {
             label: "浏览文件",
             key: "2",
-            children: <Explorer />,
+            children: <Explorer closeExplorer={createCloseExplorer("2")} />,
             className: "grow-item",
           },
         ];
@@ -37,15 +48,15 @@ const NewCommit: React.FC = () => {
         {
           label: "浏览文件",
           key: newKey,
-          children: <Explorer />,
+          children: <Explorer closeExplorer={createCloseExplorer(newKey)} />,
           className: "grow-item",
         },
       ];
     });
   };
-  const [panes, setPanes] = React.useState<TabsProps["items"]>([
+  const [panes, setPanes] = useState<TabsProps["items"]>([
     {
-      label: "新建备份列表",
+      label: "创建备份",
       key: "1",
       children: (
         <>
@@ -73,14 +84,14 @@ const NewCommit: React.FC = () => {
   };
 
   return (
-    <div className='bg-white grow-item split-container-row p-4'>
+    <div className=' grow-item split-container-row'>
       <Tabs
         type='editable-card'
         activeKey={activeKey}
         onChange={setActiveKey}
         onEdit={handleEdit}
         hideAdd
-        className='split-container-col grow-item'
+        className='split-container-col grow-item bg-white p-2'
         items={panes}></Tabs>
     </div>
   );

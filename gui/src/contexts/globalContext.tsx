@@ -1,6 +1,6 @@
 import { useGlobalMessageHandler } from "@/hooks/useGlobalMessageHandler";
 import useLog from "@/hooks/useLog";
-import React, { createContext, useContext, ReactNode } from "react";
+import React, { createContext, ReactNode } from "react";
 
 // 创建 Context
 const GlobalContext = createContext(null);

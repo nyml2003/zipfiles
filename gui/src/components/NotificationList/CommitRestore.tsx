@@ -99,7 +99,7 @@ const CommitRestore = ({ password, id, result, commitId, path }: CommitRestorePr
 
       <div className='flex space-x-2 justify-end'>
         <Button onClick={() => execute()} disabled={start} variant='confirm' visible={!start}>
-          Next
+          开始执行
         </Button>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Popconfirm, Space, Table } from "antd";
+import { Popconfirm, Space, Table } from "antd";
 import type { TableColumnsType } from "antd";
 import {
   GetCommitRecycleBinRequest,
@@ -14,6 +14,7 @@ import {
 import { useDispatch } from "react-redux";
 import { ReportError } from "@/stores/NotificationReducer";
 import { RecoverCommitRequest, RecoverCommitResponse } from "@/apis/RecoverCommit";
+import Button from "@/components/Button";
 interface CommitLog {
   uuid: string;
   message: string;
@@ -43,11 +44,9 @@ const RecycleBin = () => {
               deleteCommit(record.uuid);
               setData(data.filter(item => item.uuid !== record.uuid));
             }}>
-            <Button danger type='primary'>
-              彻底删除
-            </Button>
+            <Button variant='danger'>彻底删除</Button>
           </Popconfirm>
-          <Button type='primary' onClick={() => recoverCommit(record.uuid)}>
+          <Button variant='primary' onClick={() => recoverCommit(record.uuid)}>
             还原
           </Button>
         </Space>

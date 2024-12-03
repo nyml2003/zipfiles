@@ -11,7 +11,7 @@ import React from "react";
 import NoMoreData from "../NoMoreData";
 import PlainText from "./PlainText";
 import CommitPush from "./CommitPush";
-import { Button } from "antd";
+import Button from "@/components/Button";
 import { CloseOutlined } from "@ant-design/icons";
 import CommitRestore from "./CommitRestore";
 
@@ -41,7 +41,7 @@ const NotificationList = () => {
 
   return (
     <div className='w-25vw fade-in-left flex-col align-start overflow-auto hidden'>
-      <div className='text-lg font-bold p-4'>消息列表</div>
+      <div className='text-lg font-bold p-4'>通知中心</div>
       {notifications.length > 0 ? (
         notifications.map(notification => (
           <div
@@ -49,10 +49,10 @@ const NotificationList = () => {
             className='m-2 px-6 py-5 bg-white shadow-md rounded-lg relative'>
             {renderItem(notification)}
             <Button
-              type='text'
+              variant="primary"
               onClick={() => closeNotification(notification.id)}
               className='absolute top-2 right-2'
-              size='small'>
+              >
               <CloseOutlined />
             </Button>
           </div>
