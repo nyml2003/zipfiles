@@ -299,14 +299,14 @@ void removeCommitById(const std::string& uuid) {
     throw std::runtime_error("Commit " + uuid + " is not deleted yet");
   }
 
-  fs::path path = ctr.storagePath + "/" + ctr.uuid;
+  fs::path path = ctr.storagePath + "/" + uuid;
 
   if (fs::exists(path)) {
     try {
       fs::remove_all(path);
     } catch (std::exception& e) {
       throw std::runtime_error(
-        "Cannot remove storage file at " + path.string()
+        "Cannot remove storage file at " + path.string() + e.what()
       );
     }
   }

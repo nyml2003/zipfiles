@@ -10,3 +10,4 @@ tests/unittest/data
 test_files/*
 ventus_temp/*
 .ccls-cache
+release*

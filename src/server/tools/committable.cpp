@@ -289,7 +289,9 @@ CommitTableRecord CommitTable::getCommitRecordById(const std::string& uuid) {
   Json::Value& ct = getInstance().commitTable;
 
   if (ct.isMember(uuid)) {
-    return fromJson(ct[uuid]);
+    CommitTableRecord cr = fromJson(ct[uuid]);
+    cr.uuid = uuid;
+    return cr;
   }
 
   // 找不到对应的commit record
