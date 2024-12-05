@@ -15,12 +15,30 @@ void getFileDetail(int client_fd, const Req& req) {
   const fs::path file = path / name;
 
   if (!fs::exists(file)) {
-    throw std::runtime_error("File does not exist");
+    Socket::send(
+      client_fd, Res(
+                   response::NoResponse{
+                     .title = " 文件不存在",
+                     .description = "文件" + file.string() + "不存在"
+                   },
+                   req.uuid, Code::SERVER_ERROR
+                 )
+    );
+    return;
   }
 
   struct stat file_stat {};
   if (lstat(file.c_str(), &file_stat) != 0) {
-    throw std::runtime_error("Failed to get file details");
+    Socket::send(
+      client_fd, Res(
+                   response::NoResponse{
+                     .title = " 文件不存在",
+                     .description = "文件" + file.string() + "的元数据不存在"
+                   },
+                   req.uuid, Code::SERVER_ERROR
+                 )
+    );
+    return;
   }
 
   struct passwd* pwd = getpwuid(file_stat.st_uid);
@@ -37,7 +55,7 @@ void getFileDetail(int client_fd, const Req& req) {
   res.mode = file_stat.st_mode;
   res.name = name;
   res.path = path;
-  Socket::send(client_fd, Res(res, Api::GET_FILE_DETAIL, req.uuid, Code::OK));
+  Socket::send(client_fd, Res(res, req.uuid, Code::OK));
 }
 
 }  // namespace zipfiles::server::api

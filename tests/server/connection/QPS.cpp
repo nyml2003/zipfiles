@@ -28,11 +28,9 @@ void make_request() {
     if (current_id >= max_request) {
       break;
     }
-    Json::Value request = zipfiles::Req(
-                            zipfiles::request::MockNeedTime{current_id},
-                            zipfiles::Api::MOCK_NEED_TIME, "1234567890"
-    )
-                            .toJson();
+    Json::Value request =
+      zipfiles::Req(zipfiles::request::MockNeedTime{current_id}, "1234567890")
+        .toJson();
     Json::FastWriter writer;
     std::string json_str = writer.write(request);
     // std::cout << "Sending request: " << json_str << std::endl;

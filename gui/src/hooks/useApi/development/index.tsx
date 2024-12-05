@@ -22,7 +22,7 @@ const useApi: useApiType = () => {
         //   }, 2000);
         //   return;
         // }
-        
+
         setTimeout(() => {
           const response = mockApi[apiEnum](request);
           resolve(response);
@@ -30,40 +30,48 @@ const useApi: useApiType = () => {
         setTimeout(() => {
           if (apiEnum === ApiEnum.PostCommit) {
             if (Math.random() > 0.5) {
-              dispatch(finishMessage({
-                payload: {
-                  id: (request as PostCommitRequest).uuid,
-                },
-                code: Code.POSTCOMMIT_SUCCESS,
-                message: "提交成功",
-              }));
+              dispatch(
+                finishMessage({
+                  payload: {
+                    messageId: (request as PostCommitRequest).uuid,
+                    description: "提交成功",
+                  },
+                  code: Code.BACKUP_SUCCESS,
+                }),
+              );
             } else {
-              dispatch(finishMessage({
-                payload: {
-                  id: (request as PostCommitRequest).uuid,
-                },
-                code: Code.POSTCOMMIT_FAILED,
-                message: "提交失败",
-              }));
+              dispatch(
+                finishMessage({
+                  payload: {
+                    messageId: (request as PostCommitRequest).uuid,
+                    description: "提交失败",
+                  },
+                  code: Code.BACKUP_FAILED,
+                }),
+              );
             }
           }
           if (apiEnum === ApiEnum.Restore) {
             if (Math.random() > 0.5) {
-              dispatch(finishMessage({
-                payload: {
-                  id: (request as RestoreRequest).messageId,
-                },
-                code: Code.RESTORE_SUCCESS,
-                message: "还原成功",
-              }));
+              dispatch(
+                finishMessage({
+                  payload: {
+                    messageId: (request as RestoreRequest).messageId,
+                    description: "还原成功",
+                  },
+                  code: Code.RESTORE_SUCCESS,
+                }),
+              );
             } else {
-              dispatch(finishMessage({
-                payload: {
-                  id: (request as RestoreRequest).messageId,
-                },
-                code: Code.RESTORE_FAILED,
-                message: "还原失败",
-              }));
+              dispatch(
+                finishMessage({
+                  payload: {
+                    messageId: (request as RestoreRequest).messageId,
+                    description: "还原失败",
+                  },
+                  code: Code.RESTORE_FAILED,
+                }),
+              );
             }
           }
         }, 2000);

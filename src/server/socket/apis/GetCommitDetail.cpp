@@ -36,7 +36,7 @@ void getCommitDetail(int client_fd, const Req& req) {
        .name = name}
     );
   }
-  Res res(response, Api::GET_COMMIT_DETAIL, req.uuid, Code::OK);
+  Res res(response, req.uuid, Code::OK);
   Socket::send(client_fd, res);
 }
 

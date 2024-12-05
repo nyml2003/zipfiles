@@ -1,9 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from "react";
-import { Code, RequestWrapper, ResponseWrapper, Notification, isNotification, isResponseNotification } from "./useApi/types";
+import {
+  Code,
+  RequestWrapper,
+  ResponseWrapper,
+  Notification,
+  isSingleText,
+  SingleText,
+  isDoubleText,
+  DoubleText,
+  isBackup,
+  BackupAndRestoreEnd,
+  isRestore,
+} from "./useApi/types";
 import { useDispatch } from "react-redux";
 import { addNotification, finishMessage } from "@/stores/NotificationReducer";
-import { PlainText } from "@/components/NotificationList/types";
+import { isError } from "lodash";
 
 export interface CallBack {
   request: RequestWrapper;
@@ -19,31 +31,47 @@ export const setGlobalCallback = (callback: CallBack) => {
 };
 
 export const MAX_REQUEST_TIMEOUT = 500;
-const MAX_REQUEST_RETRY = 10;
+// const MAX_REQUEST_RETRY = 10;
 export const useGlobalMessageHandler = () => {
   const dispatch = useDispatch();
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      const response = event.data as ResponseWrapper;
-      const { api, uuid, code, payload, message } = response;
-      if (isNotification(code)) {
-        dispatch(
-          addNotification({
-            type: "plainText",
-            text: message,
-            state: "warning",
-          } as PlainText),
-        );
+      const { code } = event.data as ResponseWrapper;
+      if (isSingleText(code)) {
+        const { payload } = event.data as Notification<SingleText>;
+        const singleText = {
+          text: payload.title,
+          state: ["success", "info", "warning", "error"][code - 400] as
+            | "success"
+            | "info"
+            | "warning"
+            | "error",
+          type: "plainText",
+        };
+        dispatch(addNotification(singleText));
         return;
       }
-      if (isResponseNotification(code)) {
-        const notification = event.data as Notification;
-        dispatch(finishMessage(notification));
+      if (isDoubleText(code)) {
+        const { payload } = event.data as Notification<DoubleText>;
+        const doubleText = {
+          text: payload.title,
+          description: payload.description,
+          state: ["success", "warning", "error", "info"][code - 410] as
+            | "success"
+            | "info"
+            | "warning"
+            | "error",
+          type: "plainText",
+        };
+        dispatch(addNotification(doubleText));
         return;
       }
-      const callbackIndex = callbacks.findIndex(
-        callback => callback.request.uuid === uuid && callback.request.api === api,
-      );
+      if (isBackup(code) || isRestore(code)) {
+        dispatch(finishMessage(event.data as Notification<BackupAndRestoreEnd>));
+        return;
+      }
+      const { payload, uuid } = event.data as ResponseWrapper;
+      const callbackIndex = callbacks.findIndex(callback => callback.request.uuid === uuid);
       // console.log('event.type: ', event.type);
       // console.log('event.timestamp: ', response.timestamp);
       // console.log('event.apiEnum: ', response.apiEnum);
@@ -52,8 +80,17 @@ export const useGlobalMessageHandler = () => {
 
       if (code === Code.OK) {
         callback.resolve(payload || {});
+      } else if (isError(code)) {
+        callback.reject("");
+        const doubleText = {
+          text: (payload as DoubleText).title,
+          description: (payload as DoubleText).description,
+          state: "error",
+          type: "plainText",
+        };
+        dispatch(addNotification(doubleText));
       } else {
-        callback.reject(message || "响应体异常");
+        callback.reject("未知错误");
       }
     };
     window.addEventListener("message", handler);

@@ -6,6 +6,7 @@ import { ApiEnum } from "@/apis";
 import { UpdateConfigRequest, UpdateConfigResponse } from "@/apis/UpdateConfig";
 import { ReportError } from "@/stores/NotificationReducer";
 import { useDispatch } from "react-redux";
+import { AcceptableError } from "@/hooks/useApi/types";
 type Config = Partial<{
   ip: string; // 服务器ip
   defaultBackupPath: string; // 默认备份路径
@@ -23,6 +24,9 @@ const ConfigPage: React.FC = () => {
       .request<ReadConfigRequest, ReadConfigResponse>(ApiEnum.ReadConfig, {})
       .then(setInitialConfig)
       .catch(e => {
+        if (!(e instanceof AcceptableError)) {
+          return;
+        }
         dispatch(
           ReportError({
             state: "error",
@@ -57,6 +61,9 @@ const ConfigPage: React.FC = () => {
         fetchData();
       })
       .catch(e => {
+        if (!(e instanceof AcceptableError)) {
+          return;
+        }
         dispatch(
           ReportError({
             state: "error",

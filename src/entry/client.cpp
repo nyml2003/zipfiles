@@ -1,9 +1,7 @@
-#include <fstream>
-#include <thread>
-#include "client/launcher.h"
-#include "client/socket.h"
-#include "client/view.h"
 
+#include <fstream>
+#include "client/launcher.h"
+using zipfiles::client::Launcher;
 int main(int argc, char* argv[]) {
   // Debug
   // 因为会导致Debug冲突，因此暂时先手动处理
@@ -11,14 +9,9 @@ int main(int argc, char* argv[]) {
   ofs.open("/app/bin/client.log", std::ofstream::out | std::ofstream::trunc);
   ofs.close();
 
-  zipfiles::client::Launcher::startLogger();
-  std::thread receiverThread([]() {
-    while (true) {
-      zipfiles::client::Socket::getInstance().receive(
-        zipfiles::client::sendResponse
-      );
-    }
-  });
-  zipfiles::client::Launcher::run(argc, argv);
+  Launcher::getInstance().startLogger();
+  Launcher::getInstance().startReciever();
+  Launcher::getInstance().startGTK(argc, argv);
+
   return 0;
 }

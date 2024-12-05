@@ -8,6 +8,7 @@ import { ApiEnum } from "@/apis";
 import { GetFileDetailListRequest, GetFileDetailListResponse } from "@/apis/GetFileDetailList";
 import { ReportError } from "@/stores/NotificationReducer";
 import { useDispatch } from "react-redux";
+import { AcceptableError } from "@/hooks/useApi/types";
 const { DirectoryTree } = Tree;
 interface DataNode {
   title: React.ReactNode;
@@ -47,6 +48,9 @@ const TreeMenu = () => {
       });
       setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
     } catch (e: unknown) {
+      if (!(e instanceof AcceptableError)) {
+        return;
+      }
       dispatch(
         ReportError({
           state: "error",

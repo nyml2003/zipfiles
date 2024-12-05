@@ -10,6 +10,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/stores/store";
 import { updateCurrentFile, updateCurrentPath } from "@/stores/CreateCommitReducer";
 import { ReportError } from "@/stores/NotificationReducer";
+import { AcceptableError } from "@/hooks/useApi/types";
 const { DirectoryTree } = Tree;
 
 interface DataNode {
@@ -52,6 +53,9 @@ const TreeMenu = () => {
       });
       setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
     } catch (err) {
+      if (!(err instanceof AcceptableError)) {
+        return;
+      }
       dispatch(
         ReportError({
           state: "error",

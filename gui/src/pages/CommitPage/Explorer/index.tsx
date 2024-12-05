@@ -14,6 +14,7 @@ import { Context } from "./store";
 import { GetCommitDetailResponse, GetCommitDetailRequest } from "@/apis/GetCommitDetail";
 import { ReportError } from "@/stores/NotificationReducer";
 import { useDispatch } from "react-redux";
+import { AcceptableError } from "@/hooks/useApi/types";
 
 const Explorer: React.FC = () => {
   const { state, actions } = useContext(Context);
@@ -31,6 +32,9 @@ const Explorer: React.FC = () => {
       );
       actions.updateFiles(res.files);
     } catch (e: unknown) {
+      if (!(e instanceof AcceptableError)) {
+        return;
+      }
       dispatch(
         ReportError({
           state: "error",

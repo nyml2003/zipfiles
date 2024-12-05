@@ -15,6 +15,7 @@ import { useDispatch } from "react-redux";
 import { ReportError } from "@/stores/NotificationReducer";
 import { RecoverCommitRequest, RecoverCommitResponse } from "@/apis/RecoverCommit";
 import Button from "@/components/Button";
+import { AcceptableError } from "@/hooks/useApi/types";
 interface CommitLog {
   uuid: string;
   message: string;
@@ -122,6 +123,9 @@ const RecycleBin = () => {
         setData(res.commits);
       })
       .catch(e => {
+        if (!(e instanceof AcceptableError)) {
+          return;
+        }
         dispatch(
           ReportError({
             state: "error",
@@ -144,9 +148,11 @@ const RecycleBin = () => {
           commitId,
         },
       );
-
       setData(data.filter(item => item.uuid !== commitId));
     } catch (e) {
+      if (!(e instanceof AcceptableError)) {
+        return;
+      }
       dispatch(
         ReportError({
           state: "error",
@@ -164,6 +170,9 @@ const RecycleBin = () => {
       });
       setData(data.filter(item => item.uuid !== commitId));
     } catch (e) {
+      if (!(e instanceof AcceptableError)) {
+        return;
+      }
       dispatch(
         ReportError({
           state: "error",

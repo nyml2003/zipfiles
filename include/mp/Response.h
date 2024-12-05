@@ -20,7 +20,10 @@
 namespace zipfiles {
 
 namespace response {
-struct NoResponse {};
+struct NoResponse {
+  std::string title;
+  std::string description;
+};
 }  // namespace response
 
 using ResKind = std::variant<
@@ -40,21 +43,16 @@ using ResKind = std::variant<
   response::NoResponse>;
 
 struct Res {
-  Res(
-    ResKind,
-    Api,
-    std::string,
-    Code,
-    std::optional<std::string> = std::nullopt
-  );
-  ResKind kind;                        // 响应体
-  Api api;                             // 响应类型
-  std::string uuid;                    // 请求的uuid
-  Code code;                           // 响应状态码
-  std::optional<std::string> message;  // 响应消息, 可选，用于返回错误信息
+  Res(ResKind, std::string, Code);
+  ResKind kind;      // 响应体
+  Api api;           // 响应类型
+  std::string uuid;  // 请求的uuid
+  Code code;         // 响应状态码
   [[nodiscard]] Json::Value toJson() const;
   static Res fromJson(const Json::Value& json);
 };
+
+Api matchApi(ResKind);
 
 }  // namespace zipfiles
 

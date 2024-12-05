@@ -1,4 +1,4 @@
-import { Notification } from "@/hooks/useApi/types";
+import { BackupAndRestoreEnd, Notification } from "@/hooks/useApi/types";
 export type PlainText = NotificationUnion & {
   type: "plainText";
   text: string;
@@ -24,7 +24,7 @@ export type CommitPush = NotificationUnion & {
   files: File[];
   directories: string[];
   options: BackupOption;
-  result?: Notification;
+  result?: Notification<BackupAndRestoreEnd>;
 };
 
 export type CommitRestore = NotificationUnion & {
@@ -32,7 +32,7 @@ export type CommitRestore = NotificationUnion & {
   commitId: string;
   path: string;
   password: string;
-  result?: Notification;
+  result?: Notification<BackupAndRestoreEnd>;
 };
 
 export interface NotificationUnion {

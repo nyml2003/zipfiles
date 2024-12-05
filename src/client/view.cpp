@@ -29,45 +29,108 @@ bool isProcedureValid(JSCValue* value) {
   return true;
 }
 
-void handleNotify(const std::string& message, Code code) {
-  sendResponse(Notification(message, code).toJson());
+void handleNotifySingleSuccess(const std::string& message) {
+  sendResponse(ZNotification(
+                 notification::SingleLine({.title = message}),
+                 Code::SINGLE_SUCCESS
+  )
+                 .toJson());
 }
 
-void handleNotify(const std::string& message) {
-  sendResponse(Notification(message, Code::NOTIFICATION).toJson());
+void handleNotifySingleError(const std::string& message) {
+  sendResponse(ZNotification(
+                 notification::SingleLine({.title = message}),
+                 Code::SINGLE_ERROR
+  )
+                 .toJson());
 }
 
-void handleError(
-  const std::string& uuid,
-  const std::string& message,
-  Code code,
-  std::optional<Api> api
+void handleNotifySingleWarning(const std::string& message) {
+  sendResponse(ZNotification(
+                 notification::SingleLine({.title = message}),
+                 Code::SINGLE_WARNING
+  )
+                 .toJson());
+}
+
+void handleNotifySingleInfo(const std::string& message) {
+  sendResponse(ZNotification(
+                 notification::SingleLine({.title = message}), Code::SINGLE_INFO
+  )
+                 .toJson());
+}
+
+void handleNotifyDoubleSuccess(
+  const std::string& title,
+  const std::string& description
 ) {
-  if (api.has_value()) {
-    sendResponse(
-      Res(response::NoResponse({}), api.value(), uuid, code, message).toJson()
-    );
-    return;
-  }
   sendResponse(
-    Res(response::NoResponse({}), Api::NORESPONSE, uuid, code, message).toJson()
+    ZNotification(
+      notification::DoubleLine({.title = title, .description = description}),
+      Code::DOUBLE_SUCCESS
+    )
+      .toJson()
   );
+}
+
+void handleNotifyDoubleError(
+  const std::string& title,
+  const std::string& description
+) {
+  sendResponse(
+    ZNotification(
+      notification::DoubleLine({.title = title, .description = description}),
+      Code::DOUBLE_ERROR
+    )
+      .toJson()
+  );
+}
+
+void handleNotifyDoubleWarning(
+  const std::string& title,
+  const std::string& description
+) {
+  sendResponse(
+    ZNotification(
+      notification::DoubleLine({.title = title, .description = description}),
+      Code::DOUBLE_WARNING
+    )
+      .toJson()
+  );
+}
+
+void handleNotifyDoubleInfo(
+  const std::string& title,
+  const std::string& description
+) {
+  sendResponse(
+    ZNotification(
+      notification::DoubleLine({.title = title, .description = description}),
+      Code::DOUBLE_INFO
+    )
+      .toJson()
+  );
+}
+
+void handleNotify(const ZNotification& notification) {
+  sendResponse(notification.toJson());
 }
 
 void handleClientError(
   const std::string& uuid,
-  const std::string& message,
-  Api api
+  const std::string& title,
+  const std::string& description
 ) {
-  Json::Value root;
-  root["api"] = static_cast<int>(api);
-  root["uuid"] = uuid;
-  root["code"] = static_cast<int>(Code::CLIENT_ERROR);
-  root["message"] = message;
-  sendResponse(root);
+  sendResponse(
+    Res(
+      response::NoResponse({.title = title, .description = description}), uuid,
+      Code::CLIENT_ERROR
+    )
+      .toJson()
+  );
 }
 
-void SendLocalResponse(
+void sendLocalResponse(
   const Json::Value& root,
   Api api,
   const std::string& uuid,
@@ -100,29 +163,15 @@ void handleProcedureLog(
   [[maybe_unused]] gpointer user_data
 ) {
   JSCValue* value = webkit_javascript_result_get_js_value(js_result);
-  try {
-    if (!isProcedureValid(value)) {
-      handleNotify("Invalid procedure header", Code::NOTIFICATION);
-      return;
-    }
-  } catch (const std::exception& e) {
-    handleNotify(
-      "Failed in checking procedure header, error: " + std::string(e.what()),
-      Code::NOTIFICATION
-    );
+  if (!isProcedureValid(value)) {
+    handleNotifySingleError("log函数参数错误");
     return;
   }
+
   std::string message;
-  try {
-    message =
-      jsc_value_to_string(jsc_value_object_get_property(value, "message"));
-  } catch (const std::exception& e) {
-    handleNotify(
-      "Failed in getting message, error: " + std::string(e.what()),
-      Code::NOTIFICATION
-    );
-    return;
-  }
+
+  message =
+    jsc_value_to_string(jsc_value_object_get_property(value, "message"));
 
   log4cpp::Category::getRoot().infoStream() << "JS Log: " << message;
 }
@@ -133,29 +182,16 @@ void handleProcedureError(
   [[maybe_unused]] gpointer user_data
 ) {
   JSCValue* value = webkit_javascript_result_get_js_value(js_result);
-  try {
-    if (!isProcedureValid(value)) {
-      handleNotify("Invalid procedure header", Code::NOTIFICATION);
-      return;
-    }
-  } catch (const std::exception& e) {
-    handleNotify(
-      "Failed in checking procedure header, error: " + std::string(e.what()),
-      Code::NOTIFICATION
-    );
+
+  if (!isProcedureValid(value)) {
+    handleNotifySingleError("error函数参数错误");
     return;
   }
+
   std::string message;
-  try {
-    message =
-      jsc_value_to_string(jsc_value_object_get_property(value, "message"));
-  } catch (const std::exception& e) {
-    handleNotify(
-      "Failed in getting message, error: " + std::string(e.what()),
-      Code::NOTIFICATION
-    );
-    return;
-  }
+
+  message =
+    jsc_value_to_string(jsc_value_object_get_property(value, "message"));
 
   log4cpp::Category::getRoot().errorStream() << "JS Error: " << message;
 }
@@ -166,29 +202,13 @@ void handleProcedureInfo(
   [[maybe_unused]] gpointer user_data
 ) {
   JSCValue* value = webkit_javascript_result_get_js_value(js_result);
-  try {
-    if (!isProcedureValid(value)) {
-      handleNotify("Invalid procedure header", Code::NOTIFICATION);
-      return;
-    }
-  } catch (const std::exception& e) {
-    handleNotify(
-      "Failed in checking procedure header, error: " + std::string(e.what()),
-      Code::NOTIFICATION
-    );
+  if (!isProcedureValid(value)) {
+    handleNotifySingleError("info函数参数错误");
     return;
   }
-  std::string message;
-  try {
-    message =
-      jsc_value_to_string(jsc_value_object_get_property(value, "message"));
-  } catch (const std::exception& e) {
-    handleNotify(
-      "Failed in getting message, error: " + std::string(e.what()),
-      Code::NOTIFICATION
-    );
-    return;
-  }
+
+  std::string message =
+    jsc_value_to_string(jsc_value_object_get_property(value, "message"));
 
   log4cpp::Category::getRoot().infoStream() << "JS Info: " << message;
 }
@@ -199,29 +219,14 @@ void handleProcedureWarn(
   [[maybe_unused]] gpointer user_data
 ) {
   JSCValue* value = webkit_javascript_result_get_js_value(js_result);
-  try {
-    if (!isProcedureValid(value)) {
-      handleNotify("Invalid procedure header", Code::NOTIFICATION);
-      return;
-    }
-  } catch (const std::exception& e) {
-    handleNotify(
-      "Failed in checking procedure header, error: " + std::string(e.what()),
-      Code::NOTIFICATION
-    );
+
+  if (!isProcedureValid(value)) {
+    handleNotifySingleError("warn函数参数错误");
     return;
   }
-  std::string message;
-  try {
-    message =
-      jsc_value_to_string(jsc_value_object_get_property(value, "message"));
-  } catch (const std::exception& e) {
-    handleNotify(
-      "Failed in getting message, error: " + std::string(e.what()),
-      Code::NOTIFICATION
-    );
-    return;
-  }
+
+  std::string message =
+    jsc_value_to_string(jsc_value_object_get_property(value, "message"));
 
   log4cpp::Category::getRoot().warnStream() << "JS Warn: " << message;
 }
@@ -233,19 +238,19 @@ void handleFunction(
 ) {
   JSCValue* value = webkit_javascript_result_get_js_value(js_result);
   JSCValue* uuid = jsc_value_object_get_property(value, "uuid");
-  JSCValue* api = jsc_value_object_get_property(value, "api");
   JSCValue* request = jsc_value_object_get_property(value, "request");
-  try {
-    Json::Value req = jsc_value_to_string(request);
-    log4cpp::Category::getRoot().infoStream()
-      << "send request: " << req.asCString();
-    Socket::getInstance().send(req.asCString());
-  } catch (const std::exception& e) {
-    handleError(
-      jsc_value_to_string(uuid), "Failed in sending request", Code::ERROR,
-      static_cast<Api>(jsc_value_to_int32(api))
-    );
-  }
+  std::string req = jsc_value_to_string(request);
+  std::string _uuid = jsc_value_to_string(uuid);
+
+  std::thread t([req, _uuid] {
+    try {
+      log4cpp::Category::getRoot().debugStream() << "send request: " << req;
+      Socket::getInstance().send(req);
+    } catch (const std::exception& e) {
+      handleClientError(_uuid, "请求失败", e.what());
+    }
+  });
+  t.detach();
 }
 
 void handleUpdateConfig(
@@ -264,12 +269,12 @@ void handleUpdateConfig(
   // 读取CONFIGURE_PATH
   std::ifstream in(CONFIGURE_PATH);
   if (!in.is_open()) {
-    handleClientError(_uuid, "Failed in opening config", _api);
+    handleClientError(_uuid, "更新配置失败", "无法打开配置文件");
     return;
   }
 
   if (!reader.parse(in, root, false)) {
-    handleClientError(_uuid, "Failed in parsing config", _api);
+    handleClientError(_uuid, "更新配置失败", "无法解析配置文件");
     return;
   }
 
@@ -291,19 +296,19 @@ void handleUpdateConfig(
   log4cpp::Category::getRoot().infoStream() << "update config: " << root;
   std::ofstream out(CONFIGURE_PATH);
   if (!out.is_open()) {
-    handleClientError(_uuid, "Failed in opening config", _api);
+    handleClientError(_uuid, "更新配置失败", "无法打开配置文件");
     return;
   }
   out << root;
   out.close();
   Json::Value nullJson;
-  SendLocalResponse(nullJson, _api, _uuid, Code::OK);
+  sendLocalResponse(nullJson, _api, _uuid, Code::OK);
 }
 
 void handleReadConfig(
-  WebKitUserContentManager* manager,
+  WebKitUserContentManager* /*manager*/,
   WebKitJavascriptResult* js_result,
-  gpointer user_data
+  gpointer /*user_data*/
 ) {
   JSCValue* value = webkit_javascript_result_get_js_value(js_result);
   JSCValue* uuid = jsc_value_object_get_property(value, "uuid");
@@ -323,8 +328,7 @@ void handleReadConfig(
     // 创建文件
     std::ofstream out(CONFIGURE_PATH);
     if (!out.is_open()) {
-      handleClientError(_uuid, "Failed in writing config", _api);
-      return;
+      handleClientError(_uuid, "读取配置失败", "无法打开配置文件");
     }
     out << defaultConfig;
     out.close();
@@ -332,7 +336,7 @@ void handleReadConfig(
   }
 
   if (!reader.parse(in, root, false)) {
-    handleClientError(_uuid, "Failed in parsing config", _api);
+    handleClientError(_uuid, "读取配置失败", "无法解析配置文件");
     return;
   }
 
@@ -345,7 +349,16 @@ void handleReadConfig(
   res["defaultBackupPath"] = root["defaultBackupPath"];
   res["port"] = root["port"];
   res["version"] = root["version"];
-  SendLocalResponse(res, _api, _uuid, Code::OK);
+  sendLocalResponse(res, _api, _uuid, Code::OK);
+}
+
+void handleQuit(
+  WebKitUserContentManager* /*manager*/,
+  WebKitJavascriptResult* /*js_result*/,
+  gpointer /*user_data*/
+) {
+  gtk_main_quit();
+  Launcher::getInstance().stop();
 }
 
 }  // namespace zipfiles::client

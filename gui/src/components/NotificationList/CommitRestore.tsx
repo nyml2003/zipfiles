@@ -79,7 +79,7 @@ const CommitRestore = ({ password, id, result, commitId, path }: CommitRestorePr
     }
     if (result.code === Code.RESTORE_FAILED) {
       setRestoreRequest(prev => {
-        return { ...prev, status: "failed", description: result.message };
+        return { ...prev, status: "failed", description: result.payload.description };
       });
     }
   }, [result]);

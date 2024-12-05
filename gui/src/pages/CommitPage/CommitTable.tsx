@@ -7,6 +7,7 @@ import { GetCommitListRequest, GetCommitListResponse } from "@/apis/GetCommitLis
 import { LogicDeleteCommitRequest, LogicDeleteCommitResponse } from "@/apis/LogicDeleteCommit";
 import { useDispatch } from "react-redux";
 import { ReportError } from "@/stores/NotificationReducer";
+import { AcceptableError } from "@/hooks/useApi/types";
 interface CommitLog {
   uuid: string;
   message: string;
@@ -128,6 +129,9 @@ const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => 
         setData(res.commits);
       })
       .catch(e => {
+        if (!(e instanceof AcceptableError)) {
+          return;
+        }
         dispatch(
           ReportError({
             state: "error",

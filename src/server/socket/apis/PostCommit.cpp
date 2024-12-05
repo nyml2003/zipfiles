@@ -21,24 +21,24 @@ void postCommit(int client_fd, const Req& req) {
     .isEncrypt = request.isEncrypt,
     .isDelete = false,
   };
-  Socket::send(
-    client_fd, Res(response::PostCommit{}, Api::POST_COMMIT, req.uuid, Code::OK)
-  );
-  Json::Value idJson;
-  idJson["id"] = request.uuid;
+  Socket::send(client_fd, Res(response::PostCommit{}, req.uuid, Code::OK));
   try {
     backupFiles(files, cr, request.isEncrypt ? request.key.value() : "");
     Socket::send(
-      client_fd,
-      Notification(
-        std::string("commit success"), Code::POSTCOMMIT_SUCCESS, idJson
-      )
+      client_fd, Notification(
+                   notification::Restore{
+                     .messageId = request.uuid, .description = "备份成功"
+                   },
+                   Code::RESTORE_SUCCESS
+                 )
     );
   } catch (const std::exception& e) {
     Socket::send(
       client_fd, Notification(
-                   std::string("commit failed: ") + e.what(),
-                   Code::POSTCOMMIT_FAILED, idJson
+                   notification::Restore{
+                     .messageId = request.uuid, .description = e.what()
+                   },
+                   Code::RESTORE_FAILED
                  )
     );
   }

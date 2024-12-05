@@ -38,13 +38,15 @@ using ReqKind = std::variant<
   request::MockManyNotifications>;
 
 struct Req {
-  Req(ReqKind, Api, std::string);
+  Req(ReqKind, std::string);
   ReqKind kind;      // 请求体
   Api api;           // 请求类型
   std::string uuid;  // 请求的uuid
   [[nodiscard]] Json::Value toJson() const;
   static Req fromJson(const Json::Value&);
 };
+
+Api matchApi(ReqKind);
 
 }  // namespace zipfiles
 

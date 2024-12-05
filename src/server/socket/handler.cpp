@@ -77,7 +77,14 @@ void doHandle(int client_fd, const Req& req) {
         api::recoverCommit(client_fd, req);
         break;
       default:
-        sendError(client_fd, "Unknown api type");
+        Socket::send(
+          client_fd, Res(
+                       response::NoResponse(
+                         {.title = "未知请求", .description = "未知的请求类型"}
+                       ),
+                       req.uuid, Code::CLIENT_ERROR
+                     )
+        );
     }
   }  // namespace zipfiles::server
   catch (const std::exception& e) {
@@ -87,12 +94,25 @@ void doHandle(int client_fd, const Req& req) {
       // log4cpp::Category::getRoot().infoStream() << e_ptr->what();
       return;
     }
+    if (const auto* e_ptr = dynamic_cast<const UnknownApiException*>(&e)) {
+      log4cpp::Category::getRoot().errorStream() << e_ptr->what();
+      Socket::send(
+        client_fd, Res(
+                     response::NoResponse(
+                       {.title = "未知请求", .description = "未知的请求类型"}
+                     ),
+                     req.uuid, Code::CLIENT_ERROR
+                   )
+      );
+      return;
+    }
     log4cpp::Category::getRoot().errorStream()
       << "Failed to handle request: " << e.what();
     Socket::send(
       client_fd,
       Res(
-        response::NoResponse(), Api::NORESPONSE, req.uuid, Code::ERROR, e.what()
+        response::NoResponse({.title = "服务端异常", .description = e.what()}),
+        req.uuid, Code::SERVER_ERROR
       )
     );
   }

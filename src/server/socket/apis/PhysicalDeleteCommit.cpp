@@ -11,10 +11,7 @@ void physicalDeleteCommit(int client_fd, const Req& req) {
 
   removeCommitAndRecordById(kind.commitId);
   Socket::send(
-    client_fd, Res(
-                 response::PhysicalDeleteCommit(), Api::PHYSICAL_DELETE_COMMIT,
-                 req.uuid, Code::OK
-               )
+    client_fd, Res(response::PhysicalDeleteCommit(), req.uuid, Code::OK)
   );
 }
 

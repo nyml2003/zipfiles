@@ -6,7 +6,7 @@ import {
 } from "@/components/NotificationList/types";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
-import { Notification } from "@/hooks/useApi/types";
+import { BackupAndRestoreEnd, Notification } from "@/hooks/useApi/types";
 
 export interface NotificationState {
   notifications: NotificationUnion[];
@@ -43,9 +43,9 @@ const NotificationReducer = createSlice({
     toggleNotification(state) {
       state.open = !state.open;
     },
-    finishMessage(state, action: PayloadAction<Notification>) {
+    finishMessage(state, action: PayloadAction<Notification<BackupAndRestoreEnd>>) {
       const notification = state.notifications.find(
-        notification => notification.id === action.payload.payload.id,
+        notification => notification.id === action.payload.payload.messageId,
       );
       if (notification && notification.type === "commitPush") {
         (notification as CommitPush).result = action.payload;

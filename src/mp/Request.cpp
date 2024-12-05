@@ -7,8 +7,46 @@
 
 namespace zipfiles {
 
-Req::Req(ReqKind kind, Api api, std::string uuid)
-  : kind(std::move(kind)), api(api), uuid(std::move(uuid)) {}
+Api matchApi(ReqKind kind) {
+  return std::visit(
+    overload{
+      [](const request::GetCommitDetail&) { return Api::GET_COMMIT_DETAIL; },
+      [](const request::GetCommitList&) { return Api::GET_COMMIT_LIST; },
+      [](const request::GetFileList&) { return Api::GET_FILE_LIST; },
+      [](const request::GetFileDetail&) { return Api::GET_FILE_DETAIL; },
+      [](const request::GetFileDetailList&) {
+        return Api::GET_FILE_DETAIL_LIST;
+      },
+      [](const request::PostCommit&) { return Api::POST_COMMIT; },
+      [](const request::Restore&) { return Api::RESTORE; },
+      [](const request::LogicDeleteCommit&) {
+        return Api::LOGIC_DELETE_COMMIT;
+      },
+      [](const request::PhysicalDeleteCommit&) {
+        return Api::PHYSICAL_DELETE_COMMIT;
+      },
+      [](const request::GetCommitRecycleBin&) {
+        return Api::GET_COMMIT_RECYCLE_BIN;
+      },
+      [](const request::RecoverCommit&) { return Api::RECOVER_COMMIT; },
+      [](const request::MockNeedTime&) { return Api::MOCK_NEED_TIME; },
+      [](const request::MockManyNotifications&) {
+        return Api::MOCK_MANY_NOTIFICATIONS;
+      },
+      [](const auto&) {
+        throw UnknownApiException("错误发生在: Request::matchApi");
+        return Api::ILLEAGAL;
+      }
+    }  // namespace zipfiles
+    ,
+    kind
+  );
+}
+
+Req::Req(ReqKind kind, std::string uuid)
+  : kind(std::move(kind)), uuid(std::move(uuid)) {
+  api = matchApi(this->kind);
+}
 
 Json::Value Req::toJson() const {
   Json::Value json;
@@ -127,9 +165,9 @@ Json::Value Req::toJson() const {
       break;
     }
     default:
-      throw std::runtime_error(
-        std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": " +
-        "Unknown request type"
+      throw UnknownApiException(
+        "错误发生在: Request::toJson, 未知的API类型: " +
+        std::to_string(static_cast<int>(api))
       );
       break;
   }
@@ -256,13 +294,13 @@ Req Req::fromJson(const Json::Value& json) {
       break;
     }
     default:
-      throw std::runtime_error(
-        std::string(__FILE__) + ":" + std::to_string(__LINE__) + ": " +
-        "Unknown API type" + json["api"].asString()
+      throw UnknownApiException(
+        "错误发生在: Request::fromJson, 未知的API类型: " +
+        std::to_string(static_cast<int>(api))
       );
       break;
   }
-  return {kind, api, json["uuid"].asString()};
+  return {kind, json["uuid"].asString()};
 }
 
 }  // namespace zipfiles

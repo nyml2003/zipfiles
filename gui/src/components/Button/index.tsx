@@ -1,6 +1,6 @@
 import React from "react";
 
-type Variant = "confirm" | "primary" | "warning" | "danger";
+type Variant = "confirm" | "primary" | "warning" | "danger" | "success";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
@@ -16,6 +16,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       warning:
         "bg-yellow-500 text-white hover:bg-yellow-600 focus:ring-yellow-300 disabled:bg-yellow-200",
       danger: "bg-red-500 text-white hover:bg-red-600 focus:ring-red-300 disabled:bg-red-200",
+      success:
+        "bg-green-500 text-white hover:bg-green-600 focus:ring-green-300 disabled:bg-green-200",
     };
 
     return visible === false ? null : (

@@ -13,22 +13,24 @@ void restore(int client_fd, const Req& req) {
   const std::string& messageId = kind.messageId;
   const std::string& path = kind.path;
   response::Restore response;
-  Res res(response, Api::RESTORE, req.uuid, Code::OK);
+  Res res(response, req.uuid, Code::OK);
   Socket::send(client_fd, res);
-  Json::Value idJson;
-  idJson["id"] = messageId;
   try {
     restoreTo(path, commitId, key);
     Socket::send(
       client_fd, Notification(
-                   std::string("restore success"), Code::RESTORE_SUCCESS, idJson
+                   notification::Restore{
+                     .messageId = messageId, .description = "还原成功"
+                   },
+                   Code::RESTORE_SUCCESS
                  )
     );
   } catch (const std::exception& e) {
     Socket::send(
       client_fd,
       Notification(
-        std::string("restore failed: ") + e.what(), Code::RESTORE_FAILED, idJson
+        notification::Restore{.messageId = messageId, .description = e.what()},
+        Code::RESTORE_FAILED
       )
     );
     return;

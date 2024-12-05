@@ -10,18 +10,46 @@
 
 namespace zipfiles {
 
-Res::Res(
-  ResKind kind,
-  Api api,
-  std::string uuid,
-  Code code,
-  std::optional<std::string> message
-)
-  : kind(std::move(kind)),
-    api(api),
-    uuid(std::move(uuid)),
-    code(code),
-    message(std::move(message)) {}
+Api matchApi(ResKind kind) {
+  return std::visit(
+    overload{
+      [](const response::GetCommitDetail&) { return Api::GET_COMMIT_DETAIL; },
+      [](const response::GetCommitList&) { return Api::GET_COMMIT_LIST; },
+      [](const response::GetFileList&) { return Api::GET_FILE_LIST; },
+      [](const response::GetFileDetail&) { return Api::GET_FILE_DETAIL; },
+      [](const response::GetFileDetailList&) {
+        return Api::GET_FILE_DETAIL_LIST;
+      },
+      [](const response::PostCommit&) { return Api::POST_COMMIT; },
+      [](const response::Restore&) { return Api::RESTORE; },
+      [](const response::LogicDeleteCommit&) {
+        return Api::LOGIC_DELETE_COMMIT;
+      },
+      [](const response::PhysicalDeleteCommit&) {
+        return Api::PHYSICAL_DELETE_COMMIT;
+      },
+      [](const response::GetCommitRecycleBin&) {
+        return Api::GET_COMMIT_RECYCLE_BIN;
+      },
+      [](const response::RecoverCommit&) { return Api::RECOVER_COMMIT; },
+      [](const response::MockNeedTime&) { return Api::MOCK_NEED_TIME; },
+      [](const response::MockManyNotifications&) {
+        return Api::MOCK_MANY_NOTIFICATIONS;
+      },
+      [](const response::NoResponse&) { return Api::NORESPONSE; },
+      [](const auto&) {
+        throw UnknownApiException("错误发生在: Response::matchApi");
+        return Api::ILLEAGAL;
+      }
+    },
+    kind
+  );
+}
+
+Res::Res(ResKind kind, std::string uuid, Code code)
+  : kind(std::move(kind)), uuid(std::move(uuid)), code(code) {
+  api = matchApi(this->kind);
+}
 
 Json::Value Res::toJson() const {
   Json::Value json;
@@ -147,10 +175,17 @@ Json::Value Res::toJson() const {
     case Api::MOCK_MANY_NOTIFICATIONS: {
       break;
     }
-    case Api::NORESPONSE:
+    case Api::NORESPONSE: {
+      response::NoResponse noResponse = std::get<response::NoResponse>(kind);
+      json["payload"]["title"] = noResponse.title;
+      json["payload"]["description"] = noResponse.description;
       break;
+    }
     default:
-      throw std::runtime_error("Unknown response type");
+      throw UnknownApiException(
+        "错误发生在: Response::toJson, 未知的API类型: " +
+        std::to_string(static_cast<int>(api))
+      );
   }
 
   return json;
@@ -282,19 +317,21 @@ Res Res::fromJson(const Json::Value& json) {
       break;
     }
     case Api::NORESPONSE: {
-      kind = response::NoResponse{};
+      kind = response::NoResponse{
+        .title = json["payload"]["title"].asString(),
+        .description = json["payload"]["description"].asString()
+      };
       break;
     }
     default:
-      throw std::runtime_error(
-        std::string(__FILE__) + ":" + std::to_string(__LINE__) +
-        ": Unknown api type"
+      throw UnknownApiException(
+        "错误发生在: Response::fromJson, 未知的API类型: " +
+        std::to_string(static_cast<int>(api))
       );
       break;
   }
   return {
-    kind, api, json["uuid"].asString(), static_cast<Code>(json["code"].asInt()),
-    json["message"].asString()
+    kind, json["uuid"].asString(), static_cast<Code>(json["code"].asInt())
   };
 }
 

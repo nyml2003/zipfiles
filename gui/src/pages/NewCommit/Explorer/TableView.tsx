@@ -15,6 +15,7 @@ import {
 } from "@/stores/CreateCommitReducer";
 import { ReportError } from "@/stores/NotificationReducer";
 import { convertBytesToHumanReadable, modeToString } from "@/utils";
+import { AcceptableError } from "@/hooks/useApi/types";
 interface FileDetail {
   name: string;
   type: FileType;
@@ -215,6 +216,9 @@ const TableView: React.FC = () => {
         setData(res.files);
       })
       .catch((err: Error) => {
+        if (!(err instanceof AcceptableError)) {
+          return;
+        }
         dispatch(
           ReportError({ state: "error", text: "获取文件详情失败", description: err.message }),
         );

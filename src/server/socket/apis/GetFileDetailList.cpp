@@ -16,10 +16,28 @@ void getFileDetailList(int client_fd, const Req& req) {
   const auto& request = std::get<request::GetFileDetailList>(req.kind);
   const fs::path& path = request.path == "" ? "/" : request.path;
   if (!fs::exists(path)) {
-    throw std::runtime_error("File does not exist");
+    Socket::send(
+      client_fd, Res(
+                   response::NoResponse{
+                     .title = "路径不存在",
+                     .description = "路径" + path.string() + "不存在"
+                   },
+                   req.uuid, Code::SERVER_ERROR
+                 )
+    );
+    return;
   }
   if (!fs::is_directory(path)) {
-    throw std::runtime_error("Path is not a directory");
+    Socket::send(
+      client_fd, Res(
+                   response::NoResponse{
+                     .title = "路径不是目录",
+                     .description = "路径" + path.string() + "不是目录"
+                   },
+                   req.uuid, Code::SERVER_ERROR
+                 )
+    );
+    return;
   }
   const auto& filter = request.filter;
   std::vector<response::getFileDetailList::FileDetail> files;
@@ -27,7 +45,16 @@ void getFileDetailList(int client_fd, const Req& req) {
     const auto& file = entry.path();
     struct stat file_stat {};
     if (lstat(file.c_str(), &file_stat) != 0) {
-      throw std::runtime_error("Failed to get file details");
+      Socket::send(
+        client_fd, Res(
+                     response::NoResponse{
+                       .title = " 文件不存在",
+                       .description = "文件" + file.string() + "的元数据不存在"
+                     },
+                     req.uuid, Code::SERVER_ERROR
+                   )
+      );
+      return;
     }
 
     struct passwd* pwd = getpwuid(file_stat.st_uid);
@@ -90,10 +117,8 @@ void getFileDetailList(int client_fd, const Req& req) {
   log4cpp::Category::getRoot().infoStream()
     << "Get file detail list: " << files.size() << " files";
   Socket::send(
-    client_fd, Res(
-                 response::GetFileDetailList{.files = files},
-                 Api::GET_FILE_DETAIL_LIST, req.uuid, Code::OK
-               )
+    client_fd,
+    Res(response::GetFileDetailList{.files = files}, req.uuid, Code::OK)
   );
 }
 

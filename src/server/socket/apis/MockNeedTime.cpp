@@ -10,9 +10,7 @@ void mockNeedTime(int client_fd, const Req& req) {
 
   response::MockNeedTime response{};
   response.id = request.id;
-  Socket::send(
-    client_fd, Res(response, Api::MOCK_NEED_TIME, req.uuid, Code::OK)
-  );
+  Socket::send(client_fd, Res(response, req.uuid, Code::OK));
 }
 
 }  // namespace zipfiles::server::api

@@ -12,10 +12,7 @@ void recoverCommit(int client_fd, const Req& req) {
   const auto kind = std::get<request::RecoverCommit>(req.kind);
   CommitTable::recoverCommitRecord(kind.commitId);
   CommitTable::writeCommitTable(COMMIT_TABLE_PATH);
-  Socket::send(
-    client_fd,
-    Res(response::RecoverCommit(), Api::RECOVER_COMMIT, req.uuid, Code::OK)
-  );
+  Socket::send(client_fd, Res(response::RecoverCommit(), req.uuid, Code::OK));
 }
 
 }  // namespace zipfiles::server::api

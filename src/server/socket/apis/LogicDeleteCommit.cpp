@@ -13,10 +13,7 @@ void logicDeleteCommit(int client_fd, const Req& req) {
   CommitTable::deleteCommitRecord(kind.commitId);
   CommitTable::writeCommitTable(COMMIT_TABLE_PATH);
   Socket::send(
-    client_fd, Res(
-                 response::LogicDeleteCommit(), Api::LOGIC_DELETE_COMMIT,
-                 req.uuid, Code::OK
-               )
+    client_fd, Res(response::LogicDeleteCommit(), req.uuid, Code::OK)
   );
 }
 

@@ -7,7 +7,7 @@ import useApi from "@useApi";
 import { PostCommitRequest, PostCommitResponse } from "@/apis/PostCommit";
 import { Step, StepProps } from "@/components/Step/Step";
 import Button from "@/components/Button";
-import { Code } from "@/hooks/useApi/types";
+import { AcceptableError, Code } from "@/hooks/useApi/types";
 import { useDispatch } from "react-redux";
 import { ReportError } from "@/stores/NotificationReducer";
 interface File {
@@ -25,6 +25,9 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
       });
       return res.files;
     } catch (e: unknown) {
+      if (!(e instanceof AcceptableError)) {
+        return [];
+      }
       dispatch(
         ReportError({
           state: "error",
@@ -69,7 +72,7 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
   };
   useEffect(() => {
     if (!result) return;
-    if (result.code === Code.POSTCOMMIT_SUCCESS) {
+    if (result.code === Code.BACKUP_SUCCESS) {
       setPackingFiles(prev => {
         return {
           ...prev,
@@ -78,12 +81,12 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
         };
       });
     }
-    if (result.code === Code.POSTCOMMIT_FAILED) {
+    if (result.code === Code.BACKUP_FAILED) {
       setPackingFiles(prev => {
         return {
           ...prev,
           status: "failed",
-          description: result.message,
+          description: result.payload.description,
         };
       });
     }

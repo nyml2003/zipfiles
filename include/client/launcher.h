@@ -2,8 +2,10 @@
 #define ZIPFILE_CLIENT_LAUNCHER_H
 #include <gtk/gtk.h>
 #include <webkit2/webkit2.h>
+#include <atomic>
 #include <log4cpp/Category.hh>
 #include <string>
+#include <thread>
 
 namespace zipfiles::client {
 /**
@@ -78,20 +80,28 @@ GtkWidget* createWindow();
  */
 class Launcher {
  public:
-  Launcher() = default;
-  ~Launcher() = default;
-  Launcher(const Launcher&) = default;
-  Launcher& operator=(const Launcher&) = default;
-  Launcher(Launcher&&) = default;
-  Launcher& operator=(Launcher&&) = default;
+  Launcher() : isRunning(true) {}
+  ~Launcher() { stop(); }
+  Launcher(const Launcher&) = delete;
+  Launcher& operator=(const Launcher&) = delete;
+  Launcher(Launcher&&) = delete;
+  Launcher& operator=(Launcher&&) = delete;
   /**
    * @brief 运行
    * @details 运行前端页面
    * @param argc
    * @param argv
    */
-  static void run(int argc, char** argv);
-  static void startLogger();
+  void startGTK(int argc, char** argv);
+  void startReciever();
+  void startLogger();
+  void stop();
+  static Launcher& getInstance() {
+    static Launcher instance;
+    return instance;
+  }
+  std::atomic_bool isRunning;
+  std::thread reciever;
 };
 }  // namespace zipfiles::client
 

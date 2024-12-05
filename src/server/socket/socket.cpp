@@ -201,9 +201,4 @@ void Socket::send(int client_fd, const Notification& notification) {
   ::send(client_fd, data.c_str(), data.size(), 0);
 }
 
-void sendError(int client_fd, const std::string& message) {
-  auto notification = Notification(message, zipfiles::Code::ERROR);
-  Socket::send(client_fd, notification);
-}
-
 }  // namespace zipfiles::server

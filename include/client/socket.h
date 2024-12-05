@@ -15,7 +15,7 @@ enum class ReceiveStatus { READ_DATA_SIZE, READ_DATA };
  * @brief socket状态
  *
  */
-enum class SocketStatus { CONNECTED, DISCONNECTED, PENDING };
+enum class SocketStatus { CONNECT, DISCONNECTED, PENDING };
 
 /**
  * @brief 客户端套接字
@@ -38,11 +38,13 @@ class Socket {
   Socket& operator=(const Socket& other) = delete;
   Socket(Socket&& other) noexcept = delete;
   Socket& operator=(Socket&& other) noexcept = delete;
+  [[nodiscard]] bool isActive() const { return active; }
 
  private:
   Socket();
   ~Socket();
   int server_fd;
+  bool active;
   struct sockaddr_in serv_addr;
   std::vector<uint8_t> header_buffer;
   std::vector<uint8_t> read_buffer;
@@ -54,8 +56,6 @@ class Socket {
   void readDataSize(uint8_t byte);
   bool readData(uint8_t byte);
   Json::Value parseJsonFromBuffer();
-  void lazyConnect();
-  void resetSocket();
 };
 }  // namespace zipfiles::client
 #endif  // !ZIPFILE_CLIENT_SOCKET_H

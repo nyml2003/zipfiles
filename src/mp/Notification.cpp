@@ -1,30 +1,77 @@
 #include "mp/Notification.h"
+#include <log4cpp/convenience.h>
+#include <log4cpp/Category.hh>
 
 namespace zipfiles {
 
-Notification::Notification(
-  std::string message,
-  Code code,
-  std::optional<Json::Value> payload
-)
-  : message(std::move(message)), code(code), payload(std::move(payload)) {}
+Notification::Notification(NotificationKind kind, Code code)
+  : kind(std::move(kind)), code(code) {}
+
+bool isSingleLine(Code code) {
+  return static_cast<int>(code) >= 400 && static_cast<int>(code) < 410;
+}
+
+bool isDoubleLine(Code code) {
+  return static_cast<int>(code) >= 410 && static_cast<int>(code) < 420;
+}
+
+bool isBackup(Code code) {
+  return static_cast<int>(code) >= 420 && static_cast<int>(code) < 430;
+}
+
+bool isRestore(Code code) {
+  return static_cast<int>(code) >= 430 && static_cast<int>(code) < 440;
+}
 
 Json::Value Notification::toJson() const {
   Json::Value json;
-  json["message"] = message;
-  if (payload.has_value()) {
-    json["payload"] = payload.value();
-  }
   json["code"] = static_cast<int>(code);
-  return std::move(json);
+  if (isSingleLine(code)) {
+    json["payload"]["title"] = std::get<notification::SingleLine>(kind).title;
+  } else if (isDoubleLine(code)) {
+    auto dl = std::get<notification::DoubleLine>(kind);
+    log4cpp::Category::getRoot().debugStream()
+      << "Notification: " << dl.title << " " << dl.description;
+    json["payload"]["title"] = dl.title;
+    json["payload"]["description"] = dl.description;
+  } else if (isBackup(code)) {
+    json["payload"]["messageId"] =
+      std::get<notification::Backup>(kind).messageId;
+    json["payload"]["description"] =
+      std::get<notification::Backup>(kind).description;
+  } else if (isRestore(code)) {
+    json["payload"]["messageId"] =
+      std::get<notification::Restore>(kind).messageId;
+    json["payload"]["description"] =
+      std::get<notification::Restore>(kind).description;
+  }
+  log4cpp::Category::getRoot().debugStream() << "Notification: " << json;
+  return json;
 };
 
 Notification Notification::fromJson(const Json::Value& json) {
-  return Notification(
-    json["message"].asString(), static_cast<Code>(json["code"].asInt()),
-    json.isMember("payload") ? std::make_optional(json["payload"])
-                             : std::nullopt
-  );
+  auto code = static_cast<Code>(json["code"].asInt());
+  NotificationKind kind;
+  if (isSingleLine(code)) {
+    kind =
+      notification::SingleLine{.title = json["payload"]["title"].asString()};
+  } else if (isDoubleLine(code)) {
+    kind = notification::DoubleLine{
+      .title = json["payload"]["title"].asString(),
+      .description = json["payload"]["description"].asString()
+    };
+  } else if (isBackup(code)) {
+    kind = notification::Backup{
+      .messageId = json["payload"]["messageId"].asString(),
+      .description = json["payload"]["description"].asString()
+    };
+  } else if (isRestore(code)) {
+    kind = notification::Restore{
+      .messageId = json["payload"]["messageId"].asString(),
+      .description = json["payload"]["description"].asString()
+    };
+  }
+  return {kind, code};
 }
 
 }  // namespace zipfiles

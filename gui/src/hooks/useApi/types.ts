@@ -9,56 +9,90 @@ export interface Api {
 export enum Code {
   ILLEAGAL = 0, // StatusCode为0的情况不合法
   OK = 100, // 正常返回
-  ERROR = 200, // 默认服务端异常
+  SERVER_ERROR = 200, // 默认服务端异常
   CLIENT_ERROR = 300, // 默认客户端异常
-  NOTIFICATION = 400, // 默认通知，应该是文本消息
-  POSTCOMMIT_SUCCESS = 401, // 提交Commit成功
-  POSTCOMMIT_FAILED = 402, // 提交Commit失败
-  RESTORE_SUCCESS = 403, // 恢复成功
-  RESTORE_FAILED = 404, // 恢复失败
+  SINGLE_SUCCESS = 400, // 单行文本 success
+  SINGLE_WARNING = 401, // 单行文本 warning
+  SINGLE_ERROR = 402, // 单行文本 error
+  SINGLE_INFO = 403, // 单行文本 info
+  DOUBLE_SUCCESS = 410, // 双行文本 success
+  DOUBLE_WARNING = 411, // 双行文本 warning
+  DOUBLE_ERROR = 412, // 双行文本 error
+  DOUBLE_INFO = 413, // 双行文本 info
+  BACKUP_SUCCESS = 420, // 备份成功
+  BACKUP_FAILED = 421, // 备份失败
+  RESTORE_SUCCESS = 430, // 恢复成功
+  RESTORE_FAILED = 431, // 恢复失败
+}
+
+export interface SingleText {
+  title: string;
+}
+
+export interface DoubleText {
+  title: string;
+  description: string;
+}
+
+export interface BackupAndRestoreEnd {
+  messageId: string;
+  description: string;
 }
 
 export function isOK(code: Code): boolean {
   return code === Code.OK;
 }
 
-export function isNotification(code: Code): boolean {
-  return code === Code.NOTIFICATION;
+export function isSingleText(code: Code): boolean {
+  return code >= 400 && code < 410;
+}
+
+export function isDoubleText(code: Code): boolean {
+  return code >= 410 && code < 420;
+}
+
+export function isBackup(code: Code): boolean {
+  return code >= 420 && code < 430;
+}
+
+export function isRestore(code: Code): boolean {
+  return code >= 430 && code < 440;
 }
 
 export function isClientError(code: Code): boolean {
-  return code === Code.CLIENT_ERROR;
+  return Math.floor(code / 100) === 3;
 }
 
 export function isServerError(code: Code): boolean {
-  return code === Code.ERROR;
+  return Math.floor(code / 100) === 2;
 }
 
-export function isResponseNotification(code: Code): boolean {
-  return Math.floor(code / 100) === 4;
+export function isError(code: Code): boolean {
+  return isClientError(code) || isServerError(code);
 }
 
 export interface ResponseWrapper {
-  api: ApiEnum;
   uuid: string;
   code: Code;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload?: any;
-  message?: string;
+  payload?: unknown;
 }
 
 export interface RequestWrapper {
   api: ApiEnum;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload: any;
+  payload?: unknown;
   uuid: string;
 }
 
-export interface Notification {
+export interface Notification<T> {
   code: Code;
-  message: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload?: any;
+  payload: T;
+}
+
+export class AcceptableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AcceptableError";
+  }
 }
 
 export type useApiType = () => Api;

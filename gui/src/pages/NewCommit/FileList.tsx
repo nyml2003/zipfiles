@@ -12,6 +12,7 @@ import { Button, Table } from "antd";
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { ReportError } from "@/stores/NotificationReducer";
+import { AcceptableError } from "@/hooks/useApi/types";
 
 const columns = [
   {
@@ -96,6 +97,9 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
         setFileData(res);
       })
       .catch(e => {
+        if (!(e instanceof AcceptableError)) {
+          return;
+        }
         dispatch(
           ReportError({
             state: "error",

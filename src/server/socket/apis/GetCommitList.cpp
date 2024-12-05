@@ -27,9 +27,7 @@ void getCommitList(int client_fd, const Req& req) {
     });
   }
 
-  Socket::send(
-    client_fd, Res(response, Api::GET_COMMIT_LIST, req.uuid, Code::OK)
-  );
+  Socket::send(client_fd, Res(response, req.uuid, Code::OK));
 }
 
 }  // namespace zipfiles::server::api

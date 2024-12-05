@@ -1,13 +1,14 @@
 
 #include "client/launcher.h"
 
+#include "client/socket.h"
+#include "client/view.h"
+
 #include <libgen.h>
 #include <iostream>
 #include <log4cpp/Category.hh>
 #include <log4cpp/PropertyConfigurator.hh>
 #include <string>
-#include "client/view.h"
-#include "glib-object.h"
 
 namespace zipfiles::client {
 WebKitWebView* webView = nullptr;
@@ -54,11 +55,11 @@ GtkWidget* createWindow() {
   gtk_window_set_resizable(GTK_WINDOW(window), TRUE);
   gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(webView));
   // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
-  g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+  g_signal_connect(window, "destroy", G_CALLBACK(handleQuit), nullptr);
   return window;
 }
 
-void Launcher::run(int argc, char** argv) {
+void Launcher::startGTK(int argc, char** argv) {
   gtk_init(&argc, &argv);
   WebKitUserContentManager* manager = webkit_user_content_manager_new();
   webView =
@@ -68,6 +69,22 @@ void Launcher::run(int argc, char** argv) {
   GtkWidget* window = createWindow();
   gtk_widget_show_all(window);
   gtk_main();
+}
+
+void Launcher::startReciever() {
+  Launcher::getInstance().reciever = std::thread([this]() {
+    log4cpp::Category::getRoot().debugStream() << "Reciever started";
+    while (isRunning.load() && Socket::getInstance().isActive()) {
+      Socket::getInstance().receive(sendResponse);
+    }
+  });
+}
+
+void Launcher::stop() {
+  isRunning.store(false);
+  if (reciever.joinable()) {
+    reciever.join();
+  }
 }
 
 void Launcher::startLogger() {
