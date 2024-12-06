@@ -1,7 +1,7 @@
 #ifndef ZIPFILES_MP_RESPONSE_H
 #define ZIPFILES_MP_RESPONSE_H
-#include <json/json.h>
-#include <variant>
+
+#include "mp/apis/CreateNullFolder.h"
 #include "mp/apis/GetCommitDetail.h"
 #include "mp/apis/GetCommitList.h"
 #include "mp/apis/GetCommitRecycleBin.h"
@@ -17,6 +17,8 @@
 #include "mp/apis/Restore.h"
 #include "mp/common.h"
 
+#include <json/json.h>
+#include <variant>
 namespace zipfiles {
 
 namespace response {
@@ -38,6 +40,7 @@ using ResKind = std::variant<
   response::PhysicalDeleteCommit,
   response::GetCommitRecycleBin,
   response::RecoverCommit,
+  response::CreateNullFolder,
   response::MockNeedTime,
   response::MockManyNotifications,
   response::NoResponse>;

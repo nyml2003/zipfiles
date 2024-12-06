@@ -1,6 +1,7 @@
-#include "mp/Notification.h"
 #include <log4cpp/convenience.h>
 #include <log4cpp/Category.hh>
+#include "mp/Notification.h"
+
 
 namespace zipfiles {
 
@@ -45,7 +46,6 @@ Json::Value Notification::toJson() const {
     json["payload"]["description"] =
       std::get<notification::Restore>(kind).description;
   }
-  log4cpp::Category::getRoot().debugStream() << "Notification: " << json;
   return json;
 };
 
@@ -58,18 +58,15 @@ Notification Notification::fromJson(const Json::Value& json) {
   } else if (isDoubleLine(code)) {
     kind = notification::DoubleLine{
       .title = json["payload"]["title"].asString(),
-      .description = json["payload"]["description"].asString()
-    };
+      .description = json["payload"]["description"].asString()};
   } else if (isBackup(code)) {
     kind = notification::Backup{
       .messageId = json["payload"]["messageId"].asString(),
-      .description = json["payload"]["description"].asString()
-    };
+      .description = json["payload"]["description"].asString()};
   } else if (isRestore(code)) {
     kind = notification::Restore{
       .messageId = json["payload"]["messageId"].asString(),
-      .description = json["payload"]["description"].asString()
-    };
+      .description = json["payload"]["description"].asString()};
   }
   return {kind, code};
 }

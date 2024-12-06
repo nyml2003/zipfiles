@@ -25,4 +25,5 @@ export enum ApiEnum {
   RecoverCommit = 110,
   UpdateConfig = "updateConfig",
   ReadConfig = "readConfig",
+  Connect = "connect",
 }

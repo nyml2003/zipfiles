@@ -21,8 +21,7 @@ void getFileDetailList(int client_fd, const Req& req) {
       client_fd, Res(
                    response::NoResponse{
                      .title = "路径不存在",
-                     .description = "路径" + path.string() + "不存在"
-                   },
+                     .description = "路径" + path.string() + "不存在"},
                    req.uuid, Code::SERVER_ERROR
                  )
     );
@@ -33,8 +32,7 @@ void getFileDetailList(int client_fd, const Req& req) {
       client_fd, Res(
                    response::NoResponse{
                      .title = "路径不是目录",
-                     .description = "路径" + path.string() + "不是目录"
-                   },
+                     .description = "路径" + path.string() + "不是目录"},
                    req.uuid, Code::SERVER_ERROR
                  )
     );
@@ -47,13 +45,13 @@ void getFileDetailList(int client_fd, const Req& req) {
     struct stat file_stat {};
     if (lstat(file.c_str(), &file_stat) != 0) {
       Socket::send(
-        client_fd, Res(
-                     response::NoResponse{
-                       .title = " 文件不存在",
-                       .description = "文件" + file.string() + "的元数据不存在"
-                     },
-                     req.uuid, Code::SERVER_ERROR
-                   )
+        client_fd,
+        Res(
+          response::NoResponse{
+            .title = " 文件不存在",
+            .description = "文件" + file.string() + "的元数据不存在"},
+          req.uuid, Code::SERVER_ERROR
+        )
       );
       return;
     }
@@ -61,7 +59,7 @@ void getFileDetailList(int client_fd, const Req& req) {
     struct passwd* pwd = getpwuid(file_stat.st_uid);
     struct group* grp = getgrgid(file_stat.st_gid);
     files.push_back(
-      {.type = entry.status().type(),
+      {.type = fs::symlink_status(file).type(),
        .createTime = static_cast<double>(file_stat.st_ctime),
        .updateTime = static_cast<double>(file_stat.st_mtime),
        .size = file_stat.st_size,

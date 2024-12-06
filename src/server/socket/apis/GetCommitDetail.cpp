@@ -13,16 +13,15 @@ void getCommitDetail(int client_fd, const Req& req) {
   const std::string& uuid = kind.uuid;
   response::GetCommitDetail response;
   Json::Value directoryFile = readDirectoryFileById(uuid);
-  std::cout << directoryFile;
 
   for (const auto& file : directoryFile["data"]) {
     fs::path path = file["relativePath"].asString();
-    std::cout << path << std::endl;
     // 拆分成parent_path和filename
     std::string parentPath = path.parent_path().string();
+    if (parentPath == "") {
+      parentPath = ".";
+    }
     std::string name = path.filename().string();
-    std::cout << "parentPath: " << parentPath << std::endl;
-    std::cout << "name: " << name << std::endl;
 
     response.files.push_back(
       {.type = static_cast<fs::file_type>(file["type"].asInt()),

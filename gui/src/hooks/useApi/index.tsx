@@ -1,2 +1,2 @@
-import useApi from './useApi/development';
+import useApi from "./development";
 export default useApi;

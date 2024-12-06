@@ -36,4 +36,5 @@ export const mockApi: Record<ApiEnum, (req: any) => any> = {
   [ApiEnum.GetCommitRecycleBin]: GetCommitRecycleBin,
   [ApiEnum.ReadConfig]: ReadConfig,
   [ApiEnum.RecoverCommit]: RecoverCommit,
+  [ApiEnum.Connect]: () => {},
 };

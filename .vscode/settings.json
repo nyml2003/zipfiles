@@ -107,7 +107,8 @@
         "stack": "cpp",
         "unordered_set": "cpp",
         "__availability": "cpp",
-        "future": "cpp"
+        "future": "cpp",
+        "strstream": "cpp"
     },
     "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
     "editor.formatOnSave": true,
@@ -121,7 +122,7 @@
         "--enable-config"
     ],
     "[cpp]": {
-        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+        "editor.defaultFormatter": "xaver.clang-format",
     },
     "[dockerfile]": {
         "editor.defaultFormatter": "ms-azuretools.vscode-docker"

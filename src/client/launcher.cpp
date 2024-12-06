@@ -68,14 +68,18 @@ void Launcher::startGTK(int argc, char** argv) {
   bindJS(manager);
   GtkWidget* window = createWindow();
   gtk_widget_show_all(window);
+
+  Socket::getInstance().active = true;
   gtk_main();
 }
 
 void Launcher::startReciever() {
   Launcher::getInstance().reciever = std::thread([this]() {
     log4cpp::Category::getRoot().debugStream() << "Reciever started";
-    while (isRunning.load() && Socket::getInstance().isActive()) {
-      Socket::getInstance().receive(sendResponse);
+    while (isRunning.load()) {
+      if (Socket::getInstance().active.load()) {
+        Socket::getInstance().receive(sendResponse);
+      }
     }
   });
 }

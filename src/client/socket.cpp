@@ -16,33 +16,15 @@ namespace zipfiles::client {
  */
 void Socket::initializeSocket() {
   log4cpp::Category::getRoot().infoStream() << "Initializing socket...";
-  handleNotify(ZNotification(
-    notification::DoubleLine(
-      {.title = "正在建立连接", .description = "正在初始化socket"}
-    ),
-    Code::DOUBLE_INFO
-  ));
   server_fd = ::socket(AF_INET, SOCK_STREAM, 0);
   if (server_fd < 0) {
     log4cpp::Category::getRoot().errorStream() << "Socket creation error";
-    handleNotify(ZNotification(
-      notification::DoubleLine(
-        {.title = "建立连接失败", .description = "Socket创建失败"}
-      ),
-      Code::DOUBLE_ERROR
-    ));
     socketStatus = SocketStatus::DISCONNECTED;
+    throw std::runtime_error("Socket creation error");
     return;
   }
 
   log4cpp::Category::getRoot().infoStream() << "Socket created";
-
-  handleNotify(ZNotification(
-    notification::DoubleLine(
-      {.title = "建立连接成功", .description = "Socket创建成功"}
-    ),
-    Code::DOUBLE_INFO
-  ));
 
   serv_addr.sin_family = AF_INET;
   serv_addr.sin_port = htons(PORT);
@@ -50,27 +32,15 @@ void Socket::initializeSocket() {
   log4cpp::Category::getRoot().infoStream() << "Port set to " << PORT;
   log4cpp::Category::getRoot().infoStream() << "Resolving address...";
 
-  handleNotify(ZNotification(
-    notification::DoubleLine(
-      {.title = "正在解析地址", .description = "正在解析地址"}
-    ),
-    Code::DOUBLE_INFO
-  ));
   if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) != 1) {
     log4cpp::Category::getRoot().errorStream()
       << "Invalid address/ Address not supported";
 
     close(server_fd);
-    handleNotify(ZNotification(
-      notification::DoubleLine(
-        {.title = "建立连接失败", .description = "无效地址/不支持的地址"}
-      ),
-      Code::DOUBLE_ERROR
-    ));
     socketStatus = SocketStatus::DISCONNECTED;
+    throw std::runtime_error("Invalid address/ Address not supported");
     return;
   }
-  socketStatus = SocketStatus::PENDING;
 }
 
 /**
@@ -81,14 +51,9 @@ Socket::Socket()
   : server_fd(-1),
     serv_addr{},
     socketStatus(SocketStatus::DISCONNECTED),
-    active(true) {
-  try {
-    initializeSocket();
-    connectWithRetries();
-  } catch (const std::exception& e) {
-    close(server_fd);
-    throw e;
-  }
+    active(false) {
+  initializeSocket();
+  connectWithRetries();
 }
 
 /**
@@ -96,16 +61,10 @@ Socket::Socket()
  *
  */
 void Socket::connectWithRetries() {
-  if (socketStatus != SocketStatus::PENDING) {
-    return;
-  }
   const int max_retries = 5;
   int retries = 0;
   while (retries < max_retries) {
-    if (connect(
-          server_fd, reinterpret_cast<struct sockaddr*>(&serv_addr),
-          sizeof(serv_addr)
-        ) < 0) {
+    if (connect(server_fd, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
       log4cpp::Category::getRoot().errorStream() << "Connection failed";
       retries++;
       log4cpp::Category::getRoot().errorStream()
@@ -120,40 +79,20 @@ void Socket::connectWithRetries() {
       std::this_thread::sleep_for(std::chrono::seconds(1));  // 等待1秒后重试
     } else {
       socketStatus = SocketStatus::CONNECT;
+      active = true;
+      handleNotify(ZNotification(
+        notification::NoneNotification(), Code::ENABLE_REMOTE_REQUEST
+      ));
       return;
     }
   }
-
   log4cpp::Category::getRoot().errorStream()
     << "Failed to connect to the server after " << max_retries << " attempts.";
-  close(server_fd);
-  handleNotify(ZNotification(
-    notification::DoubleLine(
-      {.title = "建立连接失败", .description = "无法连接到服务器"}
-    ),
-    Code::DOUBLE_ERROR
-  ));
-  active = false;
-  socketStatus = SocketStatus::DISCONNECTED;
+  disconnect();
 }
 
 Socket::~Socket() {
   close(server_fd);
-}
-
-/**
- * @brief 尝试重新连接server
- *
- */
-void Socket::reconnect() {
-  close(server_fd);
-  try {
-    initializeSocket();
-    connectWithRetries();
-  } catch (const std::exception& e) {
-    close(server_fd);
-    throw e;
-  }
 }
 
 /**
@@ -164,10 +103,7 @@ void Socket::reconnect() {
  */
 void Socket::send(const std::string& req) {
   if (socketStatus == SocketStatus::DISCONNECTED) {
-    reconnect();
-    if (socketStatus == SocketStatus::DISCONNECTED) {
-      return;
-    }
+    throw std::runtime_error("服务端未连接");
   }
   uint32_t dataSize = req.size();
   std::string data =
@@ -176,36 +112,25 @@ void Socket::send(const std::string& req) {
   ssize_t bytesSent = ::send(server_fd, data.c_str(), data.size(), 0);
 
   if (bytesSent == -1) {
-    if (errno == EPIPE) {  // 检测到 "Broken pipe" 错误
-      log4cpp::Category::getRoot().errorStream()
-        << "Failed to send request: Broken pipe. Attempting to reconnect...";
-
-      close(server_fd);
-      reconnect();  // 尝试重新连接
-      bytesSent =
-        ::send(server_fd, data.c_str(), data.size(), 0);  // 重新发送请求
-      if (bytesSent == -1) {
-        handleNotify(ZNotification(
-          notification::DoubleLine(
-            {.title = "发送请求失败",
-             .description = "无法发送请求" + std::to_string(errno)}
-          ),
-          Code::DOUBLE_ERROR
-        ));
-        return;
-      }
-
-    } else {
-      handleNotify(ZNotification(
-        notification::DoubleLine(
-          {.title = "发送请求失败",
-           .description = "无法发送请求" + std::to_string(errno)}
-        ),
-        Code::DOUBLE_ERROR
-      ));
-      return;
-    }
+    handleNotify(ZNotification(
+      notification::DoubleLine(
+        {.title = "发送请求失败",
+         .description = "无法发送请求" + std::to_string(errno)}
+      ),
+      Code::DOUBLE_ERROR
+    ));
+    disconnect();
+    return;
   }
+}
+
+void Socket::disconnect() {
+  close(server_fd);
+  active = false;
+  socketStatus = SocketStatus::DISCONNECTED;
+  handleNotify(ZNotification(
+    notification::NoneNotification(), Code::DISABLE_REMOTE_REQUEST
+  ));
 }
 
 /**
@@ -216,16 +141,10 @@ void Socket::send(const std::string& req) {
  */
 void Socket::receive(const std::function<void(const Json::Value&)>& callback) {
   if (socketStatus == SocketStatus::DISCONNECTED) {
-    reconnect();
-  }
-  if (socketStatus == SocketStatus::PENDING) {
-    handleNotify(ZNotification(
-      notification::DoubleLine(
-        {.title = "接收响应失败", .description = "连接尚未建立"}
-      ),
-      Code::DOUBLE_ERROR
-    ));
-    return;
+    connectWithRetries();
+    if (socketStatus == SocketStatus::DISCONNECTED) {
+      return;
+    }
   }
   read_buffer.resize(MAX_MESSAGE_SIZE);  // 预留空间
 
@@ -237,8 +156,7 @@ void Socket::receive(const std::function<void(const Json::Value&)>& callback) {
 
   // 连接是否关闭
   if (bytesRead == 0) {
-    // 断开连接
-    close(server_fd);
+    disconnect();
     handleNotify(ZNotification(
       notification::DoubleLine(
         {.title = "连接断开", .description = "与服务器的连接已断开"}
@@ -250,7 +168,7 @@ void Socket::receive(const std::function<void(const Json::Value&)>& callback) {
 
   // socket是否产生了错误
   if (bytesRead < 0) {
-    close(server_fd);
+    disconnect();
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
       handleNotify(ZNotification(
         notification::DoubleLine(

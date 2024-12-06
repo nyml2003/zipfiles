@@ -23,6 +23,8 @@ export enum Code {
   BACKUP_FAILED = 421, // 备份失败
   RESTORE_SUCCESS = 430, // 恢复成功
   RESTORE_FAILED = 431, // 恢复失败
+  DISABLE_REMOTE_REQUEST = 440, // 禁用远程请求
+  ENABLE_REMOTE_REQUEST = 441, // 启用远程请求
 }
 
 export interface SingleText {
@@ -57,6 +59,10 @@ export function isBackup(code: Code): boolean {
 
 export function isRestore(code: Code): boolean {
   return code >= 430 && code < 440;
+}
+
+export function isSocket(code: Code): boolean {
+  return code === 440 || code === 441;
 }
 
 export function isClientError(code: Code): boolean {

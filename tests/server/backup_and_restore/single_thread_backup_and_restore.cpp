@@ -49,7 +49,7 @@ class SingleThreadBackupAndRestore : public ::testing::Test {
 TEST_F(SingleThreadBackupAndRestore, SingleThreadBackupAndRestore) {  // NOLINT
   // 切换到测试文件目录
   fs::path current_work_path = std::filesystem::current_path();
-  current_work_path = current_work_path.parent_path() / "test_files" / "text";
+  current_work_path = current_work_path.parent_path() / "test_files";
 
   std::cout << "test_files path: " << current_work_path << std::endl;
 
@@ -88,8 +88,7 @@ TEST_F(SingleThreadBackupAndRestore, SingleThreadBackupAndRestore) {  // NOLINT
     std::string originalFile = file.string();
     std::string restoredFile = (restorePath / relativePath).string();
 
-    if (fs::is_fifo(file) || fs::is_block_file(file) ||
-        fs::is_character_file(file) || fs::is_socket(file)) {
+    if (fs::is_fifo(file) || fs::is_block_file(file) || fs::is_character_file(file) || fs::is_socket(file)) {
       continue;
     }
 

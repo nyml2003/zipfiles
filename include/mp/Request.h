@@ -4,6 +4,7 @@
 #include <string>
 #include <variant>
 
+#include "mp/apis/CreateNullFolder.h"
 #include "mp/apis/GetCommitDetail.h"
 #include "mp/apis/GetCommitList.h"
 #include "mp/apis/GetCommitRecycleBin.h"
@@ -34,6 +35,7 @@ using ReqKind = std::variant<
   request::PhysicalDeleteCommit,
   request::GetCommitRecycleBin,
   request::RecoverCommit,
+  request::CreateNullFolder,
   request::MockNeedTime,
   request::MockManyNotifications>;
 

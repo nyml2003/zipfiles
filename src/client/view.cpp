@@ -113,6 +113,8 @@ void handleNotifyDoubleInfo(
 }
 
 void handleNotify(const ZNotification& notification) {
+  log4cpp::Category::getRoot().debugStream()
+    << "send notification: " << notification.toJson();
   sendResponse(notification.toJson());
 }
 
@@ -289,8 +291,7 @@ void handleUpdateConfig(
     root["ip"] = jsc_value_to_string(ip);
   }
 
-  if (defaultBackupPath && !jsc_value_is_null(defaultBackupPath) &&
-      !jsc_value_is_undefined(defaultBackupPath)) {
+  if (defaultBackupPath && !jsc_value_is_null(defaultBackupPath) && !jsc_value_is_undefined(defaultBackupPath)) {
     root["defaultBackupPath"] = jsc_value_to_string(defaultBackupPath);
   }
   log4cpp::Category::getRoot().infoStream() << "update config: " << root;

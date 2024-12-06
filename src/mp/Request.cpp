@@ -33,11 +33,11 @@ Api matchApi(ReqKind kind) {
       [](const request::MockManyNotifications&) {
         return Api::MOCK_MANY_NOTIFICATIONS;
       },
+      [](const request::CreateNullFolder&) { return Api::CREATE_NULL_FOLDER; },
       [](const auto&) {
         throw UnknownApiException("错误发生在: Request::matchApi");
         return Api::ILLEAGAL;
-      }
-    }  // namespace zipfiles
+      }}  // namespace zipfiles
     ,
     kind
   );
@@ -164,6 +164,10 @@ Json::Value Req::toJson() const {
     case Api::MOCK_MANY_NOTIFICATIONS: {
       break;
     }
+    case Api::CREATE_NULL_FOLDER: {
+      json["payload"]["path"] = std::get<request::CreateNullFolder>(kind).path;
+      break;
+    }
     default:
       throw UnknownApiException(
         "错误发生在: Request::toJson, 未知的API类型: " +
@@ -242,15 +246,13 @@ Req Req::fromJson(const Json::Value& json) {
         .storagePath = json["payload"]["storagePath"].asString(),
         .author = json["payload"]["author"].asString(),
         .isEncrypt = json["payload"]["isEncrypt"].asBool(),
-        .key = json["payload"]["key"].asString()
-      };
+        .key = json["payload"]["key"].asString()};
       break;
     }
     case Api::GET_FILE_DETAIL: {
       kind = request::GetFileDetail{
         .path = json["payload"]["path"].asString(),
-        .name = json["payload"]["name"].asString()
-      };
+        .name = json["payload"]["name"].asString()};
       break;
     }
     case Api::RESTORE: {
@@ -277,20 +279,22 @@ Req Req::fromJson(const Json::Value& json) {
       break;
     case Api::LOGIC_DELETE_COMMIT: {
       kind = request::LogicDeleteCommit{
-        .commitId = json["payload"]["commitId"].asString()
-      };
+        .commitId = json["payload"]["commitId"].asString()};
       break;
     }
     case Api::PHYSICAL_DELETE_COMMIT: {
       kind = request::PhysicalDeleteCommit{
-        .commitId = json["payload"]["commitId"].asString()
-      };
+        .commitId = json["payload"]["commitId"].asString()};
       break;
     }
     case Api::RECOVER_COMMIT: {
       kind = request::RecoverCommit{
-        .commitId = json["payload"]["commitId"].asString()
-      };
+        .commitId = json["payload"]["commitId"].asString()};
+      break;
+    }
+    case Api::CREATE_NULL_FOLDER: {
+      kind =
+        request::CreateNullFolder{.path = json["payload"]["path"].asString()};
       break;
     }
     default:

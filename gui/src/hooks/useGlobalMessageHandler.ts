@@ -16,6 +16,7 @@ import {
 import { useDispatch } from "react-redux";
 import { addNotification, finishMessage } from "@/stores/NotificationReducer";
 import { isError } from "lodash";
+import { disableSocket, enableSocket } from "@/stores/SocketReducer";
 
 export interface CallBack {
   request: RequestWrapper;
@@ -67,7 +68,17 @@ export const useGlobalMessageHandler = () => {
         return;
       }
       if (isBackup(code) || isRestore(code)) {
+        console.log("callbacks: ", callbacks);
+        console.log("event.data: ", event.data);
         dispatch(finishMessage(event.data as Notification<BackupAndRestoreEnd>));
+        return;
+      }
+      if (code === Code.ENABLE_REMOTE_REQUEST) {
+        dispatch(enableSocket());
+        return;
+      }
+      if (code === Code.DISABLE_REMOTE_REQUEST) {
+        dispatch(disableSocket());
         return;
       }
       const { payload, uuid } = event.data as ResponseWrapper;

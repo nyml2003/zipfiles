@@ -80,7 +80,7 @@ GtkWidget* createWindow();
  */
 class Launcher {
  public:
-  Launcher() : isRunning(true) {}
+  Launcher() : isRunning(false) {}
   ~Launcher() { stop(); }
   Launcher(const Launcher&) = delete;
   Launcher& operator=(const Launcher&) = delete;

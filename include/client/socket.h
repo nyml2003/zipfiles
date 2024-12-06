@@ -2,6 +2,7 @@
 #define ZIPFILE_CLIENT_SOCKET_H
 #include <json/json.h>
 #include <netinet/in.h>
+#include <atomic>
 #include <functional>
 
 namespace zipfiles::client {
@@ -15,7 +16,7 @@ enum class ReceiveStatus { READ_DATA_SIZE, READ_DATA };
  * @brief socket状态
  *
  */
-enum class SocketStatus { CONNECT, DISCONNECTED, PENDING };
+enum class SocketStatus { CONNECT, DISCONNECTED };
 
 /**
  * @brief 客户端套接字
@@ -31,20 +32,19 @@ class Socket {
   }
   void receive(const std::function<void(const Json::Value&)>& callback);
   void send(const std::string& req);
-  void reconnect();
   void connectWithRetries();
   void initializeSocket();
+  void disconnect();
   Socket(const Socket& other) = delete;
   Socket& operator=(const Socket& other) = delete;
   Socket(Socket&& other) noexcept = delete;
   Socket& operator=(Socket&& other) noexcept = delete;
-  [[nodiscard]] bool isActive() const { return active; }
+  std::atomic_bool active;
 
  private:
   Socket();
   ~Socket();
   int server_fd;
-  bool active;
   struct sockaddr_in serv_addr;
   std::vector<uint8_t> header_buffer;
   std::vector<uint8_t> read_buffer;

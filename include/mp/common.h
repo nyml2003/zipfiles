@@ -44,22 +44,24 @@ constexpr size_t PORT = 8080;
  * 1表示恢复失败，字段有messageId和description
  */
 enum class Code {
-  ILLEAGAL = 0,           // StatusCode为0的情况不合法
-  OK = 100,               // 正常返回
-  SERVER_ERROR = 200,     // 默认服务端异常
-  CLIENT_ERROR = 300,     // 默认客户端异常
-  SINGLE_SUCCESS = 400,   // 单行文本 success
-  SINGLE_WARNING = 401,   // 单行文本 warning
-  SINGLE_ERROR = 402,     // 单行文本 error
-  SINGLE_INFO = 403,      // 单行文本 info
-  DOUBLE_SUCCESS = 410,   // 双行文本 success
-  DOUBLE_WARNING = 411,   // 双行文本 warning
-  DOUBLE_ERROR = 412,     // 双行文本 error
-  DOUBLE_INFO = 413,      // 双行文本 info
-  BACKUP_SUCCESS = 420,   // 备份成功
-  BACKUP_FAILED = 421,    // 备份失败
-  RESTORE_SUCCESS = 430,  // 恢复成功
-  RESTORE_FAILED = 431,   // 恢复失败
+  ILLEAGAL = 0,                  // StatusCode为0的情况不合法
+  OK = 100,                      // 正常返回
+  SERVER_ERROR = 200,            // 默认服务端异常
+  CLIENT_ERROR = 300,            // 默认客户端异常
+  SINGLE_SUCCESS = 400,          // 单行文本 success
+  SINGLE_WARNING = 401,          // 单行文本 warning
+  SINGLE_ERROR = 402,            // 单行文本 error
+  SINGLE_INFO = 403,             // 单行文本 info
+  DOUBLE_SUCCESS = 410,          // 双行文本 success
+  DOUBLE_WARNING = 411,          // 双行文本 warning
+  DOUBLE_ERROR = 412,            // 双行文本 error
+  DOUBLE_INFO = 413,             // 双行文本 info
+  BACKUP_SUCCESS = 420,          // 备份成功
+  BACKUP_FAILED = 421,           // 备份失败
+  RESTORE_SUCCESS = 430,         // 恢复成功
+  RESTORE_FAILED = 431,          // 恢复失败
+  DISABLE_REMOTE_REQUEST = 440,  // 禁用远程请求
+  ENABLE_REMOTE_REQUEST = 441,   // 启用远程请求
 };
 /**
  * @brief: 定义所有的接口枚举
@@ -82,6 +84,7 @@ enum class Api {
   PHYSICAL_DELETE_COMMIT = 108,
   GET_COMMIT_RECYCLE_BIN = 109,
   RECOVER_COMMIT = 110,
+  CREATE_NULL_FOLDER = 111,
 };
 
 class UnknownApiException : public std::runtime_error {

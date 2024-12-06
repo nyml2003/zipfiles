@@ -29,13 +29,17 @@ struct Restore {
   std::string messageId;
   std::string description;
 };
+
+struct NoneNotification {};
+
 }  // namespace notification
 
 using NotificationKind = std::variant<
   notification::SingleLine,
   notification::DoubleLine,
   notification::Backup,
-  notification::Restore>;
+  notification::Restore,
+  notification::NoneNotification>;
 
 struct Notification {
   Notification(NotificationKind kind, Code code);
