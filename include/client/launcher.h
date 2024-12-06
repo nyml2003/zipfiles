@@ -80,7 +80,7 @@ GtkWidget* createWindow();
  */
 class Launcher {
  public:
-  Launcher() : isRunning(false) {}
+  Launcher() : isRunning(true) {}
   ~Launcher() { stop(); }
   Launcher(const Launcher&) = delete;
   Launcher& operator=(const Launcher&) = delete;
@@ -92,9 +92,9 @@ class Launcher {
    * @param argc
    * @param argv
    */
-  void startGTK(int argc, char** argv);
+  static void startGTK(int argc, char** argv);
   void startReciever();
-  void startLogger();
+  static void startLogger();
   void stop();
   static Launcher& getInstance() {
     static Launcher instance;

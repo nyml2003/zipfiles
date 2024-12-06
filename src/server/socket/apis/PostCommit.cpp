@@ -20,25 +20,26 @@ void postCommit(int client_fd, const Req& req) {
     .author = request.author,
     .isEncrypt = request.isEncrypt,
     .isDelete = false,
+    .encodedKey = ""
   };
   Socket::send(client_fd, Res(response::PostCommit{}, req.uuid, Code::OK));
   try {
     backupFiles(files, cr, request.isEncrypt ? request.key.value() : "");
     Socket::send(
       client_fd, Notification(
-                   notification::Restore{
+                   notification::Backup{
                      .messageId = request.uuid, .description = "备份成功"
                    },
-                   Code::RESTORE_SUCCESS
+                   Code::BACKUP_SUCCESS
                  )
     );
   } catch (const std::exception& e) {
     Socket::send(
       client_fd, Notification(
-                   notification::Restore{
+                   notification::Backup{
                      .messageId = request.uuid, .description = e.what()
                    },
-                   Code::RESTORE_FAILED
+                   Code::BACKUP_FAILED
                  )
     );
   }

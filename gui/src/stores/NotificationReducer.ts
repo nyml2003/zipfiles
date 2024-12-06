@@ -44,9 +44,11 @@ const NotificationReducer = createSlice({
       state.open = !state.open;
     },
     finishMessage(state, action: PayloadAction<Notification<BackupAndRestoreEnd>>) {
+      console.log("finishMessage: ", state.notifications);
       const notification = state.notifications.find(
         notification => notification.id === action.payload.payload.messageId,
       );
+      console.log("notification: ", notification);
       if (notification && notification.type === "commitPush") {
         (notification as CommitPush).result = action.payload;
       }

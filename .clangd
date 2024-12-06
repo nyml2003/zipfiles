@@ -46,3 +46,4 @@ Diagnostics:
     ]
 CompileFlags:
   Add: [$(pkg-config --cflags --libs webkit2gtk-4.1)]
+  Remove: [-I/usr/include]

@@ -88,7 +88,8 @@ TEST_F(SingleThreadBackupAndRestore, SingleThreadBackupAndRestore) {  // NOLINT
     std::string originalFile = file.string();
     std::string restoredFile = (restorePath / relativePath).string();
 
-    if (fs::is_fifo(file) || fs::is_block_file(file) || fs::is_character_file(file) || fs::is_socket(file)) {
+    if (fs::is_fifo(file) || fs::is_block_file(file) ||
+        fs::is_character_file(file) || fs::is_socket(file)) {
       continue;
     }
 

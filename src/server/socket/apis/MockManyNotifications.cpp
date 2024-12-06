@@ -8,7 +8,6 @@
 namespace zipfiles::server::api {
 
 void mockManyNotifications(int client_fd, const Req& req) {
-  const auto& request = std::get<request::MockManyNotifications>(req.kind);
   response::MockManyNotifications response;
   response.message = "耗时操作已收到，正在处理中";
   Socket::send(client_fd, Res(response, req.uuid, Code::OK));

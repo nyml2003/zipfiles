@@ -22,31 +22,6 @@ body {
   font-family: "JetBrains Mono", monospace;
 }
 
-.separator-container {
-  .separator-item {
-    &:not(:first-child)::before {
-      margin: 0 10px;
-      color: #e5e5e5;
-      content: "|";
-    }
-
-    color: #000;
-  }
-}
-
-.list-circle {
-  list-style-type: circle;
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none; /* 隐藏滚动条 */
-}
-
-.hide-scrollbar {
-  -ms-overflow-style: none; /* 适用于 IE 和 Edge */
-  scrollbar-width: none; /* 适用于 Firefox */
-}
-
 .grow-item {
   @apply flex-1 overflow-auto;
 }

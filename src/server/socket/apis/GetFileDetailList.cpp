@@ -21,7 +21,8 @@ void getFileDetailList(int client_fd, const Req& req) {
       client_fd, Res(
                    response::NoResponse{
                      .title = "路径不存在",
-                     .description = "路径" + path.string() + "不存在"},
+                     .description = "路径" + path.string() + "不存在"
+                   },
                    req.uuid, Code::SERVER_ERROR
                  )
     );
@@ -32,7 +33,8 @@ void getFileDetailList(int client_fd, const Req& req) {
       client_fd, Res(
                    response::NoResponse{
                      .title = "路径不是目录",
-                     .description = "路径" + path.string() + "不是目录"},
+                     .description = "路径" + path.string() + "不是目录"
+                   },
                    req.uuid, Code::SERVER_ERROR
                  )
     );
@@ -45,13 +47,13 @@ void getFileDetailList(int client_fd, const Req& req) {
     struct stat file_stat {};
     if (lstat(file.c_str(), &file_stat) != 0) {
       Socket::send(
-        client_fd,
-        Res(
-          response::NoResponse{
-            .title = " 文件不存在",
-            .description = "文件" + file.string() + "的元数据不存在"},
-          req.uuid, Code::SERVER_ERROR
-        )
+        client_fd, Res(
+                     response::NoResponse{
+                       .title = " 文件不存在",
+                       .description = "文件" + file.string() + "的元数据不存在"
+                     },
+                     req.uuid, Code::SERVER_ERROR
+                   )
       );
       return;
     }

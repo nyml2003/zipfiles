@@ -12,10 +12,10 @@ import {
   isBackup,
   BackupAndRestoreEnd,
   isRestore,
+  isError,
 } from "./useApi/types";
 import { useDispatch } from "react-redux";
 import { addNotification, finishMessage } from "@/stores/NotificationReducer";
-import { isError } from "lodash";
 import { disableSocket, enableSocket } from "@/stores/SocketReducer";
 
 export interface CallBack {

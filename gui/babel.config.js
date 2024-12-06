@@ -7,8 +7,6 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 
-const selectEnv = require("./build/utils");
-
 module.exports = {
   // 执行顺序由右往左,所以先处理ts,再处理jsx,最后再试一下babel转换为低版本语法
   presets: [
@@ -32,6 +30,6 @@ module.exports = {
     // 支持装饰器语法
     ["@babel/plugin-proposal-decorators", { legacy: true }],
     "@babel/plugin-syntax-dynamic-import", // 支持动态导入语法
-    selectEnv(require.resolve("react-refresh/babel"), ""), // 根据环境选择是否启动react热更新插件
+    process.env.NODE_ENV === "development" && require.resolve("react-refresh/babel"), // 根据环境选择是否启动react热更新插件
   ].filter(Boolean), // 过滤空值
 };

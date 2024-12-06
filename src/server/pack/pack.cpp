@@ -1,3 +1,4 @@
+#include "server/pack/pack.h"
 #include <fcntl.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -14,7 +15,6 @@
 #include <iostream>
 #include <stdexcept>
 #include "server/configure/configure.h"
-#include "server/pack/pack.h"
 #include "server/tools/fsapi.h"
 
 namespace zipfiles::server {
@@ -200,7 +200,8 @@ std::pair<bool, std::vector<uint8_t>&> packFilesByBlock(
           SEEK_SET,  // 设置锁的起始位置为文件开头
           0,         // 锁的起始位置偏移量
           0,         // 锁的长度，0 表示到文件末尾
-          getpid()};
+          getpid()
+        };
 
         // 使用 fcntl 尝试在文件上加读锁
         // F_SETLKW 会阻塞直到锁可用
@@ -284,7 +285,8 @@ std::pair<bool, std::vector<uint8_t>&> packFilesByBlock(
             SEEK_SET,  // 设置锁的起始位置为文件开头
             0,         // 锁的起始位置偏移量
             0,         // 锁的长度，0 表示到文件末尾
-            getpid()};
+            getpid()
+          };
 
           // 设置锁类型为解锁
           if (fcntl(inFile, F_SETLKW, &fl) == -1) {  // NOLINT

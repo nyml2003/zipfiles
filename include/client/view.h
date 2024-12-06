@@ -100,6 +100,12 @@ void handleReadConfig(
   gpointer user_data
 );
 
+void handleConnect(
+  WebKitUserContentManager* manager,
+  WebKitJavascriptResult* js_result,
+  gpointer user_data
+);
+
 void handleProcedureLog(
   WebKitUserContentManager* manager,
   WebKitJavascriptResult* js_result,

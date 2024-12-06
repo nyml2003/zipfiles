@@ -27,7 +27,7 @@ void loadDistUri() {
 }
 
 void bindJS(WebKitUserContentManager* manager) {
-  std::array<Handler, 7> handlers = {{
+  std::array<Handler, 8> handlers = {{
     {"function", reinterpret_cast<GCallback>(handleFunction)},
     {"log", reinterpret_cast<GCallback>(handleProcedureLog)},
     {"error", reinterpret_cast<GCallback>(handleProcedureError)},
@@ -35,6 +35,7 @@ void bindJS(WebKitUserContentManager* manager) {
     {"warn", reinterpret_cast<GCallback>(handleProcedureWarn)},
     {"updateConfig", reinterpret_cast<GCallback>(handleUpdateConfig)},
     {"readConfig", reinterpret_cast<GCallback>(handleReadConfig)},
+    {"connect", reinterpret_cast<GCallback>(handleConnect)},
   }};
 
   for (const auto& handler : handlers) {
@@ -68,27 +69,30 @@ void Launcher::startGTK(int argc, char** argv) {
   bindJS(manager);
   GtkWidget* window = createWindow();
   gtk_widget_show_all(window);
-
-  Socket::getInstance().active = true;
-  gtk_main();
 }
 
+/**
+ * @brief
+ * receiver线程的生命周期和socket的生命周期
+ * receiver线程在gtk线程前启动
+ * socket线程在gtk_widget_show_all(window);后实例化
+ * receive函数应当在socket的状态为CONNECT时调用
+ */
 void Launcher::startReciever() {
   Launcher::getInstance().reciever = std::thread([this]() {
     log4cpp::Category::getRoot().debugStream() << "Reciever started";
-    while (isRunning.load()) {
-      if (Socket::getInstance().active.load()) {
+    Socket::getInstance().initializeSocket();
+    while (isRunning) {
+      if (Socket::getInstance().active || Socket::getInstance().trigger) {
         Socket::getInstance().receive(sendResponse);
       }
     }
+    log4cpp::Category::getRoot().debugStream() << "Reciever stopped";
   });
 }
 
 void Launcher::stop() {
-  isRunning.store(false);
-  if (reciever.joinable()) {
-    reciever.join();
-  }
+  isRunning = false;
 }
 
 void Launcher::startLogger() {

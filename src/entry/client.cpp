@@ -9,9 +9,11 @@ int main(int argc, char* argv[]) {
   ofs.open("/app/bin/client.log", std::ofstream::out | std::ofstream::trunc);
   ofs.close();
 
-  Launcher::getInstance().startLogger();
-  Launcher::getInstance().startReciever();
-  Launcher::getInstance().startGTK(argc, argv);
+  Launcher::startLogger();
 
+  Launcher::startGTK(argc, argv);
+  Launcher::getInstance().startReciever();
+  gtk_main();
+  Launcher::getInstance().reciever.join();
   return 0;
 }

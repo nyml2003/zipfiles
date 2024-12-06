@@ -154,6 +154,10 @@ void sendResponse(const Json::Value& root) {
   std::string json_str = Json::writeString(writer, root);
   std::string script = "window.postMessage(" + json_str + ", '*');";
   log4cpp::Category::getRoot().infoStream() << "evaluating script: " << script;
+  if (!Launcher::getInstance().isRunning) {
+    log4cpp::Category::getRoot().errorStream() << "Application is not running";
+    return;
+  }
   webkit_web_view_evaluate_javascript(
     webView, script.c_str(), -1, nullptr, nullptr, nullptr, nullptr, nullptr
   );
@@ -291,7 +295,8 @@ void handleUpdateConfig(
     root["ip"] = jsc_value_to_string(ip);
   }
 
-  if (defaultBackupPath && !jsc_value_is_null(defaultBackupPath) && !jsc_value_is_undefined(defaultBackupPath)) {
+  if (defaultBackupPath && !jsc_value_is_null(defaultBackupPath) &&
+      !jsc_value_is_undefined(defaultBackupPath)) {
     root["defaultBackupPath"] = jsc_value_to_string(defaultBackupPath);
   }
   log4cpp::Category::getRoot().infoStream() << "update config: " << root;
@@ -351,6 +356,14 @@ void handleReadConfig(
   res["port"] = root["port"];
   res["version"] = root["version"];
   sendLocalResponse(res, _api, _uuid, Code::OK);
+}
+
+void handleConnect(
+  WebKitUserContentManager* /*manager*/,
+  WebKitJavascriptResult* /*js_result*/,
+  gpointer /*user_data*/
+) {
+  Socket::getInstance().trigger = true;
 }
 
 void handleQuit(

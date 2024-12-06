@@ -1,12 +1,14 @@
 #include "client/socket.h"
 
+#include "client/launcher.h"
 #include "client/view.h"
-#include "log4cpp/Category.hh"
+
 #include "mp/Notification.h"
 #include "mp/common.h"
 
 #include <arpa/inet.h>
 #include <cstdint>
+#include <log4cpp/Category.hh>
 #include <thread>
 #include <vector>
 
@@ -22,6 +24,22 @@ void Socket::initializeSocket() {
     socketStatus = SocketStatus::DISCONNECTED;
     throw std::runtime_error("Socket creation error");
     return;
+  }
+
+  // 设置 socket 为非阻塞模式
+  int flags = fcntl(server_fd, F_GETFL, 0);
+  if (flags == -1) {
+    log4cpp::Category::getRoot().errorStream() << "Failed to get socket flags";
+    close(server_fd);
+    socketStatus = SocketStatus::DISCONNECTED;
+    throw std::runtime_error("Failed to get socket flags");
+  }
+  if (fcntl(server_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+    log4cpp::Category::getRoot().errorStream()
+      << "Failed to set socket to non-blocking mode";
+    close(server_fd);
+    socketStatus = SocketStatus::DISCONNECTED;
+    throw std::runtime_error("Failed to set socket to non-blocking mode");
   }
 
   log4cpp::Category::getRoot().infoStream() << "Socket created";
@@ -48,23 +66,35 @@ void Socket::initializeSocket() {
  *
  */
 Socket::Socket()
-  : server_fd(-1),
+  : active(false),
+    trigger(false),
+    disconnectFlag(false),
+    server_fd(-1),
     serv_addr{},
-    socketStatus(SocketStatus::DISCONNECTED),
-    active(false) {
-  initializeSocket();
-  connectWithRetries();
-}
+    socketStatus(SocketStatus::DISCONNECTED) {}
 
 /**
  * @brief 尝试连接server，具有重试机制
  *
  */
 void Socket::connectWithRetries() {
+  if (disconnectFlag) {
+    initializeSocket();
+    disconnectFlag = false;
+    return;
+  }
   const int max_retries = 5;
   int retries = 0;
   while (retries < max_retries) {
-    if (connect(server_fd, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
+    if (connect(
+          server_fd, reinterpret_cast<struct sockaddr*>(&serv_addr),
+          sizeof(serv_addr)
+        ) < 0) {
+      if (!Launcher::getInstance().isRunning) {
+        log4cpp::Category::getRoot().errorStream()
+          << "Application is not running";
+        return;
+      }
       log4cpp::Category::getRoot().errorStream() << "Connection failed";
       retries++;
       log4cpp::Category::getRoot().errorStream()
@@ -76,6 +106,7 @@ void Socket::connectWithRetries() {
         ),
         Code::DOUBLE_WARNING
       ));
+
       std::this_thread::sleep_for(std::chrono::seconds(1));  // 等待1秒后重试
     } else {
       socketStatus = SocketStatus::CONNECT;
@@ -127,6 +158,7 @@ void Socket::send(const std::string& req) {
 void Socket::disconnect() {
   close(server_fd);
   active = false;
+  disconnectFlag = true;
   socketStatus = SocketStatus::DISCONNECTED;
   handleNotify(ZNotification(
     notification::NoneNotification(), Code::DISABLE_REMOTE_REQUEST
@@ -143,6 +175,7 @@ void Socket::receive(const std::function<void(const Json::Value&)>& callback) {
   if (socketStatus == SocketStatus::DISCONNECTED) {
     connectWithRetries();
     if (socketStatus == SocketStatus::DISCONNECTED) {
+      trigger.store(false);
       return;
     }
   }
@@ -168,16 +201,11 @@ void Socket::receive(const std::function<void(const Json::Value&)>& callback) {
 
   // socket是否产生了错误
   if (bytesRead < 0) {
-    disconnect();
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
-      handleNotify(ZNotification(
-        notification::DoubleLine(
-          {.title = "连接超时", .description = "连接超时"}
-        ),
-        Code::DOUBLE_ERROR
-      ));
+      // 非阻塞模式下没有数据可读，不做任何处理
       return;
     }
+    disconnect();
     handleNotify(ZNotification(
       notification::DoubleLine(
         {.title = "接收响应失败",

@@ -41,7 +41,8 @@ Api matchApi(ResKind kind) {
       [](const auto&) {
         throw UnknownApiException("错误发生在: Response::matchApi");
         return Api::ILLEAGAL;
-      }},
+      }
+    },
     kind
   );
 }
@@ -210,7 +211,8 @@ Res Res::fromJson(const Json::Value& json) {
           .group = file["group"].asString(),
           .mode = static_cast<mode_t>(file["mode"].asInt()),
           .path = file["path"].asString(),
-          .name = file["name"].asString()});
+          .name = file["name"].asString()
+        });
       }
       kind = response::GetCommitDetail{.files = files};
       break;
@@ -236,7 +238,8 @@ Res Res::fromJson(const Json::Value& json) {
       for (const auto& file : json["payload"]["files"]) {
         files.push_back(response::getFileList::File{
           .type = static_cast<fs::file_type>(file["type"].asInt()),
-          .name = file["name"].asString()});
+          .name = file["name"].asString()
+        });
       }
       kind = response::GetFileList{.files = files};
       break;
@@ -271,7 +274,8 @@ Res Res::fromJson(const Json::Value& json) {
           .group = file["group"].asString(),
           .mode = static_cast<mode_t>(file["mode"].asInt()),
           .path = file["path"].asString(),
-          .name = file["name"].asString()});
+          .name = file["name"].asString()
+        });
       }
       kind = response::GetFileDetailList{.files = files};
       break;
@@ -323,7 +327,8 @@ Res Res::fromJson(const Json::Value& json) {
     case Api::NORESPONSE: {
       kind = response::NoResponse{
         .title = json["payload"]["title"].asString(),
-        .description = json["payload"]["description"].asString()};
+        .description = json["payload"]["description"].asString()
+      };
       break;
     }
     default:
@@ -334,7 +339,8 @@ Res Res::fromJson(const Json::Value& json) {
       break;
   }
   return {
-    kind, json["uuid"].asString(), static_cast<Code>(json["code"].asInt())};
+    kind, json["uuid"].asString(), static_cast<Code>(json["code"].asInt())
+  };
 }
 
 }  // namespace zipfiles

@@ -39,7 +39,12 @@ class Socket {
   Socket& operator=(const Socket& other) = delete;
   Socket(Socket&& other) noexcept = delete;
   Socket& operator=(Socket&& other) noexcept = delete;
+  // 是否应该继续接收数据
   std::atomic_bool active;
+  // 恢复socket的触发器
+  std::atomic_bool trigger;
+  // 是否disconnet
+  std::atomic_bool disconnectFlag;
 
  private:
   Socket();
