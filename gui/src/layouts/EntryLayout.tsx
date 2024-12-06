@@ -79,20 +79,20 @@ const App: React.FC = () => {
               borderInlineEnd: "none",
             }}></Menu>
         </Sider>
-        <Layout className='grow-item split-container-row overflow-x-hidden'>
-          <div className='grow-item split-container-col'>
+        <Layout className='grow-item split-container-col overflow-x-hidden'>
+          <div className='grow-item split-container-row'>
             <Content className='grow-item'>
               <Outlet />
             </Content>
-            <FootContent />
+            <CSSTransition
+              in={notificationVisible}
+              timeout={500}
+              classNames='fade'
+              unmountOnExit={false}>
+              <NotificationList />
+            </CSSTransition>
           </div>
-          <CSSTransition
-            in={notificationVisible}
-            timeout={500}
-            classNames='fade'
-            unmountOnExit={false}>
-            <NotificationList />
-          </CSSTransition>
+          <FootContent />
         </Layout>
       </Layout>
     </>

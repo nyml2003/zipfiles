@@ -1,4 +1,4 @@
-import { removeNotification } from "@/stores/NotificationReducer";
+import { removeNotification, toggleNotification } from "@/stores/NotificationReducer";
 import { RootState } from "@/stores/store";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -12,7 +12,7 @@ import NoMoreData from "../NoMoreData";
 import PlainText from "./PlainText";
 import CommitPush from "./CommitPush";
 import Button from "@/components/Button";
-import { CloseOutlined } from "@ant-design/icons";
+import { CloseOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import CommitRestore from "./CommitRestore";
 
 const NotificationList = () => {
@@ -40,8 +40,11 @@ const NotificationList = () => {
   };
 
   return (
-    <div className='w-25vw fade-in-left flex-col align-start overflow-auto hidden'>
+    <div className='w-25vw fade-in-left flex-col align-start overflow-auto hidden fixed top-0 right-0 h-full bg-gray-50 z-50 shadow-md'>
       <div className='text-lg font-bold p-4'>通知中心</div>
+      <Button className='absolute top-4 right-4 cursor-pointer' onClick={() => dispatch(toggleNotification())}>
+        <MenuUnfoldOutlined />
+      </Button>
       {notifications.length > 0 ? (
         notifications.map(notification => (
           <div
@@ -49,10 +52,9 @@ const NotificationList = () => {
             className='m-2 px-6 py-5 bg-white shadow-md rounded-lg relative'>
             {renderItem(notification)}
             <Button
-              variant="primary"
+              variant='primary'
               onClick={() => closeNotification(notification.id)}
-              className='absolute top-2 right-2'
-              >
+              className='absolute top-2 right-2'>
               <CloseOutlined />
             </Button>
           </div>

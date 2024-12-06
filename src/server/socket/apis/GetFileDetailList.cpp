@@ -6,6 +6,7 @@
 
 #include <grp.h>
 #include <pwd.h>
+#include <algorithm>
 #include <filesystem>
 #include <log4cpp/Category.hh>
 #include <vector>
@@ -114,8 +115,19 @@ void getFileDetailList(int client_fd, const Req& req) {
       }
     }
   }
-  log4cpp::Category::getRoot().infoStream()
-    << "Get file detail list: " << files.size() << " files";
+  std::sort(files.begin(), files.end(), [](const auto& a, const auto& b) {
+    // 优先按照文件类型排序，目录在前
+    if (a.type != b.type) {
+      if (a.type == fs::file_type::directory) {
+        return true;
+      }
+      if (b.type == fs::file_type::directory) {
+        return false;
+      }
+    }
+    // 其次按照字典序排序
+    return a.name < b.name;
+  });
   Socket::send(
     client_fd,
     Res(response::GetFileDetailList{.files = files}, req.uuid, Code::OK)

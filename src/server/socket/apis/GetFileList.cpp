@@ -4,6 +4,8 @@
 #include <server/socket/socket.h>
 #include <log4cpp/Category.hh>
 
+#include <algorithm>
+
 namespace zipfiles::server::api {
 namespace fs = std::filesystem;
 void getFileList(int client_fd, const Req& req) {
@@ -42,6 +44,22 @@ void getFileList(int client_fd, const Req& req) {
       {.type = entry.status().type(), .name = entry.path().filename().string()}
     );
   }
+  std::sort(
+    response.files.begin(), response.files.end(),
+    [](const auto& a, const auto& b) {
+      // 优先按照文件类型排序，目录在前
+      if (a.type != b.type) {
+        if (a.type == fs::file_type::directory) {
+          return true;
+        }
+        if (b.type == fs::file_type::directory) {
+          return false;
+        }
+      }
+      // 其次按照字典序排序
+      return a.name < b.name;
+    }
+  );
   Socket::send(client_fd, Res(response, req.uuid, Code::OK));
 }
 
