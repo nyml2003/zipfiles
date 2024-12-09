@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { HistoryOutlined, HomeOutlined, PlusOutlined, SettingOutlined } from "@ant-design/icons";
-import { Layout, Menu } from "antd";
+import { Grid, Layout, Menu, Tour, TourStepProps } from "antd";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import FootContent from "./FootContent";
 import NotificationList from "@/components/NotificationList";
@@ -9,6 +9,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/stores/store";
 
 const { Content, Sider } = Layout;
+const { useBreakpoint } = Grid;
 
 const App: React.FC = () => {
   const notificationVisible = useSelector((state: RootState) => state.notification.open);
@@ -34,41 +35,48 @@ const App: React.FC = () => {
       icon: React.createElement(SettingOutlined)
     }
   ];
-  // const headerItemsRef = useRef<HTMLElement[]>([]);
-  // const steps: TourStepProps[] = [
-  //   {
-  //     title: "欢迎使用",
-  //     description: "这是您的应用首页。",
-  //     placement: "right",
-  //     target: headerItemsRef.current[0]!
-  //   },
-  //   {
-  //     title: "新建提交",
-  //     description: "点击这里可以快速创建新的提交，方便您的工作流程。",
-  //     placement: "right",
-  //     target: headerItemsRef.current[1]!
-  //   },
-  //   {
-  //     title: "提交历史",
-  //     description: "在这里查看您所有的提交历史，便于管理和追踪。",
-  //     placement: "right",
-  //     target: headerItemsRef.current[2]!
-  //   },
-  //   {
-  //     title: "设置",
-  //     description: "在设置中，您可以自定义应用的各种选项。",
-  //     placement: "right",
-  //     target: headerItemsRef.current[3]!
-  //   }
-  // ];
+  const sideItemsRef = useRef<(HTMLDivElement | null)[]>([null, null, null, null]);
+  const steps: TourStepProps[] = [
+    {
+      title: "欢迎使用",
+      description: "这是您的应用首页。",
+      placement: "right",
+      target: sideItemsRef.current[0]
+    },
+    {
+      title: "创建",
+      description: "点击这里可以快速创建新的备份",
+      placement: "right",
+      target: sideItemsRef.current[1]
+    },
+    {
+      title: "历史",
+      description: "在这里查看您所有的备份历史，便于管理和追踪。",
+      placement: "right",
+      target: sideItemsRef.current[2]
+    },
+    {
+      title: "设置",
+      description: "在设置中，您可以自定义应用的各种选项。",
+      placement: "right",
+      target: sideItemsRef.current[3]
+    }
+  ];
 
   const navigate = useNavigate();
   const location = useLocation();
-
+  const [open, setOpen] = useState(false);
+  const openTour = () => setOpen(true);
   useEffect(() => {
     setSelectedKeys([location.pathname.slice(1)]);
   }, [location.pathname]);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([location.pathname.slice(1)]);
+
+  const breakpoint = useBreakpoint();
+  const gap: {
+    offset: [number, number];
+    radius: number;
+  } = breakpoint.lg ? { offset: [16, 0], radius: 8 } : { offset: [24, 0], radius: 8 };
   return (
     <>
       <Layout hasSider className='select-none flex flex-row h-screen'>
@@ -76,16 +84,24 @@ const App: React.FC = () => {
           <Menu
             onClick={info => navigate(`/${info.key}`)}
             selectedKeys={selectedKeys}
-            items={headerItems}
             className='bg-white'
             style={{
               borderInlineEnd: "none"
-            }}></Menu>
+            }}>
+            {headerItems.map((item, index) => (
+              <Menu.Item key={item.key}>
+                <div className='flex items-center' ref={el => (sideItemsRef.current[index] = el)}>
+                  {item.icon}
+                  <span className='ml-4'>{item.label}</span>
+                </div>
+              </Menu.Item>
+            ))}
+          </Menu>
         </Sider>
-        <Layout className="bg-white">
+        <Layout className='bg-white'>
           <div>
             <Content>
-              <Outlet />
+              <Outlet context={{ openTour }} />
             </Content>
             <CSSTransition
               in={notificationVisible}
@@ -98,6 +114,12 @@ const App: React.FC = () => {
           <FootContent />
         </Layout>
       </Layout>
+      <Tour
+        open={open}
+        onClose={() => setOpen(false)}
+        steps={steps}
+        gap={gap}
+      />
     </>
   );
 };
