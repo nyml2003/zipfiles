@@ -5,10 +5,12 @@
 #include "client/view.h"
 
 #include <libgen.h>
+#include <csignal>
 #include <iostream>
 #include <log4cpp/Category.hh>
 #include <log4cpp/PropertyConfigurator.hh>
 #include <string>
+#include <thread>
 
 namespace zipfiles::client {
 WebKitWebView* webView = nullptr;
@@ -93,6 +95,7 @@ void Launcher::startReciever() {
 
 void Launcher::stop() {
   isRunning = false;
+  raise(SIGINT);
 }
 
 void Launcher::startLogger() {

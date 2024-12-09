@@ -2,7 +2,7 @@ import {
   CommitPush,
   CommitRestore,
   NotificationUnion,
-  PlainText,
+  PlainText
 } from "@/components/NotificationList/types";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
@@ -21,9 +21,9 @@ const initialState: NotificationState = {
       state: "info",
       type: "plainText",
       text: "欢迎来到通知中心",
-      description: "这是一个通知中心，为您提供各类重要通知。",
-    } as PlainText,
-  ],
+      description: "这是一个通知中心，为您提供各类重要通知。"
+    } as PlainText
+  ]
 };
 
 const NotificationReducer = createSlice({
@@ -37,7 +37,7 @@ const NotificationReducer = createSlice({
     },
     removeNotification(state, action: PayloadAction<string>) {
       state.notifications = state.notifications.filter(
-        notification => notification.id !== action.payload,
+        notification => notification.id !== action.payload
       );
     },
     toggleNotification(state) {
@@ -46,7 +46,7 @@ const NotificationReducer = createSlice({
     finishMessage(state, action: PayloadAction<Notification<BackupAndRestoreEnd>>) {
       console.log("finishMessage: ", state.notifications);
       const notification = state.notifications.find(
-        notification => notification.id === action.payload.payload.messageId,
+        notification => notification.id === action.payload.payload.messageId
       );
       console.log("notification: ", notification);
       if (notification && notification.type === "commitPush") {
@@ -59,8 +59,8 @@ const NotificationReducer = createSlice({
     ReportError(state, action: PayloadAction<Omit<PlainText, "id" | "type">>) {
       state.notifications.unshift({ ...action.payload, id: uuidv4(), type: "plainText" });
       state.open = false;
-    },
-  },
+    }
+  }
 });
 
 export const {
@@ -68,7 +68,7 @@ export const {
   removeNotification,
   toggleNotification,
   ReportError,
-  finishMessage,
+  finishMessage
 } = NotificationReducer.actions;
 
 export default NotificationReducer.reducer;

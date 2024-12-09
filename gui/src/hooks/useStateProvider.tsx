@@ -16,7 +16,7 @@ const useStateProvider = <
   Reducers extends Record<string, Reducer<State>>,
 >(
   reducers: Reducers,
-  defaultState: State,
+  defaultState: State
 ) => {
   type ActionObject = {
     [K in keyof Reducers]: Action<WithoutFirstArgument<Reducers[K]>>;
@@ -27,7 +27,7 @@ const useStateProvider = <
 
   const Provider: FC<{ children: ReactNode; initialState?: Partial<State> }> = ({
     children,
-    initialState,
+    initialState
   }) => {
     const [state, setState] = useState({ ...defaultState, ...initialState });
 
@@ -41,8 +41,8 @@ const useStateProvider = <
               action(state, ...args);
               return state;
             });
-          },
-        ]),
+          }
+        ])
       ) as ActionObject;
 
     const actions = createActions(reducers);

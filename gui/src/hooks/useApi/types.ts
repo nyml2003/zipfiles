@@ -24,7 +24,8 @@ export enum Code {
   RESTORE_SUCCESS = 430, // 恢复成功
   RESTORE_FAILED = 431, // 恢复失败
   DISABLE_REMOTE_REQUEST = 440, // 禁用远程请求
-  ENABLE_REMOTE_REQUEST = 441, // 启用远程请求
+  ENABLE_REMOTE_REQUEST = 441, // 启用远程请 求
+  SOCKET_CONNECT = 442, // Socket正在连接
 }
 
 export interface SingleText {

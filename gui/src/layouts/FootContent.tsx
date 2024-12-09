@@ -4,49 +4,41 @@ import Button from "@/components/Button";
 import useApi from "@useApi";
 import { toggleNotification } from "@/stores/NotificationReducer";
 import { RootState } from "@/stores/store";
-import { LoadingState } from "@/types";
-import { MessageOutlined } from "@ant-design/icons";
-import { Wifi } from "@icon-park/react";
-import { Tooltip } from "antd";
-import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import { useDispatch } from "react-redux";
-import LoadingWrapper from "@/components/LoadingWrapper";
+import { CloseWifi, MessageUnread, Wifi } from "@icon-park/react";
+import { Spin, Tooltip } from "antd";
+import React, { useCallback, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 
 const FootContent = () => {
   const dispatch = useDispatch();
   const api = useApi();
   const active = useSelector((state: RootState) => state.socket.active);
-  const [loading, setLoading] = useState<LoadingState>(LoadingState.Done);
-  const handleClick = async () => {
+  const connecting = useSelector((state: RootState) => state.socket.connecting);
+  const handleClick = useCallback(() => {
     if (!active) {
-      setLoading(LoadingState.Loading);
       api.request<ConnectRequest, ConnectResponse>(ApiEnum.Connect, {});
     }
-  };
+  }, [active]);
   useEffect(() => {
     api.request<ConnectRequest, ConnectResponse>(ApiEnum.Connect, {});
   }, []);
-
-  useEffect(() => {
-    if (active) {
-      setLoading(LoadingState.Done);
-    }
-  }, [active]);
   return (
-    <div className='bg-white flex flex-row-reverse p-2'>
+    <div className='bg-white flex-row-reverse p-2 fixed bottom-0 z-50 flex w-full right-0'>
       <Button onClick={() => dispatch(toggleNotification())} variant='primary'>
-        <MessageOutlined />
+        <MessageUnread theme='filled' size='24' fill='#333' strokeLinecap='butt' />
       </Button>
-      <Button
-        variant='primary'
-        onClick={() => handleClick()}
-        disabled={loading === LoadingState.Loading}>
-        <Tooltip title={active ? "已连接" : "未连接, 点击尝试连接"}>
-          <LoadingWrapper loading={loading}>
-            <Wifi theme='filled' size='18' fill={active ? "#1890ff" : "#ff4d4f"} />
-          </LoadingWrapper>
-        </Tooltip>
+      <Button variant='text' onClick={() => handleClick()} disabled={connecting}>
+        {connecting ? (
+          <Spin size='small' />
+        ) : (
+          <Tooltip title={active ? "已连接" : "未连接, 点击尝试连接"}>
+            {active ? (
+              <Wifi theme='filled' size='24' fill='#333' strokeLinecap='butt' />
+            ) : (
+              <CloseWifi theme='filled' size='24' fill='#333' strokeLinecap='butt' />
+            )}
+          </Tooltip>
+        )}
       </Button>
     </div>
   );

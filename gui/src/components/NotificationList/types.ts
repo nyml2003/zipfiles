@@ -22,7 +22,9 @@ type BackupOption = {
 export type CommitPush = NotificationUnion & {
   type: "commitPush";
   files: File[];
-  directories: string[];
+  directories: {
+    name: string;
+  }[];
   options: BackupOption;
   result?: Notification<BackupAndRestoreEnd>;
 };

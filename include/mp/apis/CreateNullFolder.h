@@ -8,6 +8,7 @@ namespace zipfiles {
 namespace request {
 struct CreateNullFolder {
   std::string path;
+  std::string newFolderName;
 };
 }  // namespace request
 

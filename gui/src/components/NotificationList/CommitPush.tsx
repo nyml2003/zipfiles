@@ -21,7 +21,7 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
   const fetchFileList = async (path: string) => {
     try {
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
-        path,
+        path
       });
       return res.files;
     } catch (e: unknown) {
@@ -32,8 +32,8 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
         ReportError({
           state: "error",
           text: "获取文件列表失败",
-          description: (e as Error).message,
-        }),
+          description: (e as Error).message
+        })
       );
     }
     return [];
@@ -47,16 +47,14 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
   const fetchAllFiles = async (path: string): Promise<string[]> => {
     const files = await fetchFileList(path);
     const allFiles: string[] = [];
-    const promises: Promise<void>[] = files.map((file: File) => {
-      if (file.type === FileType.Directory) {
-        return fetchAllFiles(path + "/" + file.name).then(subFiles => {
-          allFiles.push(...subFiles);
-        });
-      }
+    const promises: Promise<void>[] = files.map(async (file: File) => {
       allFiles.push(path + "/" + file.name);
+      if (file.type === FileType.Directory) {
+        const subFiles = await fetchAllFiles(path + "/" + file.name);
+        allFiles.push(...subFiles);
+      }
       return Promise.resolve();
     });
-
     await Promise.all(promises);
     return allFiles;
   };
@@ -64,7 +62,7 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
     const fileData = files.map(file => file.path + "/" + file.name);
     let dirData: string[] = [];
     const dirPromises = directories.map(async path => {
-      return await fetchAllFiles(path);
+      return await fetchAllFiles(path.name);
     });
     const dirResults = await Promise.all(dirPromises);
     dirData = dirResults.flat(); // 将所有目录的结果合并到 dirData
@@ -77,7 +75,7 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
         return {
           ...prev,
           status: "completed",
-          description: "备份完成",
+          description: "备份完成"
         };
       });
     }
@@ -86,18 +84,18 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
         return {
           ...prev,
           status: "failed",
-          description: result.payload.description,
+          description: result.payload.description
         };
       });
     }
   }, [result]);
   const [collectingFiles, setCollectingFiles] = useState<StepProps>({
     title: "统计",
-    status: "pending",
+    status: "pending"
   });
   const [packingFiles, setPackingFiles] = useState<StepProps>({
     title: "备份",
-    status: "pending",
+    status: "pending"
   });
   const execute = async () => {
     setStart(true);
@@ -105,7 +103,7 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
       return {
         ...prev,
         status: "running",
-        description: "正在收集文件",
+        description: "正在收集文件"
       };
     });
     const backupFiles = await collectFiles();
@@ -113,7 +111,7 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
       files: backupFiles,
       ...options,
       uuid: id,
-      createTime: Date.now(),
+      createTime: Date.now()
     };
     setCollectingFiles(prev => {
       return {
@@ -122,22 +120,22 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
         description: (
           <div>
             <div>备份信息如下, 正在打包中</div>
-            <div>提交的uuid为: {id}</div>
-            <div>提交的文件数为: {backupFiles.length}</div>
-            <div>提交的信息为: {options.message}</div>
-            <div>提交的作者为: {options.author}</div>
+            <div>备份的uuid为: {id}</div>
+            <div>备份的文件数为: {backupFiles.length}</div>
+            <div>备份的信息为: {options.message}</div>
+            <div>备份的作者为: {options.author}</div>
+            <div>备份的路径为: {options.storagePath}</div>
             <div>提交的时间为: {request.createTime}</div>
-            <div>是否加密: {options.isEncrypt ? "是" : "否"}</div>
-            {options.isEncrypt && <input type='password' disabled value={options.key} />}
+            <span>是否加密: {options.isEncrypt ? <span style={{ color: "green" }}>√</span> : <span style={{ color: "red" }}>×</span>}</span>
           </div>
-        ),
+        )
       };
     });
     setPackingFiles(prev => {
       return {
         ...prev,
         status: "running",
-        description: "发送文件中",
+        description: "发送文件中"
       };
     });
     try {
@@ -147,7 +145,7 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
         return {
           ...prev,
           status: "failed",
-          description: (e as Error).message,
+          description: (e as Error).message
         };
       });
       return;
@@ -155,7 +153,7 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
     setPackingFiles(prev => {
       return {
         ...prev,
-        description: "备份中",
+        description: "备份中"
       };
     });
   };

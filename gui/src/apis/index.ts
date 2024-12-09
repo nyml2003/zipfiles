@@ -23,6 +23,7 @@ export enum ApiEnum {
   PhysicalDeleteCommit = 108,
   GetCommitRecycleBin = 109,
   RecoverCommit = 110,
+  CreateNullFolder = 111,
   UpdateConfig = "updateConfig",
   ReadConfig = "readConfig",
   Connect = "connect",

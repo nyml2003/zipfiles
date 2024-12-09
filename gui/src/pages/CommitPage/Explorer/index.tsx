@@ -3,7 +3,7 @@ import {
   ArrowLeftOutlined,
   ClearOutlined,
   HomeOutlined,
-  Loading3QuartersOutlined,
+  Loading3QuartersOutlined
 } from "@ant-design/icons";
 import { Breadcrumb, Button, Splitter } from "antd";
 import TreeMenu from "./TreeMenu";
@@ -15,8 +15,9 @@ import { GetCommitDetailResponse, GetCommitDetailRequest } from "@/apis/GetCommi
 import { ReportError } from "@/stores/NotificationReducer";
 import { useDispatch } from "react-redux";
 import { AcceptableError } from "@/hooks/useApi/types";
+import { BreadcrumbItemType } from "antd/es/breadcrumb/Breadcrumb";
 
-const Explorer: React.FC = () => {
+const Explorer = ({ commitId }: { commitId: string }) => {
   const { state, actions } = useContext(Context);
   const api = useApi();
   const dispatch = useDispatch();
@@ -27,8 +28,8 @@ const Explorer: React.FC = () => {
       const res = await api.request<GetCommitDetailRequest, GetCommitDetailResponse>(
         ApiEnum.GetCommitDetail,
         {
-          uuid: state.commitId,
-        },
+          uuid: commitId
+        }
       );
       actions.updateFiles(res.files);
     } catch (e: unknown) {
@@ -38,9 +39,9 @@ const Explorer: React.FC = () => {
       dispatch(
         ReportError({
           state: "error",
-          text: "获取提交详情失败",
-          description: (e as Error).message,
-        }),
+          text: "获取备份详情失败",
+          description: (e as Error).message
+        })
       );
     }
   };
@@ -50,15 +51,12 @@ const Explorer: React.FC = () => {
   }, [fresh]);
 
   const breadcrumbItems = useMemo(() => {
-    if (state.loading) {
-      return [];
-    }
-    const items = [
+    let items: BreadcrumbItemType[] = [
       {
         title: <HomeOutlined />,
         onClick: () => actions.updatePath(""),
-        className: "px-2 py-1 rounded cursor-pointer hover:bg-gray-200 ",
-      },
+        className: "px-2 py-1 rounded cursor-pointer hover:bg-gray-200 "
+      }
     ];
     if (state.path === "") {
       return items;
@@ -68,11 +66,23 @@ const Explorer: React.FC = () => {
       items.push({
         title: <span>{item}</span>,
         onClick: () => actions.updatePath(path),
-        className: "px-2 py-1 rounded cursor-pointer hover:bg-gray-200 ",
+        className: "px-2 py-1 rounded cursor-pointer hover:bg-gray-200 "
       });
     });
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (items.length > 4) {
+      items = [
+        first,
+        {
+          title: <span>...</span>,
+          className: "px-2 py-1 rounded"
+        },
+        last
+      ];
+    }
     return items;
-  }, [state.path, state.loading]);
+  }, [state.path]);
 
   return (
     <div className='split-container-col grow-item'>
@@ -87,7 +97,7 @@ const Explorer: React.FC = () => {
           <Button
             type='text'
             onClick={() => {
-              setFresh((prev) => !prev);
+              setFresh(prev => !prev);
             }}
             icon={<Loading3QuartersOutlined />}></Button>
           <Button
@@ -97,30 +107,21 @@ const Explorer: React.FC = () => {
           <Breadcrumb items={breadcrumbItems} />
         </div>
       </div>
-      <div
-        className='
-        bg-white
-        rounded-xl
-        m-2
-        p-2
-        fade-in-down
-        grow-item 
-        split-container-row
-        '>
-        {
-          <Splitter className='fade-in-down split-container-row grow-item'>
-            <Splitter.Panel
-              defaultSize='20%'
-              min='10%'
-              max='70%'
-              className='split-container-row grow-item'>
-              <TreeMenu />
-            </Splitter.Panel>
-            <Splitter.Panel className='split-container-row grow-item'>
+      <div className='bg-white rounded-xl fade-in-down grow-item split-container-row'>
+        <Splitter className='fade-in-down split-container-row grow-item'>
+          <Splitter.Panel
+            defaultSize='20%'
+            min='10%'
+            max='70%'
+            className='split-container-row grow-item'>
+            <TreeMenu />
+          </Splitter.Panel>
+          <Splitter.Panel className='split-container-row grow-item'>
+            <div className='p-2'>
               <TableView />
-            </Splitter.Panel>
-          </Splitter>
-        }
+            </div>
+          </Splitter.Panel>
+        </Splitter>
       </div>
     </div>
   );

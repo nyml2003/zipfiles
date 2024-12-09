@@ -1,11 +1,10 @@
 import React, { useState, useEffect, Key } from "react";
-import { Tree, TreeProps } from "antd";
+import { Spin, Tree, TreeProps } from "antd";
 import useApi from "@useApi";
 import { GetFileListRequest, GetFileListResponse } from "@/apis/GetFileList";
 import { ApiEnum } from "@/apis";
 import { DownOutlined } from "@ant-design/icons";
 import { FileType, LoadingState } from "@/types";
-import LoadingWrapper from "@/components/LoadingWrapper";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/stores/store";
 import { updateCurrentFile, updateCurrentPath } from "@/stores/CreateCommitReducer";
@@ -37,21 +36,28 @@ const TreeMenu = () => {
     };
   }, [currentPath]);
 
-  const handleGetFileList = async (path: string, needLoading = true) => {
+  const handleGetFileList = async (path: string, needLoading?: boolean) => {
     if (needLoading) setLoading(LoadingState.Loading);
     try {
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
-        path,
+        path
       });
       const newTreeData = res.files.map(item => {
         const isDirectory = item.type === FileType.Directory;
         return {
           title: item.name,
           key: `${path}/${item.name}`,
-          isLeaf: !isDirectory,
+          isLeaf: !isDirectory
         };
       });
-      setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
+      if (newTreeData.length !== 0) {
+        setTreeData(prevTreeData => {
+          if (needLoading || !prevTreeData || prevTreeData.length === 0) {
+            return newTreeData;
+          }
+          return updateTreeData(prevTreeData, path, newTreeData);
+        });
+      }
     } catch (err) {
       if (!(err instanceof AcceptableError)) {
         return;
@@ -60,8 +66,8 @@ const TreeMenu = () => {
         ReportError({
           state: "error",
           text: "获取文件列表失败",
-          description: (err as Error).message,
-        }),
+          description: (err as Error).message
+        })
       );
     }
     setLoading(LoadingState.Done);
@@ -70,22 +76,19 @@ const TreeMenu = () => {
   const updateTreeData = (
     treeData: DataNode[],
     path: string,
-    newTreeData: DataNode[],
+    newTreeData: DataNode[]
   ): DataNode[] => {
-    if (treeData.length === 0) {
-      return newTreeData;
-    }
     return treeData.map((item: DataNode) => {
       if (item.key === path) {
         return {
           ...item,
-          children: newTreeData,
+          children: newTreeData
         };
       }
-      if (item.children) {
+      if (path.startsWith(item.key as string)) {
         return {
           ...item,
-          children: updateTreeData(item.children, path, newTreeData),
+          children: updateTreeData(item.children || [], path, newTreeData)
         };
       }
       return item;
@@ -113,20 +116,20 @@ const TreeMenu = () => {
     setLastClickTime(currentTime);
   };
 
-  return (
-    <LoadingWrapper loading={loading} hasData={() => treeData.length > 0}>
-      <DirectoryTree
-        showLine
-        multiple
-        switcherIcon={<DownOutlined />}
-        loadData={onLoadData}
-        treeData={treeData}
-        onSelect={handleSelect}
-        expandedKeys={expandedKeys}
-        onExpand={setExpandedKeys}
-        className='whitespace-nowrap bg-white grow-item'
-      />
-    </LoadingWrapper>
+  return loading === LoadingState.Done ? (
+    <DirectoryTree
+      showLine
+      multiple
+      switcherIcon={<DownOutlined />}
+      loadData={onLoadData}
+      treeData={treeData}
+      onSelect={handleSelect}
+      expandedKeys={expandedKeys}
+      onExpand={setExpandedKeys}
+      className='whitespace-nowrap bg-white grow-item'
+    />
+  ) : (
+    <Spin />
   );
 };
 

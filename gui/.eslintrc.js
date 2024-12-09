@@ -32,6 +32,7 @@ module.exports = {
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'react/jsx-uses-react': 2,
+    "@typescript-eslint/ban-ts-comment": "off",
     /**
      * 最佳实践
      */
@@ -43,9 +44,9 @@ module.exports = {
     radix: 1, // 强制在parseInt()使用基数参数
     // 'no-unused-vars': 'warn',
     // export不检查
-    'no-unused-vars': ["error", { "args": "none" }],
+    'no-unused-vars': ["error", { "args": "none" , "varsIgnorePattern":  "^(React|_|export)" }],
 
-    "@typescript-eslint/no-unused-vars": ["error", { "args": "none" }],
+    "@typescript-eslint/no-unused-vars": ["error", { "args": "none", "varsIgnorePattern": "^(React|_export)" }],
     /**
      * 变量声明
      */
@@ -56,7 +57,7 @@ module.exports = {
     camelcase: 2,
     // 数组和对象键值对最后一个逗号， never参数：不能带末尾的逗号, always参数：必须带末尾的逗号，
     // always-multiline：多行模式必须带逗号，单行模式不能带逗号
-    'comma-dangle': [2, 'always-multiline'],
+    'comma-dangle': [2, 'never'],
     // 控制逗号前后的空格
     'comma-spacing': [2, { before: false, after: true }],
     'comma-style': [2, 'last'], // 逗号风格，换行时在行首还是行尾

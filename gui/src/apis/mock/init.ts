@@ -1,12 +1,12 @@
 import { FileType } from "@/types";
 import { CommitLog, FileDetail, RootFileDetail } from "./types";
-import { MockFileNumber } from "./const";
+import { MockFileDepth, MockFileNumber } from "./const";
 import {
   generateRandomFileDetail,
   generateWholeFileTree,
   mockPostCommit,
   randomNumber,
-  pickFiles,
+  pickFiles
 } from "./utils";
 import Mock from "mockjs";
 
@@ -14,15 +14,15 @@ export const cachedFileRoot: RootFileDetail = {
   name: "",
   type: FileType.Directory,
   children: Array.from({ length: randomNumber(...MockFileNumber) }).map(() =>
-    generateRandomFileDetail(""),
-  ),
+    generateRandomFileDetail("")
+  )
 };
 
 cachedFileRoot.children.push({
   name: "usr",
   type: FileType.Directory,
   children: Array.from({ length: randomNumber(...MockFileNumber) }).map(() =>
-    generateRandomFileDetail("usr"),
+    generateRandomFileDetail("usr")
   ),
   createTime: new Date(Mock.mock("@datetime")).getTime() / 1000,
   updateTime: new Date(Mock.mock("@datetime")).getTime() / 1000,
@@ -30,10 +30,10 @@ cachedFileRoot.children.push({
   owner: Mock.mock("@name"),
   group: Mock.mock("@name"),
   mode: Mock.mock("@integer(0, 777)"),
-  path: "",
+  path: ""
 });
 
-generateWholeFileTree(cachedFileRoot.children, 3);
+generateWholeFileTree(cachedFileRoot.children, MockFileDepth);
 
 // 存储uuid和文件列表的映射
 export const backups: Map<string, FileDetail[]> = new Map();
@@ -42,13 +42,10 @@ export const backups: Map<string, FileDetail[]> = new Map();
 export const cachedCommitList: CommitLog[] = [];
 
 // 初始化commit log
-Array.from({ length: 10 }).forEach(() =>
-  mockPostCommit(pickFiles(cachedFileRoot.children).map(file => file.path + "/" + file.name), cachedCommitList, backups, cachedFileRoot),
+Array.from({ length: 2 }).forEach(() =>
+  mockPostCommit(pickFiles(cachedFileRoot.children).map(file => file.path + "/" + file.name), cachedCommitList, backups, cachedFileRoot)
 );
 
-export let config = {
-  ip: "127.0.0.1",
-  defaultBackupPath: "/usr/local/zipfiles",
-  port: 8080,
-  version: "1.0.0",
+export const config = {
+  defaultBackupPath: "/usr"
 };

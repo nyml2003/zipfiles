@@ -11,7 +11,7 @@ test("buildTree1", () => {
       path: ".",
       size: 3250125,
       type: 1,
-      updateTime: 1730471493.0,
+      updateTime: 1730471493.0
     },
     {
       createTime: 1730533246.0,
@@ -22,7 +22,7 @@ test("buildTree1", () => {
       path: ".",
       size: 4096,
       type: 2,
-      updateTime: 1730471706.0,
+      updateTime: 1730471706.0
     },
     {
       createTime: 1730533246.0,
@@ -33,7 +33,7 @@ test("buildTree1", () => {
       path: ".",
       size: 4096,
       type: 2,
-      updateTime: 1730471768.0,
+      updateTime: 1730471768.0
     },
     {
       createTime: 1730533246.0,
@@ -44,7 +44,7 @@ test("buildTree1", () => {
       path: ".",
       size: 59,
       type: 1,
-      updateTime: 1730470846.0,
+      updateTime: 1730470846.0
     },
     {
       createTime: 1730533246.0,
@@ -55,7 +55,7 @@ test("buildTree1", () => {
       path: "multi_dir_1",
       size: 3250125,
       type: 1,
-      updateTime: 1730471706.0,
+      updateTime: 1730471706.0
     },
     {
       createTime: 1730533246.0,
@@ -66,7 +66,7 @@ test("buildTree1", () => {
       path: "multi_dir_1",
       size: 59,
       type: 1,
-      updateTime: 1730470873.0,
+      updateTime: 1730470873.0
     },
     {
       createTime: 1730533246.0,
@@ -77,7 +77,7 @@ test("buildTree1", () => {
       path: "multi_dir_2",
       size: 3231074,
       type: 1,
-      updateTime: 1730471700.0,
+      updateTime: 1730471700.0
     },
     {
       createTime: 1730533246.0,
@@ -88,8 +88,8 @@ test("buildTree1", () => {
       path: "multi_dir_2",
       size: 79,
       type: 1,
-      updateTime: 1730470913.0,
-    },
+      updateTime: 1730470913.0
+    }
   ];
   const ans = {
     children: [
@@ -102,7 +102,7 @@ test("buildTree1", () => {
         size: 3250125,
         type: 1,
         path: "",
-        updateTime: 1730471493,
+        updateTime: 1730471493
       },
       {
         createTime: 1730533246,
@@ -113,7 +113,7 @@ test("buildTree1", () => {
         size: 4096,
         type: 2,
         path: "",
-        updateTime: 1730471706,
+        updateTime: 1730471706
       },
       {
         createTime: 1730533246,
@@ -124,7 +124,7 @@ test("buildTree1", () => {
         size: 4096,
         type: 2,
         path: "",
-        updateTime: 1730471768,
+        updateTime: 1730471768
       },
       {
         createTime: 1730533246,
@@ -135,8 +135,8 @@ test("buildTree1", () => {
         size: 59,
         type: 1,
         path: "",
-        updateTime: 1730470846,
-      },
+        updateTime: 1730470846
+      }
     ],
     name: "",
     subDir: [
@@ -153,7 +153,7 @@ test("buildTree1", () => {
             size: 3250125,
             type: 1,
             path: "multi_dir_1",
-            updateTime: 1730471706,
+            updateTime: 1730471706
           },
           {
             createTime: 1730533246,
@@ -164,9 +164,9 @@ test("buildTree1", () => {
             size: 59,
             type: 1,
             path: "multi_dir_1",
-            updateTime: 1730470873,
-          },
-        ],
+            updateTime: 1730470873
+          }
+        ]
       },
       {
         name: "multi_dir_2",
@@ -181,7 +181,7 @@ test("buildTree1", () => {
             size: 3231074,
             type: 1,
             path: "multi_dir_2",
-            updateTime: 1730471700,
+            updateTime: 1730471700
           },
           {
             createTime: 1730533246,
@@ -192,11 +192,11 @@ test("buildTree1", () => {
             size: 79,
             type: 1,
             path: "multi_dir_2",
-            updateTime: 1730470913,
-          },
-        ],
-      },
-    ],
+            updateTime: 1730470913
+          }
+        ]
+      }
+    ]
   };
   const tree = buildTree(paths);
   expect(tree).toEqual(ans);
@@ -212,7 +212,7 @@ test("buildTree1", () => {
       size: 3250125,
       type: 1,
       path: "multi_dir_1",
-      updateTime: 1730471706,
+      updateTime: 1730471706
     },
     {
       createTime: 1730533246,
@@ -223,8 +223,8 @@ test("buildTree1", () => {
       size: 59,
       type: 1,
       path: "multi_dir_1",
-      updateTime: 1730470873,
-    },
+      updateTime: 1730470873
+    }
   ]);
 });
 
@@ -338,7 +338,7 @@ test("buildTree3", () => {
       owner: "Larry Miller",
       group: "Kenneth Wilson",
       mode: 81,
-      path: "lnbw",
+      path: "lnbw"
     },
     {
       name: "hwjwrz",
@@ -349,7 +349,7 @@ test("buildTree3", () => {
       owner: "Barbara Clark",
       group: "Jennifer Martin",
       mode: 184,
-      path: "iiplbr",
+      path: "iiplbr"
     },
     {
       name: "uwtw",
@@ -360,7 +360,7 @@ test("buildTree3", () => {
       owner: "Carol Young",
       group: "Michael Johnson",
       mode: 616,
-      path: "iiplbr",
+      path: "iiplbr"
     },
     {
       name: "sfrbsuw",
@@ -371,7 +371,7 @@ test("buildTree3", () => {
       owner: "Elizabeth Harris",
       group: "Gary Brown",
       mode: 494,
-      path: "lnbw",
+      path: "lnbw"
     },
     {
       name: "ltonngwgyc",
@@ -382,7 +382,7 @@ test("buildTree3", () => {
       owner: "William Johnson",
       group: "Deborah Jackson",
       mode: 260,
-      path: "iiplbr",
+      path: "iiplbr"
     },
     {
       name: "jsukrnogl",
@@ -393,7 +393,7 @@ test("buildTree3", () => {
       owner: "Jessica Garcia",
       group: "Melissa Martin",
       mode: 636,
-      path: "lnbw",
+      path: "lnbw"
     },
     {
       name: "kdixupm",
@@ -404,7 +404,7 @@ test("buildTree3", () => {
       owner: "Helen Thompson",
       group: "Kimberly Smith",
       mode: 549,
-      path: ".",
+      path: "."
     },
     {
       name: "nlhqcmle",
@@ -415,7 +415,7 @@ test("buildTree3", () => {
       owner: "Shirley Harris",
       group: "Steven Thompson",
       mode: 268,
-      path: "usr",
+      path: "usr"
     },
     {
       name: "vsomghs",
@@ -426,8 +426,8 @@ test("buildTree3", () => {
       owner: "Frank Perez",
       group: "Frank Rodriguez",
       mode: 634,
-      path: "kdixupm",
-    },
+      path: "kdixupm"
+    }
   ];
   console.log(JSON.stringify(buildTree(paths), null, 2));
 });
@@ -443,7 +443,7 @@ test("buildTree4", () => {
       owner: "Shirley Jackson",
       group: "Linda Davis",
       mode: 602,
-      path: "oihtn",
+      path: "oihtn"
     },
     {
       name: "ajcjojd",
@@ -454,7 +454,7 @@ test("buildTree4", () => {
       owner: "Lisa Walker",
       group: "Shirley Martin",
       mode: 307,
-      path: "",
+      path: ""
     },
     {
       name: "kkbam",
@@ -465,7 +465,7 @@ test("buildTree4", () => {
       owner: "Charles Davis",
       group: "Susan Rodriguez",
       mode: 327,
-      path: "",
+      path: ""
     },
     {
       name: "lprcc",
@@ -476,7 +476,7 @@ test("buildTree4", () => {
       owner: "Karen Garcia",
       group: "Melissa Johnson",
       mode: 21,
-      path: "",
+      path: ""
     },
     {
       name: "ckreqh",
@@ -487,7 +487,7 @@ test("buildTree4", () => {
       owner: "William Perez",
       group: "Mary Davis",
       mode: 184,
-      path: "usr",
+      path: "usr"
     },
     {
       name: "lxdaxoc",
@@ -498,7 +498,7 @@ test("buildTree4", () => {
       owner: "Sharon Garcia",
       group: "Joseph Hall",
       mode: 257,
-      path: "usr",
+      path: "usr"
     },
     {
       name: "tcibr",
@@ -509,7 +509,7 @@ test("buildTree4", () => {
       owner: "Karen Gonzalez",
       group: "Scott Lewis",
       mode: 6,
-      path: "",
+      path: ""
     },
     {
       name: "wvra",
@@ -520,7 +520,7 @@ test("buildTree4", () => {
       owner: "Jessica Lewis",
       group: "Betty Clark",
       mode: 496,
-      path: "ajcjojd",
+      path: "ajcjojd"
     },
     {
       name: "onuyxxr",
@@ -531,8 +531,8 @@ test("buildTree4", () => {
       owner: "Mark Martinez",
       group: "Anna Jones",
       mode: 3,
-      path: "ajcjojd",
-    },
+      path: "ajcjojd"
+    }
   ];
   console.log(JSON.stringify(buildTree(paths), null, 2));
 });

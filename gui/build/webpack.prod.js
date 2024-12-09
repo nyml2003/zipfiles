@@ -1,11 +1,3 @@
-/*
- * @Author: shawnxiao 597035529@qq.com
- * @Date: 2022-11-16 00:03:56
- * @LastEditors: shawnxiao 597035529@qq.com
- * @LastEditTime: 2022-11-17 01:51:30
- * @FilePath: \react\webpack5-ts-react18\build\webpack.prod.js
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
 const path = require("path");
 const webpack = require("webpack");
 const CopyPlugin = require("copy-webpack-plugin");
@@ -16,6 +8,7 @@ const TerserPlugin = require("terser-webpack-plugin"); // 压缩js
 const globAll = require("glob-all");
 const { PurgeCSSPlugin } = require("purgecss-webpack-plugin"); // // 清理无用css
 const CompressionPlugin = require("compression-webpack-plugin");
+const { v4: uuidv4 } = require("uuid");
 
 module.exports = merge(baseConfig, {
   mode: "production", // 生产模式,会开启tree-shaking和压缩代码,以及其他优化
@@ -69,7 +62,6 @@ module.exports = merge(baseConfig, {
         },
       ],
     }),
-    
     // 去除没用到的css插件
     new PurgeCSSPlugin({
       // 检测src下所有tsx文件和public下index.html中使用的类名和id和标签名称
@@ -89,9 +81,14 @@ module.exports = merge(baseConfig, {
       threshold: 10240, // 只有大小大于该值的资源会被处理。默认值是 10k
       minRatio: 0.8, // 压缩率,默认值是 0.8
     }),
-    new webpack.IgnorePlugin({
-      resourceRegExp: /^\.\/mock$/,
-      contextRegExp: /src[\\/]apis$/,
+    new webpack.DefinePlugin({
+      "zipfiles": JSON.stringify({
+        NODE_ENV: "production",
+        BASE_ENV: process.env.BASE_ENV,
+        BUILD_ID: uuidv4(),
+        BUILD_TIME: new Date().toLocaleString(),
+      }),
+      "process.env.NODE_ENV": JSON.stringify("development"),
     }),
   ],
   resolve: {

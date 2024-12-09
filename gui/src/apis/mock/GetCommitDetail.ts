@@ -7,7 +7,7 @@ export function mock(request: GetCommitDetailRequest): GetCommitDetailResponse {
     throw new Error("no such commit");
   }
   return {
-    files,
+    files
   };
   // return {
   //   files: [

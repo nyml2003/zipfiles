@@ -26,22 +26,6 @@ void Socket::initializeSocket() {
     return;
   }
 
-  // 设置 socket 为非阻塞模式
-  int flags = fcntl(server_fd, F_GETFL, 0);
-  if (flags == -1) {
-    log4cpp::Category::getRoot().errorStream() << "Failed to get socket flags";
-    close(server_fd);
-    socketStatus = SocketStatus::DISCONNECTED;
-    throw std::runtime_error("Failed to get socket flags");
-  }
-  if (fcntl(server_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
-    log4cpp::Category::getRoot().errorStream()
-      << "Failed to set socket to non-blocking mode";
-    close(server_fd);
-    socketStatus = SocketStatus::DISCONNECTED;
-    throw std::runtime_error("Failed to set socket to non-blocking mode");
-  }
-
   log4cpp::Category::getRoot().infoStream() << "Socket created";
 
   serv_addr.sin_family = AF_INET;
@@ -106,13 +90,21 @@ void Socket::connectWithRetries() {
         ),
         Code::DOUBLE_WARNING
       ));
-
+      handleNotify(
+        ZNotification(notification::NoneNotification(), Code::SOCKET_CONNECT)
+      );
       std::this_thread::sleep_for(std::chrono::seconds(1));  // 等待1秒后重试
     } else {
       socketStatus = SocketStatus::CONNECT;
       active = true;
       handleNotify(ZNotification(
         notification::NoneNotification(), Code::ENABLE_REMOTE_REQUEST
+      ));
+      handleNotify(ZNotification(
+        notification::DoubleLine(
+          {.title = "连接成功", .description = "与服务器的连接已建立"}
+        ),
+        Code::DOUBLE_SUCCESS
       ));
       return;
     }

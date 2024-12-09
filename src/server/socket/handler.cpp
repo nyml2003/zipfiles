@@ -72,6 +72,9 @@ void doHandle(int client_fd, const Req& req) {
       case Api::RECOVER_COMMIT:
         api::recoverCommit(client_fd, req);
         break;
+      case Api::CREATE_NULL_FOLDER:
+        api::createNullFolder(client_fd, req);
+        break;
       default:
         Socket::send(
           client_fd, Res(

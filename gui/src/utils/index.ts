@@ -16,21 +16,6 @@ interface File {
   type: FileType;
 }
 
-export function selectEnvironment<T>(production: T, development: T) {
-  if (process.env.BASE_ENV === "prod") {
-    return production;
-  }
-  return development;
-}
-
-export function isProduction() {
-  return process.env.BASE_ENV === "prod";
-}
-
-export function isDevelopment() {
-  return process.env.BASE_ENV === "dev";
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function cleanObject(obj: any) {
   if (obj === null || obj === undefined) return obj;
@@ -100,7 +85,7 @@ export function buildTree<
         current.subDir.push({
           name: part,
           subDir: [],
-          children: [],
+          children: []
         });
         current = current.subDir[current.subDir.length - 1];
       } else {
@@ -128,7 +113,7 @@ export function findFile(files: Dir<FileDetail>, targetPath: string): (FileDetai
     if (!result.find(file => file.name === subDir.name)) {
       result.push({
         name: subDir.name,
-        type: FileType.Directory,
+        type: FileType.Directory
       });
     }
   });

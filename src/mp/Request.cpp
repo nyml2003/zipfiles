@@ -166,7 +166,9 @@ Json::Value Req::toJson() const {
       break;
     }
     case Api::CREATE_NULL_FOLDER: {
-      json["payload"]["path"] = std::get<request::CreateNullFolder>(kind).path;
+      const auto& createNullFolder = std::get<request::CreateNullFolder>(kind);
+      json["payload"]["path"] = createNullFolder.path;
+      json["payload"]["newFolderName"] = createNullFolder.newFolderName;
       break;
     }
     default:
@@ -299,8 +301,10 @@ Req Req::fromJson(const Json::Value& json) {
       break;
     }
     case Api::CREATE_NULL_FOLDER: {
-      kind =
-        request::CreateNullFolder{.path = json["payload"]["path"].asString()};
+      kind = request::CreateNullFolder{
+        .path = json["payload"]["path"].asString(),
+        .newFolderName = json["payload"]["newFolderName"].asString()
+      };
       break;
     }
     default:

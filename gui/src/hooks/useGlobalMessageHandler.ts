@@ -12,11 +12,11 @@ import {
   isBackup,
   BackupAndRestoreEnd,
   isRestore,
-  isError,
+  isError
 } from "./useApi/types";
 import { useDispatch } from "react-redux";
 import { addNotification, finishMessage } from "@/stores/NotificationReducer";
-import { disableSocket, enableSocket } from "@/stores/SocketReducer";
+import { connectSocket, disableSocket, enableSocket } from "@/stores/SocketReducer";
 
 export interface CallBack {
   request: RequestWrapper;
@@ -47,7 +47,7 @@ export const useGlobalMessageHandler = () => {
             | "info"
             | "warning"
             | "error",
-          type: "plainText",
+          type: "plainText"
         };
         dispatch(addNotification(singleText));
         return;
@@ -62,7 +62,7 @@ export const useGlobalMessageHandler = () => {
             | "info"
             | "warning"
             | "error",
-          type: "plainText",
+          type: "plainText"
         };
         dispatch(addNotification(doubleText));
         return;
@@ -81,6 +81,10 @@ export const useGlobalMessageHandler = () => {
         dispatch(disableSocket());
         return;
       }
+      if (code === Code.SOCKET_CONNECT) {
+        dispatch(connectSocket());
+        return;
+      }
       const { payload, uuid } = event.data as ResponseWrapper;
       const callbackIndex = callbacks.findIndex(callback => callback.request.uuid === uuid);
       // console.log('event.type: ', event.type);
@@ -97,7 +101,7 @@ export const useGlobalMessageHandler = () => {
           text: (payload as DoubleText).title,
           description: (payload as DoubleText).description,
           state: "error",
-          type: "plainText",
+          type: "plainText"
         };
         dispatch(addNotification(doubleText));
       } else {

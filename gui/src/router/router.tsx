@@ -8,7 +8,6 @@ const CommitPage = lazy(() => import("@/pages/CommitPage"));
 const IndexPage = lazy(() => import("@/pages/IndexPage"));
 const EntryLayout = lazy(() => import("@/layouts/EntryLayout"));
 const NotFound = lazy(() => import("@/components/NotFound"));
-const TestPage = lazy(() => import("@/pages/TestPage"));
 
 const fallbackWrapper = (component: React.ReactNode) => {
   return <Suspense fallback={<Spin size='large' />}>{component}</Suspense>;
@@ -21,34 +20,30 @@ const routes: RouteObject[] = [
     children: [
       {
         path: "",
-        element: <Navigate to='/index' />,
+        element: <Navigate to='/index' />
       },
       {
         path: "index",
-        element: fallbackWrapper(<IndexPage />),
+        element: fallbackWrapper(<IndexPage />)
       },
       {
         path: "commit_history",
-        element: fallbackWrapper(<CommitPage />),
+        element: fallbackWrapper(<CommitPage />)
       },
       {
         path: "new_commit",
-        element: fallbackWrapper(<NewCommit />),
+        element: fallbackWrapper(<NewCommit />)
       },
       {
         path: "setting",
-        element: fallbackWrapper(<ConfigPage />),
-      },
-      {
-        path: "test",
-        element: fallbackWrapper(<TestPage />),
+        element: fallbackWrapper(<ConfigPage />)
       },
       {
         path: "*",
-        element: fallbackWrapper(<NotFound />),
-      },
-    ],
-  },
+        element: fallbackWrapper(<NotFound />)
+      }
+    ]
+  }
 ];
 
 const router = createHashRouter(routes);

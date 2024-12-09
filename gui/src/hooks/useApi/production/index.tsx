@@ -40,7 +40,7 @@ const useApi = () => {
       window.webkit.messageHandlers[api].postMessage({
         api,
         request,
-        uuid,
+        uuid
       });
       return new Promise((resolve, reject) => {
         setGlobalCallback({
@@ -51,7 +51,7 @@ const useApi = () => {
           reject: (message: string) => {
             reject(message);
           },
-          retries: 0,
+          retries: 0
         });
       });
     }
@@ -59,7 +59,7 @@ const useApi = () => {
       window.webkit.messageHandlers.function.postMessage({
         api,
         request: JSON.stringify(message),
-        uuid,
+        uuid
       });
 
       return new Promise((resolve, reject) => {
@@ -71,7 +71,7 @@ const useApi = () => {
           reject: (message: string) => {
             reject(message);
           },
-          retries: 0,
+          retries: 0
         });
       });
     }
@@ -84,7 +84,7 @@ const useApi = () => {
 
   apiInstance = {
     request,
-    call,
+    call
   };
 
   return apiInstance;

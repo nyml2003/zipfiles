@@ -1,60 +1,117 @@
 import { ApiEnum } from "@/apis";
 import { GetFileDetailRequest, GetFileDetailResponse } from "@/apis/GetFileDetail";
 import useApi from "@useApi";
-import {
-  clearSelectedDirectories,
-  clearSelectedFiles,
-  removeSelectedDirectory,
-} from "@/stores/CreateCommitReducer";
+import { clearSelectedDirectories, clearSelectedFiles } from "@/stores/CreateCommitReducer";
 import { RootState } from "@/stores/store";
-import { FileType } from "@/types";
-import { Button, Table } from "antd";
+import { FileType, FileTypeToString } from "@/types";
+import { Table, TableColumnType } from "antd";
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { ReportError } from "@/stores/NotificationReducer";
 import { AcceptableError } from "@/hooks/useApi/types";
+import { convertBytesToHumanReadable, modeToString } from "@/utils";
+import Button from "@/components/Button";
 
-const columns = [
+const columns: TableColumnType<DataType>[] = [
   {
     title: "文件名",
     dataIndex: "name",
     key: "name",
+    render: (_: string, record: DataType) => {
+      return record.name || "/";
+    }
+  },
+  {
+    title: "是否递归备份",
+    render: (_: string, record: DataType) => (
+      <span>
+        {Object.hasOwnProperty.call(record, "path") ? (
+          <div className='text-red-500'>×</div>
+        ) : (
+          <div className='text-green-500'>√</div>
+        )}
+      </span>
+    )
   },
   {
     title: "类型",
     dataIndex: "type",
+    ellipsis: true,
     key: "type",
+    render: (text: FileType, record: DataType) => {
+      if (!Object.hasOwnProperty.call(record, "path")) return <span>-</span>;
+      return FileTypeToString(text);
+    },
+    width: 75
   },
   {
     title: "创建时间",
     dataIndex: "createTime",
     key: "createTime",
+    ellipsis: true,
+    render: (text: number, record: DataType) => {
+      if (!Object.hasOwnProperty.call(record, "path")) return <span>-</span>;
+      return text ? <span>{new Date(text * 1000).toLocaleString()}</span> : <span>加载中...</span>;
+    },
+    width: 150
   },
   {
     title: "更新时间",
     dataIndex: "updateTime",
     key: "updateTime",
+    ellipsis: true,
+    render: (text: number, record: DataType) => {
+      if (!Object.hasOwnProperty.call(record, "path")) return <span>-</span>;
+      return text ? <span>{new Date(text * 1000).toLocaleString()}</span> : <span>加载中...</span>;
+    },
+    width: 150
   },
   {
     title: "大小",
     dataIndex: "size",
     key: "size",
+    ellipsis: true,
+    render: (text: number, record: DataType) => {
+      if (!Object.hasOwnProperty.call(record, "path")) return <span>-</span>;
+      if (text === undefined) return <span>加载中...</span>;
+      if (text === null) return <span>未知</span>;
+      if (text === 0) return <span>-</span>;
+      return <span>{convertBytesToHumanReadable(text)}</span>;
+    },
+    width: 100
   },
   {
     title: "所有者",
     dataIndex: "owner",
     key: "owner",
+    ellipsis: true,
+    render: (text: string, record: DataType) => {
+      if (!Object.hasOwnProperty.call(record, "path")) return <span>-</span>;
+      return text ? <span>{text}</span> : <span>加载中...</span>;
+    }
   },
   {
     title: "组",
     dataIndex: "group",
     key: "group",
+    ellipsis: true,
+    render: (text: string, record: DataType) => {
+      if (!Object.hasOwnProperty.call(record, "path")) return <span>-</span>;
+      return text ? <span>{text}</span> : <span>加载中...</span>;
+    }
   },
   {
     title: "权限",
     dataIndex: "mode",
     key: "mode",
-  },
+    ellipsis: true,
+    render: (text: number, record: DataType) => {
+      if (!Object.hasOwnProperty.call(record, "path")) return <span>-</span>;
+      return text ? <span>{modeToString(text)}</span> : <span>加载中...</span>;
+    },
+    width: 75,
+    align: "center"
+  }
 ];
 
 interface FileDetail {
@@ -69,6 +126,8 @@ interface FileDetail {
   path: string;
 }
 
+type DataType = FileDetail | { name: string };
+
 interface FileListProps {
   addExplorer: () => void;
 }
@@ -76,25 +135,25 @@ interface FileListProps {
 const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
   const files = useSelector((state: RootState) => state.createCommit.selectedFile.files);
   const directories = useSelector(
-    (state: RootState) => state.createCommit.selectedFile.directories,
+    (state: RootState) => state.createCommit.selectedFile.directories
   );
-  const [fileData, setFileData] = React.useState<FileDetail[]>([]);
+  const [fileData, setFileData] = React.useState<DataType[]>([]);
   const dispatch = useDispatch();
 
   const api = useApi();
 
   useEffect(() => {
     if (files.length === 0) {
-      setFileData([]);
+      setFileData([...directories]);
       return;
     }
     Promise.all(
       files.map(async (file: { name: string; path: string }) => {
         return await fetchFileDetail(file.path, file.name);
-      }),
+      })
     )
       .then(res => {
-        setFileData(res);
+        setFileData([...directories, ...res]);
       })
       .catch(e => {
         if (!(e instanceof AcceptableError)) {
@@ -104,106 +163,58 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
           ReportError({
             state: "error",
             text: "获取文件详情失败",
-            description: (e as Error).message,
-          }),
+            description: (e as Error).message
+          })
         );
       });
-  }, [files]);
+  }, [files, directories]);
 
   const handleAdd = () => {
     addExplorer();
   };
-
-  const handleDelete = (record: string) => {
-    dispatch(removeSelectedDirectory(record));
-  };
-
   const fetchFileDetail = async (path: string, name: string) => {
     return await api.request<GetFileDetailRequest, GetFileDetailResponse>(ApiEnum.GetFileDetail, {
       path,
-      name,
+      name
     });
   };
 
   const handleFileClear = () => {
     dispatch(clearSelectedFiles());
-  };
-
-  const handleDirectoryClear = () => {
     dispatch(clearSelectedDirectories());
   };
 
-  const directoryColumns = [
-    {
-      title: "目录名",
-      dataIndex: "name",
-      key: "name",
-      render: (_: string, record: string) => <span>{record ? record : "/"}</span>,
-    },
-    {
-      title: "操作",
-      key: "action",
-      render: (_: string, record: string) => (
-        <Button type='link' onClick={() => handleDelete(record)}>
-          删除
-        </Button>
-      ),
-    },
-  ];
-
   return (
     <div className='grow-item'>
-      <div className='m-4 flex flex-row justify-start items-center'>
-        <div className='space-x-2'>
-          <Button type='primary' onClick={handleAdd}>
-            添加
-          </Button>
+      <div className='flex flex-col justify-between items-center border-gray-200 p-2'>
+        <div className='flex justify-between w-full'>
+          <div className='text-xl font-bold px-2 py-1'>文件列表</div>
+          <div className='space-x-2'>
+            <Button variant='confirm' onClick={handleAdd}>
+              添加
+            </Button>
+            <Button variant='primary' onClick={handleFileClear} disabled={fileData.length === 0}>
+              清空
+            </Button>
+          </div>
         </div>
-      </div>
-      <div className='rounded-md p-2 m-2 bg-white shadow-md'>
-        <div className='flex flex-row justify-between items-center border-b border-gray-200 pb-2'>
-          <h2 className='text-xl font-bold px-2 py-1 m-0'>文件列表</h2>
-          <Button
-            type='primary'
-            onClick={handleFileClear}
-            className='m-2'
-            disabled={fileData.length === 0}>
-            清空
-          </Button>
-        </div>
-        <Table<FileDetail>
-          columns={columns}
-          dataSource={fileData}
-          size='small'
-          rowKey={"name"}
-          className='p-2'
-        />
+        {fileData.length !== 0 && (
+          <Table<DataType>
+            columns={columns}
+            dataSource={fileData}
+            size='small'
+            rowKey={"name"}
+            className='grow-item w-full mt-2'
+            scroll={{ x: "max-content" }}
+          />
+        )}
       </div>
       <div className='m-4 flex flex-col text-gray-600'>
-        <span>仅备份目录文件信息时，不会备份目录下的文件</span>
-        <span>若目录文件出现在文件列表中，说明是仅备份目录文件信息</span>
-      </div>
-      <div className='rounded-md p-2 m-2 bg-white shadow-md'>
-        <div className='flex flex-row justify-between items-center border-b border-gray-200 pb-2'>
-          <h2 className='text-xl font-bold px-2 py-1 m-0'>目录列表</h2>
-          <Button
-            type='primary'
-            onClick={handleDirectoryClear}
-            className='m-2'
-            disabled={directories.length === 0}>
-            清空
-          </Button>
-        </div>
-        <Table<string>
-          columns={directoryColumns}
-          dataSource={directories}
-          size='small'
-          rowKey={record => record}
-          className='p-2'
-        />
-      </div>
-      <div className='m-4 flex flex-col text-gray-600'>
-        <span>出现在目录列表中的目录，会先查询目录下的所有文件</span>
+        <span>提示：</span>
+        <span>1. 文件列表中的文件将会被添加到备份中</span>
+        <span>
+          2. 递归备份列显示为<span className='text-green-500'>√</span>的目录将会被递归备份
+        </span>
       </div>
     </div>
   );

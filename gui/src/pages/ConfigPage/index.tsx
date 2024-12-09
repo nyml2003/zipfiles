@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Button, Form, Input, InputNumber, Space } from "antd";
+import React, { useCallback, useContext, useEffect, useState } from "react";
+import { Button, Form, Input, Space, Tooltip } from "antd";
 import useApi from "@useApi";
 import { ReadConfigRequest, ReadConfigResponse } from "@/apis/ReadConfig";
 import { ApiEnum } from "@/apis";
@@ -7,22 +7,26 @@ import { UpdateConfigRequest, UpdateConfigResponse } from "@/apis/UpdateConfig";
 import { ReportError } from "@/stores/NotificationReducer";
 import { useDispatch } from "react-redux";
 import { AcceptableError } from "@/hooks/useApi/types";
+import { UndoOutlined } from "@ant-design/icons";
+import PathChecker from "@/components/PathChecker/PathChecker";
 type Config = Partial<{
-  ip: string; // 服务器ip
   defaultBackupPath: string; // 默认备份路径
-  port: number; // 端口
-  version: string; // 版本
 }>;
+import { Context, createProvider as createRestoreProvider } from "@/components/PathChecker/store";
 
-const ConfigPage: React.FC = () => {
+const ConfigPageContent: React.FC = () => {
   const [form] = Form.useForm();
   const [initialConfig, setInitialConfig] = useState<Config | null>(null);
   const api = useApi();
   const dispatch = useDispatch();
+  const { state, actions } = useContext(Context);
   const fetchData = async () => {
     api
       .request<ReadConfigRequest, ReadConfigResponse>(ApiEnum.ReadConfig, {})
-      .then(setInitialConfig)
+      .then(res => {
+        setInitialConfig(res);
+        actions.updatePath(res.defaultBackupPath);
+      })
       .catch(e => {
         if (!(e instanceof AcceptableError)) {
           return;
@@ -31,8 +35,8 @@ const ConfigPage: React.FC = () => {
           ReportError({
             state: "error",
             text: "获取配置失败",
-            description: (e as Error).message,
-          }),
+            description: (e as Error).message
+          })
         );
       });
   };
@@ -46,9 +50,6 @@ const ConfigPage: React.FC = () => {
 
   const onFinish = (values: Config) => {
     const request: UpdateConfigRequest = {};
-    if (values.ip && values.ip !== initialConfig?.ip) {
-      request.ip = values.ip;
-    }
     if (values.defaultBackupPath && values.defaultBackupPath !== initialConfig?.defaultBackupPath) {
       request.defaultBackupPath = values.defaultBackupPath;
     }
@@ -68,53 +69,90 @@ const ConfigPage: React.FC = () => {
           ReportError({
             state: "error",
             text: "更新配置失败",
-            description: (e as Error).message,
-          }),
+            description: (e as Error).message
+          })
         );
       });
   };
 
+  const selectedPath = useCallback(() => {
+    if (state.file !== "") {
+      return state.file;
+    }
+    if (state.path !== "") {
+      return state.path;
+    }
+    return "";
+  }, [state.path, state.file]);
+
+  useEffect(() => {
+    form.setFieldsValue({ defaultBackupPath: selectedPath() });
+  }, [state.path, state.file]);
+
   return (
-    <div className='fade-in-down p-4 max-w-3xl'>
+    <div
+      className='fade-in-down p-4 max-w-4xl bg-white split-container-col grow-item'
+      style={{
+        height: "calc(100vh - 56px)",
+        width: "calc(100vw - 100px)"
+      }}>
       {initialConfig && (
         <Form
-          labelCol={{ span: 4 }}
-          wrapperCol={{ span: 14 }}
+          labelCol={{ span: 6 }}
+          wrapperCol={{ span: 16 }}
           layout='horizontal'
           variant='outlined'
           scrollToFirstError
           form={form}
           initialValues={initialConfig}
           onFinish={onFinish}>
+          {
+            // @ts-ignore
+            zipfiles.BASE_ENV === "prod" ? (
+              <Form.Item label='UI-bundle版本'>
+                <Input
+                  disabled
+                  value={
+                    // @ts-ignore
+                    zipfiles.BUILD_ID
+                  }
+                />
+              </Form.Item>
+            ) : null
+          }
+          {
+            // @ts-ignore
+            zipfiles.BASE_ENV === "prod" ? (
+              <Form.Item label='UI-打包时间'>
+                <Input
+                  disabled
+                  value={
+                    // @ts-ignore
+                    zipfiles.BUILD_TIME
+                  }
+                />
+              </Form.Item>
+            ) : null
+          }
           <Form.Item
-            label='服务器ip'
-            name='ip'
-            rules={[{ required: true, message: "请输入服务器ip" }]}>
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            label='默认备份路径'
+            label='备份路径'
             name='defaultBackupPath'
-            rules={[{ required: true, message: "请输入默认备份路径" }]}>
-            <Input />
+            rules={[{ required: true, message: "请输入备份路径" }]}>
+            <Input disabled value={selectedPath()} />
           </Form.Item>
-
-          <Form.Item label='端口' name='port'>
-            <InputNumber disabled />
+          <Form.Item wrapperCol={{ offset: 6, span: 16 }}>
+            <PathChecker />
           </Form.Item>
-
-          <Form.Item label='版本' name='version'>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item wrapperCol={{ offset: 4, span: 14 }}>
+          <Form.Item wrapperCol={{ offset: 6, span: 16 }}>
             <Space>
               <Button type='primary' htmlType='submit'>
-                提交
+                更新
               </Button>
-              <Button htmlType='button' onClick={onReset}>
-                重置
-              </Button>
+              <Tooltip title='重置表单'>
+                <Button htmlType='button' onClick={onReset} icon={<UndoOutlined />}>
+                  重置
+                </Button>
+              </Tooltip>
             </Space>
           </Form.Item>
         </Form>
@@ -122,5 +160,7 @@ const ConfigPage: React.FC = () => {
     </div>
   );
 };
-
+const ConfigPage = () => {
+  return createRestoreProvider(<ConfigPageContent />);
+};
 export default ConfigPage;

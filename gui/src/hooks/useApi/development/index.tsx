@@ -23,10 +23,12 @@ const useApi: useApiType = () => {
         //   return;
         // }
 
-        setTimeout(() => {
+        try {
           const response = mockApi[apiEnum](request);
           resolve(response);
-        }, 1000);
+        } catch (e) {
+          reject(e);
+        }
         setTimeout(() => {
           if (apiEnum === ApiEnum.PostCommit) {
             if (Math.random() > 0.5) {
@@ -34,20 +36,20 @@ const useApi: useApiType = () => {
                 finishMessage({
                   payload: {
                     messageId: (request as PostCommitRequest).uuid,
-                    description: "提交成功",
+                    description: "备份成功"
                   },
-                  code: Code.BACKUP_SUCCESS,
-                }),
+                  code: Code.BACKUP_SUCCESS
+                })
               );
             } else {
               dispatch(
                 finishMessage({
                   payload: {
                     messageId: (request as PostCommitRequest).uuid,
-                    description: "提交失败",
+                    description: "备份失败"
                   },
-                  code: Code.BACKUP_FAILED,
-                }),
+                  code: Code.BACKUP_FAILED
+                })
               );
             }
           }
@@ -57,20 +59,20 @@ const useApi: useApiType = () => {
                 finishMessage({
                   payload: {
                     messageId: (request as RestoreRequest).messageId,
-                    description: "还原成功",
+                    description: "还原成功"
                   },
-                  code: Code.RESTORE_SUCCESS,
-                }),
+                  code: Code.RESTORE_SUCCESS
+                })
               );
             } else {
               dispatch(
                 finishMessage({
                   payload: {
                     messageId: (request as RestoreRequest).messageId,
-                    description: "还原失败",
+                    description: "还原失败"
                   },
-                  code: Code.RESTORE_FAILED,
-                }),
+                  code: Code.RESTORE_FAILED
+                })
               );
             }
           }
@@ -79,7 +81,7 @@ const useApi: useApiType = () => {
     },
     call: () => {
       return;
-    },
+    }
   };
   return api;
 };

@@ -11,7 +11,7 @@ import {
   addSelectedDirectory,
   addSelectedFile,
   removeSelectedFile,
-  removeSelectedDirectory,
+  removeSelectedDirectory
 } from "@/stores/CreateCommitReducer";
 import { ReportError } from "@/stores/NotificationReducer";
 import { convertBytesToHumanReadable, modeToString } from "@/utils";
@@ -36,7 +36,7 @@ const TableView: React.FC = () => {
   const currentFile = useSelector((state: RootState) => state.createCommit.currentFile);
   const selectedFiles = useSelector((state: RootState) => state.createCommit.selectedFile.files);
   const selectedDirectories = useSelector(
-    (state: RootState) => state.createCommit.selectedFile.directories,
+    (state: RootState) => state.createCommit.selectedFile.directories
   );
   const fresh = useSelector((state: RootState) => state.createCommit.fresh);
   const dispatch = useDispatch();
@@ -48,8 +48,9 @@ const TableView: React.FC = () => {
         selectedFiles.findIndex(file => file.path === record.path && file.name === record.name) !==
         -1;
       let disabled = false;
+      const filePath = record.path + "/" + record.name;
       for (const directory of selectedDirectories) {
-        if (record.path.startsWith(directory)) {
+        if (filePath.startsWith(directory.name)) {
           disabled = true;
           checked = true;
           break;
@@ -57,7 +58,7 @@ const TableView: React.FC = () => {
       }
       const file = {
         path: record.path,
-        name: record.name,
+        name: record.name
       };
 
       const handleClick = () => {
@@ -77,15 +78,15 @@ const TableView: React.FC = () => {
           }}></Checkbox>
       );
     },
-    [selectedFiles, selectedDirectories],
+    [selectedFiles, selectedDirectories]
   );
   const renderDirectoryCheckbox = useCallback(() => {
     let checked = false;
     let disabled = false;
     for (const directory of selectedDirectories) {
-      if (currentPath.startsWith(directory)) {
+      if (currentPath.startsWith(directory.name)) {
         checked = true;
-        if (currentPath !== directory) disabled = true;
+        if (currentPath !== directory.name) disabled = true;
         break;
       }
     }
@@ -112,7 +113,7 @@ const TableView: React.FC = () => {
       },
       align: "center",
       ellipsis: true,
-      width: 50,
+      width: 50
     },
     {
       title: "文件名",
@@ -122,7 +123,7 @@ const TableView: React.FC = () => {
         return <a>{text}</a>;
       },
       ellipsis: true,
-      width: 100,
+      width: 100
     },
     {
       title: "类型",
@@ -132,7 +133,7 @@ const TableView: React.FC = () => {
       render: text => {
         return FileTypeToString(text);
       },
-      width: 75,
+      width: 75
     },
     {
       title: "创建时间",
@@ -146,7 +147,7 @@ const TableView: React.FC = () => {
           <span>加载中...</span>
         );
       },
-      width: 150,
+      width: 150
     },
     {
       title: "更新时间",
@@ -160,7 +161,7 @@ const TableView: React.FC = () => {
           <span>加载中...</span>
         );
       },
-      width: 150,
+      width: 150
     },
     {
       title: "大小",
@@ -173,7 +174,7 @@ const TableView: React.FC = () => {
         if (text === 0) return <span>-</span>;
         return <span>{convertBytesToHumanReadable(text)}</span>;
       },
-      width: 100,
+      width: 100
     },
     {
       title: "所有者",
@@ -182,7 +183,7 @@ const TableView: React.FC = () => {
       ellipsis: true,
       render: text => {
         return text ? <span>{text}</span> : <span>加载中...</span>;
-      },
+      }
     },
     {
       title: "组",
@@ -191,7 +192,7 @@ const TableView: React.FC = () => {
       ellipsis: true,
       render: text => {
         return text ? <span>{text}</span> : <span>加载中...</span>;
-      },
+      }
     },
     {
       title: "权限",
@@ -202,15 +203,15 @@ const TableView: React.FC = () => {
         return text ? <span>{modeToString(text)}</span> : <span>加载中...</span>;
       },
       width: 75,
-      align: "center",
-    },
+      align: "center"
+    }
   ];
 
   const fetchData = (path: string) => {
     api
       .request<GetFileDetailListRequest, GetFileDetailListResponse>(ApiEnum.GetFileDetailList, {
         path,
-        filter,
+        filter
       })
       .then((res: GetFileDetailListResponse) => {
         setData(res.files);
@@ -220,7 +221,7 @@ const TableView: React.FC = () => {
           return;
         }
         dispatch(
-          ReportError({ state: "error", text: "获取文件详情失败", description: err.message }),
+          ReportError({ state: "error", text: "获取文件详情失败", description: err.message })
         );
       });
   };
@@ -235,7 +236,7 @@ const TableView: React.FC = () => {
     // 确保表格已经被渲染
     if (tableRef && tableRef.current) {
       const rows = (tableRef.current as HTMLDivElement).ownerDocument.querySelectorAll(
-        ".ant-table-row",
+        ".ant-table-row"
       );
       rows.forEach(row => {
         const prefix = currentPath === "/" ? "" : currentPath;
@@ -262,11 +263,13 @@ const TableView: React.FC = () => {
       className='fade-in-down grow-item'
       size='small'
       rowKey={"name"}
+      scroll={{ x: "max-content" }}
       rowClassName={record => {
         const prefix = currentPath === "/" ? "" : currentPath;
         const absoluteRowPath = `${prefix}/${record.name}`;
         return currentFile.startsWith(absoluteRowPath) ? "bg-gray-200" : "";
       }}
+      sticky
     />
   );
 };

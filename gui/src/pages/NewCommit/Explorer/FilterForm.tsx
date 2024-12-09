@@ -24,7 +24,7 @@ const fileTypeOptions = [
   { label: "块设备", value: FileType.Block },
   { label: "字符设备", value: FileType.Character },
   { label: "FIFO", value: FileType.Fifo },
-  { label: "Socket", value: FileType.Socket },
+  { label: "Socket", value: FileType.Socket }
 ];
 
 const FilterForm: React.FC = () => {
@@ -47,7 +47,7 @@ const FilterForm: React.FC = () => {
       ? dayjs(filter.maxUpdateTime * 1000)
       : undefined,
     owner: filter.owner,
-    group: filter.group,
+    group: filter.group
   };
   const dispatch = useDispatch();
 
@@ -108,15 +108,15 @@ const FilterForm: React.FC = () => {
                       return Promise.reject("最小值不能大于最大值");
                     }
                     return Promise.resolve();
-                  },
-                },
+                  }
+                }
               ]}>
               <InputNumber style={{ width: "40%" }} placeholder='最小值' min={0} />
             </Form.Item>
             <Input
               style={{
                 width: "20%",
-                textAlign: "center",
+                textAlign: "center"
               }}
               placeholder='~'
               disabled
@@ -138,8 +138,8 @@ const FilterForm: React.FC = () => {
                       return Promise.reject("最大值不能小于最小值");
                     }
                     return Promise.resolve();
-                  },
-                },
+                  }
+                }
               ]}>
               <InputNumber style={{ width: "40%" }} placeholder='最大值' min={0} />
             </Form.Item>
@@ -164,8 +164,8 @@ const FilterForm: React.FC = () => {
                       return Promise.reject("时间区间不合法");
                     }
                     return Promise.resolve();
-                  },
-                },
+                  }
+                }
               ]}>
               <DatePicker
                 showTime
@@ -176,7 +176,7 @@ const FilterForm: React.FC = () => {
             <Input
               style={{
                 width: "20%",
-                textAlign: "center",
+                textAlign: "center"
               }}
               placeholder='~'
               disabled
@@ -198,8 +198,8 @@ const FilterForm: React.FC = () => {
                       return Promise.reject("时间区间不合法");
                     }
                     return Promise.resolve();
-                  },
-                },
+                  }
+                }
               ]}>
               <DatePicker
                 showTime
@@ -229,8 +229,8 @@ const FilterForm: React.FC = () => {
                       return Promise.reject("时间区间不合法");
                     }
                     return Promise.resolve();
-                  },
-                },
+                  }
+                }
               ]}>
               <DatePicker
                 showTime
@@ -241,7 +241,7 @@ const FilterForm: React.FC = () => {
             <Input
               style={{
                 width: "20%",
-                textAlign: "center",
+                textAlign: "center"
               }}
               placeholder='~'
               disabled
@@ -263,8 +263,8 @@ const FilterForm: React.FC = () => {
                       return Promise.reject("时间区间不合法");
                     }
                     return Promise.resolve();
-                  },
-                },
+                  }
+                }
               ]}>
               <DatePicker
                 showTime

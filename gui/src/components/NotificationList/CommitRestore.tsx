@@ -8,7 +8,7 @@ import { RestoreRequest, RestoreResponse } from "@/apis/Restore";
 import { Step, StepProps } from "../Step/Step";
 const RestoreInfo = ({
   commitId,
-  path,
+  path
 }: {
   commitId: string;
   path: string;
@@ -40,12 +40,12 @@ const CommitRestore = ({ password, id, result, commitId, path }: CommitRestorePr
   const [confirmRequest, setConfirmRequest] = useState<StepProps>({
     title: "确认请求",
     status: "running",
-    description: RestoreInfo({ commitId, path}),
+    description: RestoreInfo({ commitId, path})
   });
 
   const [restoreRequest, setRestoreRequest] = useState<StepProps>({
     title: "还原",
-    status: "pending",
+    status: "pending"
   });
 
   const restore = async () => {
@@ -58,7 +58,7 @@ const CommitRestore = ({ password, id, result, commitId, path }: CommitRestorePr
         commitId,
         path,
         messageId: id,
-        ...key,
+        ...key
       });
     } catch (e) {
       setRestoreRequest(prev => {

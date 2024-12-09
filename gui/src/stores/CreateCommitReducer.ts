@@ -23,7 +23,9 @@ export interface CreateCommitState {
   currentPath: string;
   selectedFile: {
     files: File[];
-    directories: string[];
+    directories: {
+      name: string;
+    }[];
   };
   backupFiles: string[];
   filter: Partial<Filter>;
@@ -36,12 +38,12 @@ const initialState: CreateCommitState = {
   currentPath: "",
   selectedFile: {
     files: [],
-    directories: [],
+    directories: []
   },
   filter: {},
   isFiltering: false,
   backupFiles: [],
-  fresh: false,
+  fresh: false
 };
 
 const CreateCommitReducer = createSlice({
@@ -59,7 +61,7 @@ const CreateCommitReducer = createSlice({
       state.currentPath = "";
       state.selectedFile = {
         files: [],
-        directories: [],
+        directories: []
       };
       state.filter = {};
       state.fresh = !state.fresh;
@@ -73,7 +75,7 @@ const CreateCommitReducer = createSlice({
     addSelectedFile(state, action: PayloadAction<File>) {
       if (
         !state.selectedFile.files.find(
-          file => file.path === action.payload.path && file.name === action.payload.name,
+          file => file.path === action.payload.path && file.name === action.payload.name
         )
       ) {
         state.selectedFile.files.push(action.payload);
@@ -81,14 +83,14 @@ const CreateCommitReducer = createSlice({
     },
     removeSelectedFile(state, action: PayloadAction<File>) {
       state.selectedFile.files = state.selectedFile.files.filter(
-        file => file.path !== action.payload.path || file.name !== action.payload.name,
+        file => file.path !== action.payload.path || file.name !== action.payload.name
       );
     },
     addSelectedDirectory(state, action: PayloadAction<string>) {
       const newDirectories = [];
       const newFiles = [];
       for (const directory of state.selectedFile.directories) {
-        if (!directory.startsWith(action.payload)) {
+        if (!directory.name.startsWith(action.payload)) {
           newDirectories.push(directory);
         }
       }
@@ -97,13 +99,13 @@ const CreateCommitReducer = createSlice({
           newFiles.push(file);
         }
       }
-      newDirectories.push(action.payload);
+      newDirectories.push({ name: action.payload });
       state.selectedFile.files = newFiles;
       state.selectedFile.directories = newDirectories;
     },
     removeSelectedDirectory(state, action: PayloadAction<string>) {
       state.selectedFile.directories = state.selectedFile.directories.filter(
-        directory => directory !== action.payload,
+        directory => directory.name !== action.payload
       );
     },
     clearSelectedFiles(state) {
@@ -117,8 +119,8 @@ const CreateCommitReducer = createSlice({
     },
     finishRefresh(state) {
       state.fresh = true;
-    },
-  },
+    }
+  }
 });
 
 export const {
@@ -134,7 +136,7 @@ export const {
   clearSelectedFiles,
   clearSelectedDirectories,
   updateBackupFiles,
-  finishRefresh,
+  finishRefresh
 } = CreateCommitReducer.actions;
 
 export default CreateCommitReducer.reducer;

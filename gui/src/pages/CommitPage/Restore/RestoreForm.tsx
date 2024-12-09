@@ -1,7 +1,7 @@
 import { Button, Form, Input, Space } from "antd";
 import React, { useCallback, useContext, useEffect } from "react";
-import { Context } from "./store";
-import PathChecker from "./PathChecker";
+import { Context } from "../../../components/PathChecker/store";
+import PathChecker from "../../../components/PathChecker/PathChecker";
 import { useDispatch } from "react-redux";
 import { addNotification } from "@/stores/NotificationReducer";
 import { CommitRestore } from "@/components/NotificationList/types";
@@ -12,14 +12,19 @@ type FormDataType = {
   password?: string;
 };
 
-const RestoreForm = () => {
+interface RestoreFormProps {
+  commitId: string;
+  isEncrypt: boolean;
+}
+
+const RestoreForm = ({ commitId, isEncrypt }: RestoreFormProps) => {
   const [form] = Form.useForm();
   const { state } = useContext(Context);
   const dispatch = useDispatch();
   const initialValues: FormDataType = {
-    commitId: state.commitId,
+    commitId,
     path: "",
-    password: "",
+    password: ""
   };
 
   const onFinish = (values: FormDataType) => {
@@ -27,8 +32,8 @@ const RestoreForm = () => {
       addNotification({
         type: "commitRestore",
         progress: 0,
-        ...values,
-      } as Omit<CommitRestore, "id">),
+        ...values
+      } as Omit<CommitRestore, "id">)
     );
   };
 
@@ -61,19 +66,19 @@ const RestoreForm = () => {
       initialValues={initialValues}
       scrollToFirstError
       onFinish={onFinish}>
-      <Form.Item label='提交ID' name='commitId' labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
-        <Input value={state.commitId} disabled autoComplete='off' />
+      <Form.Item label='备份ID' name='commitId' labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+        <Input value={commitId} disabled autoComplete='off' />
       </Form.Item>
-      {state.isEncrypt && (
+      {isEncrypt && (
         <Form.Item label='密码' name='password' rules={[{ required: true, message: "请输入密码" }]}>
           <Input.Password placeholder='请输入密码' autoComplete='current-password' />
         </Form.Item>
       )}
       <Form.Item name='path' label='路径' rules={[{ required: true, message: "请选择路径!" }]}>
-        <div>
-          <Input value={selectedPath()} disabled />
-          <PathChecker />
-        </div>
+        <Input value={selectedPath()} disabled />
+      </Form.Item>
+      <Form.Item wrapperCol={{ offset: 4, span: 14 }}>
+        <PathChecker />
       </Form.Item>
       <Form.Item wrapperCol={{ offset: 4, span: 14 }}>
         <Space>

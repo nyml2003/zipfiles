@@ -27,6 +27,8 @@ void physicalDeleteCommit(int client_fd, const Req& req);
 void getCommitRecycleBin(int client_fd, const Req& req);
 
 void recoverCommit(int client_fd, const Req& req);
+
+void createNullFolder(int client_fd, const Req& req);
 }  // namespace zipfiles::server::api
 
 #endif  // !ZIPFILES_MP_API_H

@@ -1,6 +1,6 @@
 import {
   PhysicalDeleteCommitRequest,
-  PhysicalDeleteCommitResponse,
+  PhysicalDeleteCommitResponse
 } from "@/apis/PhysicalDeleteCommit";
 import { cachedCommitList } from "./init";
 export function mock(request: PhysicalDeleteCommitRequest): PhysicalDeleteCommitResponse {

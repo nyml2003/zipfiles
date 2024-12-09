@@ -44,10 +44,3 @@ export type Filter = Partial<{
 export interface MockFileDetail extends FileDetail {
   children: MockFileDetail[] | null;
 }
-
-type Config = {
-  ip: string; // 服务器ip
-  defaultBackupPath: string; // 默认备份路径
-  port: number; // 端口
-  version: string; // 版本
-};

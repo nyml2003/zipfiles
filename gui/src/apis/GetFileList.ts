@@ -1,4 +1,4 @@
-import { FileType } from '@/types';
+import { FileType } from "@/types";
 interface File {
   name: string;
   type: FileType;

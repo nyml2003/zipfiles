@@ -5,7 +5,7 @@ import {
   NotificationUnion,
   PlainText as TypePlainText,
   CommitPush as TypeCommitPush,
-  CommitRestore as TypeCommitRestore,
+  CommitRestore as TypeCommitRestore
 } from "@/components/NotificationList/types";
 import React from "react";
 import NoMoreData from "../NoMoreData";
@@ -40,28 +40,32 @@ const NotificationList = () => {
   };
 
   return (
-    <div className='w-25vw fade-in-left flex-col align-start overflow-auto hidden fixed top-0 right-0 h-full bg-gray-50 z-50 shadow-md'>
-      <div className='text-lg font-bold p-4'>通知中心</div>
-      <Button className='absolute top-4 right-4 cursor-pointer' onClick={() => dispatch(toggleNotification())}>
-        <MenuUnfoldOutlined />
-      </Button>
-      {notifications.length > 0 ? (
-        notifications.map(notification => (
-          <div
-            key={notification.id}
-            className='m-2 px-6 py-5 bg-white shadow-md rounded-lg relative'>
-            {renderItem(notification)}
-            <Button
-              variant='primary'
-              onClick={() => closeNotification(notification.id)}
-              className='absolute top-2 right-2'>
-              <CloseOutlined />
-            </Button>
-          </div>
-        ))
-      ) : (
-        <NoMoreData />
-      )}
+    <div className='fade-in-left flex-col align-start hidden fixed top-0 right-0 h-full bg-blue-50 z-20 shadow-md sm:w-1/2 lg:w-1/3'>
+      <div className='sticky top-0 bg-white w-full flex justify-between items-center'>
+        <div className='text-lg p-4'>通知中心</div>
+        <Button className='cursor-pointer' onClick={() => dispatch(toggleNotification())}>
+          <MenuUnfoldOutlined />
+        </Button>
+      </div>
+      <div className='overflow-auto ' style={{ height: "calc(100vh - 120px)" }}>
+        {notifications.length > 0 ? (
+          notifications.map(notification => (
+            <div
+              key={notification.id}
+              className='m-2 px-6 py-5 bg-white shadow-md rounded-lg relative'>
+              {renderItem(notification)}
+              <Button
+                variant='primary'
+                onClick={() => closeNotification(notification.id)}
+                className='absolute top-2 right-2'>
+                <CloseOutlined />
+              </Button>
+            </div>
+          ))
+        ) : (
+          <NoMoreData />
+        )}
+      </div>
     </div>
   );
 };

@@ -174,11 +174,7 @@ module.exports = {
       inject: true, // 自动注入静态资源
       filename: "index.html",
     }),
-    new webpack.DefinePlugin({
-      "process.env": JSON.stringify({
-        BASE_ENV: process.env.BASE_ENV,
-      }),
-    }),
+    
     // 进度条
     new WebpackBar({
       name: "zipfiles",

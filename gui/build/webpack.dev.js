@@ -1,15 +1,6 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-/*
- * @Author: shawnxiao 597035529@qq.com
- * @Date: 2022-11-15 23:50:30
- * @LastEditors: shawnxiao 597035529@qq.com
- * @LastEditTime: 2022-11-26 20:15:55
- * @FilePath: \react\webpack5-ts-react18\build\webpack.dev.js
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
-// webpack.dev.js
 const path = require("path");
 const { merge } = require("webpack-merge");
+const webpack = require("webpack");
 const baseConfig = require("./webpack.base.js");
 // 在不需要刷新浏览器的前提下模块热更新,并且能够保留react组件的状态。
 const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
@@ -20,6 +11,13 @@ module.exports = merge(baseConfig, {
   devtool: "eval-cheap-module-source-map", // 源码调试模式,后面会讲
   plugins: [
     new ReactRefreshWebpackPlugin(), // 添加热更新插件
+    new webpack.DefinePlugin({
+      "zipfiles": JSON.stringify({
+        BASE_ENV: process.env.BASE_ENV,
+        NODE_ENV: "development",
+      }),
+      "process.env.NODE_ENV": JSON.stringify("development"),
+    }),
   ],
   devServer: {
     open: true, // 自动打开浏览器

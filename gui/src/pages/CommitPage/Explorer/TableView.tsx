@@ -3,7 +3,7 @@ import { Table } from "antd";
 import type { TableColumnsType } from "antd";
 import { FileType, FileTypeToString } from "@/types";
 import { Context } from "./store";
-import { findFile } from "@/utils";
+import { convertBytesToHumanReadable, findFile, modeToString } from "@/utils";
 interface FileDetail {
   name: string;
   type: FileType;
@@ -25,6 +25,7 @@ const columns: TableColumnsType<DataType> = [
       return <a>{text}</a>;
     },
     ellipsis: true,
+    width: 100
   },
   {
     title: "类型",
@@ -34,6 +35,7 @@ const columns: TableColumnsType<DataType> = [
     render: text => {
       return FileTypeToString(text);
     },
+    width: 75
   },
   {
     title: "创建时间",
@@ -43,6 +45,7 @@ const columns: TableColumnsType<DataType> = [
     render: text => {
       return text ? <span>{new Date(text * 1000).toLocaleString()}</span> : <span></span>;
     },
+    width: 150
   },
   {
     title: "更新时间",
@@ -52,6 +55,7 @@ const columns: TableColumnsType<DataType> = [
     render: text => {
       return text ? <span>{new Date(text * 1000).toLocaleString()}</span> : <span></span>;
     },
+    width: 150
   },
   {
     title: "大小",
@@ -61,8 +65,10 @@ const columns: TableColumnsType<DataType> = [
     render: text => {
       if (text === undefined) return <span></span>;
       if (text === null) return <span>未知</span>;
-      return <span>{text}</span>;
+      if (text === 0) return <span>-</span>;
+      return <span>{convertBytesToHumanReadable(text)}</span>;
     },
+    width: 100
   },
   {
     title: "所有者",
@@ -71,7 +77,7 @@ const columns: TableColumnsType<DataType> = [
     ellipsis: true,
     render: text => {
       return text ? <span>{text}</span> : <span></span>;
-    },
+    }
   },
   {
     title: "组",
@@ -80,7 +86,7 @@ const columns: TableColumnsType<DataType> = [
     ellipsis: true,
     render: text => {
       return text ? <span>{text}</span> : <span></span>;
-    },
+    }
   },
   {
     title: "权限",
@@ -88,9 +94,11 @@ const columns: TableColumnsType<DataType> = [
     key: "mode",
     ellipsis: true,
     render: text => {
-      return text ? <span>{text}</span> : <span></span>;
+      return text ? <span>{modeToString(text)}</span> : <span></span>;
     },
-  },
+    width: 75,
+    align: "center"
+  }
 ];
 const TableView: React.FC = () => {
   const { state } = useContext(Context);
@@ -98,10 +106,10 @@ const TableView: React.FC = () => {
   const tableRef = useRef(null);
 
   const scrollToRow = (filename: string) => {
-    // 确保表格已经被渲染          
+    // 确保表格已经被渲染
     if (tableRef && tableRef.current) {
       const rows = (tableRef.current as HTMLDivElement).ownerDocument.querySelectorAll(
-        ".ant-table-row",
+        ".ant-table-row"
       );
       rows.forEach(row => {
         const absoluteRowPath = `${state.path}/${row.getAttribute("data-row-key")}`;
@@ -128,13 +136,15 @@ const TableView: React.FC = () => {
       columns={columns}
       dataSource={currentFiles}
       pagination={false}
-      className='overflow-auto fade-in-down'
+      className='fade-in-down grow-item'
       size='small'
+      scroll={{ x: "max-content" }}
       rowKey={"name"}
       rowClassName={record => {
         const absoluteRowPath = `${state.path}/${record.name}`;
         return state.file.startsWith(absoluteRowPath) ? "bg-gray-200" : "";
       }}
+      sticky
     />
   );
 };

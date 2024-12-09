@@ -9,7 +9,7 @@ import {
   CoffeeOutlined,
   EllipsisOutlined,
   StopOutlined,
-  WarningOutlined,
+  WarningOutlined
 } from "@ant-design/icons";
 
 export const Step = ({ status, title, description }: StepProps) => {

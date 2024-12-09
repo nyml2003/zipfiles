@@ -60,7 +60,7 @@ export function pickFileType(): FileType {
     FileType.Character,
     FileType.Fifo,
     FileType.Socket,
-    FileType.Unknown,
+    FileType.Unknown
   ];
   const weights = [1, 1, 3, 5, 1, 1, 1, 1, 1, 1];
   return pickIndex<FileType>(fileTypes, weights);
@@ -71,7 +71,7 @@ export function generateWholeFileTree(root: MockFileDetail[], depth: number) {
   root.forEach(file => {
     if (file.type === FileType.Directory) {
       file.children = Array.from({ length: randomNumber(...MockFileNumber) }).map(() =>
-        generateRandomFileDetail(file.path + "/" + file.name),
+        generateRandomFileDetail(file.path + "/" + file.name)
       );
       if (depth === 1) {
         file.children = file.children.filter(file => file.type !== FileType.Directory);
@@ -102,7 +102,7 @@ export function mockPostCommit(
   files: string[],
   cachedCommitList: CommitLog[],
   backups: Map<string, FileDetail[]>,
-  cachedFileRoot: RootFileDetail,
+  cachedFileRoot: RootFileDetail
 ) {
   const uuid = uuidv4();
   saveFiles(files, uuid, backups, cachedFileRoot);
@@ -113,7 +113,7 @@ export function mockPostCommit(
     storagePath: "/usr/local/zipfiles",
     isDelete: false,
     isEncrypt: Mock.mock("@boolean"),
-    author: Mock.mock("@name"),
+    author: Mock.mock("@name")
   });
 }
 
@@ -121,7 +121,7 @@ export function saveFiles(
   files: string[],
   uuid: string,
   backups: Map<string, FileDetail[]>,
-  cachedFileRoot: RootFileDetail,
+  cachedFileRoot: RootFileDetail
 ) {
   const lca = findLongestCommonPrefix(files);
   const fileDetails = files.map(path => {
@@ -143,7 +143,7 @@ export function saveFiles(
     }
     return {
       ...omit(file, "children"),
-      path: newPath,
+      path: newPath
     };
   });
   backups.set(uuid, relativeFiles);
@@ -163,20 +163,20 @@ export function generateRandomFileDetail(path: string): MockFileDetail {
     owner: Mock.mock("@name"),
     group: Mock.mock("@name"),
     mode: Mock.mock("@integer(0, 777)"),
-    path,
+    path
   };
 }
 export function findFilesByPath(
   cachedFileRoot: RootFileDetail,
   targetPath: string,
-  filter?: Filter,
+  filter?: Filter
 ): MockFileDetail[] | null {
   if (targetPath === "") {
     return filterBy(cachedFileRoot.children, filter);
   }
   const parts = targetPath.split("/").slice(1);
   let current: MockFileDetail = cachedFileRoot.children.find(
-    file => file.name === parts[0],
+    file => file.name === parts[0]
   ) as MockFileDetail;
   for (let i = 1; i < parts.length; i++) {
     if (!current.children) {
@@ -190,11 +190,60 @@ export function findFilesByPath(
 export function findFile(
   cachedFileRoot: RootFileDetail,
   targetPath: string,
-  targetName: string,
+  targetName: string
 ): MockFileDetail | null {
   const files = findFilesByPath(cachedFileRoot, targetPath);
   if (!files) return null;
   return files.find(file => file.name === targetName) || null;
+}
+
+export function createNullFolder(
+  cachedFileRoot: RootFileDetail,
+  targetPath: string,
+  newFolderName: string
+) {
+  if (targetPath === "") {
+    const index = cachedFileRoot.children.findIndex(file => file.name === newFolderName);
+    if (index !== -1) {
+      throw new Error("Folder already exists");
+    }
+    cachedFileRoot.children.push({
+      name: newFolderName,
+      type: FileType.Directory,
+      children: null,
+      createTime: new Date().getTime() / 1000,
+      updateTime: new Date().getTime() / 1000,
+      size: 0,
+      owner: "root",
+      group: "root",
+      mode: 777,
+      path: "/" + newFolderName
+    });
+    return;
+  }
+  const parts = targetPath.split("/").slice(1);
+  let current: MockFileDetail = cachedFileRoot.children.find(
+    file => file.name === parts[0]
+  ) as MockFileDetail;
+  for (let i = 1; i < parts.length; i++) {
+    if (!current.children) {
+      break;
+    }
+    current = current.children.find(file => file.name === parts[i]) as MockFileDetail;
+  }
+  current.children = current.children || [];
+  current.children.push({
+    name: newFolderName,
+    type: FileType.Directory,
+    children: null,
+    createTime: new Date().getTime() / 1000,
+    updateTime: new Date().getTime() / 1000,
+    size: 0,
+    owner: "root",
+    group: "root",
+    mode: 777,
+    path: targetPath + "/" + newFolderName
+  });
 }
 
 export function randomNumber(min: number, max: number) {

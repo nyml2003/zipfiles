@@ -39,40 +39,47 @@ const TreeMenu = () => {
   }, [state.path, state.files]);
 
   const handleGetFileList = useCallback(
-  (path: string) => {
+    (path: string, needLoading = false) => {
       const res = findFile(state.files, path) as FileDetail[];
       const newTreeData = res.map(item => {
         const isDirectory = item.type === FileType.Directory;
         return {
           title: item.name,
           key: path === "" ? item.name : `${path}/${item.name}`,
-          isLeaf: !isDirectory,
+          isLeaf: !isDirectory
         };
       });
-      setTreeData(prevTreeData => updateTreeData(prevTreeData, path, newTreeData));
+      if (newTreeData.length !== 0) {
+        setTreeData(prevTreeData => {
+          if (!prevTreeData || prevTreeData.length === 0) {
+            return newTreeData;
+          }
+          if (!needLoading) {
+            return newTreeData;
+          }
+          return updateTreeData(prevTreeData, path, newTreeData);
+        });
+      }
     },
-    [state.files],
+    [state.files]
   );
 
   const updateTreeData = (
     treeData: DataNode[],
     path: string,
-    newTreeData: DataNode[],
+    newTreeData: DataNode[]
   ): DataNode[] => {
-    if (treeData.length === 0) {
-      return newTreeData;
-    }
     return treeData.map((item: DataNode) => {
       if (item.key === path) {
         return {
           ...item,
-          children: newTreeData,
+          children: newTreeData
         };
       }
-      if (item.children) {
+      if (path.startsWith(item.key as string)) {
         return {
           ...item,
-          children: updateTreeData(item.children, path, newTreeData),
+          children: updateTreeData(item.children || [], path, newTreeData)
         };
       }
       return item;
@@ -93,7 +100,7 @@ const TreeMenu = () => {
 
   const handleExpand: TreeProps["onExpand"] = (expandedKeys, info) => {
     setExpandedKeys(expandedKeys);
-    handleGetFileList(info.node.key as string);
+    handleGetFileList(info.node.key as string, true);
   };
 
   return (

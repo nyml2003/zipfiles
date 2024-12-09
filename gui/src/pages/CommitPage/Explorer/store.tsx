@@ -19,20 +19,16 @@ interface FileDetail {
 interface State {
   path: string;
   file: string;
-  commitId: string;
   files: Dir<FileDetail>;
-  loading: boolean;
 }
 const defaultState: State = {
   path: "",
   file: "",
-  commitId: "",
   files: {
     name: "",
     children: [],
-    subDir: [],
-  },
-  loading: false,
+    subDir: []
+  }
 };
 
 const reducers = {
@@ -46,7 +42,7 @@ const reducers = {
 
   updateFiles: (state: State, payload: FileDetail[]) => {
     state.files = buildTree(payload);
-  },
+  }
 };
 
 const { Context, Provider } = useStateProvider(reducers, defaultState);

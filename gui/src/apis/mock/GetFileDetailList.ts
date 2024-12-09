@@ -12,6 +12,6 @@ export function mock(request: GetFileDetailListRequest): GetFileDetailListRespon
     throw new Error("File not found" + path);
   }
   return {
-    files: files.map(file => omit(file, "children")),
+    files: files.map(file => omit(file, "children"))
   };
 }

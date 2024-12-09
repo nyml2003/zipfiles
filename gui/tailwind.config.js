@@ -6,11 +6,15 @@ export default {
     extend: {
       width: {
         "25vw": "25vw",
+        "75vw": "75vw"
       },
-      fontFamily: {
-        chinese: ["Noto Sans SC", "Noto Serif SC", "Microsoft YaHei", "SimHei", "sans-serif"],
-      },
-    },
+      height: {
+        "1/4vh": "25vh",
+        "1/3vh": "33vh",
+        "1/2vh": "50vh",
+        "3/4vh": "75vh"
+      }
+    }
   },
-  plugins: [],
+  plugins: []
 };

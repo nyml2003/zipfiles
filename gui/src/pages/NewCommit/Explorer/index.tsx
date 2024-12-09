@@ -1,11 +1,11 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   ArrowLeftOutlined,
   FilterFilled,
   FilterOutlined,
   HomeOutlined,
   Loading3QuartersOutlined,
-  RollbackOutlined,
+  RollbackOutlined
 } from "@ant-design/icons";
 import { Breadcrumb, Button, Space, Splitter, Tooltip } from "antd";
 import MyButton from "@/components/Button";
@@ -26,6 +26,39 @@ const Explorer: React.FC<ExplorerProps> = ({ closeExplorer }) => {
   const currentPath = useSelector((state: RootState) => state.createCommit.currentPath);
   const dispatch = useDispatch();
 
+  const breadcrumbItems = useMemo(() => {
+    let items: BreadcrumbItemType[] = [
+      {
+        title: <HomeOutlined />,
+        onClick: () => dispatch(updateCurrentPath("")),
+        className: "cursor-pointer px-2 py-1 rounded hover:bg-gray-200"
+      }
+    ];
+    if (currentPath === "") {
+      return items;
+    }
+    currentPath
+      .split("/")
+      .slice(1)
+      .forEach((item, index, arr) => {
+        const fullPath = "/" + arr.slice(0, index + 1).join("/");
+        items.push({
+          title: <span>{item}</span>,
+          onClick: () => {
+            dispatch(updateCurrentPath(fullPath));
+          },
+          className: "cursor-pointer px-2 py-1 rounded hover:bg-gray-200"
+        });
+      });
+    if (items.length > 4) {
+      const first = items[0];
+      const last = items[items.length - 1];
+      items = [first, { title: <span>...</span>, className: "px-2 py-1 rounded" }, last];
+    }
+    items[items.length - 1].className = "px-2 py-1 rounded";
+    return items;
+  }, [currentPath]);
+
   return (
     <div className='split-container-col grow-item'>
       <div className='flex rounded-xl items-center justify-between bg-gray-100 '>
@@ -43,51 +76,32 @@ const Explorer: React.FC<ExplorerProps> = ({ closeExplorer }) => {
             }}
             icon={<Loading3QuartersOutlined />}
             disabled={isFiltering}></Button>
-          <Breadcrumb
-            items={currentPath.split("/").reduce((acc, item, index, arr) => {
-              const path = arr.slice(0, index + 1).join("/");
-              acc.push({
-                title: item === "" ? <HomeOutlined /> : item,
-                onClick: () => dispatch(updateCurrentPath(path)),
-                className: "cursor-pointer px-2 py-1 rounded hover:bg-gray-200",
-              });
-              return acc;
-            }, [] as BreadcrumbItemType[])}
-          />
+          <Breadcrumb items={breadcrumbItems} />
         </div>
         <div className='flex p-2'>
           <Space>
             {!isFiltering && (
-              <MyButton
-                variant="success"
-               onClick={closeExplorer}>
+              <MyButton variant='success' onClick={closeExplorer}>
                 <Tooltip title='返回创建备份界面'>
                   <RollbackOutlined /> 确定
                 </Tooltip>
               </MyButton>
             )}
-            <MyButton
-              variant="confirm"
-              onClick={() => dispatch(updateIsFiltering(!isFiltering))}>
+            <MyButton variant='confirm' onClick={() => dispatch(updateIsFiltering(!isFiltering))}>
               {isFiltering ? (
-                <Tooltip title='根据当前条件进行筛选'><FilterFilled />  确定</Tooltip>
+                <Tooltip title='根据当前条件进行筛选'>
+                  <FilterFilled /> 确定
+                </Tooltip>
               ) : (
-                <Tooltip title='筛选'><FilterOutlined /> 筛选</Tooltip>
+                <Tooltip title='筛选'>
+                  <FilterOutlined /> 筛选
+                </Tooltip>
               )}
             </MyButton>
           </Space>
         </div>
       </div>
-      <div
-        className='
-        bg-white
-        rounded-xl
-        m-2
-        p-2
-        fade-in-down
-        grow-item 
-        split-container-row
-        '>
+      <div className='bg-white rounded-xl fade-in-down grow-item  split-container-row'>
         {isFiltering ? (
           <FilterForm />
         ) : (
@@ -100,7 +114,7 @@ const Explorer: React.FC<ExplorerProps> = ({ closeExplorer }) => {
               <TreeMenu />
             </Splitter.Panel>
             <Splitter.Panel className='split-container-row grow-item'>
-              <div className='p-2'>
+              <div>
                 <TableView />
               </div>
             </Splitter.Panel>

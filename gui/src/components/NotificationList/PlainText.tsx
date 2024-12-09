@@ -4,7 +4,7 @@ import {
   CheckCircleOutlined,
   InfoCircleOutlined,
   ExclamationCircleOutlined,
-  CloseCircleOutlined,
+  CloseCircleOutlined
 } from "@ant-design/icons";
 const PlainText = ({ text, state, description, id }: PlainTextProps) => {
   const renderIcon = (type: string) => {

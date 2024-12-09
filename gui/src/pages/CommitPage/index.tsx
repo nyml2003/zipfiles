@@ -3,23 +3,23 @@ import CommitTable from "./CommitTable";
 import { Tabs, TabsProps } from "antd";
 import Explorer from "./Explorer";
 import { createProvider as createExplorerProvider } from "./Explorer/store";
-import { createProvider as createRestoreProvider } from "./Restore/store";
+import { createProvider as createRestoreProvider } from "@/components/PathChecker/store";
 import { v4 as uuidv4 } from "uuid";
 import RestoreForm from "./Restore/RestoreForm";
 import RecycleBin from "./RecycleBin";
 
 const ExplorerPane = (uuid: string, key: string) => ({
-  label: "浏览文件",
+  label: <div>浏览文件</div>,
   key,
-  children: createExplorerProvider(<Explorer />, { commitId: uuid }),
-  className: "grow-item",
+  children: createExplorerProvider(<Explorer commitId={uuid} />),
+  className: "grow-item"
 });
 
 const RestorePane = (uuid: string, key: string, isEncrypt: boolean) => ({
-  label: "恢复文件",
+  label: <div>恢复备份</div>,
   key,
-  children: createRestoreProvider(<RestoreForm />, { commitId: uuid, isEncrypt }),
-  className: "grow-item",
+  children: createRestoreProvider(<RestoreForm commitId={uuid} isEncrypt={isEncrypt} />),
+  className: "grow-item"
 });
 
 const CommitPage: React.FC = () => {
@@ -47,26 +47,26 @@ const CommitPage: React.FC = () => {
   };
   const InitialPanes = [
     {
-      label: "提交列表",
-      key: "commitList",
-      children: <CommitTable openExplorer={openExplorer} openRestore={openRestore} />,
-      closable: false,
-      className: "grow-item",
-    },
-    {
-      label: "回收站",
+      label: <div className='text-center'>回收站</div>,
       key: "recycle",
       children: <RecycleBin />,
       closable: false,
-      className: "grow-item",
+      className: "grow-item"
     },
+    {
+      label: <div className='text-center'>备份列表</div>,
+      key: "commitList",
+      children: <CommitTable openExplorer={openExplorer} openRestore={openRestore} />,
+      closable: false,
+      className: "grow-item"
+    }
   ];
 
   const [panes, setPanes] = React.useState<TabsProps["items"]>(InitialPanes);
 
   const handleEdit = (
     e: React.MouseEvent | React.KeyboardEvent | string,
-    action: "add" | "remove",
+    action: "add" | "remove"
   ) => {
     if (!panes) {
       return;
@@ -79,17 +79,16 @@ const CommitPage: React.FC = () => {
   };
 
   return (
-    <div className='bg-white grow-item split-container-row p-4'>
-      <Tabs
-        type='editable-card'
-        activeKey={activeKey}
-        onChange={setActiveKey}
-        onEdit={handleEdit}
-        hideAdd
-        destroyInactiveTabPane={true}
-        className='split-container-col grow-item'
-        items={panes}></Tabs>
-    </div>
+    <Tabs
+      type='editable-card'
+      activeKey={activeKey}
+      onChange={setActiveKey}
+      onEdit={handleEdit}
+      hideAdd
+      destroyInactiveTabPane={true}
+      className=' bg-white'
+      style={{ height: "calc(100vh - 56px)" }}
+      items={panes}></Tabs>
   );
 };
 
