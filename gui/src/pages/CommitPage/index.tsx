@@ -86,7 +86,7 @@ const CommitPage: React.FC = () => {
       onEdit={handleEdit}
       hideAdd
       destroyInactiveTabPane={true}
-      className=' bg-white'
+      className=' bg-white p-2'
       style={{ height: "calc(100vh - 56px)" }}
       items={panes}></Tabs>
   );

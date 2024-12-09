@@ -288,12 +288,8 @@ void handleUpdateConfig(
     return;
   }
 
-  JSCValue* ip = jsc_value_object_get_property(request, "ip");
   JSCValue* defaultBackupPath =
     jsc_value_object_get_property(request, "defaultBackupPath");
-  if (ip && !jsc_value_is_null(ip) && !jsc_value_is_undefined(ip)) {
-    root["ip"] = jsc_value_to_string(ip);
-  }
 
   if (defaultBackupPath && !jsc_value_is_null(defaultBackupPath) &&
       !jsc_value_is_undefined(defaultBackupPath)) {
@@ -327,14 +323,24 @@ void handleReadConfig(
   std::ifstream in(CONFIGURE_PATH);
   if (!in.is_open()) {
     Json::Value defaultConfig;
-    defaultConfig["ip"] = "127.0.0.1";
     defaultConfig["defaultBackupPath"] = "/usr/local/zipfiles";
-    defaultConfig["port"] = 8080;
-    defaultConfig["version"] = "1.0.0";
     // 创建文件
     std::ofstream out(CONFIGURE_PATH);
     if (!out.is_open()) {
-      handleClientError(_uuid, "读取配置失败", "无法打开配置文件");
+      handleClientError(
+        _uuid, "读取配置失败", "无法打开配置文件, 将尝试创建配置文件"
+      );
+      fs::path dirPath = "/usr/local/zipfiles/.zip";
+      if (!fs::exists(dirPath)) {
+        fs::create_directories(dirPath);
+      }
+      out.open(CONFIGURE_PATH);
+      if (!out.is_open()) {
+        handleClientError(
+          _uuid, "读取配置失败", "无法创建配置文件, 请检查权限"
+        );
+        return;
+      }
     }
     out << defaultConfig;
     out.close();
@@ -351,10 +357,7 @@ void handleReadConfig(
   }
 
   Json::Value res;
-  res["ip"] = root["ip"];
   res["defaultBackupPath"] = root["defaultBackupPath"];
-  res["port"] = root["port"];
-  res["version"] = root["version"];
   sendLocalResponse(res, _api, _uuid, Code::OK);
 }
 

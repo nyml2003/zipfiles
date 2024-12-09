@@ -90,7 +90,7 @@ const NewCommit: FC = () => {
       onChange={setActiveKey}
       onEdit={handleEdit}
       hideAdd
-      className=' bg-white'
+      className=' bg-white p-2'
       style={{ height: "calc(100vh - 56px)" }}
       items={panes}></Tabs>
   );

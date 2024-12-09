@@ -1,6 +1,3 @@
 {
-    "ip": "127.0.0.1",
-    "defaultBackupPath": "/usr/local/zipfiles",
-    "port": 8080,
-    "version": "1.0.0"
+    "defaultBackupPath": "/usr/local/zipfiles"
 }

@@ -7,7 +7,7 @@ import { CommitPush } from "@/components/NotificationList/types";
 import { handleRefresh } from "@/stores/CreateCommitReducer";
 import { AcceptableError } from "@/hooks/useApi/types";
 import { ReadConfigRequest, ReadConfigResponse } from "@/apis/ReadConfig";
-import useApi from "@/hooks/useApi/development";
+import useApi from "@useApi";
 import { ApiEnum } from "@/apis";
 import { createProvider as createRestoreProvider, Context } from "@/components/PathChecker/store";
 import PathChecker from "@/components/PathChecker/PathChecker";
@@ -104,7 +104,7 @@ const BackupOptionContent: React.FC = () => {
             variant='outlined'
             scrollToFirstError
             form={form}
-            initialValues={initialState}
+            initialValues={{ ...initialState, storagePath: initialConfig.defaultBackupPath }}
             onFinish={onFinish}>
             <Form.Item
               label='是否加密'

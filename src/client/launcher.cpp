@@ -101,7 +101,8 @@ void Launcher::stop() {
 void Launcher::startLogger() {
   try {
     // 假设配置文件名为 "log4cpp.properties"
-    std::string configFilePath = "/app/config/client.log.properties";
+    std::string configFilePath =
+      "/usr/local/zipfiles/.zip/client.log.properties";
     log4cpp::PropertyConfigurator::configure(configFilePath);
   } catch (log4cpp::ConfigureFailure& f) {
     std::cerr << "Configure Problem: " << f.what() << std::endl;

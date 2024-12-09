@@ -188,7 +188,7 @@ const FileList: React.FC<FileListProps> = ({ addExplorer }) => {
     <div className='grow-item'>
       <div className='flex flex-col justify-between items-center border-gray-200 p-2'>
         <div className='flex justify-between w-full'>
-          <div className='text-xl font-bold px-2 py-1'>文件列表</div>
+          <div className='text-xl font-semibold px-2 py-1'>文件列表</div>
           <div className='space-x-2'>
             <Button variant='confirm' onClick={handleAdd}>
               添加

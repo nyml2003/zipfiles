@@ -5,6 +5,7 @@ import { PostCommitRequest } from "@/apis/PostCommit";
 import { RestoreRequest } from "@/apis/Restore";
 import { finishMessage } from "@/stores/NotificationReducer";
 import { useDispatch } from "react-redux";
+const fuckWebpack = "怎么可能会有这种事情";
 const useApi: useApiType = () => {
   const dispatch = useDispatch();
   const api: Api = {
