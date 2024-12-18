@@ -73,7 +73,7 @@ const FilterForm: React.FC = () => {
   };
 
   return (
-    <div className='fade-in-down p-4 max-w-3xl'>
+    <div className='fade-in-down p-4 '>
       <Form
         labelCol={{ span: 4 }}
         wrapperCol={{ span: 14 }}

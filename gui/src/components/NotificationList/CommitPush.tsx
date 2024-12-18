@@ -18,6 +18,11 @@ interface File {
 const CommitPush = ({ files, directories, options, id, result }: CommitPushProps) => {
   const dispatch = useDispatch();
   const api = useApi();
+  /**
+   * @brief 获取指定路径下的文件列表
+   * @param path
+   * @returns File[] 文件列表
+   */
   const fetchFileList = async (path: string) => {
     try {
       const res = await api.request<GetFileListRequest, GetFileListResponse>(ApiEnum.GetFileList, {
@@ -68,6 +73,8 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
     dirData = dirResults.flat(); // 将所有目录的结果合并到 dirData
     return [...fileData, ...dirData];
   };
+
+  // 监听result的变化, result的内容会由全局监听器接收到对应消息后填充
   useEffect(() => {
     if (!result) return;
     if (result.code === Code.BACKUP_SUCCESS) {
@@ -89,14 +96,20 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
       });
     }
   }, [result]);
+
+  // 第一个步骤，确认需要备份的文件集合
   const [collectingFiles, setCollectingFiles] = useState<StepProps>({
     title: "统计",
     status: "pending"
   });
+
+  // 第二个步骤，打包文件，这是个耗时操作
   const [packingFiles, setPackingFiles] = useState<StepProps>({
     title: "备份",
     status: "pending"
   });
+
+  // 执行备份操作, 会调用collectFiles, 然后调用PostCommit, 注意一旦开始执行，就没法取消，除非执行故障
   const execute = async () => {
     setStart(true);
     setCollectingFiles(prev => {
@@ -158,12 +171,12 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
     });
   };
 
+  // 表征是否正在执行
   const [start, setStart] = useState<boolean>(false);
   return (
-    <div className='grow-item split-container-col div-2'>
+    <div className='grow-item split-container-col'>
       <Step {...collectingFiles} />
       <Step {...packingFiles} />
-
       <div className='flex space-x-2 justify-end'>
         <Button onClick={() => execute()} disabled={start} variant='confirm' visible={!start}>
           开始执行

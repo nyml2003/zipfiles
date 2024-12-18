@@ -94,7 +94,7 @@ const ConfigPageContent: React.FC = () => {
       className='fade-in-down p-4 max-w-4xl bg-white split-container-col grow-item'
       style={{
         height: "calc(100vh - 56px)",
-        width: "calc(100vw - 100px)"
+        width: "calc(100vw - 200px)"
       }}>
       {initialConfig && (
         <Form

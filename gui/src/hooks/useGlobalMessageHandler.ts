@@ -68,8 +68,6 @@ export const useGlobalMessageHandler = () => {
         return;
       }
       if (isBackup(code) || isRestore(code)) {
-        console.log("callbacks: ", callbacks);
-        console.log("event.data: ", event.data);
         dispatch(finishMessage(event.data as Notification<BackupAndRestoreEnd>));
         return;
       }

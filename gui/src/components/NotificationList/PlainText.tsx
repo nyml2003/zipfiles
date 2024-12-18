@@ -6,7 +6,8 @@ import {
   ExclamationCircleOutlined,
   CloseCircleOutlined
 } from "@ant-design/icons";
-const PlainText = ({ text, state, description, id }: PlainTextProps) => {
+// 普通文本通知，包含状态、文本、描述
+const PlainText = ({ text, state, description }: PlainTextProps) => {
   const renderIcon = (type: string) => {
     switch (type) {
       case "success":

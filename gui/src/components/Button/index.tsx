@@ -1,5 +1,5 @@
 import React from "react";
-
+// 定义按钮的不同变体类型，包含确认、主要、警告、危险、成功以及文本这几种类型
 type Variant = "confirm" | "primary" | "warning" | "danger" | "success" | "text";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -30,7 +30,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     );
   }
 );
-
+// 为Button组件设置displayName属性，便于在调试等场景中更清晰地识别组件名称
 Button.displayName = "Button";
 
 export default Button;

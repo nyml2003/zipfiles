@@ -1,0 +1,15 @@
+2024-12-16 12:03:04,639 [140677543940928] INFO   - Server started
+2024-12-16 12:05:11,399 [140677543940928] INFO   - Now processing event from 3(server_fd) as accept event
+2024-12-16 12:05:11,399 [140677543940928] INFO   - Accept connection with ip: 127.0.0.1 port: 45524 client_fd: 6
+2024-12-16 12:05:11,399 [140677543940928] INFO   - Add client_fd 6 to epoll_fd 5
+2024-12-16 12:05:11,400 [140677543940928] INFO   - Connection count: 1
+2024-12-16 12:06:19,874 [139849921659712] INFO   - Server started
+2024-12-16 12:06:26,593 [139849921659712] INFO   - Now processing event from 3(server_fd) as accept event
+2024-12-16 12:06:26,603 [139849921659712] INFO   - Accept connection with ip: 127.0.0.1 port: 46234 client_fd: 6
+2024-12-16 12:06:26,604 [139849921659712] INFO   - Add client_fd 6 to epoll_fd 5
+2024-12-16 12:06:26,605 [139849921659712] INFO   - Connection count: 1
+2024-12-16 12:06:46,814 [140091804726080] INFO   - Server started
+2024-12-16 12:06:48,619 [140091804726080] INFO   - Now processing event from 3(server_fd) as accept event
+2024-12-16 12:06:48,619 [140091804726080] INFO   - Accept connection with ip: 127.0.0.1 port: 44762 client_fd: 6
+2024-12-16 12:06:48,620 [140091804726080] INFO   - Add client_fd 6 to epoll_fd 5
+2024-12-16 12:06:48,620 [140091804726080] INFO   - Connection count: 1

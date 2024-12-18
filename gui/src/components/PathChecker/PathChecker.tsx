@@ -1,4 +1,8 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, {
+  useContext,
+  useMemo,
+  useState
+} from "react";
 import { Button, message } from "antd";
 import {
   ArrowLeftOutlined,
@@ -22,6 +26,8 @@ const PathChecker = () => {
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Done);
   const [creatingNewFolder, setCreatingNewFolder] = useState<boolean>(false);
   const api = useApi();
+
+  // 在当前路径下创建一个新的文件夹
   const createNullFolder = () => {
     setTreeData(prev => {
       if (prev === null) {
@@ -32,17 +38,18 @@ const PathChecker = () => {
       const newFolderItem = {
         title: (
           <input
-            className='text-black bg-white border-none focus:outline-none'
+            ref={(el: HTMLInputElement) => {
+              if (el) {
+                el.focus();
+              }
+            }}
+            className='text-black bg-white border-none focus:outline-none select-all'
             onKeyDown={e => {
               if (e.key === "Enter") {
-                e.preventDefault();
-                e.stopPropagation();
                 handleFolderNameChange(e.currentTarget.value);
               }
             }}
             onBlur={e => {
-              e.preventDefault();
-              e.stopPropagation();
               handleFolderNameChange(e.target.value);
             }}
             placeholder='NewFolderName'
@@ -54,6 +61,8 @@ const PathChecker = () => {
       return newData;
     });
   };
+
+  // 用户确定新文件夹名称后的回调函数
   const handleFolderNameChange = async (newName: string) => {
     if (newName === "") {
       setCreatingNewFolder(false);
@@ -95,8 +104,9 @@ const PathChecker = () => {
     }
   };
 
+  // 生成面包屑导航, 当路径过长时, 只显示前后两个
   const breadcrumbItems = useMemo(() => {
-    let items : BreadcrumbItemType[] = [
+    let items: BreadcrumbItemType[] = [
       {
         title: <HomeOutlined />,
         onClick: () => actions.updatePath(""),

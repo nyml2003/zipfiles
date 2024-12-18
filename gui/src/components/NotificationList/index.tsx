@@ -19,10 +19,12 @@ const NotificationList = () => {
   const notifications = useSelector((state: RootState) => state.notification.notifications);
   const dispatch = useDispatch();
 
+  // 右上角关闭通知
   const closeNotification = (id: string) => {
     dispatch(removeNotification(id));
   };
 
+  // 渲染通知
   const renderItem = (notification: NotificationUnion) => {
     switch (notification.type) {
       case "plainText": {

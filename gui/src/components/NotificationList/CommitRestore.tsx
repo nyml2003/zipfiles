@@ -6,13 +6,12 @@ import { ApiEnum } from "@/apis";
 import useApi from "@useApi";
 import { RestoreRequest, RestoreResponse } from "@/apis/Restore";
 import { Step, StepProps } from "../Step/Step";
-const RestoreInfo = ({
-  commitId,
-  path
-}: {
-  commitId: string;
-  path: string;
-}) => {
+/**
+ * @brief 还原信息
+ * @param commitId
+ * @param path
+ */
+const RestoreInfo = ({ commitId, path }: { commitId: string; path: string }) => {
   return (
     <div>
       <div className='text-lg font-semibold mb-2'>请确认还原信息</div>
@@ -35,19 +34,23 @@ const RestoreInfo = ({
     </div>
   );
 };
+
 const CommitRestore = ({ password, id, result, commitId, path }: CommitRestoreProps) => {
   const api = useApi();
+  // 步骤确认请求的组件状态
   const [confirmRequest, setConfirmRequest] = useState<StepProps>({
     title: "确认请求",
     status: "running",
-    description: RestoreInfo({ commitId, path})
+    description: RestoreInfo({ commitId, path })
   });
 
+  // 步骤还原请求的组件状态
   const [restoreRequest, setRestoreRequest] = useState<StepProps>({
     title: "还原",
     status: "pending"
   });
 
+  // 发送还原请求
   const restore = async () => {
     const key = password ? { key: password } : {};
     setRestoreRequest(prev => {
@@ -70,6 +73,7 @@ const CommitRestore = ({ password, id, result, commitId, path }: CommitRestorePr
     });
   };
 
+  // 监听result的变化, result的内容会由全局监听器接收到对应消息后填充;
   useEffect(() => {
     if (!result) return;
     if (result.code === Code.RESTORE_SUCCESS) {
@@ -84,6 +88,7 @@ const CommitRestore = ({ password, id, result, commitId, path }: CommitRestorePr
     }
   }, [result]);
 
+  // 执行还原操作, 会调用restore, 注意一旦开始执行，就没法取消，除非执行故障
   const execute = async () => {
     setStart(true);
     setConfirmRequest(prev => {
@@ -91,6 +96,8 @@ const CommitRestore = ({ password, id, result, commitId, path }: CommitRestorePr
     });
     await restore();
   };
+
+  // 是否开始执行
   const [start, setStart] = useState<boolean>(false);
   return (
     <div className='grow-item split-container-col div-2'>

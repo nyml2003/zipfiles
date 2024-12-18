@@ -18,7 +18,7 @@ const App: React.FC = () => {
       key: "index",
       label: "首页",
       icon: React.createElement(HomeOutlined)
-    },
+    },  
     {
       key: "new_commit",
       label: "新建",
@@ -79,7 +79,7 @@ const App: React.FC = () => {
   } = breakpoint.lg ? { offset: [16, 0], radius: 8 } : { offset: [24, 0], radius: 8 };
   return (
     <>
-      <Layout hasSider className='select-none flex flex-row h-screen'>
+      <Layout hasSider className='select-none flex flex-row '>
         <Sider breakpoint='lg' className='bg-white'>
           <Menu
             onClick={info => navigate(`/${info.key}`)}

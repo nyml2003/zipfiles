@@ -33,6 +33,12 @@ const TreeMenu = ({ treeData, setTreeData, setLoading }: TreeMenuProps) => {
     };
   }, [state.path, state.fresh]);
 
+  /**
+   * 
+   * @param path 获取某个路径下的文件列表
+   * @param newPath newPath为true时，意味着当前目录切换；为false时，意味着正在请求当前目录的某个子目录
+   * @returns 
+   */
   const handleGetFileList = async (path: string, newPath = true) => {
     setLoading(LoadingState.Loading);
     try {

@@ -65,7 +65,6 @@ void Socket::connectWithRetries() {
   if (disconnectFlag) {
     initializeSocket();
     disconnectFlag = false;
-    return;
   }
   const int max_retries = 5;
   int retries = 0;
