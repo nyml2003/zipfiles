@@ -52,7 +52,7 @@ set(ZIPFILES_TEST_DIR ${CMAKE_SOURCE_DIR}/tests) # 测试目录
 set(ZIPFILES_UNIT_TEST_DIR ${ZIPFILES_TEST_DIR}) # 单元测试目录
 set(ZIPFILES_DIST_DIR ${CMAKE_SOURCE_DIR}/gui/dist)
 set(ZIPFILES_CONFIG_DIR ${CMAKE_SOURCE_DIR}/config)
-set(ZIPFILES_OUTPUT_DIR ${CMAKE_SOURCE_DIR}/bin)
+set(ZIPFILES_OUTPUT_DIR ${CMAKE_SOURCE_DIR}/release)
 set(ZIPFILES_FRONTEND_DIR ${CMAKE_SOURCE_DIR}/gui/src)
 
 # 客户端相关
@@ -104,6 +104,7 @@ add_executable(
 set_target_properties(server PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZIPFILES_OUTPUT_DIR})
 
 install(FILES ${ZIPFILES_SERVER_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR})
+install(FILES ${CMAKE_SOURCE_DIR}/release_script/install.sh ${CMAKE_SOURCE_DIR}/release_script/uninstall.sh ${CMAKE_SOURCE_DIR}/release_script/start.sh DESTINATION ${ZIPFILES_OUTPUT_DIR})
 
 target_link_libraries(
     server
@@ -209,6 +210,3 @@ if(CLANGD)
 else()
     message(WARNING "clangd not found, skipping RUN_CLANGD target")
 endif()
-
-
-

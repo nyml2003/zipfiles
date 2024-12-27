@@ -1,0 +1,134 @@
+2024-12-27 11:27:44,115 [140349523617344] DEBUG  - Reciever started
+2024-12-27 11:27:44,115 [140349523617344] INFO   - Initializing socket...
+2024-12-27 11:27:44,115 [140349523617344] INFO   - Socket created
+2024-12-27 11:27:44,115 [140349523617344] INFO   - Port set to 8080
+2024-12-27 11:27:44,116 [140349523617344] INFO   - Resolving address...
+2024-12-27 11:27:44,736 [140353756048128] ERROR  - JS Error: "Warning: findDOMNode is deprecated and will be removed in the next major release. Instead, add a ref directly to the element you want to reference. Learn more about using refs safely here: https://reactjs.org/link/strict-mode-find-node%s" "\nV@file:///app/release/dist/static/js/547.7de4d21538730043db29.js:2:175647\nK@file:///app/release/dist/static/js/547.7de4d21538730043db29.js:2:177087\nTrigger@file:///app/release/dist/static/js/547.7de4d21538730043db29.js:2:16720\ng@file:///app/release/dist/static/js/547.7de4d21538730043db29.js:2:179656\nTooltip@file:///app/release/dist/static/js/547.7de4d21538730043db29.js:2:83285\nbutton\nButton@file:///app/release/dist/static/js/805.1b69044463802ae25fe2.js:2:421\ndiv\nx@file:///app/release/dist/static/js/805.1b69044463802ae25fe2.js:2:1819\ndiv\n@file:///app/release/dist/static/js/818.30be2926685c79bce71f.js:2:18920\nLayout\ndiv\n@file:///app/release/dist/static/js/818.30be2926685c79bce71f.js:2:18920\nLayout\nht@file:///app/release/dist/static/js/805.1b69044463802ae25fe2.js:2:32294\nSuspense\nA@file:///app/release/dist/static/js/vendors.9c1b24b492252f502f30.js:2:501720\nC@file:///app/release/dist/static/js/vendors.9c1b24b492252f502f30.js:2:500941\n_@file:///app/release/dist/static/js/vendors.9c1b24b492252f502f30.js:2:488910\nW@file:///app/release/dist/static/js/vendors.9c1b24b492252f502f30.js:2:507025\nP@file:///app/release/dist/static/js/vendors.9c1b24b492252f502f30.js:2:485825\nLocaleProvider@file:///app/release/dist/static/js/vendors.9c1b24b492252f502f30.js:2:139292\nI@file:///app/release/dist/static/js/vendors.9c1b24b492252f502f30.js:2:141677\nQ@file:///app/release/dist/static/js/vendors.9c1b24b492252f502f30.js:2:143690\nConfigProvider@file:///app/release/dist/static/js/vendors.9c1b24b492252f502f30.js:2:148173\nT@file:///app/release/dist/static/js/index.23848b2709ae6c784a46.js:2:18697\nx@file:///app/release/dist/static/js/vendors.9c1b24b492252f502f30.js:2:481098\nC@file:///app/release/dist/static/js/index.23848b2709ae6c784a46.js:2:17088\nI"
+2024-12-27 11:27:44,754 [140349523617344] ERROR  - Connection failed
+2024-12-27 11:27:44,754 [140349523617344] ERROR  - Retrying connection (1/5)...
+2024-12-27 11:27:44,772 [140349523617344] DEBUG  - send notification: {
+	"code" : 411,
+	"payload" : 
+	{
+		"description" : "\u7b2c1\u6b21\u5c1d\u8bd5",
+		"title" : "\u6b63\u5728\u91cd\u8bd5\u8fde\u63a5"
+	}
+}
+2024-12-27 11:27:44,774 [140349523617344] INFO   - evaluating script: window.postMessage({
+	"code" : 411,
+	"payload" : 
+	{
+		"description" : "\u7b2c1\u6b21\u5c1d\u8bd5",
+		"title" : "\u6b63\u5728\u91cd\u8bd5\u8fde\u63a5"
+	}
+}, '*');
+2024-12-27 11:27:44,775 [140349523617344] DEBUG  - send notification: {
+	"code" : 442
+}
+2024-12-27 11:27:44,776 [140349523617344] INFO   - evaluating script: window.postMessage({
+	"code" : 442
+}, '*');
+2024-12-27 11:27:45,777 [140349523617344] ERROR  - Connection failed
+2024-12-27 11:27:45,777 [140349523617344] ERROR  - Retrying connection (2/5)...
+2024-12-27 11:27:45,778 [140349523617344] DEBUG  - send notification: {
+	"code" : 411,
+	"payload" : 
+	{
+		"description" : "\u7b2c2\u6b21\u5c1d\u8bd5",
+		"title" : "\u6b63\u5728\u91cd\u8bd5\u8fde\u63a5"
+	}
+}
+2024-12-27 11:27:45,778 [140349523617344] INFO   - evaluating script: window.postMessage({
+	"code" : 411,
+	"payload" : 
+	{
+		"description" : "\u7b2c2\u6b21\u5c1d\u8bd5",
+		"title" : "\u6b63\u5728\u91cd\u8bd5\u8fde\u63a5"
+	}
+}, '*');
+2024-12-27 11:27:45,778 [140349523617344] DEBUG  - send notification: {
+	"code" : 442
+}
+2024-12-27 11:27:45,779 [140349523617344] INFO   - evaluating script: window.postMessage({
+	"code" : 442
+}, '*');
+2024-12-27 11:27:46,779 [140349523617344] ERROR  - Connection failed
+2024-12-27 11:27:46,779 [140349523617344] ERROR  - Retrying connection (3/5)...
+2024-12-27 11:27:46,780 [140349523617344] DEBUG  - send notification: {
+	"code" : 411,
+	"payload" : 
+	{
+		"description" : "\u7b2c3\u6b21\u5c1d\u8bd5",
+		"title" : "\u6b63\u5728\u91cd\u8bd5\u8fde\u63a5"
+	}
+}
+2024-12-27 11:27:46,780 [140349523617344] INFO   - evaluating script: window.postMessage({
+	"code" : 411,
+	"payload" : 
+	{
+		"description" : "\u7b2c3\u6b21\u5c1d\u8bd5",
+		"title" : "\u6b63\u5728\u91cd\u8bd5\u8fde\u63a5"
+	}
+}, '*');
+2024-12-27 11:27:46,780 [140349523617344] DEBUG  - send notification: {
+	"code" : 442
+}
+2024-12-27 11:27:46,781 [140349523617344] INFO   - evaluating script: window.postMessage({
+	"code" : 442
+}, '*');
+2024-12-27 11:27:47,781 [140349523617344] ERROR  - Connection failed
+2024-12-27 11:27:47,781 [140349523617344] ERROR  - Retrying connection (4/5)...
+2024-12-27 11:27:47,781 [140349523617344] DEBUG  - send notification: {
+	"code" : 411,
+	"payload" : 
+	{
+		"description" : "\u7b2c4\u6b21\u5c1d\u8bd5",
+		"title" : "\u6b63\u5728\u91cd\u8bd5\u8fde\u63a5"
+	}
+}
+2024-12-27 11:27:47,782 [140349523617344] INFO   - evaluating script: window.postMessage({
+	"code" : 411,
+	"payload" : 
+	{
+		"description" : "\u7b2c4\u6b21\u5c1d\u8bd5",
+		"title" : "\u6b63\u5728\u91cd\u8bd5\u8fde\u63a5"
+	}
+}, '*');
+2024-12-27 11:27:47,782 [140349523617344] DEBUG  - send notification: {
+	"code" : 442
+}
+2024-12-27 11:27:47,783 [140349523617344] INFO   - evaluating script: window.postMessage({
+	"code" : 442
+}, '*');
+2024-12-27 11:27:48,783 [140349523617344] ERROR  - Connection failed
+2024-12-27 11:27:48,784 [140349523617344] ERROR  - Retrying connection (5/5)...
+2024-12-27 11:27:48,785 [140349523617344] DEBUG  - send notification: {
+	"code" : 411,
+	"payload" : 
+	{
+		"description" : "\u7b2c5\u6b21\u5c1d\u8bd5",
+		"title" : "\u6b63\u5728\u91cd\u8bd5\u8fde\u63a5"
+	}
+}
+2024-12-27 11:27:48,785 [140349523617344] INFO   - evaluating script: window.postMessage({
+	"code" : 411,
+	"payload" : 
+	{
+		"description" : "\u7b2c5\u6b21\u5c1d\u8bd5",
+		"title" : "\u6b63\u5728\u91cd\u8bd5\u8fde\u63a5"
+	}
+}, '*');
+2024-12-27 11:27:48,786 [140349523617344] DEBUG  - send notification: {
+	"code" : 442
+}
+2024-12-27 11:27:48,786 [140349523617344] INFO   - evaluating script: window.postMessage({
+	"code" : 442
+}, '*');
+2024-12-27 11:27:49,787 [140349523617344] ERROR  - Failed to connect to the server after 5 attempts.
+2024-12-27 11:27:49,788 [140349523617344] DEBUG  - send notification: {
+	"code" : 440
+}
+2024-12-27 11:27:49,788 [140349523617344] INFO   - evaluating script: window.postMessage({
+	"code" : 440
+}, '*');
+2024-12-27 11:27:50,462 [140349523617344] DEBUG  - Reciever stopped
