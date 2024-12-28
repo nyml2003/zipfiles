@@ -1,40 +1,44 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <!-- 绝对路径引入图标文件 -->
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= htmlWebpackPlugin.options.title %></title>
+  <title>
+    <%= htmlWebpackPlugin.options.title %>
+  </title>
   <!-- import cdn css -->
   <% if(htmlWebpackPlugin.options.cdn) {%>
     <% for (var i in htmlWebpackPlugin.options.cdn&&htmlWebpackPlugin.options.cdn.css) { %>
       <link href="<%= htmlWebpackPlugin.options.cdn.css[i] %>" rel="stylesheet">
-    <% } %>
-  <% } %>
-  <!-- import cdn js -->
-  <% if(htmlWebpackPlugin.options.cdn) {%>
-    <% for (var i in htmlWebpackPlugin.options.cdn&&htmlWebpackPlugin.options.cdn.js) { %>
-      <script src="<%= htmlWebpackPlugin.options.cdn.js[i] %>"></script>
-    <% } %>
-  <% } %>
+      <% } %>
+        <% } %>
+          <!-- import cdn js -->
+          <% if(htmlWebpackPlugin.options.cdn) {%>
+            <% for (var i in htmlWebpackPlugin.options.cdn&&htmlWebpackPlugin.options.cdn.js) { %>
+              <script src="<%= htmlWebpackPlugin.options.cdn.js[i] %>"></script>
+              <% } %>
+                <% } %>
 </head>
+
 <body>
   <!-- 容器节点 -->
   <div id="root"></div>
-    <!-- built files will be auto injected -->
-    <!-- IE 浏览器跳转提示升级页面 start -->
-    <script>
-      if (/*@cc_on!@*/(!!window.MSInputMethodContext && !!document.documentMode)) {
-          window.open("https://support.dmeng.net/upgrade-your-browser.html?referrer="+encodeURIComponent(window.location.href));
-      };
-    </script>
-    <!-- IE 浏览器跳转提示升级页面 end -->
-    <script>
-      function isIE() {
-          return !!window.ActiveXObject || "ActiveXObject" in window;
-      }
-    </script>
+  <!-- built files will be auto injected -->
+  <!-- IE 浏览器跳转提示升级页面 start -->
+  <script>
+    if (/*@cc_on!@*/(!!window.MSInputMethodContext && !!document.documentMode)) {
+      window.open("https://support.dmeng.net/upgrade-your-browser.html?referrer=" + encodeURIComponent(window.location.href));
+    };
+  </script>
+  <!-- IE 浏览器跳转提示升级页面 end -->
+  <script>
+    function isIE() {
+      return !!window.ActiveXObject || "ActiveXObject" in window;
+    }
+  </script>
 </body>
+
 </html>

@@ -88,7 +88,6 @@ module.exports = merge(baseConfig, {
         BUILD_ID: uuidv4(),
         BUILD_TIME: new Date().toLocaleString(),
       }),
-      "process.env.NODE_ENV": JSON.stringify("development"),
     }),
   ],
   resolve: {

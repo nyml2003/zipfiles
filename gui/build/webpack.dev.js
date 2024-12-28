@@ -16,7 +16,6 @@ module.exports = merge(baseConfig, {
         BASE_ENV: process.env.BASE_ENV,
         NODE_ENV: "development",
       }),
-      "process.env.NODE_ENV": JSON.stringify("development"),
     }),
   ],
   devServer: {
