@@ -69,10 +69,7 @@ void Socket::connectWithRetries() {
   const int max_retries = 5;
   int retries = 0;
   while (retries < max_retries) {
-    if (connect(
-          server_fd, reinterpret_cast<struct sockaddr*>(&serv_addr),
-          sizeof(serv_addr)
-        ) < 0) {
+    if (connect(server_fd, reinterpret_cast<struct sockaddr*>(&serv_addr), sizeof(serv_addr)) < 0) {
       if (!Launcher::getInstance().isRunning) {
         log4cpp::Category::getRoot().errorStream()
           << "Application is not running";

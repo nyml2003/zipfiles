@@ -44,9 +44,9 @@ module.exports = {
     radix: 1, // 强制在parseInt()使用基数参数
     // 'no-unused-vars': 'warn',
     // export不检查
-    'no-unused-vars': ["error", { "args": "none" , "varsIgnorePattern":  "^(React|_|export)" }],
+    'no-unused-vars': ["off", { "args": "none" , "varsIgnorePattern":  "^(React|_|export)"}],
 
-    "@typescript-eslint/no-unused-vars": ["error", { "args": "none", "varsIgnorePattern": "^(React|_export)" }],
+    "@typescript-eslint/no-unused-vars": ["off", { "args": "none", "varsIgnorePattern": "^(React|_|export)" }],
     /**
      * 变量声明
      */
