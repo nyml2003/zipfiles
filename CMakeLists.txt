@@ -171,7 +171,7 @@ foreach(TEST_FILE ${ZIPFILES_SERVER_UNIT_TEST_FILES})
     get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
 
     # 创建测试目标
-    add_executable(${TEST_NAME} ${TEST_FILE} ${ZIPFILES_SERVER_SOURCE_FILES} ${ZIPFILES_MP_SOURCE_FILES})
+    add_executable(${TEST_NAME} ${TEST_FILE} ${ZIPFILES_SERVER_SOURCE_FILES} ${ZIPFILES_MP_SOURCE_FILES} )
 
     # 链接依赖库
     target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main ${LOG4CPP_LIBRARIES} ${JSONCPP_LIBRARIES} ${CRYPTOPP_LIBRARIES} ${WEBKIT_LIBRARIES})
@@ -205,14 +205,3 @@ add_custom_target(
     | xargs wc -l
     COMMENT "Counting lines of code"
 )
-
-find_program(CLANGD clangd)
-
-if(CLANGD)
-    add_custom_target(RUN_CLANGD
-        COMMAND ${CLANGD} --compile-commands-dir=${CMAKE_BINARY_DIR} ${ZIPFILES_HEADER_FILES} ${ZIPFILES_HEADER_FILES}
-        COMMENT "Running clangd and collecting errors"
-    )
-else()
-    message(WARNING "clangd not found, skipping RUN_CLANGD target")
-endif()

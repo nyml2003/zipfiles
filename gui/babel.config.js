@@ -11,7 +11,7 @@ module.exports = {
   // 执行顺序由右往左,所以先处理ts,再处理jsx,最后再试一下babel转换为低版本语法
   presets: [
     [
-      "@babel/preset-env",
+      "@babel/preset-env"
       // {
       //   // 设置兼容目标浏览器版本,这里可以不写,babel-loader会自动寻找上面配置好的文件.browserslistrc
       //   // "targets": {
@@ -24,12 +24,12 @@ module.exports = {
       // },
     ],
     "@babel/preset-react",
-    "@babel/preset-typescript",
+    "@babel/preset-typescript"
   ],
   plugins: [
     // 支持装饰器语法
     ["@babel/plugin-proposal-decorators", { legacy: true }],
     "@babel/plugin-syntax-dynamic-import", // 支持动态导入语法
-    process.env.NODE_ENV === "development" && require.resolve("react-refresh/babel"), // 根据环境选择是否启动react热更新插件
-  ].filter(Boolean), // 过滤空值
+    process.env.NODE_ENV === "development" && require.resolve("react-refresh/babel") // 根据环境选择是否启动react热更新插件
+  ].filter(Boolean) // 过滤空值
 };
