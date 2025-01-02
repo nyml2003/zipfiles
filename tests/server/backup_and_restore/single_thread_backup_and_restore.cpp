@@ -72,15 +72,33 @@ TEST_F(SingleThreadBackupAndRestore, SingleThreadBackupAndRestore) {  // NOLINT
   std::string key = "test-key";
 
   // 调用备份函数
+  // Start timing for backup
+  auto start_backup = std::chrono::high_resolution_clock::now();
+
   ASSERT_NO_THROW(backupFiles(backup_files, cr, key));  // NOLINT
 
   std::cout << "Backup done" << std::endl;
 
+  // End timing for backup and output the time taken
+  auto end_backup = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> backup_time =
+    end_backup - start_backup;
+  std::cout << "Backup time: " << backup_time.count() << " ms" << std::endl;
+
   // 恢复文件
   fs::path restorePath = "/tmp/restore";
+
+  auto start_restore = std::chrono::high_resolution_clock::now();
+
   ASSERT_NO_THROW(restoreTo(restorePath, cr.uuid, key));  // NOLINT
 
   std::cout << "Restore done" << std::endl;
+
+  // End timing for restore and output the time taken
+  auto end_restore = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> restore_time =
+    end_restore - start_restore;
+  std::cout << "Restore time: " << restore_time.count() << " ms" << std::endl;
 
   // 使用cmp指令验证文件内容
   for (const auto& file : backup_files) {
@@ -88,8 +106,7 @@ TEST_F(SingleThreadBackupAndRestore, SingleThreadBackupAndRestore) {  // NOLINT
     std::string originalFile = file.string();
     std::string restoredFile = (restorePath / relativePath).string();
 
-    if (fs::is_fifo(file) || fs::is_block_file(file) ||
-        fs::is_character_file(file) || fs::is_socket(file)) {
+    if (fs::is_fifo(file) || fs::is_block_file(file) || fs::is_character_file(file) || fs::is_socket(file)) {
       continue;
     }
 

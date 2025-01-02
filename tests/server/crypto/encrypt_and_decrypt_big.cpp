@@ -82,6 +82,18 @@ bool test(const std::string& src_filename) {
   std::cout << "Encryption time: " << encryption_time.count() << " ms"
             << std::endl;
 
+  // 计算总大小，获得Encrypt速度(MB/s)
+  std::ifstream ifile_size;
+  size_t total_size = 0;
+  ifile_size.open(ipath, std::ios::binary);
+  ifile_size.seekg(0, std::ios::end);
+  total_size += ifile_size.tellg();
+  ifile_size.close();
+
+  double encrypt_speed = static_cast<double>(total_size) /
+                         encryption_time.count() * 1000 / 1024 / 1024;
+  std::cout << "Encrypt speed: " << encrypt_speed << " MB/s" << std::endl;
+
   // decrypt
   ifile.open(crypt_path + dst_filename, iflag);
   ofile.open(crypt_path + src_filename_ex, oflag);
@@ -114,6 +126,10 @@ bool test(const std::string& src_filename) {
     end_decrypt - start_decrypt;
   std::cout << "Decryption time: " << decryption_time.count() << " ms"
             << std::endl;
+
+  double decrypt_speed = static_cast<double>(total_size) /
+                         decryption_time.count() * 1000 / 1024 / 1024;
+  std::cout << "Decrypt speed: " << decrypt_speed << " MB/s" << std::endl;
 
   // compare
   std::string cmpCommand = "cmp --silent " + test_files + src_filename + " " +

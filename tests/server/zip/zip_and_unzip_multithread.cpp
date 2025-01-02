@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <filesystem>
@@ -76,9 +77,20 @@ bool test(const std::string& src_filename) {
 
   // End timing for zip and output the time taken
   auto end_zip = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double, std::milli> encryption_time =
-    end_zip - start_zip;
-  std::cout << "Zip time: " << encryption_time.count() << " ms" << std::endl;
+  std::chrono::duration<double, std::milli> zip_time = end_zip - start_zip;
+  std::cout << "Zip time: " << zip_time.count() << " ms" << std::endl;
+
+  // 计算总大小，获得Zip速度(MB/s)
+  std::ifstream ifile_size;
+  size_t total_size = 0;
+  ifile_size.open(ipath, std::ios::binary);
+  ifile_size.seekg(0, std::ios::end);
+  total_size += ifile_size.tellg();
+  ifile_size.close();
+
+  double zip_speed =
+    static_cast<double>(total_size) / zip_time.count() * 1000 / 1024 / 1024;
+  std::cout << "Zip speed: " << zip_speed << " MB/s" << std::endl;
 
   // unzip
   ifile.open(zip_path + dst_filename, iflag);
@@ -110,9 +122,13 @@ bool test(const std::string& src_filename) {
 
   // End timing for unzip and output the time taken
   auto end_unzip = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double, std::milli> decryption_time =
+  std::chrono::duration<double, std::milli> unzip_time =
     end_unzip - start_unzip;
-  std::cout << "Unzip time: " << decryption_time.count() << " ms" << std::endl;
+  std::cout << "Unzip time: " << unzip_time.count() << " ms" << std::endl;
+
+  double unzip_speed =
+    static_cast<double>(total_size) / unzip_time.count() * 1000 / 1024 / 1024;
+  std::cout << "Unzip speed: " << unzip_speed << " MB/s" << std::endl;
 
   // compare
   std::string cmpCommand = "cmp --silent " + test_files + src_filename + " " +

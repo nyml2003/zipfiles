@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <array>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <filesystem>
@@ -85,6 +86,20 @@ TEST_F(PackAndUnpackSingle, PackAndUnpackSingle) {  // NOLINT
   std::chrono::duration<double, std::milli> pack_time = end_pack - start_pack;
   std::cout << "Pack time: " << pack_time.count() << " ms" << std::endl;
 
+  // 计算总大小，获得Pack速度(MB/s)
+  std::ifstream ifile_size;
+  size_t total_size = 0;
+  for (const auto& pack_file : pack_files) {
+    ifile_size.open(pack_file, std::ios::binary);
+    ifile_size.seekg(0, std::ios::end);
+    total_size += ifile_size.tellg();
+    ifile_size.close();
+  }
+
+  double pack_speed =
+    static_cast<double>(total_size) / pack_time.count() * 1000 / 1024 / 1024;
+  std::cout << "Pack speed: " << pack_speed << " MB/s" << std::endl;
+
   // unpack
   std::ifstream ifile;
   ifile.open(pack_path / "pack_file", std::ios::binary);
@@ -125,6 +140,10 @@ TEST_F(PackAndUnpackSingle, PackAndUnpackSingle) {  // NOLINT
   std::chrono::duration<double, std::milli> unpack_time =
     end_unpack - start_unpack;
   std::cout << "Unpack time: " << unpack_time.count() << " ms" << std::endl;
+
+  double unpack_speed =
+    static_cast<double>(total_size) / unpack_time.count() * 1000 / 1024 / 1024;
+  std::cout << "Unpack speed: " << unpack_speed << " MB/s" << std::endl;
 
   bool is_correct = true;
 

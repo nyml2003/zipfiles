@@ -12,3 +12,4 @@ ventus_temp/*
 .ccls-cache
 /release
 /output
+release@*
