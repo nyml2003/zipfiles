@@ -262,19 +262,24 @@ fs::path getCommonAncestor(const std::vector<fs::path>& paths) {
   }
 
   if (paths.size() == 1) {
+    // 如果只有一个路径，直接返回这个路径的文件名
     return paths[0].filename();
   }
 
   // 初始化公共祖先为第一个路径
-  fs::path commonAncestor = paths[0];
+  fs::path commonAncestor = paths[0].parent_path();
 
   for (const auto& path : paths) {
+    if (!path.is_absolute()) {
+      throw std::runtime_error("path " + path.string() + " is not absolute");
+    }
+
     fs::path tempAncestor;
     auto it1 = commonAncestor.begin();
-    auto it2 = path.begin();
+    auto it2 = path.parent_path().begin();
 
     // 比较路径的每一部分，找到公共部分
-    while (it1 != commonAncestor.end() && it2 != path.end() && *it1 == *it2) {
+    while (it1 != commonAncestor.end() && it2 != path.parent_path().end() && *it1 == *it2) {
       tempAncestor /= *it1;
       ++it1;
       ++it2;

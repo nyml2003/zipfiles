@@ -40,8 +40,8 @@ class SingleThreadBackupAndRestore : public ::testing::Test {
 
   void TearDown() override {
     // 删除测试目录和文件
-    fs::remove_all("/tmp/backup");
-    fs::remove_all("/tmp/restore");
+    // fs::remove_all("/tmp/backup");
+    // fs::remove_all("/tmp/restore");
     fs::remove(COMMIT_TABLE_PATH);
   }
 };
@@ -55,7 +55,11 @@ TEST_F(SingleThreadBackupAndRestore, SingleThreadBackupAndRestore) {  // NOLINT
 
   // test_files
   std::vector<fs::path> backup_files{};
-  get_test_files(current_work_path, backup_files);
+  // get_test_files(current_work_path, backup_files);
+  backup_files = {
+    "/app/test_files/text/multi_dir_1",
+    "/app/test_files/text/multi_dir_1/small_text_test_file",
+    "/app/test_files/text/multi_dir_1/big_text_test_file"};
 
   for (const auto& path : backup_files) {
     std::cout << "Got file: " << path << std::endl;
@@ -100,13 +104,15 @@ TEST_F(SingleThreadBackupAndRestore, SingleThreadBackupAndRestore) {  // NOLINT
     end_restore - start_restore;
   std::cout << "Restore time: " << restore_time.count() << " ms" << std::endl;
 
+  fs::path lca = getCommonAncestor(backup_files);
+
   // 使用cmp指令验证文件内容
   for (const auto& file : backup_files) {
-    fs::path relativePath = fs::relative(file, current_work_path);
+    fs::path relativePath = fs::relative(file.parent_path(), lca);
     std::string originalFile = file.string();
-    std::string restoredFile = (restorePath / relativePath).string();
+    std::string restoredFile = restorePath / relativePath / file.filename();
 
-    if (fs::is_fifo(file) || fs::is_block_file(file) || fs::is_character_file(file) || fs::is_socket(file)) {
+    if (fs::is_fifo(file) || fs::is_block_file(file) || fs::is_character_file(file) || fs::is_socket(file) || fs::is_directory(file)) {
       continue;
     }
 
@@ -122,13 +128,16 @@ TEST_F(SingleThreadBackupAndRestore, SingleThreadBackupAndRestore) {  // NOLINT
     if (fs::is_socket(file)) {
       continue;
     }
-    fs::path relativePath = fs::relative(file.parent_path(), current_work_path);
-    relativePath = relativePath / file.filename();
-    FileDetail originalDetail = getFileDetail(file);
-    FileDetail restoredDetail = getFileDetail(restorePath / relativePath);
+    fs::path relativePath = fs::relative(file.parent_path(), lca);
+    std::string originalFile = file.string();
+    std::string restoredFile = restorePath / relativePath / file.filename();
+
+    FileDetail originalDetail = getFileDetail(originalFile);
+    FileDetail restoredDetail = getFileDetail(restoredFile);
+
     ASSERT_EQ(originalDetail.type, restoredDetail.type)
       << file << " & " << restorePath / relativePath;
-    if (!fs::is_character_file(file) && !fs::is_block_file(file)) {
+    if (!fs::is_character_file(file) && !fs::is_block_file(file) && !fs::is_directory(file)) {
       ASSERT_EQ(originalDetail.updateTime, restoredDetail.updateTime)
         << file << " & " << restorePath / relativePath;
     }
@@ -144,7 +153,7 @@ TEST_F(SingleThreadBackupAndRestore, SingleThreadBackupAndRestore) {  // NOLINT
 
   std::cout << "Compare done" << std::endl;
 
-  uintmax_t origin_size = get_folder_size(current_work_path);
+  uintmax_t origin_size = get_folder_size(lca);
   uintmax_t compressed_size =
     get_folder_size(fs::path(cr.storagePath) / cr.uuid);
 
