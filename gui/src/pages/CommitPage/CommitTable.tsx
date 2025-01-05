@@ -41,11 +41,23 @@ const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => 
       message.error("请选择要删除的项");
       return;
     }
-    selectedRowKeys.forEach(async key => {
-      if (typeof key === "string") {
-        deleteCommit(key).then(() => setData(data => data.filter(item => item.uuid !== key)));
-      }
-    });
+    // 使用 Promise.all 等待所有删除操作完成
+    Promise.all(
+      selectedRowKeys.map(key => {
+        if (typeof key === "string") {
+          return deleteCommit(key);
+        }
+        return Promise.resolve(); // 如果 key 不是字符串，返回一个立即解决的 Promise
+      })
+    )
+      .then(() => {
+        // 所有删除操作完成后，一次性更新数据
+        setData(data => data.filter(item => !selectedRowKeys.includes(item.uuid)));
+      })
+      .catch(error => {
+        // 处理删除过程中可能出现的错误
+        message.error("删除失败：" + error.message);
+      });
   }, [selectedRowKeys]);
   const rowSelection: TableRowSelection<DataType> = {
     selectedRowKeys,
@@ -80,8 +92,9 @@ const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => 
             title='确认删除？'
             onConfirm={() => {
               if (!record.uuid) return;
-              deleteCommit(record.uuid);
-              setData(data.filter(item => item.uuid !== record.uuid));
+              deleteCommit(record.uuid).then(() =>
+                setData(data.filter(item => item.uuid !== record.uuid))
+              );
             }}>
             <Button variant='danger'>删除</Button>
           </Popconfirm>
@@ -111,7 +124,7 @@ const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => 
       key: "createTime",
       ellipsis: true,
       align: "center",
-      render: (value: number) => new Date(value * 1000).toLocaleString()
+      render: (value: number) => new Date(value).toLocaleString()
     },
     {
       title: "提交信息",
@@ -149,16 +162,15 @@ const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => 
       align: "center"
     }
   ];
-  const fetchData = () => {
-    api
-      .request<GetCommitListRequest, GetCommitListResponse>(ApiEnum.GetCommitList, {})
-      .then(res => {
-        setData(res.commits);
-      })
-      .catch(e => {
-        if (!(e instanceof AcceptableError)) {
-          return;
-        }
+  const fetchData = async () => {
+    try {
+      const res = await api.request<GetCommitListRequest, GetCommitListResponse>(
+        ApiEnum.GetCommitList,
+        {}
+      );
+      setData(res.commits);
+    } catch (e) {
+      if (e instanceof AcceptableError) {
         dispatch(
           ReportError({
             state: "error",
@@ -166,7 +178,12 @@ const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => 
             description: (e as Error).message
           })
         );
-      });
+      } else {
+        // 如果 e 不是 AcceptableError，可以在这里处理其他类型的错误
+        // 例如，显示一个通用的错误消息
+        message.error("获取备份列表失败：" + (e as Error).message);
+      }
+    }
   };
 
   useEffect(() => {
@@ -180,6 +197,7 @@ const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => 
         commitId
       }
     );
+    await fetchData();
   };
   const navigate = useNavigate();
   const footer = () => {

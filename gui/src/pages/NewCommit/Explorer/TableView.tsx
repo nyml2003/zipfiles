@@ -80,35 +80,42 @@ const TableView: React.FC = () => {
     },
     [selectedFiles, selectedDirectories]
   );
-  const renderDirectoryCheckbox = useCallback(() => {
-    let checked = false;
-    let disabled = false;
-    for (const directory of selectedDirectories) {
-      if (currentPath.startsWith(directory.name)) {
-        checked = true;
-        if (currentPath !== directory.name) disabled = true;
-        break;
+  const renderDirectoryCheckbox = useCallback(
+    (name?: string) => {
+      const path = name ? `${currentPath}/${name}` : currentPath;
+      let checked = false;
+      let disabled = false;
+      for (const directory of selectedDirectories) {
+        if (path.startsWith(directory.name)) {
+          checked = true;
+          if (path !== directory.name) disabled = true;
+          break;
+        }
       }
-    }
 
-    const handleClick = () => {
-      if (checked) {
-        dispatch(removeSelectedDirectory(currentPath));
-      } else {
-        dispatch(addSelectedDirectory(currentPath));
-      }
-    };
+      const handleClick = () => {
+        if (checked) {
+          dispatch(removeSelectedDirectory(path));
+        } else {
+          dispatch(addSelectedDirectory(path));
+        }
+      };
 
-    return (
-      <Checkbox checked={checked} disabled={disabled} onClick={() => handleClick()}></Checkbox>
-    );
-  }, [selectedDirectories, currentPath]);
+      return (
+        <Checkbox checked={checked} disabled={disabled} onClick={() => handleClick()}></Checkbox>
+      );
+    },
+    [selectedDirectories, currentPath]
+  );
   const columns: TableColumnsType<DataType> = [
     {
       title: renderDirectoryCheckbox(),
       dataIndex: "operation",
       key: "operation",
       render: (text, record: DataType) => {
+        if (record.type === FileType.Directory) {
+          return renderDirectoryCheckbox(record.name);
+        }
         return renderFileCheckbox(text, record);
       },
       align: "center",

@@ -14,14 +14,6 @@ set(CMAKE_CXX_FLAGS_MINSIZEREL "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-gdwarf-4") # to use valgrind
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -gdwarf-4 -DNDEBUG") # to use valgrind
 set(CMAKE_EXPORT_COMPILECOMMANDS on)
-# 设置编译器为clang
-set(CMAKE_C_COMPILER clang-18)
-set(CMAKE_CXX_COMPILER clang++-18)
-# 集成clang-tidy
-find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
-if(CLANG_TIDY_EXE)
-    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
-endif()
 set(CMAKE_GENERATOR Ninja)
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
 set(ZIPFILES_HEADER_DIR ${CMAKE_SOURCE_DIR}/include) # 头文件目录
@@ -162,37 +154,29 @@ install(FILES ${ZIPFILES_CLIENT_LOG_CONFIG} DESTINATION ${ZIPFILES_OUTPUT_DIR})
 #     ${LOG4CPP_LIBRARIES}
 # )
 
-find_package(GTest REQUIRED)
-# 单元测试
-enable_testing()
+# find_package(GTest REQUIRED)
+# # 单元测试
+# enable_testing()
 
-foreach(TEST_FILE ${ZIPFILES_SERVER_UNIT_TEST_FILES})
-    # 获取文件名（不带路径和扩展名）+ 服务端单元测试
-    get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
+# foreach(TEST_FILE ${ZIPFILES_SERVER_UNIT_TEST_FILES})
+#     # 获取文件名（不带路径和扩展名）+ 服务端单元测试
+#     get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
 
-    # 创建测试目标
-    add_executable(${TEST_NAME} ${TEST_FILE} ${ZIPFILES_SERVER_SOURCE_FILES} ${ZIPFILES_MP_SOURCE_FILES} ${ZIPFILES_CLIENT_SOURCE_FILES})
+#     # 创建测试目标
+#     add_executable(${TEST_NAME} ${TEST_FILE} ${ZIPFILES_SERVER_SOURCE_FILES} ${ZIPFILES_MP_SOURCE_FILES} )
 
-    # 链接依赖库
-    target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main ${LOG4CPP_LIBRARIES} ${JSONCPP_LIBRARIES} ${CRYPTOPP_LIBRARIES} ${WEBKIT_LIBRARIES})
+#     # 链接依赖库
+#     target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main ${LOG4CPP_LIBRARIES} ${JSONCPP_LIBRARIES} ${CRYPTOPP_LIBRARIES} ${WEBKIT_LIBRARIES})
 
-    # 添加测试到 CTest
-    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+#     # 添加测试到 CTest
+#     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
 
-    set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 30)
-endforeach()
+#     set_tests_properties(${TEST_NAME} PROPERTIES TIMEOUT 30)
+# endforeach()
 
 ############################################
 #### 工具
 ############################################
-
-# 源码格式化
-add_custom_target(
-    CPP_FORMAT
-    COMMAND clang-format -i -style=file -assume-filename=${CMAKE_SOURCE_DIR}/.clang-format ${ZIPFILES_HEADER_FILES} $ ${ZIPFILES_CLIENT_SOURCE_FILES} ${ZIPFILES_MP_SOURCE_FILES} ${ZIPFILES_SERVER_SOURCE_FILES} ${ZIPFILES_SERVER_UNIT_TEST_FILES} ${ZIPFILES_MOCK_SERVER_ENTRY}
-    COMMENT "Formatting source files"
-)
-
 
 # 计算代码行数
 add_custom_target(

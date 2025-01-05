@@ -16,7 +16,6 @@ import { ReportError } from "@/stores/NotificationReducer";
 import { RecoverCommitRequest, RecoverCommitResponse } from "@/apis/RecoverCommit";
 import Button from "@/components/Button";
 import { AcceptableError } from "@/hooks/useApi/types";
-import { RecycleBin as IconRecycleBin } from "@icon-park/react";
 import { TableRowSelection } from "antd/lib/table/interface";
 interface CommitLog {
   uuid: string;
@@ -42,11 +41,23 @@ const RecycleBin = () => {
       message.error("请选择要删除的项");
       return;
     }
-    selectedRowKeys.forEach(async key => {
-      if (typeof key === "string") {
-        deleteCommit(key).then(() => setData(data => data.filter(item => item.uuid !== key)));
-      }
-    });
+    const selectedKeysCopy = [...selectedRowKeys];
+    Promise.all(
+      selectedKeysCopy.map(key => {
+        if (typeof key === "string") {
+          return deleteCommit(key);
+        }
+        return Promise.resolve(); // 如果 key 不是字符串，返回一个立即解决的 Promise
+      })
+    )
+      .then(() => {
+        // 所有删除操作完成后，一次性更新数据
+        setData(data => data.filter(item => !selectedKeysCopy.includes(item.uuid)));
+      })
+      .catch(error => {
+        // 处理删除过程中可能出现的错误
+        message.error("删除失败：" + error.message);
+      });
   }, [selectedRowKeys]);
   const rowSelection: TableRowSelection<DataType> = {
     selectedRowKeys,
@@ -59,11 +70,23 @@ const RecycleBin = () => {
       message.error("请选择要还原的项");
       return;
     }
-    selectedRowKeys.forEach(async key => {
-      if (typeof key === "string") {
-        recoverCommit(key).then(() => setData(data => data.filter(item => item.uuid !== key)));
-      }
-    });
+    const selectedKeysCopy = [...selectedRowKeys];
+    Promise.all(
+      selectedKeysCopy.map(key => {
+        if (typeof key === "string") {
+          return recoverCommit(key);
+        }
+        return Promise.resolve(); // 如果 key 不是字符串，返回一个立即解决的 Promise
+      })
+    )
+      .then(() => {
+        // 所有删除操作完成后，一次性更新数据
+        setData(data => data.filter(item => !selectedKeysCopy.includes(item.uuid)));
+      })
+      .catch(error => {
+        // 处理删除过程中可能出现的错误
+        message.error("删除失败：" + error.message);
+      });
   }, [selectedRowKeys]);
 
   const columns: TableColumnsType<DataType> = [
@@ -75,9 +98,9 @@ const RecycleBin = () => {
         <Space>
           <Popconfirm
             title={<div className='text-red-500'>删除后不可恢复，确认删除？</div>}
-            onConfirm={() => {
+            onConfirm={async () => {
               if (!record.uuid) return;
-              deleteCommit(record.uuid);
+              await deleteCommit(record.uuid);
               setData(data.filter(item => item.uuid !== record.uuid));
             }}>
             <Button variant='danger'>彻底删除</Button>
@@ -110,7 +133,7 @@ const RecycleBin = () => {
       key: "createTime",
       ellipsis: true,
       align: "center",
-      render: (value: number) => new Date(value * 1000).toLocaleString()
+      render: (value: number) => new Date(value).toLocaleString()
     },
     {
       title: "提交信息",
@@ -148,19 +171,15 @@ const RecycleBin = () => {
       align: "center"
     }
   ];
-  const fetchData = () => {
-    api
-      .request<GetCommitRecycleBinRequest, GetCommitRecycleBinResponse>(
+  const fetchData = async () => {
+    try {
+      const res = await api.request<GetCommitRecycleBinRequest, GetCommitRecycleBinResponse>(
         ApiEnum.GetCommitRecycleBin,
         {}
-      )
-      .then(res => {
-        setData(res.commits);
-      })
-      .catch(e => {
-        if (!(e instanceof AcceptableError)) {
-          return;
-        }
+      );
+      setData(res.commits);
+    } catch (e) {
+      if (e instanceof AcceptableError) {
         dispatch(
           ReportError({
             state: "error",
@@ -168,7 +187,12 @@ const RecycleBin = () => {
             description: (e as Error).message
           })
         );
-      });
+      } else {
+        // 如果 e 不是 AcceptableError，可以在这里处理其他类型的错误
+        // 例如，显示一个通用的错误消息
+        message.error("获取回收站失败：" + (e as Error).message);
+      }
+    }
   };
 
   useEffect(() => {
@@ -183,7 +207,7 @@ const RecycleBin = () => {
           commitId
         }
       );
-      setData(data.filter(item => item.uuid !== commitId));
+      await fetchData();
     } catch (e) {
       if (!(e instanceof AcceptableError)) {
         return;
@@ -203,7 +227,7 @@ const RecycleBin = () => {
       await api.request<RecoverCommitRequest, RecoverCommitResponse>(ApiEnum.RecoverCommit, {
         commitId
       });
-      setData(data.filter(item => item.uuid !== commitId));
+      await fetchData();
     } catch (e) {
       if (!(e instanceof AcceptableError)) {
         return;
@@ -249,11 +273,8 @@ const RecycleBin = () => {
           footer={footer}
         />
       ) : (
-        <div className='text-center text-gray-500 mt-2 p-4 bg-gray-200 rounded-lg shadow-lg'>
-          <div className='flex justify-center'>
-            <IconRecycleBin theme='filled' size='48' fill='#333' strokeLinecap='butt' />
-          </div>
-          <div className='text-4xl my-2'>回收站为空</div>
+        <div className='text-center mt-4'>
+          <p className='text-gray-600 mb-4'>您的回收站空空如也</p>
         </div>
       )}
     </>
