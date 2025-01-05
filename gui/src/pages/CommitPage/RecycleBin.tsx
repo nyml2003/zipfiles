@@ -260,13 +260,13 @@ const RecycleBin = () => {
         <Table<DataType>
           columns={columns}
           dataSource={data}
-          // rowSelection={rowSelection}
+          rowSelection={rowSelection}
           pagination={false}
           className='fade-in-down rounded-lg'
           size='small'
           rowKey={"uuid"}
           scroll={{ x: "max-content" }}
-          // footer={footer}
+          footer={footer}
         />
       ) : (
         <div className='text-center mt-4'>

@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=0.0.13
+VERSION=0.0.14
 wget https://github.com/nyml2003/zipfiles/releases/download/$VERSION/zipfiles.tar.gz
 mkdir -p zipfiles
 tar -xzvf zipfiles.tar.gz -C ./zipfiles
