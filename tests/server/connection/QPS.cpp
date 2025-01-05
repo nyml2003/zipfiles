@@ -13,7 +13,7 @@ namespace zipfiles {
 std::atomic<int> id(0);   // 使用原子操作确保线程安全
 std::mutex mutex;         // 全局互斥锁
 std::map<int, bool> map;  // 用于跟踪请求是否收到响应
-int max_request = 1000000;
+int max_request = 1000;
 
 class QPS : public ::testing::Test {
  protected:

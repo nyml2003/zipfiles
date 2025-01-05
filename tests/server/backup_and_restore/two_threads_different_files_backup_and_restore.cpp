@@ -148,14 +148,16 @@ TEST_F(  // NOLINT
 
   std::cout << "Restore done" << std::endl;
 
+  fs::path lca1 = getCommonAncestor(backup_files1);
+  fs::path lca2 = getCommonAncestor(backup_files2);
+
   // 使用cmp指令验证文件内容
   for (const auto& file : backup_files1) {
-    fs::path relativePath = fs::relative(file, work_path_1);
+    fs::path relativePath = fs::relative(file.parent_path(), lca1);
     std::string originalFile = file.string();
-    std::string restoredFile = (restorePath / relativePath).string();
+    std::string restoredFile = restorePath / relativePath / file.filename();
 
-    if (fs::is_fifo(file) || fs::is_block_file(file) ||
-        fs::is_character_file(file) || fs::is_socket(file)) {
+    if (fs::is_fifo(file) || fs::is_block_file(file) || fs::is_character_file(file) || fs::is_socket(file)) {
       continue;
     }
 
@@ -167,12 +169,11 @@ TEST_F(  // NOLINT
 
   // 使用cmp指令验证文件内容
   for (const auto& file : backup_files2) {
-    fs::path relativePath = fs::relative(file, work_path_2);
+    fs::path relativePath = fs::relative(file.parent_path(), lca2);
     std::string originalFile = file.string();
-    std::string restoredFile = (restorePath / relativePath).string();
+    std::string restoredFile = restorePath / relativePath / file.filename();
 
-    if (fs::is_fifo(file) || fs::is_block_file(file) ||
-        fs::is_character_file(file) || fs::is_socket(file)) {
+    if (fs::is_fifo(file) || fs::is_block_file(file) || fs::is_character_file(file) || fs::is_socket(file)) {
       continue;
     }
 
@@ -188,10 +189,12 @@ TEST_F(  // NOLINT
     if (fs::is_socket(file)) {
       continue;
     }
-    fs::path relativePath = fs::relative(file.parent_path(), work_path_1);
-    relativePath = relativePath / file.filename();
-    FileDetail originalDetail = getFileDetail(file);
-    FileDetail restoredDetail = getFileDetail(restorePath / relativePath);
+    fs::path relativePath = fs::relative(file.parent_path(), lca1);
+    std::string originalFile = file.string();
+    std::string restoredFile = restorePath / relativePath / file.filename();
+
+    FileDetail originalDetail = getFileDetail(originalFile);
+    FileDetail restoredDetail = getFileDetail(restoredFile);
     ASSERT_EQ(originalDetail.type, restoredDetail.type)
       << file << " & " << restorePath / relativePath;
     if (!fs::is_character_file(file) && !fs::is_block_file(file)) {
@@ -214,10 +217,12 @@ TEST_F(  // NOLINT
     if (fs::is_socket(file)) {
       continue;
     }
-    fs::path relativePath = fs::relative(file.parent_path(), work_path_2);
-    relativePath = relativePath / file.filename();
-    FileDetail originalDetail = getFileDetail(file);
-    FileDetail restoredDetail = getFileDetail(restorePath / relativePath);
+    fs::path relativePath = fs::relative(file.parent_path(), lca2);
+    std::string originalFile = file.string();
+    std::string restoredFile = restorePath / relativePath / file.filename();
+
+    FileDetail originalDetail = getFileDetail(originalFile);
+    FileDetail restoredDetail = getFileDetail(restoredFile);
     ASSERT_EQ(originalDetail.type, restoredDetail.type)
       << file << " & " << restorePath / relativePath;
     if (!fs::is_character_file(file) && !fs::is_block_file(file)) {

@@ -1,4 +1,3 @@
-#include "server/pack/unpack.h"
 #include <grp.h>
 #include <pwd.h>
 #include <sys/socket.h>
@@ -19,6 +18,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include "server/pack/unpack.h"
 
 namespace zipfiles::server {
 /**
@@ -380,9 +380,9 @@ void FileUnpacker::readFileDetail(std::vector<uint8_t>& ibuffer) {
         break;
       case std::filesystem::file_type::directory:
         fs::create_directories(dst / file_path);
+        data_size = 0;
         break;
       case std::filesystem::file_type::symlink:
-        // 留到READ_DATA处理
         break;
       case std::filesystem::file_type::character:
         createDeviceFile();
@@ -397,6 +397,7 @@ void FileUnpacker::readFileDetail(std::vector<uint8_t>& ibuffer) {
         createDeviceFile();
         break;
       case std::filesystem::file_type::unknown:
+        throw std::runtime_error("Unknown file type");
         break;
     }
 

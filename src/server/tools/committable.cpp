@@ -80,6 +80,8 @@ void CommitTable::readCommitTable(const fs::path& src) {
  *
  */
 Json::Value CommitTable::readCommitTableView(const fs::path& src) {
+  std::lock_guard<std::mutex> lock(getInstance().mutex);
+
   // 先创建相应的目录
   // src有可能是一个相对目录或者根目录，此时是没有parent_path的
   // 要求src是一个绝对路径
