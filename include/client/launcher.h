@@ -19,12 +19,12 @@ constexpr size_t EXE_PATH_SIZE = 1024;
  * @brief 窗体宽度
  *
  */
-constexpr int WINDOW_WIDTH = 800;
+constexpr int WINDOW_WIDTH = 1280;
 /**
  * @brief 窗体高度
  *
  */
-constexpr int WINDOW_HEIGHT = 600;
+constexpr int WINDOW_HEIGHT = 720;
 
 // 配置文件地址
 constexpr const char* CONFIGURE_PATH = "/usr/local/zipfiles/.zip/config.json";
