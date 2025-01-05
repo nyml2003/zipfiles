@@ -53,10 +53,12 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
     const files = await fetchFileList(path);
     const allFiles: string[] = [];
     const promises: Promise<void>[] = files.map(async (file: File) => {
-      allFiles.push(path + "/" + file.name);
       if (file.type === FileType.Directory) {
+        allFiles.push(path + "/" + file.name + "/"); // 目录的话，加入目录的路径
         const subFiles = await fetchAllFiles(path + "/" + file.name);
         allFiles.push(...subFiles);
+      } else {
+        allFiles.push(path + "/" + file.name);
       }
       return Promise.resolve();
     });
@@ -139,7 +141,14 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
             <div>备份的作者为: {options.author}</div>
             <div>备份的路径为: {options.storagePath}</div>
             <div>提交的时间为: {request.createTime}</div>
-            <span>是否加密: {options.isEncrypt ? <span style={{ color: "green" }}>√</span> : <span style={{ color: "red" }}>×</span>}</span>
+            <span>
+              是否加密:{" "}
+              {options.isEncrypt ? (
+                <span style={{ color: "green" }}>√</span>
+              ) : (
+                <span style={{ color: "red" }}>×</span>
+              )}
+            </span>
           </div>
         )
       };
