@@ -54,7 +54,6 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
     const allFiles: string[] = [];
     const promises: Promise<void>[] = files.map(async (file: File) => {
       if (file.type === FileType.Directory) {
-        allFiles.push(path + "/" + file.name + "/"); // 目录的话，加入目录的路径
         const subFiles = await fetchAllFiles(path + "/" + file.name);
         allFiles.push(...subFiles);
       } else {

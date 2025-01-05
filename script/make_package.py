@@ -22,7 +22,7 @@ output_dir = f"/app/output/{version}"
 os.system(f"mkdir -p {output_dir}")
 
 # 执行打包命令
-os.system(f"tar -czvf {output_dir}/{tar_name} {target_dir}")
+os.system(f"tar -czvf {output_dir}/{tar_name} -C {target_dir} .")
 
 # 修改download.sh文件, 替换版本号
 download_sh = "/app/demo/download.sh"

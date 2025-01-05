@@ -222,7 +222,7 @@ const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => 
         </div>
       ) : (
         <Table<DataType>
-          rowSelection={rowSelection}
+          // rowSelection={rowSelection}
           columns={columns}
           dataSource={data}
           pagination={false}
@@ -230,7 +230,7 @@ const CommitTable: React.FC<ExplorerProps> = ({ openExplorer, openRestore }) => 
           size='small'
           rowKey={"uuid"}
           scroll={{ x: "max-content" }}
-          footer={footer}
+          // footer={footer}
           sticky
         />
       )}
