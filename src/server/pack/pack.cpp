@@ -13,7 +13,6 @@
 #include <ios>
 #include <iostream>
 #include <stdexcept>
-#include "server/configure/configure.h"
 #include "server/pack/pack.h"
 #include "server/tools/fsapi.h"
 
@@ -126,8 +125,6 @@ void createHeader(
                       fileDetail.owner.size() + fileDetail.group.size() +
                       fileDetail.absolutePath.size() + sizeof(fileDetail.dev);
   size_t totalSize = sizeof(size_t) * 2 + relativePathSize + structSize;
-
-  std::cout << "relativePathSize: " << relativePathSize << std::endl;
 
   header.reserve(totalSize);
 

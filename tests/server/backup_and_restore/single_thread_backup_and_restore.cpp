@@ -40,8 +40,8 @@ class SingleThreadBackupAndRestore : public ::testing::Test {
 
   void TearDown() override {
     // 删除测试目录和文件
-    // fs::remove_all("/tmp/backup");
-    // fs::remove_all("/tmp/restore");
+    fs::remove_all("/tmp/backup");
+    fs::remove_all("/tmp/restore");
     fs::remove(COMMIT_TABLE_PATH);
   }
 };
@@ -55,11 +55,11 @@ TEST_F(SingleThreadBackupAndRestore, SingleThreadBackupAndRestore) {  // NOLINT
 
   // test_files
   std::vector<fs::path> backup_files{};
-  // get_test_files(current_work_path, backup_files);
-  backup_files = {
-    "/app/test_files/text/multi_dir_1",
-    "/app/test_files/text/multi_dir_1/small_text_test_file",
-    "/app/test_files/text/multi_dir_1/big_text_test_file"};
+  get_test_files(current_work_path, backup_files);
+  // backup_files = {
+  //   "/app/test_files/text/multi_dir_1",
+  //   "/app/test_files/text/multi_dir_1/small_text_test_file",
+  //   "/app/test_files/text/multi_dir_1/big_text_test_file"};
 
   for (const auto& path : backup_files) {
     std::cout << "Got file: " << path << std::endl;
