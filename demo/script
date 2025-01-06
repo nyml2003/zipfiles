@@ -1,3 +1,6 @@
 head -n 10 <filename>
 lsof -i :8080
 kill -9 <pid>
+ln [源文件] [目标文件]
+ln -s [源文件或目录] [目标链接]
+mkfifo mypipe
