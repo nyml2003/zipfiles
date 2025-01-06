@@ -79,10 +79,6 @@ const RecycleBin = () => {
         return Promise.resolve(); // 如果 key 不是字符串，返回一个立即解决的 Promise
       })
     )
-      .then(() => {
-        // 所有删除操作完成后，一次性更新数据
-        setData(data => data.filter(item => !selectedKeysCopy.includes(item.uuid)));
-      })
       .catch(error => {
         // 处理删除过程中可能出现的错误
         message.error("删除失败：" + error.message);

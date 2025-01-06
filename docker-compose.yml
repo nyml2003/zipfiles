@@ -16,9 +16,20 @@ services:
       context: .
       dockerfile: ./service/build/Dockerfile
     ports:
-      - "8022:22"
+      - "8023:22"
     command: ["/bin/bash"]
     tty: true
     stdin_open: true
     volumes:
       - .:/app
+  demo:
+    build:
+      context: .
+      dockerfile: ./demo/Dockerfile
+    ports:
+      - "8024:22"
+    command: ["/bin/bash"]
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./demo:/app

@@ -54,12 +54,10 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
     const allFiles: string[] = [];
     const promises: Promise<void>[] = files.map(async (file: File) => {
       if (file.type === FileType.Directory) {
-        allFiles.push(path + "/" + file.name + "/"); // 目录的话，加入目录的路径
         const subFiles = await fetchAllFiles(path + "/" + file.name);
         allFiles.push(...subFiles);
-      } else {
-        allFiles.push(path + "/" + file.name);
       }
+      allFiles.push(path + "/" + file.name);
       return Promise.resolve();
     });
     await Promise.all(promises);
@@ -73,7 +71,9 @@ const CommitPush = ({ files, directories, options, id, result }: CommitPushProps
     });
     const dirResults = await Promise.all(dirPromises);
     dirData = dirResults.flat(); // 将所有目录的结果合并到 dirData
-    return [...fileData, ...dirData];
+    const allFiles = [...fileData, ...dirData];
+    allFiles.sort();
+    return allFiles;
   };
 
   // 监听result的变化, result的内容会由全局监听器接收到对应消息后填充
